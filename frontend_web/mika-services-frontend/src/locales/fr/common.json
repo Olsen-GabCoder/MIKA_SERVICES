@@ -1,0 +1,114 @@
+{
+  "app": {
+    "name": "MIKA Services",
+    "loading": "Chargement…"
+  },
+  "passwordRequirements": {
+    "minLength": "Le mot de passe doit contenir au moins 8 caractères",
+    "uppercase": "Le mot de passe doit contenir au moins une majuscule",
+    "lowercase": "Le mot de passe doit contenir au moins une minuscule",
+    "digit": "Le mot de passe doit contenir au moins un chiffre",
+    "special": "Le mot de passe doit contenir au moins un caractère spécial (ex. @$!%*?&)"
+  },
+  "error": {
+    "generic": "Une erreur est survenue",
+    "unexpected": "Une erreur inattendue est survenue"
+  },
+  "communication": {
+    "errorLoadMessagesReceived": "Erreur chargement messages reçus",
+    "errorLoadMessagesSent": "Erreur chargement messages envoyés",
+    "errorLoadNotifications": "Erreur chargement notifications"
+  },
+  "close": "Fermer",
+  "confirm": {
+    "title": "Confirmer",
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "ok": "OK",
+    "deletePointBloquant": "Supprimer ce point bloquant ?",
+    "deleteTask": "Supprimer cette tâche ?",
+    "deactivateProject": "Êtes-vous sûr de vouloir désactiver le projet « {{name}} » ?",
+    "deleteFournisseur": "Supprimer ce fournisseur ?",
+    "downloadError": "Erreur lors du téléchargement",
+    "deleteDocument": "Supprimer ce document ?",
+    "deleteIncident": "Supprimer cet incident ?",
+    "deleteRisk": "Supprimer ce risque ?",
+    "removeProjectFromPV": "Retirer ce projet du PV ?",
+    "deleteReunion": "Supprimer la réunion du {{date}} ?",
+    "deleteControl": "Supprimer ce contrôle qualité ?",
+    "deactivateEquipe": "Désactiver l'équipe « {{name}} » ?",
+    "deactivateMateriau": "Désactiver le matériau « {{name}} » ?",
+    "deactivateEngin": "Désactiver l'engin « {{name}} » ?"
+  },
+  "notFound": {
+    "title": "Page non trouvée",
+    "description": "L'URL demandée n'existe pas ou a été déplacée.",
+    "backHome": "Retour à l'accueil"
+  },
+  "dashboard": {
+    "loading": "Chargement du tableau de bord…",
+    "greeting": "Bonjour, {{name}}",
+    "subtitle": "Tableau de bord — MIKA SERVICES",
+    "userFallback": "Utilisateur",
+    "notificationsUnread_one": "{{count}} notification non lue",
+    "notificationsUnread_other": "{{count}} notifications non lues",
+    "messagesUnread_one": "{{count}} message non lu",
+    "messagesUnread_other": "{{count}} messages non lus",
+    "kpi": {
+      "activeProjects": "Projets actifs",
+      "tasksInProgress": "Tâches en cours",
+      "budgetConsumed": "Budget consommé",
+      "total": "total",
+      "completed": "terminées"
+    },
+    "progress": {
+      "global": "Avancement global",
+      "budgetConsumption": "Consommation budget",
+      "completed": "terminées",
+      "total": "total",
+      "spent": "dépensé",
+      "planned": "prévu"
+    },
+    "alerts": {
+      "delays": "Retards",
+      "projectsDelayed": "{{count}} projet(s) en retard",
+      "tasksDelayed": "{{count}} tâche(s) en retard",
+      "quality": "Qualité",
+      "conformity": "conformité",
+      "controls": "contrôles",
+      "ncOpen": "NC ouvertes",
+      "safety": "Sécurité",
+      "incidents": "incidents",
+      "seriousIncidents": "{{count}} incident(s) grave(s)",
+      "criticalRisks": "{{count}} risque(s) critique(s)",
+      "daysStopped": "jours d'arrêt cumulés",
+      "equipmentPark": "Parc matériel",
+      "equipmentTotal": "Engins total",
+      "available": "Disponibles",
+      "inService": "En service / maintenance",
+      "stockAlerts": "Alertes stock",
+      "materialsLow": "{{count}} matériau(x) en stock bas",
+      "seeDetails": "Voir les détails",
+      "quickAccess": "Accès rapide",
+      "projectsManaged": "projets gérés",
+      "tasks": "tâches"
+    },
+    "shortcuts": {
+      "projets": "Projets",
+      "planning": "Planning",
+      "budget": "Budget",
+      "engins": "Engins",
+      "materiaux": "Matériaux",
+      "qualite": "Qualité",
+      "securite": "Sécurité",
+      "messagerie": "Messagerie",
+      "reporting": "Reporting"
+    }
+  },
+  "meteo": {
+    "feelsLike": "Ressenti",
+    "humidity": "Humidité",
+    "wind": "Vent",
+    "forecast5Days": "Prévisions 5 jours"
+  }
+}

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet" />
+    <title>mika-services-frontend</title>
+    <script>
+      (function() {
+        var key = 'mika-theme';
+        var stored = typeof localStorage !== 'undefined' && (localStorage.getItem(key) === 'dark' || localStorage.getItem(key) === 'light')
+          ? localStorage.getItem(key) : 'light';
+        var html = document.documentElement;
+        html.setAttribute('data-theme', stored);
+        if (stored === 'dark') html.classList.add('dark'); else html.classList.remove('dark');
+        var isDark = stored === 'dark';
+        html.style.setProperty('--mika-bg-content', isDark ? 'rgb(17 24 39)' : 'rgba(237 242 244 / 0.8)');
+        html.style.setProperty('--mika-bg-card', isDark ? 'rgb(31 41 55)' : 'rgb(255 255 255)');
+        html.style.setProperty('--mika-border-card', isDark ? 'rgb(75 85 99)' : 'rgb(229 231 235)');
+        html.style.setProperty('--mika-text-primary', isDark ? 'rgb(243 244 246)' : 'rgb(17 24 39)');
+      })();
+    </script>
+    <script>
+      (function() {
+        var key = 'mika-locale';
+        var stored = typeof localStorage !== 'undefined' && (localStorage.getItem(key) === 'fr' || localStorage.getItem(key) === 'en')
+          ? localStorage.getItem(key) : 'fr';
+        document.documentElement.lang = stored;
+        if (typeof window !== 'undefined') window.__INITIAL_LOCALE__ = stored;
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

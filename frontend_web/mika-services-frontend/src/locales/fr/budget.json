@@ -1,0 +1,26 @@
+{
+  "title": "Budget & Performances",
+  "subtitle": "Suivi des dépenses et performances financières",
+  "selectProject": "Sélectionner un projet",
+  "chooseProject": "-- Choisir un projet --",
+  "selectProjectHint": "Sélectionnez un projet pour voir son budget",
+  "loading": "Chargement...",
+  "budgetReference": "Budget Référence",
+  "totalDepenses": "Total Dépenses",
+  "budgetRestant": "Budget Restant",
+  "tauxConsommation": "Taux de Consommation",
+  "repartitionTitle": "Répartition des dépenses par type",
+  "type": {
+    "MAIN_OEUVRE": "Main d'oeuvre",
+    "MATERIEL": "Matériel",
+    "MATERIAUX": "Matériaux",
+    "SOUS_TRAITANCE": "Sous-traitance",
+    "TRANSPORT": "Transport",
+    "CARBURANT": "Carburant",
+    "LOCATION_ENGIN": "Location engin",
+    "FRAIS_GENERAUX": "Frais généraux",
+    "ASSURANCE": "Assurance",
+    "ETUDES": "Études",
+    "AUTRE": "Autre"
+  }
+}

@@ -1,0 +1,2 @@
+# SPA fallback : toutes les URLs servent index.html pour le routage côté client
+/* /index.html 200

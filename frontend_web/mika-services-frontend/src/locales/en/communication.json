@@ -1,0 +1,40 @@
+{
+  "messagerie": {
+    "title": "Messaging",
+    "subtitle": "Internal platform messages",
+    "newMessage": "New message",
+    "tabRecus": "Received ({{count}})",
+    "tabEnvoyes": "Sent ({{count}})",
+    "loading": "Loading...",
+    "empty": "No messages.",
+    "from": "From: {{name}}",
+    "to": "To: {{name}}",
+    "destinataire": "Recipient *",
+    "sujet": "Subject",
+    "sujetPlaceholder": "Subject (optional)",
+    "message": "Message *",
+    "messagePlaceholder": "Your message...",
+    "choose": "-- Choose --",
+    "cancel": "Cancel",
+    "send": "Send"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount": "{{count}} unread notification(s)",
+    "allRead": "All notifications read",
+    "markAllRead": "Mark all as read",
+    "loading": "Loading...",
+    "empty": "No notifications.",
+    "type": {
+      "INFO": "Info",
+      "ALERTE": "Alert",
+      "TACHE_ASSIGNEE": "Task",
+      "INCIDENT": "Incident",
+      "NON_CONFORMITE": "NC",
+      "ECHEANCE": "Due date",
+      "STOCK_BAS": "Low stock",
+      "MESSAGE": "Message",
+      "SYSTEME": "System"
+    }
+  }
+}

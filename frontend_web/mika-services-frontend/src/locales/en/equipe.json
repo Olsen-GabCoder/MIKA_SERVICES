@@ -1,0 +1,91 @@
+{
+  "form": {
+    "title": "Team",
+    "newTitle": "New team",
+    "editTitle": "Edit team",
+    "back": "Back",
+    "backToTeam": "to team",
+    "backToList": "to teams",
+    "code": "Code *",
+    "codePlaceholder": "EQ-ROAD-01",
+    "nom": "Name *",
+    "nomPlaceholder": "Road Team Lot 1",
+    "type": "Type *",
+    "effectif": "Headcount",
+    "chefEquipe": "Team leader",
+    "noChef": "— Not assigned —",
+    "cancel": "Cancel",
+    "save": "Update",
+    "create": "Create team",
+    "saving": "Saving...",
+    "loading": "Loading…",
+    "notFound": "Team not found",
+    "errorSave": "Error saving"
+  },
+  "type": {
+    "TERRASSEMENT": "Earthworks",
+    "VOIRIE": "Roadworks",
+    "ASSAINISSEMENT": "Sanitation",
+    "GENIE_CIVIL": "Civil engineering",
+    "BATIMENT": "Building",
+    "PONT": "Bridge",
+    "TOPOGRAPHIE": "Surveying",
+    "LABORATOIRE": "Laboratory",
+    "MECANIQUE": "Mechanical",
+    "POLYVALENTE": "Multi-skilled"
+  },
+  "list": {
+    "title": "Teams",
+    "totalCount": "{{count}} team(s) in total",
+    "newTeam": "+ New team",
+    "loading": "Loading…",
+    "emptyTitle": "No teams found",
+    "emptyHint": "Create a team to assign it to a project",
+    "columns": {
+      "code": "Code",
+      "nom": "Name",
+      "type": "Type",
+      "effectif": "Headcount",
+      "chefEquipe": "Team leader"
+    },
+    "actions": "Actions",
+    "delete": "Delete",
+    "pageInfo": "Page {{current}} of {{total}}",
+    "prev": "Previous",
+    "next": "Next"
+  },
+  "detail": {
+    "backToList": "Back to teams",
+    "loading": "Loading…",
+    "notFound": "Team not found",
+    "edit": "Edit",
+    "chefEquipe": "Team leader",
+    "effectifLabel": "Headcount",
+    "members": "Members",
+    "addMember": "+ Add member",
+    "user": "User",
+    "role": "Role",
+    "choose": "— Choose —",
+    "add": "Add",
+    "adding": "Adding...",
+    "cancel": "Cancel",
+    "noMembers": "No members in this team.",
+    "columns": {
+      "nom": "Name",
+      "role": "Role",
+      "dateAffectation": "Assignment date"
+    },
+    "info": "Information",
+    "statut": "Status",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "role": {
+    "CHEF_EQUIPE": "Team leader",
+    "CHEF_EQUIPE_ADJOINT": "Deputy leader",
+    "OUVRIER_QUALIFIE": "Skilled worker",
+    "OUVRIER_SPECIALISE": "Specialist worker",
+    "MANOEUVRE": "Labourer",
+    "APPRENTI": "Trainee"
+  }
+}

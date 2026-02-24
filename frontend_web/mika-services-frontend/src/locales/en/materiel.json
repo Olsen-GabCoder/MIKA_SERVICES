@@ -1,0 +1,55 @@
+{
+  "materiau": {
+    "title": "Materials & Stock",
+    "totalCount": "{{count}} material(s) in total",
+    "loading": "Loading…",
+    "empty": "No materials found",
+    "columns": {
+      "code": "Code",
+      "nom": "Name",
+      "type": "Type",
+      "unite": "Unit",
+      "stockActuel": "Current stock",
+      "stockMin": "Min. stock",
+      "alerte": "Alert",
+      "fournisseur": "Supplier"
+    },
+    "alertStockBas": "Low stock",
+    "alertOk": "OK",
+    "actions": "Actions",
+    "delete": "Delete",
+    "pageInfo": "Page {{current}} of {{total}}",
+    "prev": "Previous",
+    "next": "Next"
+  },
+  "engin": {
+    "title": "Equipment & Machinery",
+    "totalCount": "{{count}} item(s) in total",
+    "loading": "Loading…",
+    "empty": "No equipment found",
+    "columns": {
+      "code": "Code",
+      "nom": "Name",
+      "type": "Type",
+      "marque": "Brand",
+      "immatriculation": "Registration",
+      "statut": "Status",
+      "location": "Rental"
+    },
+    "statut": {
+      "DISPONIBLE": "Available",
+      "EN_SERVICE": "In service",
+      "EN_MAINTENANCE": "Under maintenance",
+      "EN_PANNE": "Out of order",
+      "HORS_SERVICE": "Out of service",
+      "EN_TRANSIT": "In transit"
+    },
+    "yes": "Yes",
+    "no": "No",
+    "actions": "Actions",
+    "delete": "Delete",
+    "pageInfo": "Page {{current}} of {{total}}",
+    "prev": "Previous",
+    "next": "Next"
+  }
+}

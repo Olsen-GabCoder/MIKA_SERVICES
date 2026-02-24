@@ -1,0 +1,26 @@
+{
+  "title": "Budget & Performance",
+  "subtitle": "Expense and financial performance tracking",
+  "selectProject": "Select a project",
+  "chooseProject": "-- Choose a project --",
+  "selectProjectHint": "Select a project to view its budget",
+  "loading": "Loading...",
+  "budgetReference": "Reference budget",
+  "totalDepenses": "Total expenses",
+  "budgetRestant": "Remaining budget",
+  "tauxConsommation": "Consumption rate",
+  "repartitionTitle": "Expenses by type",
+  "type": {
+    "MAIN_OEUVRE": "Labour",
+    "MATERIEL": "Equipment",
+    "MATERIAUX": "Materials",
+    "SOUS_TRAITANCE": "Subcontracting",
+    "TRANSPORT": "Transport",
+    "CARBURANT": "Fuel",
+    "LOCATION_ENGIN": "Equipment rental",
+    "FRAIS_GENERAUX": "Overheads",
+    "ASSURANCE": "Insurance",
+    "ETUDES": "Studies",
+    "AUTRE": "Other"
+  }
+}

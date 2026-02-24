@@ -1,0 +1,9 @@
+{
+  "sidebar": {
+    "dashboard": "Tableau de bord",
+    "navigation": "Navigation"
+  },
+  "footer": {
+    "copyright": "© MIKA Services - Tous droits réservés"
+  }
+}

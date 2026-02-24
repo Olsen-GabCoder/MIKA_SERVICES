@@ -1,0 +1,10 @@
+{
+  "app": {
+    "name": "MIKA Services",
+    "loading": "Loading…"
+  },
+  "error": {
+    "generic": "An error occurred",
+    "unexpected": "An unexpected error occurred"
+  }
+}

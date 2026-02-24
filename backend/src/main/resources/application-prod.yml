@@ -1,0 +1,25 @@
+# Configuration Production
+app:
+  auth:
+    refresh-cookie:
+      secure: true   # Cookie envoyé uniquement en HTTPS
+      same-site: Strict  # Protection CSRF (ou Lax si redirects cross-site login)
+
+spring:
+  datasource:
+    url: ${DATABASE_URL}  # Lue depuis variable d'environnement
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none      # Ne modifie JAMAIS le schéma en prod
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+logging:
+  level:
+    com.mikaservices.platform: WARN

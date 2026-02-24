@@ -1,0 +1,55 @@
+{
+  "materiau": {
+    "title": "Matériaux & Stocks",
+    "totalCount": "{{count}} matériau(x) au total",
+    "loading": "Chargement…",
+    "empty": "Aucun matériau trouvé",
+    "columns": {
+      "code": "Code",
+      "nom": "Nom",
+      "type": "Type",
+      "unite": "Unité",
+      "stockActuel": "Stock Actuel",
+      "stockMin": "Stock Min.",
+      "alerte": "Alerte",
+      "fournisseur": "Fournisseur"
+    },
+    "alertStockBas": "Stock bas",
+    "alertOk": "OK",
+    "actions": "Actions",
+    "delete": "Supprimer",
+    "pageInfo": "Page {{current}} sur {{total}}",
+    "prev": "Précédent",
+    "next": "Suivant"
+  },
+  "engin": {
+    "title": "Engins & Matériel",
+    "totalCount": "{{count}} engin(s) au total",
+    "loading": "Chargement…",
+    "empty": "Aucun engin trouvé",
+    "columns": {
+      "code": "Code",
+      "nom": "Nom",
+      "type": "Type",
+      "marque": "Marque",
+      "immatriculation": "Immatriculation",
+      "statut": "Statut",
+      "location": "Location"
+    },
+    "statut": {
+      "DISPONIBLE": "Disponible",
+      "EN_SERVICE": "En service",
+      "EN_MAINTENANCE": "En maintenance",
+      "EN_PANNE": "En panne",
+      "HORS_SERVICE": "Hors service",
+      "EN_TRANSIT": "En transit"
+    },
+    "yes": "Oui",
+    "no": "Non",
+    "actions": "Actions",
+    "delete": "Supprimer",
+    "pageInfo": "Page {{current}} sur {{total}}",
+    "prev": "Précédent",
+    "next": "Suivant"
+  }
+}

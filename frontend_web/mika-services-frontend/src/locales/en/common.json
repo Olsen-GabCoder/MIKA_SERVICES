@@ -1,0 +1,108 @@
+{
+  "app": { "name": "MIKA Services", "loading": "Loading…" },
+  "passwordRequirements": {
+    "minLength": "Password must be at least 8 characters",
+    "uppercase": "Password must contain at least one uppercase letter",
+    "lowercase": "Password must contain at least one lowercase letter",
+    "digit": "Password must contain at least one digit",
+    "special": "Password must contain at least one special character (e.g. @$!%*?&)"
+  },
+  "error": { "generic": "An error occurred", "unexpected": "An unexpected error occurred" },
+  "communication": {
+    "errorLoadMessagesReceived": "Error loading received messages",
+    "errorLoadMessagesSent": "Error loading sent messages",
+    "errorLoadNotifications": "Error loading notifications"
+  },
+  "close": "Close",
+  "confirm": {
+    "title": "Confirm",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "deletePointBloquant": "Delete this blocking point?",
+    "deleteTask": "Delete this task?",
+    "deactivateProject": "Are you sure you want to deactivate the project \"{{name}}\"?",
+    "deleteFournisseur": "Delete this supplier?",
+    "downloadError": "Download error",
+    "deleteDocument": "Delete this document?",
+    "deleteIncident": "Delete this incident?",
+    "deleteRisk": "Delete this risk?",
+    "removeProjectFromPV": "Remove this project from the minutes?",
+    "deleteReunion": "Delete the meeting of {{date}}?",
+    "deleteControl": "Delete this quality control?",
+    "deactivateEquipe": "Deactivate the team \"{{name}}\"?",
+    "deactivateMateriau": "Deactivate the material \"{{name}}\"?",
+    "deactivateEngin": "Deactivate the equipment \"{{name}}\"?"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The requested URL does not exist or has been moved.",
+    "backHome": "Back to home"
+  },
+  "dashboard": {
+    "loading": "Loading dashboard…",
+    "greeting": "Hello, {{name}}",
+    "subtitle": "Dashboard — MIKA SERVICES",
+    "userFallback": "User",
+    "notificationsUnread_one": "{{count}} unread notification",
+    "notificationsUnread_other": "{{count}} unread notifications",
+    "messagesUnread_one": "{{count}} unread message",
+    "messagesUnread_other": "{{count}} unread messages",
+    "kpi": {
+      "activeProjects": "Active projects",
+      "tasksInProgress": "Tasks in progress",
+      "budgetConsumed": "Budget consumed",
+      "total": "total",
+      "completed": "completed"
+    },
+    "progress": {
+      "global": "Overall progress",
+      "budgetConsumption": "Budget consumption",
+      "completed": "completed",
+      "total": "total",
+      "spent": "spent",
+      "planned": "planned"
+    },
+    "alerts": {
+      "delays": "Delays",
+      "projectsDelayed": "{{count}} project(s) delayed",
+      "tasksDelayed": "{{count}} task(s) delayed",
+      "quality": "Quality",
+      "conformity": "conformity",
+      "controls": "controls",
+      "ncOpen": "open NC",
+      "safety": "Safety",
+      "incidents": "incidents",
+      "seriousIncidents": "{{count}} serious incident(s)",
+      "criticalRisks": "{{count}} critical risk(s)",
+      "daysStopped": "cumulative days stopped",
+      "equipmentPark": "Equipment park",
+      "equipmentTotal": "Total equipment",
+      "available": "Available",
+      "inService": "In service / maintenance",
+      "stockAlerts": "Stock alerts",
+      "materialsLow": "{{count}} material(s) low in stock",
+      "seeDetails": "See details",
+      "quickAccess": "Quick access",
+      "projectsManaged": "projects managed",
+      "tasks": "tasks"
+    },
+    "shortcuts": {
+      "projets": "Projects",
+      "planning": "Planning",
+      "budget": "Budget",
+      "engins": "Equipment",
+      "materiaux": "Materials",
+      "qualite": "Quality",
+      "securite": "Safety",
+      "messagerie": "Messaging",
+      "reporting": "Reporting"
+    }
+  },
+  "meteo": {
+    "feelsLike": "Feels like",
+    "humidity": "Humidity",
+    "wind": "Wind",
+    "forecast5Days": "5-day forecast"
+  }
+}

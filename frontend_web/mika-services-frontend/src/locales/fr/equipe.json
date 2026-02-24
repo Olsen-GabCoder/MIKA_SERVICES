@@ -1,0 +1,91 @@
+{
+  "form": {
+    "title": "Équipe",
+    "newTitle": "Nouvelle équipe",
+    "editTitle": "Modifier l'équipe",
+    "back": "Retour",
+    "backToTeam": "à l'équipe",
+    "backToList": "aux équipes",
+    "code": "Code *",
+    "codePlaceholder": "EQ-VOIRIE-01",
+    "nom": "Nom *",
+    "nomPlaceholder": "Équipe Voirie Lot 1",
+    "type": "Type *",
+    "effectif": "Effectif",
+    "chefEquipe": "Chef d'équipe",
+    "noChef": "— Non assigné —",
+    "cancel": "Annuler",
+    "save": "Mettre à jour",
+    "create": "Créer l'équipe",
+    "saving": "Sauvegarde...",
+    "loading": "Chargement…",
+    "notFound": "Équipe non trouvée",
+    "errorSave": "Erreur lors de la sauvegarde"
+  },
+  "type": {
+    "TERRASSEMENT": "Terrassement",
+    "VOIRIE": "Voirie",
+    "ASSAINISSEMENT": "Assainissement",
+    "GENIE_CIVIL": "Génie civil",
+    "BATIMENT": "Bâtiment",
+    "PONT": "Pont",
+    "TOPOGRAPHIE": "Topographie",
+    "LABORATOIRE": "Laboratoire",
+    "MECANIQUE": "Mécanique",
+    "POLYVALENTE": "Polyvalente"
+  },
+  "list": {
+    "title": "Équipes",
+    "totalCount": "{{count}} équipe(s) au total",
+    "newTeam": "+ Nouvelle équipe",
+    "loading": "Chargement…",
+    "emptyTitle": "Aucune équipe trouvée",
+    "emptyHint": "Créez une équipe pour pouvoir l'affecter à un projet",
+    "columns": {
+      "code": "Code",
+      "nom": "Nom",
+      "type": "Type",
+      "effectif": "Effectif",
+      "chefEquipe": "Chef d'équipe"
+    },
+    "actions": "Actions",
+    "delete": "Supprimer",
+    "pageInfo": "Page {{current}} sur {{total}}",
+    "prev": "Précédent",
+    "next": "Suivant"
+  },
+  "detail": {
+    "backToList": "Retour aux équipes",
+    "loading": "Chargement…",
+    "notFound": "Équipe non trouvée",
+    "edit": "Modifier",
+    "chefEquipe": "Chef d'équipe",
+    "effectifLabel": "Effectif",
+    "members": "Membres",
+    "addMember": "+ Ajouter un membre",
+    "user": "Utilisateur",
+    "role": "Rôle",
+    "choose": "— Choisir —",
+    "add": "Ajouter",
+    "adding": "Ajout...",
+    "cancel": "Annuler",
+    "noMembers": "Aucun membre dans cette équipe.",
+    "columns": {
+      "nom": "Nom",
+      "role": "Rôle",
+      "dateAffectation": "Date affectation"
+    },
+    "info": "Informations",
+    "statut": "Statut",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "role": {
+    "CHEF_EQUIPE": "Chef d'équipe",
+    "CHEF_EQUIPE_ADJOINT": "Chef adjoint",
+    "OUVRIER_QUALIFIE": "Ouvrier qualifié",
+    "OUVRIER_SPECIALISE": "Ouvrier spécialisé",
+    "MANOEUVRE": "Manoeuvre",
+    "APPRENTI": "Apprenti"
+  }
+}

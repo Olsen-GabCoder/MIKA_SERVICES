@@ -1,0 +1,40 @@
+{
+  "messagerie": {
+    "title": "Messagerie",
+    "subtitle": "Messages internes de la plateforme",
+    "newMessage": "Nouveau message",
+    "tabRecus": "Reçus ({{count}})",
+    "tabEnvoyes": "Envoyés ({{count}})",
+    "loading": "Chargement...",
+    "empty": "Aucun message.",
+    "from": "De: {{name}}",
+    "to": "À: {{name}}",
+    "destinataire": "Destinataire *",
+    "sujet": "Sujet",
+    "sujetPlaceholder": "Sujet (optionnel)",
+    "message": "Message *",
+    "messagePlaceholder": "Votre message...",
+    "choose": "-- Choisir --",
+    "cancel": "Annuler",
+    "send": "Envoyer"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount": "{{count}} notification(s) non lue(s)",
+    "allRead": "Toutes les notifications sont lues",
+    "markAllRead": "Tout marquer comme lu",
+    "loading": "Chargement...",
+    "empty": "Aucune notification.",
+    "type": {
+      "INFO": "Info",
+      "ALERTE": "Alerte",
+      "TACHE_ASSIGNEE": "Tâche",
+      "INCIDENT": "Incident",
+      "NON_CONFORMITE": "NC",
+      "ECHEANCE": "Échéance",
+      "STOCK_BAS": "Stock bas",
+      "MESSAGE": "Message",
+      "SYSTEME": "Système"
+    }
+  }
+}

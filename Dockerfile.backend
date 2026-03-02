@@ -1,0 +1,24 @@
+# Dockerfile à la racine du repo pour Railway (build depuis la racine).
+# Le backend est dans backend/ ; ce fichier copie depuis backend/.
+FROM eclipse-temurin:17-jdk-alpine AS builder
+WORKDIR /build
+
+RUN apk add --no-cache maven
+
+COPY backend/pom.xml .
+RUN mvn dependency:go-offline -B
+
+COPY backend/src ./src
+RUN mvn package -DskipTests -B
+
+FROM eclipse-temurin:17-jre-jammy
+WORKDIR /app
+
+RUN groupadd -g 1000 app && useradd -u 1000 -g app -d /app -m app \
+    && mkdir -p /app/uploads && chown -R app:app /app
+USER app
+
+COPY --from=builder /build/target/platform-*.jar app.jar
+
+EXPOSE 9090
+ENTRYPOINT ["java", "-jar", "app.jar"]

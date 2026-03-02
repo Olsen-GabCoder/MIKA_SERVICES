@@ -19,7 +19,7 @@ class ApiRootRedirectController {
             .build()
     }
 
-    @GetMapping("/swagger-ui.html")
+    @GetMapping("/swagger-ui.html", "/swagger-ui.htm")
     fun redirectSwaggerUiHtml(): ResponseEntity<Void> {
         return ResponseEntity.status(302)
             .location(URI.create("swagger-ui/index.html"))

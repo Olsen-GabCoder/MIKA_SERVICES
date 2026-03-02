@@ -60,7 +60,7 @@ class SecurityConfig(
                     .requestMatchers("/webjars/**").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/error").permitAll()
-                    .requestMatchers("", "/").permitAll()
+                    .requestMatchers("/").permitAll()
                     .anyRequest().authenticated()
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)

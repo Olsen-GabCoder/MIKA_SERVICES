@@ -72,13 +72,15 @@ spring.servlet.multipart:
   max-file-size: 50MB
   max-request-size: 50MB
 
-# Configuration Swagger
+# Configuration Swagger (Springdoc 2.x)
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
     enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
 
 # Logs
 logging:

@@ -81,7 +81,7 @@ export function buildProjetExcel(payload: ProjetDocumentPayload): Blob {
 
   // Feuille 3 : Suivi mensuel
   const suiviHeader = ['Mois', 'CA prévisionnel', 'CA réalisé', 'Écart', 'Avancement cumulé %']
-  const suiviRows = lignesCA.length > 0 ? lignesCA.map((l) => [l.label, l.caPrevisionnel, l.caRealise, l.ecart, l.avancementCumule]) : []
+  const suiviRows = lignesCA.length > 0 ? lignesCA.map((l) => [l.label, l.caPrevisionnel, l.caRealise, l.ecart, l.avancementCumule != null ? l.avancementCumule : '—']) : []
   const suivi = [['TABLEAU DE SUIVI MENSUEL'], [], suiviHeader, ...suiviRows, [], ['Budget total prévu', budgetPrevu], ['Dépenses réalisées', depensesTotales]]
   XLSX.utils.book_append_sheet(wb, sheetFromAoa(suivi), 'Suivi mensuel')
 
@@ -91,17 +91,41 @@ export function buildProjetExcel(payload: ProjetDocumentPayload): Blob {
   const etudesSheet = [['ÉTAT D\'AVANCEMENT DES ÉTUDES'], [], etudesHeader, ...etudesRows]
   XLSX.utils.book_append_sheet(wb, sheetFromAoa(etudesSheet), 'Avancement études')
 
-  // Feuille 5 : Points bloquants
+  // Feuille 5 : Réalisé — Semaine en cours
+  const tachesRealiseSemaine = previsions.filter((p) => p.semaine === semaineCalendaire && p.annee === anneeCalendaire)
+  const semaineSuivante = semaineCalendaire < 53 ? semaineCalendaire + 1 : 1
+  const anneeSuivante = semaineCalendaire < 53 ? anneeCalendaire : anneeCalendaire + 1
+  const tachesPrevuesSuivante = previsions.filter((p) => p.semaine === semaineSuivante && p.annee === anneeSuivante)
+  const avancementsRealise = tachesRealiseSemaine.map((t) => t.avancementPct).filter((v): v is number => v != null)
+  const globalPctExcel = avancementsRealise.length > 0 ? Math.round((avancementsRealise.reduce((a, b) => a + b, 0) / avancementsRealise.length) * 100) / 100 : null
+
+  const realiseHeader = ['Tâche', 'Avancement (%)']
+  const realiseRows = tachesRealiseSemaine.map((p) => [p.description ?? p.type ?? '', p.avancementPct ?? ''])
+  const realiseSheet = [
+    [`RÉALISÉ — SEMAINE ${semaineCalendaire} (${anneeCalendaire})`],
+    ...(globalPctExcel != null ? [[], [`Avancement global semaine : ${globalPctExcel} %`]] : []),
+    [],
+    realiseHeader,
+    ...realiseRows,
+  ]
+  XLSX.utils.book_append_sheet(wb, sheetFromAoa(realiseSheet), 'Réalisé semaine')
+
+  // Feuille 6 : Prévisions — Semaine suivante
+  const prevSuivHeader = ['Tâche']
+  const prevSuivRows = tachesPrevuesSuivante.map((p) => [p.description ?? p.type ?? ''])
+  const prevSuivSheet = [
+    [`PRÉVISIONS — SEMAINE ${semaineSuivante} (${anneeSuivante})`],
+    [],
+    prevSuivHeader,
+    ...prevSuivRows,
+  ]
+  XLSX.utils.book_append_sheet(wb, sheetFromAoa(prevSuivSheet), 'Prévisions semaine')
+
+  // Feuille 7 : Points bloquants
   const pbHeader = ['Titre', 'Description', 'Priorité', 'Statut']
   const pbRows = pointsBloquants.map((pb) => [pb.titre, pb.description ?? '', pb.priorite, pb.statut])
   const pbSheet = [['POINTS BLOQUANTS'], [], pbHeader, ...pbRows]
   XLSX.utils.book_append_sheet(wb, sheetFromAoa(pbSheet), 'Points bloquants')
-
-  // Feuille 6 : Prévisions
-  const prevHeader = ['Semaine', 'Année', 'Type', 'Description', 'Statut']
-  const prevRows = previsions.map((p) => [p.semaine ?? '', p.annee ?? '', p.type ?? '', p.description ?? '', p.statut ?? ''])
-  const prevSheet = [['PRÉVISIONS'], [], prevHeader, ...prevRows]
-  XLSX.utils.book_append_sheet(wb, sheetFromAoa(prevSheet), 'Prévisions')
 
   // Feuille 7 : Synthèse et indicateurs
   const synthèse = [

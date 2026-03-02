@@ -13,8 +13,10 @@ export type StatutSousProjet = 'PLANIFIE' | 'EN_COURS' | 'TERMINE' | 'SUSPENDU'
 export type Priorite = 'BASSE' | 'NORMALE' | 'HAUTE' | 'CRITIQUE' | 'URGENTE'
 export type StatutPointBloquant = 'OUVERT' | 'EN_COURS' | 'RESOLU' | 'FERME' | 'ESCALADE'
 export type TypePrevision = 'HEBDOMADAIRE' | 'MENSUELLE' | 'TRIMESTRIELLE' | 'PRODUCTION' | 'APPROVISIONNEMENT' | 'RESSOURCES_HUMAINES' | 'MATERIEL'
-export type StatutPrevision = 'BROUILLON' | 'VALIDEE' | 'REALISEE' | 'ANNULEE'
-export type PhaseEtude = 'APS' | 'APD' | 'EXE' | 'GEOTECHNIQUE' | 'HYDRAULIQUE' | 'EIES'
+export type PhaseEtude = 'APS' | 'APD' | 'EXE' | 'GEOTECHNIQUE' | 'HYDRAULIQUE' | 'EIES' | 'PAES'
+/** État de validation par l'administration (liste déroulante dans l'avancement des études) */
+export type EtatValidationEtude = 'NON_DEPOSE' | 'EN_ATTENTE' | 'EN_COURS' | 'VALIDE' | 'REFUSE'
+export type ModeSuiviMensuel = 'AUTO' | 'MANUEL'
 
 /** Libellés des types de projet (affichage liste, détail, export) */
 export const TYPE_PROJET_LABELS: Record<string, string> = {
@@ -121,6 +123,7 @@ export interface Projet {
   montantInitial?: number
   montantRevise?: number
   delaiMois?: number
+  modeSuiviMensuel?: ModeSuiviMensuel
   dateDebut?: string
   dateFin?: string
   dateDebutReel?: string
@@ -216,8 +219,39 @@ export interface Prevision {
   type: TypePrevision
   dateDebut?: string
   dateFin?: string
-  statut: StatutPrevision
+  avancementPct?: number | null
   createdAt?: string
+}
+
+/** Résumé du point projet dans un PV hebdo (pour l’historique). */
+export interface PvResumeResponse {
+  reunionId: number
+  dateReunion: string
+  resumeTravauxPrevisions?: string
+  pointsBloquantsResume?: string
+  besoinsMateriel?: string
+  besoinsHumain?: string
+  propositionsAmelioration?: string
+  avancementPhysiquePct?: number
+  avancementFinancierPct?: number
+  delaiConsommePct?: number
+}
+
+/** Une période (semaine) dans l’historique du projet. */
+export interface PeriodeHistoriqueResponse {
+  semaine: number
+  annee: number
+  dateReunion?: string
+  previsions: Prevision[]
+  pointsBloquants: PointBloquant[]
+  pvResume?: PvResumeResponse | null
+}
+
+/** Réponse agrégée de l’historique d’un projet. */
+export interface ProjetHistoriqueResponse {
+  projetId: number
+  projetNom: string
+  periodes: PeriodeHistoriqueResponse[]
 }
 
 export interface RevisionBudget {
@@ -251,6 +285,7 @@ export interface ProjetCreateRequest {
   montantInitial?: number
   montantRevise?: number
   delaiMois?: number
+  modeSuiviMensuel?: ModeSuiviMensuel
   dateDebut?: string
   dateFin?: string
   dateDebutReel?: string
@@ -286,6 +321,7 @@ export interface ProjetUpdateRequest {
   montantInitial?: number
   montantRevise?: number
   delaiMois?: number
+  modeSuiviMensuel?: ModeSuiviMensuel
   dateDebut?: string
   dateFin?: string
   dateDebutReel?: string

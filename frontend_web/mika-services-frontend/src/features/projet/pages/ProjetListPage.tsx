@@ -1,19 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import * as XLSX from 'xlsx'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { fetchProjets, searchProjets, deleteProjet, fetchClients } from '@/store/slices/projetSlice'
+import { setItemsPerPage } from '@/store/slices/uiSlice'
+import { fetchProjets, searchProjets, deleteProjet, fetchClients, clearError } from '@/store/slices/projetSlice'
 import { getProjetTypes } from '@/types/projet'
 import type { ProjetListFilters, ProjetSortKey, SortDirection } from '@/api/projetApi'
 import type { ProjetSummary, StatutProjet, TypeProjet } from '@/types/projet'
 import { userApi } from '@/api/userApi'
+import { roleApi } from '@/api/roleApi'
 import type { User } from '@/types'
-
-const STATUT_EN_COURS = 'EN_COURS'
-const STATUTS_TERMINES = ['TERMINE', 'RECEPTION_PROVISOIRE', 'RECEPTION_DEFINITIVE']
+import { useFormatNumber } from '@/hooks/useFormatNumber'
+import { getEffectiveConnectionQuality, AUTO_REFRESH_INTERVAL_MS } from '@/utils/connectionQualityPreferences'
 
 const STATUT_COLORS: Record<string, string> = {
   EN_ATTENTE: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
@@ -46,29 +47,23 @@ export interface ListStateToRestore {
 }
 
 export const ProjetListPage = () => {
-  const { t, i18n } = useTranslation('projet')
+  const { t } = useTranslation('projet')
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
-  const { projets, totalElements, totalPages, currentPage, loading, clients } = useAppSelector((state) => state.projet)
+  const { projets, totalElements, totalPages, currentPage, loading, error, clients } = useAppSelector((state) => state.projet)
   const currentUser = useAppSelector((state) => state.auth.user)
+  const pageSize = useAppSelector((state) => state.ui.itemsPerPage)
+  const { autoRefreshListsEnabled, connectionQuality } = useAppSelector((state) => state.ui)
   const isAdmin = currentUser?.roles?.some((r) => r.code === 'ADMIN' || r.code === 'SUPER_ADMIN')
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState<ProjetListFilters>({})
   const [users, setUsers] = useState<User[]>([])
   const [sortBy, setSortBy] = useState<ProjetSortKey | ''>('')
   const [sortDir, setSortDir] = useState<SortDirection>('asc')
-  const [pageSize, setPageSize] = useState(20)
 
-  const lang = i18n.language === 'en' ? 'en-GB' : 'fr-FR'
-  const formatMontant = useCallback(
-    (montant?: number) => {
-      if (!montant) return '—'
-      return new Intl.NumberFormat(lang, { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(montant)
-    },
-    [lang]
-  )
+  const { formatMontant } = useFormatNumber()
 
   const STATUT_LABELS = useMemo(
     () =>
@@ -127,6 +122,20 @@ export const ProjetListPage = () => {
   const sortParams = () =>
     sortBy ? { sortBy: sortBy as ProjetSortKey, sortDir } : {}
 
+  const refetchListRef = useRef<() => void>(() => {})
+  refetchListRef.current = () => {
+    const params = { page: currentPage, size: pageSize, ...filterParams(), ...sortParams() }
+    if (searchQuery.trim()) dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
+    else dispatch(fetchProjets(params))
+  }
+  useEffect(() => {
+    if (!autoRefreshListsEnabled) return
+    const effective = getEffectiveConnectionQuality(connectionQuality)
+    const ms = AUTO_REFRESH_INTERVAL_MS[effective]
+    const interval = setInterval(() => refetchListRef.current(), ms)
+    return () => clearInterval(interval)
+  }, [autoRefreshListsEnabled, connectionQuality])
+
   const handleSort = (column: ProjetSortKey) => {
     const nextDir: SortDirection = sortBy === column && sortDir === 'asc' ? 'desc' : 'asc'
     setSortBy(column)
@@ -160,7 +169,7 @@ export const ProjetListPage = () => {
       setFilters(fromListState.filters ?? {})
       setSortBy((fromListState.sortBy as ProjetSortKey) ?? '')
       setSortDir(fromListState.sortDir ?? 'asc')
-      setPageSize(fromListState.size ?? 20)
+      dispatch(setItemsPerPage(fromListState.size ?? 20))
       const params = {
         page: fromListState.page ?? 0,
         size: fromListState.size ?? 20,
@@ -184,8 +193,24 @@ export const ProjetListPage = () => {
     if (fromListState) return
     dispatch(fetchProjets({ page: 0, size: pageSize }))
     dispatch(fetchClients({ page: 0, size: 200 }))
-    userApi.getAll({ page: 0, size: 300 }).then((r) => setUsers(r.content ?? [])).catch(() => setUsers([]))
-  }, [dispatch])
+    // Charger les utilisateurs pour le filtre (seulement si admin, sinon menu vide)
+    if (isAdmin) {
+      roleApi.getByCode('CHEF_PROJET')
+        .then((chefRole) => {
+          return userApi.getAll({ page: 0, size: 300, roleId: chefRole.id })
+        })
+        .then((r) => setUsers(r.content ?? []))
+        .catch(() => {
+          // Si le rôle n'existe pas ou erreur, charger tous les utilisateurs
+          userApi.getAll({ page: 0, size: 300 })
+            .then((r) => setUsers(r.content ?? []))
+            .catch(() => setUsers([]))
+        })
+    } else {
+      // Non-admin : menu vide (pas de droit pour charger les utilisateurs)
+      setUsers([])
+    }
+  }, [dispatch, isAdmin])
 
   const applyFilters = useCallback(() => {
     const params = { page: 0, size: pageSize, ...filterParams(), ...sortParams() }
@@ -214,9 +239,10 @@ export const ProjetListPage = () => {
   }
 
   const handlePageChange = (page: number) => {
+    if (page < 0 || (totalPages > 0 && page >= totalPages)) return
     const params = { page, size: pageSize, ...filterParams(), ...sortParams() }
     if (searchQuery.trim()) {
-      dispatch(searchProjets({ q: searchQuery, ...params }))
+      dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
     } else {
       dispatch(fetchProjets(params))
     }
@@ -294,18 +320,6 @@ export const ProjetListPage = () => {
     URL.revokeObjectURL(url)
   }, [projets, t, STATUT_LABELS, getTypeDisplay])
 
-  // KPIs calculés sur la page courante (données déjà chargées)
-  const kpis = (() => {
-    const enCours = projets.filter((p) => p.statut === STATUT_EN_COURS).length
-    const termines = projets.filter((p) => STATUTS_TERMINES.includes(p.statut)).length
-    const montantTotalPage = projets.reduce((sum, p) => sum + (p.montantHT ?? 0), 0)
-    const avancementMoyen =
-      projets.length > 0
-        ? Math.round((projets.reduce((acc, p) => acc + (p.avancementGlobal ?? 0), 0) / projets.length) * 100) / 100
-        : 0
-    return { enCours, termines, montantTotalPage, avancementMoyen }
-  })()
-
   const listSubtitle = isAdmin ? t('list.subtitleAll') : t('list.subtitleMine')
 
   return (
@@ -338,42 +352,18 @@ export const ProjetListPage = () => {
           </div>
         </div>
 
-        {/* Carte portefeuille (KPIs) — fixe */}
-        {!loading && (
-          <div className="mb-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-4 md:p-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                <div className="min-w-0 rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-100 dark:border-green-800 p-3">
-                  <p className="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wider">{t('list.kpi.enCours')}</p>
-                  <p className="text-2xl font-bold text-green-900 dark:text-green-100 mt-0.5">{kpis.enCours}</p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">{t('list.kpi.onThisPage')}</p>
-                </div>
-                <div className="min-w-0 rounded-lg bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800 p-3">
-                  <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">{t('list.kpi.termines')}</p>
-                  <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 mt-0.5">{kpis.termines}</p>
-                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-0.5">{t('list.kpi.onThisPage')}</p>
-                </div>
-                <div className="min-w-0 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 p-3 overflow-hidden">
-                  <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider">{t('list.kpi.montantTotal')}</p>
-                  <p className="text-sm sm:text-base md:text-lg font-bold text-blue-900 dark:text-blue-100 mt-0.5 tabular-nums break-all min-w-0">{formatMontant(kpis.montantTotalPage)}</p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">{t('list.kpi.currentPage')}</p>
-                </div>
-                <div className="min-w-0 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-800 p-3">
-                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">{t('list.kpi.avancementMoyen')}</p>
-                  <p className="text-2xl font-bold text-amber-900 dark:text-amber-100 mt-0.5 tabular-nums">{kpis.avancementMoyen} %</p>
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">{t('list.kpi.physiquePage')}</p>
-                </div>
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 pt-3 border-t border-gray-100 dark:border-gray-600" role="doc-subtitle">
-                {t('list.portfolioHint')}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Zone défilable : filtres + liste + pagination — scroll sur toute la page */}
       <div className="flex-1 min-h-0 overflow-y-auto">
+      {error && (
+        <div className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-200 flex justify-between items-center">
+          <span>{error === 'offline_no_cache' ? t('common:error.offlineNoCache') : error}</span>
+          <button type="button" onClick={() => dispatch(clearError())} className="text-red-600 dark:text-red-400 hover:underline text-sm">
+            {t('common:close')}
+          </button>
+        </div>
+      )}
       {/* Barre de recherche et filtres */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-3 mb-4">
@@ -592,7 +582,7 @@ export const ProjetListPage = () => {
                     key={projet.id}
                     role="button"
                     tabIndex={0}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700/70 cursor-pointer transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
+                    className="mika-tile hover:bg-gray-50 dark:hover:bg-gray-700/70 cursor-pointer transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
                     aria-label={t('list.openDetail', { name: projet.nom })}
                     onClick={() => openProjetDetail(projet)}
                     onKeyDown={(e) => handleRowKeyDown(e, projet)}
@@ -672,7 +662,7 @@ export const ProjetListPage = () => {
                 key={projet.id}
                 role="button"
                 tabIndex={0}
-                className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/70 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset cursor-pointer transition-colors"
+                className="mika-tile p-4 hover:bg-gray-50 dark:hover:bg-gray-700/70 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset cursor-pointer transition-colors"
                 aria-label={t('list.openDetail', { name: projet.nom })}
                 onClick={() => openProjetDetail(projet)}
                 onKeyDown={(e) => handleRowKeyDown(e, projet)}
@@ -725,7 +715,7 @@ export const ProjetListPage = () => {
           </p>
 
           {/* Pagination améliorée */}
-          {(totalPages > 1 || totalElements > 0) && (
+          {totalPages > 0 && (
             <div className="flex flex-col md:flex-row items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-600 gap-4">
               <div className="flex flex-wrap items-center gap-3">
                 <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
@@ -740,14 +730,16 @@ export const ProjetListPage = () => {
                     value={pageSize}
                     onChange={(e) => {
                       const newSize = Number(e.target.value)
-                      setPageSize(newSize)
+                      dispatch(setItemsPerPage(newSize))
                       const params = { page: 0, size: newSize, ...filterParams(), ...sortParams() }
                       if (searchQuery.trim()) dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
                       else dispatch(fetchProjets(params))
                     }}
                     className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
                   >
+                    <option value={10}>10</option>
                     <option value={20}>20</option>
+                    <option value={25}>25</option>
                     <option value={50}>50</option>
                     <option value={100}>100</option>
                   </select>

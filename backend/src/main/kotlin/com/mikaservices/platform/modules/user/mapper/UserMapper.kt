@@ -2,6 +2,7 @@ package com.mikaservices.platform.modules.user.mapper
 
 import com.mikaservices.platform.modules.user.dto.request.UserCreateRequest
 import com.mikaservices.platform.modules.user.dto.request.UserUpdateRequest
+import com.mikaservices.platform.modules.user.dto.response.UserForMessagingResponse
 import com.mikaservices.platform.modules.user.dto.response.UserResponse
 import com.mikaservices.platform.modules.user.dto.response.UserSummaryResponse
 import com.mikaservices.platform.modules.user.entity.User
@@ -39,7 +40,16 @@ object UserMapper {
             specialites = SpecialiteMapper.toResponseList(user.specialites),
             superieurHierarchique = user.superieurHierarchique?.let { toSummaryResponse(it) },
             createdAt = user.createdAt,
-            updatedAt = user.updatedAt
+            updatedAt = user.updatedAt,
+            emailNotificationsEnabled = user.emailNotificationsEnabled,
+            alertNewLoginEnabled = user.alertNewLoginEnabled,
+            dailyDigestEnabled = user.dailyDigestEnabled,
+            weeklyDigestEnabled = user.weeklyDigestEnabled,
+            digestTime = user.digestTime,
+            inAppNotificationsEnabled = user.inAppNotificationsEnabled,
+            notificationSoundEnabled = user.notificationSoundEnabled,
+            defaultSessionDuration = user.defaultSessionDuration,
+            logoutOnBrowserClose = user.logoutOnBrowserClose
         )
     }
     
@@ -50,6 +60,19 @@ object UserMapper {
             nom = user.nom,
             prenom = user.prenom,
             email = user.email
+        )
+    }
+
+    fun toForMessagingResponse(user: User): UserForMessagingResponse {
+        val roleLabel = user.roles.firstOrNull()?.nom?.takeIf { it.isNotBlank() }
+            ?: user.roles.firstOrNull()?.code?.takeIf { it.isNotBlank() }
+            ?: ""
+        return UserForMessagingResponse(
+            id = user.id!!,
+            nom = user.nom,
+            prenom = user.prenom,
+            email = user.email,
+            roleLabel = roleLabel
         )
     }
     

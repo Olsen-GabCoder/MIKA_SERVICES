@@ -7,17 +7,16 @@ import { reunionHebdoApi } from '@/api/reunionHebdoApi'
 import { projetApi } from '@/api/projetApi'
 import type { ReunionHebdo, PointProjetPV, PointProjetPVRequest } from '@/types/reunionHebdo'
 import type { ProjetSummary } from '@/types/projet'
+import { useFormatDate } from '@/hooks/useFormatDate'
 
 const formatTime = (timeStr?: string) => (timeStr ? timeStr.slice(0, 5).replace(':', 'h') : '-')
 
 export const ReunionHebdoPVPage = () => {
-  const { t, i18n } = useTranslation('reunionHebdo')
+  const { t } = useTranslation('reunionHebdo')
+  const formatDate = useFormatDate()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const confirm = useConfirm()
-  const locale = i18n.language === 'en' ? 'en-GB' : 'fr-FR'
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const [pv, setPv] = useState<ReunionHebdo | null>(null)
   const [projets, setProjets] = useState<ProjetSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -77,7 +76,7 @@ export const ReunionHebdoPVPage = () => {
       <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('pv.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{formatDate(pv.dateReunion)} — {pv.lieu || t('pv.lieuNonPrecise')}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{formatDate(pv.dateReunion, { weekday: 'long', monthStyle: 'long' })} — {pv.lieu || t('pv.lieuNonPrecise')}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => navigate('/reunions-hebdo/' + id + '/edit')} className="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 px-4 py-2 rounded-lg font-medium">
@@ -91,7 +90,7 @@ export const ReunionHebdoPVPage = () => {
         <section className="p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('pv.header')}</h2>
           <div className="grid grid-cols-2 gap-4 text-sm text-gray-900 dark:text-gray-200">
-            <div><span className="text-gray-500 dark:text-gray-400">{t('pv.date')}</span> {formatDate(pv.dateReunion)}</div>
+            <div><span className="text-gray-500 dark:text-gray-400">{t('pv.date')}</span> {formatDate(pv.dateReunion, { weekday: 'long', monthStyle: 'long' })}</div>
             <div><span className="text-gray-500 dark:text-gray-400">{t('pv.lieu')}</span> {pv.lieu || '-'}</div>
             <div><span className="text-gray-500 dark:text-gray-400">{t('pv.heure')}</span> {formatTime(pv.heureDebut)} - {formatTime(pv.heureFin)}</div>
             <div><span className="text-gray-500 dark:text-gray-400">{t('pv.redacteur')}</span> {pv.redacteur ? `${pv.redacteur.prenom} ${pv.redacteur.nom}` : '-'}</div>

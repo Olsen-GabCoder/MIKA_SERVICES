@@ -98,6 +98,7 @@
       "lastActivity": "Dernière activité",
       "revoke": "Déconnecter",
       "revoking": "Déconnexion…",
+      "current": "Session actuelle",
       "errorLoad": "Impossible de charger les sessions.",
       "errorRevoke": "Impossible de révoquer la session."
     },

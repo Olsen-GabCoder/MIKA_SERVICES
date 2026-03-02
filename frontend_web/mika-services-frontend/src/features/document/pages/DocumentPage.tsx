@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { useConfirm } from '@/contexts/ConfirmContext'
-import { Alert } from '@/components/ui/Alert'
 import { fetchDocuments, fetchDocumentsByProjet, uploadDocument, deleteDocument } from '../../../store/slices/documentSlice'
 import { TypeDocument } from '../../../types/document'
 import { documentApi } from '../../../api/documentApi'
+import { useFormatDate } from '@/hooks/useFormatDate'
 
 const typeColors: Record<TypeDocument, string> = {
   [TypeDocument.PLAN]: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200',
@@ -24,13 +24,13 @@ const typeColors: Record<TypeDocument, string> = {
 }
 
 export default function DocumentPage() {
-  const { t, i18n } = useTranslation('document')
+  const { t } = useTranslation('document')
+  const formatDate = useFormatDate()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
   const { documents, loading, uploading, error, totalPages, currentPage } = useAppSelector((state) => state.document)
   const projets = useAppSelector((state) => state.projet.projets)
   const currentUser = useAppSelector((state) => state.auth.user)
-  const locale = i18n.language === 'en' ? 'en-GB' : 'fr-FR'
 
   const [selectedProjetId, setSelectedProjetId] = useState<number | ''>('')
   const [showUploadModal, setShowUploadModal] = useState(false)
@@ -92,8 +92,6 @@ export default function DocumentPage() {
 
   const filteredDocs = filterType ? documents.filter(d => d.typeDocument === filterType) : documents
 
-  const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' })
-
   return (
     <PageContainer size="wide" className="space-y-6">
       <div className="flex items-center justify-between">
@@ -142,7 +140,7 @@ export default function DocumentPage() {
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-gray-600">
             {filteredDocs.map((doc) => (
-              <div key={doc.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/70 transition">
+              <div key={doc.id} className="mika-tile p-4 hover:bg-gray-50 dark:hover:bg-gray-700/70 transition">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

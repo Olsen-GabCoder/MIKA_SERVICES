@@ -1,10 +1,14 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import type { RootState } from '@/store/store'
 import { projetApi, clientApi } from '@/api/projetApi'
 import type { ProjetListFilters, ProjetSortKey, SortDirection } from '@/api/projetApi'
 import type {
   Projet, ProjetSummary, ProjetCreateRequest, ProjetUpdateRequest,
   Client, ClientCreateRequest, ClientUpdateRequest
 } from '@/types/projet'
+import type { PageResponse } from '@/types/projet'
+import { getProjetsCache, getProjetsCacheIfValid, setProjetsCache, CACHE_DURATION_MS } from '@/utils/offlineCache'
+import { isNetworkError } from '@/utils/errorHandler'
 
 /** Normalise le champ types pour l’affichage liste (API peut renvoyer type et/ou types). */
 function normalizeProjetTypes(p: ProjetSummary): ProjetSummary {
@@ -45,16 +49,39 @@ const initialState: ProjetState = {
 // ============================================
 export const fetchProjets = createAsyncThunk(
   'projet/fetchAll',
-  async ({
-    page = 0,
-    size = 20,
-    sortBy,
-    sortDir,
-    ...filters
-  }: { page?: number; size?: number; sortBy?: ProjetSortKey; sortDir?: SortDirection } & ProjetListFilters = {}) => {
+  async (
+    arg: { page?: number; size?: number; sortBy?: ProjetSortKey; sortDir?: SortDirection } & ProjetListFilters = {},
+    { getState, rejectWithValue }
+  ) => {
+    const state = getState() as RootState
+    const offlineMode = state.ui.offlineModeEnabled
+    const cacheEnabled = state.ui.cacheEnabled
+    const cacheDuration = state.ui.cacheDuration
+    const offline = typeof navigator !== 'undefined' && !navigator.onLine
+    if (offline && offlineMode) {
+      const cached = getProjetsCache()
+      if (cached) return cached as PageResponse<ProjetSummary>
+      return rejectWithValue('offline_no_cache')
+    }
+    if (!offline && cacheEnabled) {
+      const maxAgeMs = CACHE_DURATION_MS[cacheDuration as keyof typeof CACHE_DURATION_MS]
+      const cached = getProjetsCacheIfValid(maxAgeMs)
+      if (cached) return cached as PageResponse<ProjetSummary>
+    }
+    const { page = 0, size = 20, sortBy, sortDir, ...filters } = arg
     const hasFilters = filters.statut != null || filters.type != null || filters.clientId != null || filters.responsableId != null
     const sort = sortBy && sortDir ? { sortBy, sortDir } : undefined
-    return await projetApi.findAll(page, size, hasFilters ? filters : undefined, sort)
+    try {
+      const result = await projetApi.findAll(page, size, hasFilters ? filters : undefined, sort)
+      if (offlineMode || cacheEnabled) setProjetsCache(result)
+      return result
+    } catch (e) {
+      if (offlineMode && isNetworkError(e)) {
+        const cached = getProjetsCache()
+        if (cached) return cached as PageResponse<ProjetSummary>
+      }
+      throw e
+    }
   }
 )
 
@@ -67,17 +94,39 @@ export const fetchProjetById = createAsyncThunk(
 
 export const searchProjets = createAsyncThunk(
   'projet/search',
-  async ({
-    q,
-    page = 0,
-    size = 20,
-    sortBy,
-    sortDir,
-    ...filters
-  }: { q: string; page?: number; size?: number; sortBy?: ProjetSortKey; sortDir?: SortDirection } & ProjetListFilters) => {
+  async (
+    arg: { q: string; page?: number; size?: number; sortBy?: ProjetSortKey; sortDir?: SortDirection } & ProjetListFilters,
+    { getState, rejectWithValue }
+  ) => {
+    const state = getState() as RootState
+    const offlineMode = state.ui.offlineModeEnabled
+    const cacheEnabled = state.ui.cacheEnabled
+    const cacheDuration = state.ui.cacheDuration
+    const offline = typeof navigator !== 'undefined' && !navigator.onLine
+    if (offline && offlineMode) {
+      const cached = getProjetsCache()
+      if (cached) return cached as PageResponse<ProjetSummary>
+      return rejectWithValue('offline_no_cache')
+    }
+    if (!offline && cacheEnabled) {
+      const maxAgeMs = CACHE_DURATION_MS[cacheDuration as keyof typeof CACHE_DURATION_MS]
+      const cached = getProjetsCacheIfValid(maxAgeMs)
+      if (cached) return cached as PageResponse<ProjetSummary>
+    }
+    const { q, page = 0, size = 20, sortBy, sortDir, ...filters } = arg
     const hasFilters = filters.statut != null || filters.type != null || filters.clientId != null || filters.responsableId != null
     const sort = sortBy && sortDir ? { sortBy, sortDir } : undefined
-    return await projetApi.search(q, page, size, hasFilters ? filters : undefined, sort)
+    try {
+      const result = await projetApi.search(q, page, size, hasFilters ? filters : undefined, sort)
+      if (offlineMode || cacheEnabled) setProjetsCache(result)
+      return result
+    } catch (e) {
+      if (offlineMode && isNetworkError(e)) {
+        const cached = getProjetsCache()
+        if (cached) return cached as PageResponse<ProjetSummary>
+      }
+      throw e
+    }
   }
 )
 
@@ -159,13 +208,15 @@ const projetSlice = createSlice({
       .addCase(fetchProjets.fulfilled, (state, action) => {
         state.loading = false
         state.projets = (action.payload.content ?? []).map(normalizeProjetTypes)
-        state.totalElements = action.payload.totalElements
-        state.totalPages = action.payload.totalPages
-        state.currentPage = action.payload.number
+        state.totalElements = action.payload.totalElements ?? 0
+        state.totalPages = Math.max(0, action.payload.totalPages ?? 0)
+        // Spring Page renvoie toujours 'number' (0-based), utiliser directement
+        const pageNumber = action.payload?.number
+        state.currentPage = typeof pageNumber === 'number' && pageNumber >= 0 ? pageNumber : 0
       })
       .addCase(fetchProjets.rejected, (state, action) => {
         state.loading = false
-        state.error = action.error.message || 'Erreur lors du chargement des projets'
+        state.error = (typeof action.payload === 'string' ? action.payload : action.error.message) || 'Erreur lors du chargement des projets'
       })
       // Fetch projet by ID
       .addCase(fetchProjetById.pending, (state) => {
@@ -182,11 +233,22 @@ const projetSlice = createSlice({
         state.error = action.error.message || 'Erreur lors du chargement du projet'
       })
       // Search projets
+      .addCase(searchProjets.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
       .addCase(searchProjets.fulfilled, (state, action) => {
+        state.loading = false
         state.projets = (action.payload.content ?? []).map(normalizeProjetTypes)
-        state.totalElements = action.payload.totalElements
-        state.totalPages = action.payload.totalPages
-        state.currentPage = action.payload.number
+        state.totalElements = action.payload.totalElements ?? 0
+        state.totalPages = Math.max(0, action.payload.totalPages ?? 0)
+        // Spring Page renvoie toujours 'number' (0-based), utiliser directement
+        const pageNumber = action.payload?.number
+        state.currentPage = typeof pageNumber === 'number' && pageNumber >= 0 ? pageNumber : 0
+      })
+      .addCase(searchProjets.rejected, (state, action) => {
+        state.loading = false
+        state.error = (typeof action.payload === 'string' ? action.payload : action.error.message) || 'Erreur lors de la recherche'
       })
       // Create projet
       .addCase(createProjet.fulfilled, (state) => {

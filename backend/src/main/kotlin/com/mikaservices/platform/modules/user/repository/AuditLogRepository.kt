@@ -26,6 +26,8 @@ interface AuditLogRepository : JpaRepository<AuditLog, Long> {
     @Query("SELECT a FROM AuditLog a WHERE a.user.id = :userId AND a.createdAt BETWEEN :startDate AND :endDate ORDER BY a.createdAt DESC")
     fun findByUserAndDateRange(userId: Long, startDate: LocalDateTime, endDate: LocalDateTime, pageable: Pageable): Page<AuditLog>
 
+    fun findByUser_IdAndModuleAndActionOrderByCreatedAtDesc(userId: Long, module: String, action: String, pageable: Pageable): Page<AuditLog>
+
     @Modifying
     @Query("UPDATE AuditLog a SET a.user = null WHERE a.user.id = :userId")
     fun setUserNullForUserId(userId: Long)

@@ -5,6 +5,7 @@ import { useConfirm } from '@/contexts/ConfirmContext'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { reunionHebdoApi } from '@/api/reunionHebdoApi'
 import type { ReunionHebdoSummary, StatutReunion } from '@/types/reunionHebdo'
+import { useFormatDate } from '@/hooks/useFormatDate'
 
 const STATUT_COLORS: Record<StatutReunion, string> = {
   BROUILLON: 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200',
@@ -12,13 +13,10 @@ const STATUT_COLORS: Record<StatutReunion, string> = {
 }
 
 export const ReunionHebdoListPage = () => {
-  const { t, i18n } = useTranslation('reunionHebdo')
+  const { t } = useTranslation('reunionHebdo')
+  const formatDate = useFormatDate()
   const navigate = useNavigate()
   const confirm = useConfirm()
-  const lang = i18n.language === 'en' ? 'en-GB' : 'fr-FR'
-
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString(lang, { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
 
   const formatTime = (timeStr?: string) => {
     if (!timeStr) return '-'
@@ -69,7 +67,7 @@ export const ReunionHebdoListPage = () => {
   }
 
   const handleDelete = async (id: number, dateStr: string) => {
-    if (await confirm({ messageKey: 'confirm.deleteReunion', messageParams: { date: formatDate(dateStr) } })) {
+    if (await confirm({ messageKey: 'confirm.deleteReunion', messageParams: { date: formatDate(dateStr, { weekday: 'short', monthStyle: 'short' }) } })) {
       await reunionHebdoApi.delete(id)
       setReunions((prev) => prev.filter((r) => r.id !== id))
       setTotalElements((prev) => Math.max(0, prev - 1))
@@ -126,7 +124,7 @@ export const ReunionHebdoListPage = () => {
                   className="hover:bg-gray-50 dark:hover:bg-gray-700/70 cursor-pointer"
                   onClick={() => navigate(`/reunions-hebdo/${r.id}`)}
                 >
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{formatDate(r.dateReunion)}</td>
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{formatDate(r.dateReunion, { weekday: 'short', monthStyle: 'short' })}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{r.lieu || '-'}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                     {formatTime(r.heureDebut)} - {formatTime(r.heureFin)}

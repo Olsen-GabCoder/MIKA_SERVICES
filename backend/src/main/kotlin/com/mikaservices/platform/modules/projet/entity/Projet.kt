@@ -2,6 +2,7 @@ package com.mikaservices.platform.modules.projet.entity
 
 import com.mikaservices.platform.common.entity.BaseEntity
 import com.mikaservices.platform.common.enums.ConditionAcces
+import com.mikaservices.platform.common.enums.ModeSuiviMensuel
 import com.mikaservices.platform.common.enums.SourceFinancement
 import com.mikaservices.platform.common.enums.StatutProjet
 import com.mikaservices.platform.common.enums.TypeProjet
@@ -112,6 +113,10 @@ class Projet(
 
     @Column(name = "delai_mois")
     var delaiMois: Int? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode_suivi_mensuel", length = 10)
+    var modeSuiviMensuel: ModeSuiviMensuel? = ModeSuiviMensuel.AUTO,
 
     @Column(name = "date_debut")
     var dateDebut: LocalDate? = null,

@@ -14,9 +14,12 @@ import com.mikaservices.platform.modules.projet.dto.request.ProjetCreateRequest
 import com.mikaservices.platform.modules.projet.dto.request.ProjetUpdateRequest
 import com.mikaservices.platform.modules.projet.dto.response.AvancementEtudeProjetResponse
 import com.mikaservices.platform.modules.projet.dto.response.CAPrevisionnelRealiseResponse
+import com.mikaservices.platform.modules.projet.dto.response.PeriodeHistoriqueResponse
 import com.mikaservices.platform.modules.projet.dto.response.PrevisionResponse
+import com.mikaservices.platform.modules.projet.dto.response.ProjetHistoriqueResponse
 import com.mikaservices.platform.modules.projet.dto.response.ProjetResponse
 import com.mikaservices.platform.modules.projet.dto.response.ProjetSummaryResponse
+import com.mikaservices.platform.modules.projet.dto.response.PvResumeResponse
 import com.mikaservices.platform.modules.projet.entity.AvancementEtudeProjet
 import com.mikaservices.platform.modules.projet.entity.CAPrevisionnelRealise
 import com.mikaservices.platform.modules.projet.entity.Client
@@ -24,6 +27,7 @@ import com.mikaservices.platform.modules.projet.entity.Prevision
 import com.mikaservices.platform.modules.projet.entity.Projet
 import com.mikaservices.platform.modules.projet.mapper.AvancementEtudeProjetMapper
 import com.mikaservices.platform.modules.projet.mapper.CAPrevisionnelRealiseMapper
+import com.mikaservices.platform.modules.projet.mapper.PointBloquantMapper
 import com.mikaservices.platform.modules.projet.mapper.PrevisionMapper
 import com.mikaservices.platform.modules.projet.mapper.ProjetMapper
 import com.mikaservices.platform.modules.projet.repository.AvancementEtudeProjetRepository
@@ -34,6 +38,7 @@ import com.mikaservices.platform.modules.planning.dto.request.TacheCreateRequest
 import com.mikaservices.platform.modules.planning.service.PlanningService
 import com.mikaservices.platform.modules.projet.repository.PrevisionRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
+import com.mikaservices.platform.modules.reunionhebdo.repository.PointProjetPVRepository
 import com.mikaservices.platform.modules.user.entity.User
 import com.mikaservices.platform.modules.user.repository.UserRepository
 import com.mikaservices.platform.modules.user.service.CurrentUserService
@@ -48,6 +53,8 @@ import org.springframework.transaction.annotation.Transactional
 import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import java.time.temporal.WeekFields
+import java.util.Locale
 import java.util.UUID
 
 @Service
@@ -61,6 +68,7 @@ class ProjetService(
     private val avancementEtudeProjetRepository: AvancementEtudeProjetRepository,
     private val caPrevisionnelRealiseRepository: CAPrevisionnelRealiseRepository,
     private val previsionRepository: PrevisionRepository,
+    private val pointProjetPVRepository: PointProjetPVRepository,
     private val currentUserService: CurrentUserService,
     private val planningService: PlanningService
 ) {
@@ -118,6 +126,7 @@ class ProjetService(
             montantTTC = request.montantTTC,
             montantInitial = request.montantInitial,
             delaiMois = computeDelaiMois(request.dateDebut, request.dateFin) ?: request.delaiMois,
+            modeSuiviMensuel = request.modeSuiviMensuel,
             dateDebut = request.dateDebut,
             dateFin = request.dateFin,
             partenairePrincipal = request.partenairePrincipal
@@ -150,7 +159,12 @@ class ProjetService(
 
     @Transactional(readOnly = true)
     fun findAll(pageable: Pageable): Page<ProjetSummaryResponse> {
-        return projetRepository.findByActifTrue(pageable).map { ProjetMapper.toSummaryResponse(it) }
+        try {
+            return projetRepository.findByActifTrue(pageable).map { ProjetMapper.toSummaryResponse(it) }
+        } catch (e: Exception) {
+            logger.error("Erreur lors de la récupération des projets (page ${pageable.pageNumber}, size ${pageable.pageSize}): ${e.message}", e)
+            throw e
+        }
     }
 
     @Transactional(readOnly = true)
@@ -265,6 +279,7 @@ class ProjetService(
         request.montantTTC?.let { projet.montantTTC = it }
         request.montantInitial?.let { projet.montantInitial = it }
         request.montantRevise?.let { projet.montantRevise = it }
+        request.modeSuiviMensuel?.let { projet.modeSuiviMensuel = it }
         request.dateDebut?.let { projet.dateDebut = it }
         request.dateFin?.let { projet.dateFin = it }
         computeDelaiMois(projet.dateDebut, projet.dateFin)?.let { projet.delaiMois = it }
@@ -368,6 +383,24 @@ class ProjetService(
             .map { CAPrevisionnelRealiseMapper.toResponse(it) }
     }
 
+    /**
+     * Remplace entièrement le tableau de suivi mensuel.
+     * Utilisé par le mode MANUEL : la liste envoyée devient la source de vérité (suppression des lignes absentes).
+     * Le mode AUTO conserve l'API historique saveSuiviMensuel (upsert sans suppression).
+     */
+    fun replaceSuiviMensuel(projetId: Long, requests: List<CAPrevisionnelRealiseRequest>): List<CAPrevisionnelRealiseResponse> {
+        getProjetById(projetId)
+        val requestKeys = requests.map { "${it.mois}-${it.annee}" }.toSet()
+        val existing = caPrevisionnelRealiseRepository.findByProjetIdOrderByAnneeAscMoisAsc(projetId)
+        existing.forEach { e ->
+            val key = "${e.mois}-${e.annee}"
+            if (!requestKeys.contains(key)) {
+                caPrevisionnelRealiseRepository.delete(e)
+            }
+        }
+        return saveSuiviMensuel(projetId, requests)
+    }
+
     @Transactional(readOnly = true)
     fun getPrevisions(projetId: Long): List<PrevisionResponse> {
         getProjetById(projetId)
@@ -387,7 +420,7 @@ class ProjetService(
             type = request.type ?: com.mikaservices.platform.common.enums.TypePrevision.HEBDOMADAIRE,
             dateDebut = request.dateDebut,
             dateFin = request.dateFin,
-            statut = request.statut ?: com.mikaservices.platform.common.enums.StatutPrevision.BROUILLON
+            avancementPct = request.avancementPct
         )
         val saved = previsionRepository.save(prevision)
         // Synchronisation automatique avec Planning : créer une tâche correspondante
@@ -431,7 +464,7 @@ class ProjetService(
         request.type?.let { prevision.type = it }
         request.dateDebut?.let { prevision.dateDebut = it }
         request.dateFin?.let { prevision.dateFin = it }
-        request.statut?.let { prevision.statut = it }
+        request.avancementPct?.let { prevision.avancementPct = it }
         val saved = previsionRepository.save(prevision)
         return PrevisionMapper.toResponse(saved)
     }
@@ -450,5 +483,83 @@ class ProjetService(
     internal fun getProjetById(id: Long): Projet {
         return projetRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Projet non trouvé avec l'ID: $id") }
+    }
+
+    /** Historique du projet : périodes passées (semaines) avec prévisions, points bloquants et résumés PV. */
+    fun getHistorique(projetId: Long, maxSemaines: Int = 52): ProjetHistoriqueResponse {
+        val projet = getProjetById(projetId)
+        val now = LocalDate.now()
+        val weekFields = WeekFields.of(Locale.getDefault())
+        val currentSemaine = now.get(weekFields.weekOfWeekBasedYear()).toInt()
+        val currentAnnee = now.get(weekFields.weekBasedYear())
+
+        val previsions = previsionRepository.findByProjetId(projetId)
+        val pointsBloquants = pointBloquantRepository.findByProjetId(projetId)
+        val pointsPV = pointProjetPVRepository.findByProjetIdOrderByReunion_DateReunionDesc(projetId)
+
+        fun semaineAnneeOf(date: LocalDate): Pair<Int, Int> =
+            date.get(weekFields.weekOfWeekBasedYear()).toInt() to date.get(weekFields.weekBasedYear())
+
+        fun isBeforeCurrent(semaine: Int, annee: Int): Boolean =
+            annee < currentAnnee || (annee == currentAnnee && semaine < currentSemaine)
+
+        val periodKeys = mutableSetOf<Pair<Int, Int>>()
+        previsions.forEach { p ->
+            val s = p.semaine ?: return@forEach
+            val a = p.annee
+            if (isBeforeCurrent(s, a)) periodKeys.add(s to a)
+        }
+        pointsPV.forEach { pp ->
+            val (s, a) = semaineAnneeOf(pp.reunion.dateReunion)
+            if (isBeforeCurrent(s, a)) periodKeys.add(s to a)
+        }
+
+        val sortedPeriods = periodKeys.sortedWith(
+            compareBy<Pair<Int, Int>> { -it.second }.thenBy { -it.first }
+        ).take(maxSemaines)
+
+        val previsionResponses = previsions.map { PrevisionMapper.toResponse(it) }
+        val pointBloquantResponses = pointsBloquants.map { PointBloquantMapper.toResponse(it) }
+
+        val pvByPeriod: Map<Pair<Int, Int>, com.mikaservices.platform.modules.reunionhebdo.entity.PointProjetPV> =
+            pointsPV.associate { pp -> semaineAnneeOf(pp.reunion.dateReunion) to pp }
+
+        val periodes = sortedPeriods.map { (semaine, annee) ->
+            val previsionsPeriode = previsionResponses.filter { it.semaine == semaine && it.annee == annee }
+            val pv = pvByPeriod[semaine to annee]
+            val dateReunion = pv?.reunion?.dateReunion
+            val pointsBloquantsPeriode = pointBloquantResponses.filter { pb ->
+                val (s, a) = semaineAnneeOf(pb.dateDetection)
+                s == semaine && a == annee
+            }
+            val pvResume = pv?.let {
+                PvResumeResponse(
+                    reunionId = it.reunion.id!!,
+                    dateReunion = it.reunion.dateReunion,
+                    resumeTravauxPrevisions = it.resumeTravauxPrevisions,
+                    pointsBloquantsResume = it.pointsBloquantsResume,
+                    besoinsMateriel = it.besoinsMateriel,
+                    besoinsHumain = it.besoinsHumain,
+                    propositionsAmelioration = it.propositionsAmelioration,
+                    avancementPhysiquePct = it.avancementPhysiquePct,
+                    avancementFinancierPct = it.avancementFinancierPct,
+                    delaiConsommePct = it.delaiConsommePct
+                )
+            }
+            PeriodeHistoriqueResponse(
+                semaine = semaine,
+                annee = annee,
+                dateReunion = dateReunion,
+                previsions = previsionsPeriode,
+                pointsBloquants = pointsBloquantsPeriode,
+                pvResume = pvResume
+            )
+        }
+
+        return ProjetHistoriqueResponse(
+            projetId = projet.id!!,
+            projetNom = projet.nom,
+            periodes = periodes
+        )
     }
 }

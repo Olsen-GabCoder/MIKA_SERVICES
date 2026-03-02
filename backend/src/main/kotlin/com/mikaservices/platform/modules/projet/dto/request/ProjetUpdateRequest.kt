@@ -3,6 +3,7 @@ package com.mikaservices.platform.modules.projet.dto.request
 import com.mikaservices.platform.common.enums.SourceFinancement
 import com.mikaservices.platform.common.enums.StatutProjet
 import com.mikaservices.platform.common.enums.TypeProjet
+import com.mikaservices.platform.common.enums.ModeSuiviMensuel
 import jakarta.validation.constraints.Size
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -31,6 +32,7 @@ data class ProjetUpdateRequest(
     val montantInitial: BigDecimal? = null,
     val montantRevise: BigDecimal? = null,
     val delaiMois: Int? = null,
+    val modeSuiviMensuel: ModeSuiviMensuel? = null,
     val dateDebut: LocalDate? = null,
     val dateFin: LocalDate? = null,
     val dateDebutReel: LocalDate? = null,

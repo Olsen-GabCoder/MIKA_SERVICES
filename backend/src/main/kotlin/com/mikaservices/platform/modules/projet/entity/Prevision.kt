@@ -1,7 +1,6 @@
 package com.mikaservices.platform.modules.projet.entity
 
 import com.mikaservices.platform.common.entity.BaseEntity
-import com.mikaservices.platform.common.enums.StatutPrevision
 import com.mikaservices.platform.common.enums.TypePrevision
 import jakarta.persistence.*
 import java.time.LocalDate
@@ -35,9 +34,8 @@ class Prevision(
     @Column(name = "date_fin")
     var dateFin: LocalDate? = null,
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "statut", nullable = false, length = 20)
-    var statut: StatutPrevision = StatutPrevision.BROUILLON
+    @Column(name = "avancement_pct")
+    var avancementPct: Int? = null
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

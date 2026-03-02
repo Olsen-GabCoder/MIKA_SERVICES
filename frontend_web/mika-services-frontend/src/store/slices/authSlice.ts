@@ -3,10 +3,12 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 import type { User } from '@/types'
 import { authApi, isLogin2FAPending } from '@/api/authApi'
 import type { LoginRequest } from '@/api/authApi'
+import { getAccessToken, setAccessToken, removeAccessToken } from '@/utils/tokenStorage'
 
 /** État intermédiaire après login quand 2FA est requis */
 export interface TwoFactorPending {
   tempToken: string
+  rememberMe: boolean
 }
 
 interface AuthState {
@@ -22,9 +24,9 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  accessToken: localStorage.getItem('accessToken'),
+  accessToken: getAccessToken(),
   refreshToken: null,
-  isAuthenticated: !!localStorage.getItem('accessToken'),
+  isAuthenticated: !!getAccessToken(),
   isLoading: false,
   error: null,
   twoFactorPending: null,
@@ -64,8 +66,8 @@ export const login = createAsyncThunk(
 
 export const verify2FA = createAsyncThunk(
   'auth/verify2FA',
-  async (payload: { tempToken: string; code: string }) => {
-    const response = await authApi.verify2FA(payload.tempToken, payload.code)
+  async (payload: { tempToken: string; code: string; rememberMe?: boolean }) => {
+    const response = await authApi.verify2FA(payload.tempToken, payload.code, payload.rememberMe ?? false)
     return response
   }
 )
@@ -95,7 +97,7 @@ const authSlice = createSlice({
       state.refreshToken = action.payload.refreshToken ?? null
       state.isAuthenticated = true
       state.error = null
-      localStorage.setItem('accessToken', action.payload.accessToken)
+      setAccessToken(action.payload.accessToken)
     },
     logout: (state) => {
       state.user = null
@@ -104,8 +106,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false
       state.error = null
       state.twoFactorPending = null
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
+      removeAccessToken()
     },
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload
@@ -129,7 +130,7 @@ const authSlice = createSlice({
     builder.addCase(login.fulfilled, (state, action) => {
       state.isLoading = false
       if (isLogin2FAPending(action.payload)) {
-        state.twoFactorPending = { tempToken: action.payload.tempToken }
+        state.twoFactorPending = { tempToken: action.payload.tempToken, rememberMe: (action.meta.arg as LoginRequest).rememberMe ?? false }
         state.user = null
         state.accessToken = null
         state.isAuthenticated = false
@@ -194,9 +195,7 @@ const authSlice = createSlice({
       state.accessToken = null
       state.refreshToken = null
       state.isAuthenticated = false
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('accessToken')
-      }
+      removeAccessToken()
     })
 
     // Logout

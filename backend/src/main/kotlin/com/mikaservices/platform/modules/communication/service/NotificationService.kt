@@ -2,6 +2,7 @@ package com.mikaservices.platform.modules.communication.service
 
 import com.mikaservices.platform.common.enums.TypeNotification
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
+import com.mikaservices.platform.config.mail.EmailService
 import com.mikaservices.platform.modules.communication.dto.request.NotificationCreateRequest
 import com.mikaservices.platform.modules.communication.dto.response.NotificationResponse
 import com.mikaservices.platform.modules.communication.entity.Notification
@@ -21,7 +22,8 @@ import java.time.LocalDateTime
 class NotificationService(
     private val notificationRepository: NotificationRepository,
     private val userRepository: UserRepository,
-    private val messagingTemplate: SimpMessagingTemplate
+    private val messagingTemplate: SimpMessagingTemplate,
+    private val emailService: EmailService
 ) {
     private val logger = LoggerFactory.getLogger(NotificationService::class.java)
 
@@ -46,6 +48,17 @@ class NotificationService(
             "/queue/notifications",
             response
         )
+
+        // E-mail si le destinataire a activé les notifications par e-mail
+        if (destinataire.emailNotificationsEnabled) {
+            emailService.sendInAppNotificationEmail(
+                destinataire.email,
+                destinataire.prenom,
+                request.titre,
+                request.contenu,
+                request.lien
+            )
+        }
 
         logger.info("Notification envoyée à ${destinataire.email}: ${request.titre}")
         return response

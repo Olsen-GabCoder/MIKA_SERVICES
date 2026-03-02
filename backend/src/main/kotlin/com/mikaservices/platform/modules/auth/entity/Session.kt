@@ -29,6 +29,9 @@ class Session(
     
     @Column(name = "user_agent", length = 500)
     var userAgent: String? = null,
+
+    @Column(name = "device_name", length = 100)
+    var deviceName: String? = null,
     
     @Column(name = "date_debut", nullable = false)
     var dateDebut: LocalDateTime = LocalDateTime.now(),

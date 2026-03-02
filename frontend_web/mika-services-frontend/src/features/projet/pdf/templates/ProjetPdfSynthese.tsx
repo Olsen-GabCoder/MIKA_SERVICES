@@ -62,7 +62,7 @@ export function ProjetPdfSynthese({ data }: { data: ProjetPdfData }) {
                 <Text style={s.tableCellFixedRight}>{formatMontant(ligne.caPrevisionnel)}</Text>
                 <Text style={s.tableCellFixedRight}>{formatMontant(ligne.caRealise)}</Text>
                 <Text style={s.tableCellFixedRight}>{formatMontant(ligne.ecart)}</Text>
-                <Text style={s.tableCellFixedRight}>{ligne.avancementCumule} %</Text>
+                <Text style={s.tableCellFixedRight}>{ligne.avancementCumule != null ? `${ligne.avancementCumule} %` : '—'}</Text>
               </View>
             ))}
           </View>
@@ -108,7 +108,7 @@ export function ProjetPdfSynthese({ data }: { data: ProjetPdfData }) {
         </View>
 
         <Text style={s.footer}>
-          Document généré le {new Date().toLocaleDateString('fr-FR')} — Mika Services — Synthèse exécutive {projet.nom}
+          Document généré le {formatDate(new Date().toISOString())} — Mika Services — Synthèse exécutive {projet.nom}
         </Text>
       </Page>
     </Document>

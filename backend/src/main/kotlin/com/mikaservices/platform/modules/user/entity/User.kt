@@ -95,6 +95,42 @@ class User(
     @Column(name = "lockout_until")
     var lockoutUntil: LocalDateTime? = null,
 
+    /** Préférence : recevoir les e-mails transactionnels (MDP modifié, 2FA désactivée, etc.). Bienvenue et reset MDP toujours envoyés. */
+    @Column(name = "email_notifications_enabled", nullable = false)
+    var emailNotificationsEnabled: Boolean = true,
+
+    /** Préférence : recevoir un e-mail à chaque nouvelle connexion (si config globale notify-on-login activée). */
+    @Column(name = "alert_new_login_enabled", nullable = false)
+    var alertNewLoginEnabled: Boolean = true,
+
+    /** Préférence : recevoir un résumé quotidien par e-mail (notifications + messages non lus). */
+    @Column(name = "daily_digest_enabled", nullable = false)
+    var dailyDigestEnabled: Boolean = false,
+
+    /** Préférence : recevoir un résumé hebdomadaire par e-mail. */
+    @Column(name = "weekly_digest_enabled", nullable = false)
+    var weeklyDigestEnabled: Boolean = false,
+
+    /** Heure d'envoi des résumés (format HH:mm, fuseau serveur). Défaut 18:00. */
+    @Column(name = "digest_time", length = 5)
+    var digestTime: String? = "18:00",
+
+    /** Préférence : afficher les notifications in-app (badge, alertes dans l'interface). */
+    @Column(name = "in_app_notifications_enabled", nullable = false)
+    var inAppNotificationsEnabled: Boolean = true,
+
+    /** Préférence : jouer un son à la réception d'une notification ou d'un message in-app. */
+    @Column(name = "notification_sound_enabled", nullable = false)
+    var notificationSoundEnabled: Boolean = true,
+
+    /** Préférence : durée de session par défaut à la connexion. "SHORT" = 1 h, "LONG" = 5 h. Null = utiliser le choix du formulaire (rememberMe). */
+    @Column(name = "default_session_duration", length = 10)
+    var defaultSessionDuration: String? = null,
+
+    /** Préférence : déconnexion à la fermeture du navigateur (token en sessionStorage côté client). */
+    @Column(name = "logout_on_browser_close", nullable = false)
+    var logoutOnBrowserClose: Boolean = false,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "superieur_hierarchique_id")
     var superieurHierarchique: User? = null,

@@ -1,4 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
+import { notificationSoundMiddleware } from './middleware/notificationSoundMiddleware'
+import { offlineQueueMiddleware } from './middleware/offlineQueueMiddleware'
 import authReducer from './slices/authSlice'
 import userReducer from './slices/userSlice'
 import projetReducer from './slices/projetSlice'
@@ -38,7 +40,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: ['persist/PERSIST'],
       },
-    }),
+    }).concat(notificationSoundMiddleware, offlineQueueMiddleware),
 })
 
 export type RootState = ReturnType<typeof store.getState>

@@ -13,6 +13,7 @@ import { fetchProjetsByResponsable } from '@/store/slices/projetSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { StatutTache, Priorite } from '@/types/planning'
 import type { TacheCreateRequest, TacheUpdateRequest, Tache } from '@/types/planning'
+import { useFormatDate } from '@/hooks/useFormatDate'
 
 const statutColors: Record<StatutTache, string> = {
   [StatutTache.A_FAIRE]: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/60 dark:text-slate-200 dark:border-slate-600',
@@ -75,7 +76,8 @@ function KpiCard({
 }
 
 export default function PlanningPage() {
-  const { t, i18n } = useTranslation('planning')
+  const { t } = useTranslation('planning')
+  const formatDate = useFormatDate()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
   const currentUser = useAppSelector((state) => state.auth.user)
@@ -83,11 +85,6 @@ export default function PlanningPage() {
     (state) => state.planning
   )
   const mesProjets = useAppSelector((state) => state.projet.mesProjets)
-  const locale = i18n.language === 'en' ? 'en-GB' : 'fr-FR'
-  const formatDate = (d: string | null) => {
-    if (!d) return '—'
-    return new Date(d).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
-  }
 
   const [selectedProjetId, setSelectedProjetId] = useState<number | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -257,19 +254,19 @@ export default function PlanningPage() {
               </div>
               <div className="p-5">
                 <div className="space-y-3">
-                  {tachesEnRetard.slice(0, 5).map((t) => (
+                  {tachesEnRetard.slice(0, 5).map((tacheRetard) => (
                     <div
-                      key={t.id}
+                      key={tacheRetard.id}
                       className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white dark:bg-gray-700/50 border border-red-100 dark:border-red-900/50 p-4 shadow-sm"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{t.titre}</p>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{tacheRetard.titre}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                          {t.projetNom} — {t('echeance')} {formatDate(t.dateEcheance)}
+                          {tacheRetard.projetNom} — {t('echeance')} {formatDate(tacheRetard.dateEcheance, { monthStyle: 'short' })}
                         </p>
                       </div>
-                      <span className={`shrink-0 px-3 py-1 rounded-lg text-xs font-semibold ${prioriteColors[t.priorite]}`}>
-                        {t(`priorite.${t.priorite}`)}
+                      <span className={`shrink-0 px-3 py-1 rounded-lg text-xs font-semibold ${prioriteColors[tacheRetard.priorite]}`}>
+                        {t(`priorite.${tacheRetard.priorite}`)}
                       </span>
                     </div>
                   ))}
@@ -359,7 +356,7 @@ export default function PlanningPage() {
                               )}
                               {tache.dateEcheance && (
                                 <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700">
-                                  {t('echShort')} {formatDate(tache.dateEcheance)}
+                                  {t('echShort')} {formatDate(tache.dateEcheance, { monthStyle: 'short' })}
                                 </span>
                               )}
                             </div>

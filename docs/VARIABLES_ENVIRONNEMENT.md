@@ -90,6 +90,7 @@ En cas de verrouillage, l’API renvoie **423 Locked**. Le déverrouillage est a
 |----------|-------------|--------|
 | `SESSION_CLEANUP_CRON` | Cron de nettoyage des sessions expirées. | `0 0 3 * * ?` (tous les jours à 3h) |
 | `PASSWORD_RESET_CLEANUP_CRON` | Cron de nettoyage des tokens de réinitialisation MDP. | `0 0 4 * * ?` (tous les jours à 4h) |
+| `DIGEST_CRON` | Cron d’envoi des digest (quotidiens/hebdomadaires). À l’heure configurée par utilisateur (`digestTime`). | `0 0 * * * ?` (toutes les heures à minuit) |
 
 ---
 

@@ -9,5 +9,6 @@ data class MessageCreateRequest(
     val sujet: String? = null,
     @field:NotBlank(message = "Le contenu est obligatoire")
     val contenu: String,
-    val parentId: Long? = null
+    val parentId: Long? = null,
+    val mentionIds: List<Long>? = null
 )

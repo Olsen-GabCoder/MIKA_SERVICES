@@ -23,12 +23,7 @@ import { fetchGlobalDashboard, fetchProjetReport, clearProjetReport } from '@/st
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
 import type { GlobalDashboard, ProjetReport, EvolutionPoint } from '@/types/reporting'
-
-const formatMontant = (val: number, locale: string) =>
-  new Intl.NumberFormat(locale === 'en' ? 'en-GB' : 'fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val)
-
-const formatShort = (val: number, locale: string) =>
-  val >= 1_000_000 ? `${(val / 1_000_000).toFixed(1)}M` : new Intl.NumberFormat(locale === 'en' ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 }).format(val)
+import { useFormatNumber } from '@/hooks/useFormatNumber'
 
 const CHART_COLORS = {
   primary: '#FF6B35',
@@ -116,8 +111,8 @@ function ChartCard({
 }
 
 export default function ReportingPage() {
-  const { t, i18n } = useTranslation('reporting')
-  const locale = i18n.language === 'en' ? 'en-GB' : 'fr-FR'
+  const { t } = useTranslation('reporting')
+  const { formatMontant, formatShort } = useFormatNumber()
   const dispatch = useAppDispatch()
   const { dashboard, projetReport, loading, error } = useAppSelector((state) => state.reporting)
   const projets = useAppSelector((state) => state.projet.projets)
@@ -180,7 +175,7 @@ export default function ReportingPage() {
               <KPICard
                 title={t('budgetConsumed')}
                 value={`${d.budget.tauxConsommation}%`}
-                subtitle={formatMontant(d.budget.depensesTotales, i18n.language) + ' / ' + formatMontant(d.budget.budgetTotalPrevu, i18n.language)}
+                subtitle={formatMontant(d.budget.depensesTotales) + ' / ' + formatMontant(d.budget.budgetTotalPrevu)}
                 trend={d.budget.tauxConsommation > 80 ? 'up' : 'neutral'}
                 accent={d.budget.tauxConsommation > 90 ? 'danger' : d.budget.tauxConsommation > 70 ? 'warning' : 'success'}
               />
@@ -260,7 +255,7 @@ export default function ReportingPage() {
                       <Cell fill={CHART_COLORS.primary} />
                       <Cell fill={CHART_COLORS.gray} />
                     </Pie>
-                    <Tooltip formatter={(value: number | undefined) => [formatMontant(value ?? 0, i18n.language), '']} />
+                    <Tooltip formatter={(value: number | undefined) => [formatMontant(value ?? 0), '']} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -345,11 +340,11 @@ export default function ReportingPage() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                    <YAxis yAxisId="left" tickFormatter={(v) => formatShort(v, i18n.language)} tick={{ fontSize: 11 }} />
+                    <YAxis yAxisId="left" tickFormatter={(v) => formatShort(v)} tick={{ fontSize: 11 }} />
                     <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
                     <Tooltip
                       formatter={(value: number | undefined, name?: string) =>
-                        name === 'depenses' ? [formatMontant(value ?? 0, i18n.language), t('expenses')] : [value ?? 0, t('tasksCompleted')]
+                        name === 'depenses' ? [formatMontant(value ?? 0), t('expenses')] : [value ?? 0, t('tasksCompleted')]
                       }
                       labelFormatter={(label) => `${t('month')}: ${label}`}
                     />
@@ -478,7 +473,7 @@ export default function ReportingPage() {
         </select>
       </section>
 
-      {projetReport && <ProjetReportSection report={projetReport} locale={i18n.language} />}
+      {projetReport && <ProjetReportSection report={projetReport} />}
 
       {error && (
         <div className="rounded-xl border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/30 p-4 text-red-700 dark:text-red-200">
@@ -490,7 +485,8 @@ export default function ReportingPage() {
 }
 
 /** Bloc rapport détaillé d'un projet avec graphiques */
-function ProjetReportSection({ report, locale }: { report: ProjetReport; locale: string }) {
+function ProjetReportSection({ report }: { report: ProjetReport }) {
+  const { formatMontant, formatShort } = useFormatNumber()
   const { t } = useTranslation('reporting')
   const b = report.budget
   const p = report.planning
@@ -533,15 +529,15 @@ function ProjetReportSection({ report, locale }: { report: ProjetReport; locale:
                   ]}
                   margin={{ top: 8, right: 24, left: 70, bottom: 8 }}
                 >
-                  <XAxis type="number" tickFormatter={(v) => formatShort(v, locale)} />
+                  <XAxis type="number" tickFormatter={(v) => formatShort(v)} />
                   <YAxis type="category" dataKey="name" width={65} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(value: number | undefined) => [formatMontant(value ?? 0, locale), '']} />
+                  <Tooltip formatter={(value: number | undefined) => [formatMontant(value ?? 0), '']} />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              {t('variance')}: <span className={Number(b.ecart) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>{formatMontant(Number(b.ecart), locale)}</span>
+              {t('variance')}: <span className={Number(b.ecart) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>{formatMontant(Number(b.ecart))}</span>
             </p>
           </ChartCard>
 

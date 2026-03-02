@@ -11,6 +11,7 @@ import com.mikaservices.platform.modules.projet.dto.request.ProjetUpdateRequest
 import com.mikaservices.platform.modules.projet.dto.response.AvancementEtudeProjetResponse
 import com.mikaservices.platform.modules.projet.dto.response.CAPrevisionnelRealiseResponse
 import com.mikaservices.platform.modules.projet.dto.response.PrevisionResponse
+import com.mikaservices.platform.modules.projet.dto.response.ProjetHistoriqueResponse
 import com.mikaservices.platform.modules.projet.dto.response.ProjetResponse
 import com.mikaservices.platform.modules.projet.dto.response.ProjetSummaryResponse
 import com.mikaservices.platform.modules.projet.service.ProjetExportService
@@ -41,7 +42,7 @@ class ProjetController(
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     @Operation(summary = "Créer un projet (réservé aux administrateurs)")
     fun create(@Valid @RequestBody request: ProjetCreateRequest): ResponseEntity<ProjetResponse> {
-        return ResponseEntity.status(HttpStatus.CREATED).body(projetService.create(request))
+        return ResponseEntity.status(HttpStatus.CREATED).body<ProjetResponse>(projetService.create(request))
     }
 
     @GetMapping
@@ -55,16 +56,25 @@ class ProjetController(
     ): ResponseEntity<Page<ProjetSummaryResponse>> {
         val hasFilters = statut != null || type != null || clientId != null || responsableId != null
         return if (hasFilters) {
-            ResponseEntity.ok(projetService.findAllFiltered(statut, type, clientId, responsableId, pageable))
+            ResponseEntity.ok<Page<ProjetSummaryResponse>>(projetService.findAllFiltered(statut, type, clientId, responsableId, pageable))
         } else {
-            ResponseEntity.ok(projetService.findAll(pageable))
+            ResponseEntity.ok<Page<ProjetSummaryResponse>>(projetService.findAll(pageable))
         }
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtenir un projet par ID (détail complet)")
     fun findById(@PathVariable id: Long): ResponseEntity<ProjetResponse> {
-        return ResponseEntity.ok(projetService.findById(id))
+        return ResponseEntity.ok<ProjetResponse>(projetService.findById(id))
+    }
+
+    @GetMapping("/{id}/historique")
+    @Operation(summary = "Historique du projet (semaines passées : prévisions, points bloquants, résumés PV)")
+    fun getHistorique(
+        @PathVariable id: Long,
+        @RequestParam(required = false, defaultValue = "52") maxSemaines: Int
+    ): ResponseEntity<ProjetHistoriqueResponse> {
+        return ResponseEntity.ok<ProjetHistoriqueResponse>(projetService.getHistorique(id, maxSemaines.coerceIn(1, 104)))
     }
 
     @GetMapping("/search")
@@ -79,22 +89,22 @@ class ProjetController(
     ): ResponseEntity<Page<ProjetSummaryResponse>> {
         val hasFilters = statut != null || type != null || clientId != null || responsableId != null
         return if (hasFilters) {
-            ResponseEntity.ok(projetService.searchFiltered(q, statut, type, clientId, responsableId, pageable))
+            ResponseEntity.ok<Page<ProjetSummaryResponse>>(projetService.searchFiltered(q, statut, type, clientId, responsableId, pageable))
         } else {
-            ResponseEntity.ok(projetService.search(q, pageable))
+            ResponseEntity.ok<Page<ProjetSummaryResponse>>(projetService.search(q, pageable))
         }
     }
 
     @GetMapping("/statut/{statut}")
     @Operation(summary = "Lister les projets par statut")
     fun findByStatut(@PathVariable statut: StatutProjet): ResponseEntity<List<ProjetSummaryResponse>> {
-        return ResponseEntity.ok(projetService.findByStatut(statut))
+        return ResponseEntity.ok<List<ProjetSummaryResponse>>(projetService.findByStatut(statut))
     }
 
     @GetMapping("/responsable/{userId}")
     @Operation(summary = "Lister les projets par responsable")
     fun findByResponsable(@PathVariable userId: Long): ResponseEntity<List<ProjetSummaryResponse>> {
-        return ResponseEntity.ok(projetService.findByResponsable(userId))
+        return ResponseEntity.ok<List<ProjetSummaryResponse>>(projetService.findByResponsable(userId))
     }
 
     @GetMapping("/count/{statut}")
@@ -106,7 +116,7 @@ class ProjetController(
     @RequestMapping(value = ["/{id}"], method = [RequestMethod.PUT, RequestMethod.POST])
     @Operation(summary = "Mettre à jour un projet (PUT ou POST pour compatibilité)")
     fun update(@PathVariable id: Long, @Valid @RequestBody request: ProjetUpdateRequest): ResponseEntity<ProjetResponse> {
-        return ResponseEntity.ok(projetService.update(id, request))
+        return ResponseEntity.ok<ProjetResponse>(projetService.update(id, request))
     }
 
     @DeleteMapping("/{id}")
@@ -119,7 +129,7 @@ class ProjetController(
     @GetMapping("/{id}/avancement-etudes")
     @Operation(summary = "Obtenir l'avancement des études par phase")
     fun getAvancementEtudes(@PathVariable id: Long): ResponseEntity<List<AvancementEtudeProjetResponse>> {
-        return ResponseEntity.ok(projetService.getAvancementEtudes(id))
+        return ResponseEntity.ok<List<AvancementEtudeProjetResponse>>(projetService.getAvancementEtudes(id))
     }
 
     @PutMapping("/{id}/avancement-etudes")
@@ -128,13 +138,13 @@ class ProjetController(
         @PathVariable id: Long,
         @RequestBody requests: List<AvancementEtudeProjetRequest>
     ): ResponseEntity<List<AvancementEtudeProjetResponse>> {
-        return ResponseEntity.ok(projetService.saveAvancementEtudes(id, requests))
+        return ResponseEntity.ok<List<AvancementEtudeProjetResponse>>(projetService.saveAvancementEtudes(id, requests))
     }
 
     @GetMapping("/{id}/previsions")
     @Operation(summary = "Lister les prévisions du projet (tâches planifiées)")
     fun getPrevisions(@PathVariable id: Long): ResponseEntity<List<PrevisionResponse>> {
-        return ResponseEntity.ok(projetService.getPrevisions(id))
+        return ResponseEntity.ok<List<PrevisionResponse>>(projetService.getPrevisions(id))
     }
 
     @PostMapping("/{id}/previsions")
@@ -143,7 +153,7 @@ class ProjetController(
         @PathVariable id: Long,
         @Valid @RequestBody request: PrevisionCreateRequest
     ): ResponseEntity<PrevisionResponse> {
-        return ResponseEntity.status(HttpStatus.CREATED).body(projetService.createPrevision(id, request))
+        return ResponseEntity.status(HttpStatus.CREATED).body<PrevisionResponse>(projetService.createPrevision(id, request))
     }
 
     @PutMapping("/{id}/previsions/{previsionId}")
@@ -153,7 +163,7 @@ class ProjetController(
         @PathVariable previsionId: Long,
         @Valid @RequestBody request: PrevisionUpdateRequest
     ): ResponseEntity<PrevisionResponse> {
-        return ResponseEntity.ok(projetService.updatePrevision(id, previsionId, request))
+        return ResponseEntity.ok<PrevisionResponse>(projetService.updatePrevision(id, previsionId, request))
     }
 
     @DeleteMapping("/{id}/previsions/{previsionId}")
@@ -169,7 +179,7 @@ class ProjetController(
     @GetMapping("/{id}/suivi-mensuel")
     @Operation(summary = "Obtenir le tableau de suivi mensuel (CA prévisionnel / réalisé)")
     fun getSuiviMensuel(@PathVariable id: Long): ResponseEntity<List<CAPrevisionnelRealiseResponse>> {
-        return ResponseEntity.ok(projetService.getSuiviMensuel(id))
+        return ResponseEntity.ok<List<CAPrevisionnelRealiseResponse>>(projetService.getSuiviMensuel(id))
     }
 
     @PutMapping("/{id}/suivi-mensuel")
@@ -178,7 +188,16 @@ class ProjetController(
         @PathVariable id: Long,
         @Valid @RequestBody requests: List<CAPrevisionnelRealiseRequest>
     ): ResponseEntity<List<CAPrevisionnelRealiseResponse>> {
-        return ResponseEntity.ok(projetService.saveSuiviMensuel(id, requests))
+        return ResponseEntity.ok<List<CAPrevisionnelRealiseResponse>>(projetService.saveSuiviMensuel(id, requests))
+    }
+
+    @PutMapping("/{id}/suivi-mensuel/replace")
+    @Operation(summary = "Remplacer le tableau de suivi mensuel (mode manuel)")
+    fun replaceSuiviMensuel(
+        @PathVariable id: Long,
+        @Valid @RequestBody requests: List<CAPrevisionnelRealiseRequest>
+    ): ResponseEntity<List<CAPrevisionnelRealiseResponse>> {
+        return ResponseEntity.ok<List<CAPrevisionnelRealiseResponse>>(projetService.replaceSuiviMensuel(id, requests))
     }
 
     @GetMapping("/{id}/export")
@@ -187,7 +206,9 @@ class ProjetController(
         @PathVariable id: Long,
         @RequestParam format: String
     ): ResponseEntity<Resource> {
-        val (resource, filename) = projetExportService.exportDocument(id, format)
+        val exportResult: Pair<Resource, String> = projetExportService.exportDocument(id, format)
+        val resource = exportResult.first
+        val filename = exportResult.second
         val contentType = when (format.lowercase()) {
             "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

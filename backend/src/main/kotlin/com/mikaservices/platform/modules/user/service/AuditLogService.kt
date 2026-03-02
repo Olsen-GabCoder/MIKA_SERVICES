@@ -19,18 +19,20 @@ class AuditLogService(
      * Enregistre une action dans l'audit.
      * @param targetUser Utilisateur concerné par l'action (cible), null si action globale
      * @param module Module métier (ex: "USER", "AUTH")
-     * @param action Action effectuée (ex: "CREATE", "UPDATE", "DEACTIVATE", "PASSWORD_RESET")
-     * @param details Détails libres (ex: "Mot de passe réinitialisé par l'administrateur")
+     * @param action Action effectuée (ex: "CREATE", "UPDATE", "DEACTIVATE", "PASSWORD_RESET", "LOGIN")
+     * @param details Détails libres (ex. appareil pour LOGIN : "Chrome sur Windows")
      * @param ipAddress Adresse IP de l'acteur si disponible
+     * @param actorOverride Si fourni, utilisé à la place du contexte sécurité (ex. login avant authentification)
      */
     fun log(
         targetUser: User?,
         module: String,
         action: String,
         details: String? = null,
-        ipAddress: String? = null
+        ipAddress: String? = null,
+        actorOverride: String? = null
     ) {
-        val actor = SecurityContextHolder.getContext().authentication?.name ?: "system"
+        val actor = actorOverride ?: SecurityContextHolder.getContext().authentication?.name ?: "system"
         val detailsWithActor = details?.let { "$it | Par: $actor" } ?: "Par: $actor"
         val log = AuditLog(
             user = targetUser,

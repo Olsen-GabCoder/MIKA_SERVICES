@@ -7,7 +7,8 @@ import {
   marquerToutesNotifLues,
 } from '../../../store/slices/communicationSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { TypeNotification } from '../../../types/communication'
+import { TypeNotification, type Notification } from '../../../types/communication'
+import { useFormatDate } from '@/hooks/useFormatDate'
 
 const typeColors: Record<TypeNotification, string> = {
   [TypeNotification.INFO]: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200',
@@ -22,13 +23,13 @@ const typeColors: Record<TypeNotification, string> = {
 }
 
 export default function NotificationsPage() {
-  const { t, i18n } = useTranslation('communication')
+  const { t } = useTranslation('communication')
   const dispatch = useAppDispatch()
+  const formatDate = useFormatDate()
   const { notifications, notificationsNonLuesCount, loading, totalPages, currentPage } = useAppSelector(
     (state) => state.communication
   )
   const currentUser = useAppSelector((state) => state.auth.user)
-  const locale = i18n.language === 'en' ? 'en-GB' : 'fr-FR'
 
   useEffect(() => {
     if (currentUser?.id) {
@@ -46,11 +47,6 @@ export default function NotificationsPage() {
     if (currentUser?.id) {
       dispatch(marquerToutesNotifLues(currentUser.id))
     }
-  }
-
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr)
-    return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
 
   return (
@@ -82,7 +78,7 @@ export default function NotificationsPage() {
           <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('notifications.empty')}</div>
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-gray-600">
-            {notifications.map((notif) => (
+            {notifications.map((notif: Notification) => (
               <div
                 key={notif.id}
                 className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/70 transition cursor-pointer ${!notif.lu ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
@@ -92,10 +88,10 @@ export default function NotificationsPage() {
                   {!notif.lu && <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[notif.typeNotification]}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[notif.typeNotification as TypeNotification]}`}>
                         {t(`notifications.type.${notif.typeNotification}`)}
                       </span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(notif.dateCreation)}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(notif.dateCreation, { includeTime: true })}</span>
                     </div>
                     <p className={`text-sm ${!notif.lu ? 'font-semibold text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
                       {notif.titre}

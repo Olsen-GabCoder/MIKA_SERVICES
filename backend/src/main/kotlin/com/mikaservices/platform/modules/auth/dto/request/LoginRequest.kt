@@ -9,5 +9,7 @@ data class LoginRequest(
     val email: String,
     
     @field:NotBlank(message = "Le mot de passe est obligatoire")
-    val password: String
+    val password: String,
+
+    val rememberMe: Boolean = false
 )

@@ -9,4 +9,7 @@ interface PointProjetPVRepository : JpaRepository<PointProjetPV, Long> {
     fun findByReunionIdOrderByOrdreAffichageAsc(reunionId: Long): List<PointProjetPV>
     fun findByReunionIdAndProjetId(reunionId: Long, projetId: Long): PointProjetPV?
     fun deleteByReunionId(reunionId: Long)
+
+    /** Points PV du projet, des plus récents aux plus anciens (par date de réunion). */
+    fun findByProjetIdOrderByReunion_DateReunionDesc(projetId: Long): List<PointProjetPV>
 }

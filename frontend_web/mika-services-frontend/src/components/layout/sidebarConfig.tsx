@@ -26,7 +26,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   { to: '/securite', label: 'sidebar.securite', icon: <ShieldIcon className={iconClass} /> },
   { to: '/messagerie', label: 'sidebar.messagerie', icon: <MailIcon className={iconClass} />, badgeKey: 'messages' },
   { to: '/notifications', label: 'sidebar.notifications', icon: <BellIcon className={iconClass} />, badgeKey: 'notifications' },
-  { to: '/reporting', label: 'sidebar.reporting', icon: <ChartIcon className={iconClass} /> },
+
   { to: '/documents', label: 'sidebar.documents', icon: <DocumentIcon className={iconClass} /> },
   { to: '/fournisseurs', label: 'sidebar.fournisseurs', icon: <TruckIcon className={iconClass} /> },
 ]
@@ -115,13 +115,7 @@ function BellIcon({ className }: { className?: string }) {
     </svg>
   )
 }
-function ChartIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-    </svg>
-  )
-}
+
 function DocumentIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -133,20 +127,6 @@ function TruckIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-    </svg>
-  )
-}
-function UserIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
-  )
-}
-function UsersIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
     </svg>
   )
 }

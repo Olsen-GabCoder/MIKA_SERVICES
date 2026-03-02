@@ -27,6 +27,7 @@ import com.mikaservices.platform.modules.user.dto.response.UserResponse
 import com.mikaservices.platform.modules.user.entity.User
 import com.mikaservices.platform.modules.user.mapper.UserMapper
 import com.mikaservices.platform.modules.user.repository.UserRepository
+import com.mikaservices.platform.modules.user.service.AuditLogService
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -48,6 +49,7 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder,
     private val emailService: EmailService,
     private val twoFactorService: TwoFactorService,
+    private val auditLogService: AuditLogService,
     @Value("\${app.mail.notify-on-login:false}") private val notifyOnLogin: Boolean,
     @Value("\${app.auth.lockout-max-attempts:5}") private val lockoutMaxAttempts: Int,
     @Value("\${app.auth.lockout-duration-minutes:15}") private val lockoutDurationMinutes: Int
@@ -102,8 +104,8 @@ class AuthService(
             )
         }
         
-        val response = createSessionAndAuthResponse(user, httpRequest)
-        if (notifyOnLogin) {
+        val response = createSessionAndAuthResponse(user, httpRequest, request.rememberMe)
+        if (notifyOnLogin && user.alertNewLoginEnabled) {
             try {
                 emailService.sendLoginNotification(
                     user.email,
@@ -130,8 +132,8 @@ class AuthService(
             throw UnauthorizedException("Code 2FA incorrect")
         }
         logger.info("2FA validé pour: ${user.email}")
-        val response = createSessionAndAuthResponse(user, httpRequest)
-        if (notifyOnLogin) {
+        val response = createSessionAndAuthResponse(user, httpRequest, request.rememberMe)
+        if (notifyOnLogin && user.alertNewLoginEnabled) {
             try {
                 emailService.sendLoginNotification(
                     user.email,
@@ -146,30 +148,101 @@ class AuthService(
         return response
     }
 
-    private fun createSessionAndAuthResponse(user: User, httpRequest: HttpServletRequest): AuthResponse {
+    private fun createSessionAndAuthResponse(user: User, httpRequest: HttpServletRequest, rememberMe: Boolean = false): AuthResponse {
         val roles = user.roles.map { it.code }
+        val sessionDurationMs = when (user.defaultSessionDuration) {
+            "LONG" -> SecurityConstants.LONG_SESSION_MS
+            "SHORT" -> SecurityConstants.SHORT_SESSION_MS
+            else -> if (rememberMe) SecurityConstants.LONG_SESSION_MS else SecurityConstants.SHORT_SESSION_MS
+        }
         val accessToken = jwtTokenProvider.generateToken(user.email, roles, SecurityConstants.DEFAULT_JWT_EXPIRATION_MS)
-        val refreshToken = jwtTokenProvider.generateRefreshToken(user.email)
+        val refreshToken = jwtTokenProvider.generateRefreshToken(user.email, sessionDurationMs)
         val now = LocalDateTime.now()
-        val refreshTokenExpiration = now.plusSeconds(SecurityConstants.DEFAULT_REFRESH_TOKEN_EXPIRATION_MS / 1000)
-        val session = Session(
-            user = user,
-            token = accessToken,
-            refreshToken = refreshToken,
-            ipAddress = httpRequest.remoteAddr,
-            userAgent = httpRequest.getHeader("User-Agent"),
-            dateDebut = now,
-            dateExpiration = refreshTokenExpiration
-        )
+        val refreshTokenExpiration = now.plusSeconds(sessionDurationMs / 1000)
+        val ip = httpRequest.remoteAddr
+        val ua = httpRequest.getHeader("User-Agent") ?: ""
+        val deviceName = parseDeviceName(ua)
+
+        val matchingSessions = if (ip.isNotBlank() && ua.isNotBlank()) {
+            sessionRepository.findActiveByUserIdAndIpAndUserAgent(user.id!!, ip, ua)
+        } else emptyList()
+
+        val existingSession = matchingSessions.firstOrNull()
+        if (matchingSessions.size > 1) {
+            val duplicates = matchingSessions.drop(1)
+            duplicates.forEach { it.active = false }
+            sessionRepository.saveAll(duplicates)
+            logger.info("Nettoyage de ${duplicates.size} session(s) dupliquée(s) pour userId=${user.id}, ip=$ip")
+        }
+
+        val session = if (existingSession != null) {
+            existingSession.token = accessToken
+            existingSession.refreshToken = refreshToken
+            existingSession.lastActivity = now
+            existingSession.dateExpiration = refreshTokenExpiration
+            existingSession.deviceName = deviceName
+            existingSession
+        } else {
+            enforceMaxSessions(user.id!!, MAX_SESSIONS_PER_USER)
+            Session(
+                user = user,
+                token = accessToken,
+                refreshToken = refreshToken,
+                ipAddress = ip,
+                userAgent = ua,
+                deviceName = deviceName,
+                dateDebut = now,
+                dateExpiration = refreshTokenExpiration
+            )
+        }
         sessionRepository.save(session)
         user.lastLogin = now
         userRepository.save(user)
+        auditLogService.log(user, "AUTH", "LOGIN", deviceName.ifBlank { null }, ip, actorOverride = user.email)
         return AuthResponse(
             accessToken = accessToken,
             refreshToken = refreshToken,
             expiresIn = SecurityConstants.DEFAULT_JWT_EXPIRATION_MS / 1000,
+            sessionExpiresIn = sessionDurationMs / 1000,
             user = UserMapper.toResponse(user)
         )
+    }
+
+    private fun enforceMaxSessions(userId: Long, max: Int) {
+        val activeCount = sessionRepository.countActiveByUserId(userId)
+        if (activeCount >= max) {
+            val orderedSessions = sessionRepository.findActiveSessionsByUserIdOrderByLastActivityAsc(userId)
+            val toDeactivate = orderedSessions.take((activeCount - max + 1).toInt())
+            toDeactivate.forEach { it.active = false }
+            sessionRepository.saveAll(toDeactivate)
+            logger.info("Désactivation de ${toDeactivate.size} session(s) ancienne(s) pour userId=$userId (limite=$max)")
+        }
+    }
+
+    internal fun parseDeviceName(userAgent: String?): String {
+        if (userAgent.isNullOrBlank()) return "Appareil inconnu"
+        val ua = userAgent.lowercase()
+
+        val browser = when {
+            ua.contains("edg/") || ua.contains("edge/") -> "Edge"
+            ua.contains("opr/") || ua.contains("opera") -> "Opera"
+            ua.contains("chrome") && !ua.contains("edg") -> "Chrome"
+            ua.contains("firefox") -> "Firefox"
+            ua.contains("safari") && !ua.contains("chrome") -> "Safari"
+            else -> "Navigateur"
+        }
+
+        val os = when {
+            ua.contains("iphone") -> "iPhone"
+            ua.contains("ipad") -> "iPad"
+            ua.contains("android") -> "Android"
+            ua.contains("windows") -> "Windows"
+            ua.contains("macintosh") || ua.contains("mac os") -> "Mac"
+            ua.contains("linux") -> "Linux"
+            else -> "Autre"
+        }
+
+        return "$browser sur $os"
     }
     
     fun setup2FA(): Setup2FAResponse {
@@ -177,18 +250,13 @@ class AuthService(
             ?: throw UnauthorizedException("Non authentifié")
         val user = userRepository.findByEmail(email)
             .orElseThrow { UnauthorizedException("Utilisateur introuvable") }
-        val (secret, qrImageBase64) = if (user.totpSecret != null && !user.totpEnabled) {
-            // Réutiliser le secret existant (évite d'invalider le QR déjà scanné)
-            twoFactorService.generateQrFromSecret(user.totpSecret!!.trim(), user.email)
-        } else {
-            val (s, qr) = twoFactorService.generateSecretAndQr(user.email)
-            user.totpSecret = s
-            user.totpEnabled = false
-            userRepository.save(user)
-            Pair(s, qr)
-        }
+        // Toujours générer un nouveau secret pour éviter les problèmes d'anciens formats
+        val (s, qr) = twoFactorService.generateSecretAndQr(user.email)
+        user.totpSecret = s
+        user.totpEnabled = false
+        userRepository.saveAndFlush(user)
         logger.info("Setup 2FA initié pour: ${user.email}")
-        return Setup2FAResponse(secret = secret, qrImageBase64 = qrImageBase64)
+        return Setup2FAResponse(secret = s, qrImageBase64 = qr)
     }
     
     fun verifySetup2FA(request: Verify2FASetupRequest): UserResponse {
@@ -196,23 +264,29 @@ class AuthService(
             ?: throw UnauthorizedException("Non authentifié")
         val user = userRepository.findByEmail(email)
             .orElseThrow { UnauthorizedException("Utilisateur introuvable") }
-        val secret = user.totpSecret?.trim() ?: throw BadRequestException("Effectuez d'abord l'étape de configuration 2FA")
-        val digitsOnly = request.code.filter { it.isDigit() }
-        if (digitsOnly.isEmpty()) {
-            throw BadRequestException("Le code doit contenir 6 chiffres.")
+        val rawSecret = user.totpSecret ?: throw BadRequestException("Effectuez d'abord l'étape de configuration 2FA")
+        val secret = twoFactorService.cleanSecret(rawSecret)
+        if (secret != rawSecret) {
+            user.totpSecret = secret
+            userRepository.saveAndFlush(user)
         }
-        val codeToVerify = digitsOnly.take(6).padStart(6, '0')
+        val digitsOnly = request.code.filter { it.isDigit() }
+        if (digitsOnly.length < 6) {
+            throw BadRequestException("Le code doit contenir exactement 6 chiffres.")
+        }
+        val codeToVerify = digitsOnly.take(6)
         if (!twoFactorService.verifyCode(secret, codeToVerify)) {
-            logger.warn("2FA verification failed for ${user.email}: code length=${codeToVerify.length}")
             throw BadRequestException("Code incorrect. Vérifiez l'heure de votre appareil et réessayez.")
         }
         user.totpEnabled = true
         userRepository.saveAndFlush(user)
-        logger.info("2FA activé pour: ${user.email}")
-        try {
-            emailService.send2FAEnabledNotification(user.email, user.prenom)
-        } catch (e: Exception) {
-            logger.warn("Envoi notification 2FA activée échoué: ${e.message}")
+        logger.info("2FA activé avec succès pour: ${user.email}")
+        if (user.emailNotificationsEnabled) {
+            try {
+                emailService.send2FAEnabledNotification(user.email, user.prenom)
+            } catch (e: Exception) {
+                logger.warn("Envoi notification 2FA activée échoué: ${e.message}")
+            }
         }
         return UserMapper.toResponse(user)
     }
@@ -229,10 +303,12 @@ class AuthService(
         user.totpEnabled = false
         userRepository.save(user)
         logger.info("2FA désactivé pour: ${user.email}")
-        try {
-            emailService.send2FADisabledNotification(user.email, user.prenom)
-        } catch (e: Exception) {
-            logger.warn("Envoi notification 2FA désactivée échoué: ${e.message}")
+        if (user.emailNotificationsEnabled) {
+            try {
+                emailService.send2FADisabledNotification(user.email, user.prenom)
+            } catch (e: Exception) {
+                logger.warn("Envoi notification 2FA désactivée échoué: ${e.message}")
+            }
         }
     }
 
@@ -258,16 +334,16 @@ class AuthService(
             throw UnauthorizedException("Compte utilisateur désactivé")
         }
         
-        // Génération de nouveaux tokens
+        // Génération de nouveaux tokens — conserver la même date d'expiration de session
         val roles = user.roles.map { it.code }
+        val now = LocalDateTime.now()
+        val remainingSeconds = java.time.Duration.between(now, session.dateExpiration).seconds.coerceAtLeast(60)
         val newAccessToken = jwtTokenProvider.generateToken(user.email, roles, SecurityConstants.DEFAULT_JWT_EXPIRATION_MS)
-        val newRefreshToken = jwtTokenProvider.generateRefreshToken(user.email)
+        val newRefreshToken = jwtTokenProvider.generateRefreshToken(user.email, remainingSeconds * 1000)
         
-        // Mise à jour de la session
         session.token = newAccessToken
         session.refreshToken = newRefreshToken
-        session.lastActivity = LocalDateTime.now()
-        session.dateExpiration = LocalDateTime.now().plusSeconds(SecurityConstants.DEFAULT_REFRESH_TOKEN_EXPIRATION_MS / 1000)
+        session.lastActivity = now
         sessionRepository.save(session)
         
         logger.info("Token renouvelé pour l'utilisateur: ${user.email}")
@@ -276,6 +352,7 @@ class AuthService(
             accessToken = newAccessToken,
             refreshToken = newRefreshToken,
             expiresIn = SecurityConstants.DEFAULT_JWT_EXPIRATION_MS / 1000,
+            sessionExpiresIn = remainingSeconds,
             user = UserMapper.toResponse(user)
         )
     }
@@ -298,13 +375,15 @@ class AuthService(
         sessionRepository.deactivateAllUserSessions(userId)
     }
 
-    fun getMySessions(userId: Long): List<SessionResponse> {
+    fun getMySessions(userId: Long, currentToken: String? = null): List<SessionResponse> {
         val sessions = sessionRepository.findActiveSessionsByUserId(userId)
         return sessions.map { s ->
             SessionResponse(
                 id = s.id!!,
                 ipAddress = s.ipAddress,
                 userAgent = s.userAgent,
+                deviceName = s.deviceName ?: parseDeviceName(s.userAgent),
+                isCurrent = currentToken != null && s.token == currentToken,
                 dateDebut = s.dateDebut,
                 lastActivity = s.lastActivity
             )
@@ -324,6 +403,7 @@ class AuthService(
 
     companion object {
         private const val RESET_TOKEN_EXPIRATION_HOURS = 1L
+        private const val MAX_SESSIONS_PER_USER = 3
     }
 
     /**
@@ -377,10 +457,12 @@ class AuthService(
         resetToken.used = true
         passwordResetTokenRepository.save(resetToken)
         logger.info("Mot de passe réinitialisé pour: ${user.email}")
-        try {
-            emailService.sendPasswordChangedNotification(user.email, user.prenom)
-        } catch (e: Exception) {
-            logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
+        if (user.emailNotificationsEnabled) {
+            try {
+                emailService.sendPasswordChangedNotification(user.email, user.prenom)
+            } catch (e: Exception) {
+                logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
+            }
         }
     }
 }

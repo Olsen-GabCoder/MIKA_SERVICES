@@ -6,6 +6,8 @@ export const mockGlobalDashboard: GlobalDashboard = {
     enCours: 3,
     termines: 2,
     enRetard: 1,
+    montantTotal: 420_000_000,
+    avancementMoyen: 58.4,
   },
   chantiers: {
     total: 12,

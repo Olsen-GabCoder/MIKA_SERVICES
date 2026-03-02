@@ -46,7 +46,8 @@ export async function generateProjetDocument(
     }
     case 'pdf': {
       const doc = React.createElement(ProjetDocumentPdf, { payload })
-      const blob = await pdf(doc as React.ReactElement).toBlob()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const blob = await pdf(doc as any).toBlob()
       downloadBlob(blob, filename)
       return
     }

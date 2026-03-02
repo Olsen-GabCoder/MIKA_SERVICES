@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 import { i18n } from '@/i18n'
+import { getAccessToken, setAccessToken, removeAccessToken } from '@/utils/tokenStorage'
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: '/api',
@@ -14,7 +15,7 @@ const apiClient: AxiosInstance = axios.create({
 // Intercepteur pour ajouter le token JWT et la locale
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('accessToken')
+    const token = getAccessToken()
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -49,7 +50,7 @@ apiClient.interceptors.response.use(
         const response = await apiClient.post('/auth/refresh', {})
         const { accessToken } = response.data
         if (accessToken) {
-          localStorage.setItem('accessToken', accessToken)
+          setAccessToken(accessToken)
           if (originalRequest.headers) {
             originalRequest.headers.Authorization = `Bearer ${accessToken}`
           }
@@ -58,7 +59,7 @@ apiClient.interceptors.response.use(
       } catch {
         // Refresh échoué : déconnecter et rediriger
       }
-      localStorage.removeItem('accessToken')
+      removeAccessToken()
       window.location.href = '/login'
       return Promise.reject(error)
     }

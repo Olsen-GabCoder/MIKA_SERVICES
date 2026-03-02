@@ -1,6 +1,5 @@
 package com.mikaservices.platform.modules.projet.dto.request
 
-import com.mikaservices.platform.common.enums.StatutPrevision
 import com.mikaservices.platform.common.enums.TypePrevision
 import java.time.LocalDate
 
@@ -11,5 +10,5 @@ data class PrevisionUpdateRequest(
     val type: TypePrevision? = null,
     val dateDebut: LocalDate? = null,
     val dateFin: LocalDate? = null,
-    val statut: StatutPrevision? = null
+    val avancementPct: Int? = null
 )

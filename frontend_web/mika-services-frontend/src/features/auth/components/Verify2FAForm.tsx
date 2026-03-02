@@ -1,10 +1,7 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useForm } from 'react-hook-form'
 import { useAppSelector } from '@/store/hooks'
-
-interface Verify2FAFormData {
-  code: string
-}
+import { OtpInput } from '@/components/ui/OtpInput'
 
 interface Verify2FAFormProps {
   onSubmit: (code: string) => void
@@ -13,64 +10,54 @@ interface Verify2FAFormProps {
 export const Verify2FAForm = ({ onSubmit }: Verify2FAFormProps) => {
   const { t } = useTranslation('auth')
   const { isLoading, error } = useAppSelector((state) => state.auth)
+  const [code, setCode] = useState('')
+  const [localError, setLocalError] = useState<string | null>(null)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<Verify2FAFormData>()
-
-  const onFormSubmit = (data: Verify2FAFormData) => {
-    onSubmit(data.code.trim())
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const digits = code.replace(/\D/g, '')
+    if (digits.length < 6) {
+      setLocalError(t('twoFa.codeMinLength'))
+      return
+    }
+    setLocalError(null)
+    onSubmit(digits.slice(0, 6))
   }
+
+  const displayError = error || localError
 
   return (
     <form
-      onSubmit={handleSubmit(onFormSubmit)}
+      onSubmit={handleFormSubmit}
       className="w-full"
       aria-label={t('twoFa.verifyFormAria')}
       noValidate
     >
-      {error && (
+      {displayError && (
         <div className="login-error-msg" role="alert">
-          <strong>{t('twoFa.errorTitle')}</strong> — {error}
+          <strong>{t('twoFa.errorTitle')}</strong> — {displayError}
         </div>
       )}
 
-      <p className="login-text-muted mb-4">
+      <p className="login-text-muted mb-6">
         {t('twoFa.verifySubtitle')}
       </p>
 
-      <div className="login-input-group">
-        <label htmlFor="login-2fa-code" className="login-input-label">{t('twoFa.codeLabel')}</label>
-        <div className="login-input-wrap">
-          <span className="login-input-icon" aria-hidden="true">🔐</span>
-          <input
-            id="login-2fa-code"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder={t('twoFa.codePlaceholder')}
-            maxLength={8}
-            className={errors.code ? 'login-input-invalid' : ''}
-            {...register('code', {
-              required: t('twoFa.codeRequired'),
-              minLength: {
-                value: 6,
-                message: t('twoFa.codeMinLength'),
-              },
-            })}
-          />
-        </div>
-        {errors.code?.message && (
-          <p className="login-input-error">{errors.code.message}</p>
-        )}
+      <div className="mb-6">
+        <label className="login-input-label mb-3 block text-center">{t('twoFa.codeLabel')}</label>
+        <OtpInput
+          value={code}
+          onChange={(v) => { setCode(v); setLocalError(null) }}
+          disabled={isLoading}
+          autoFocus
+          error={!!displayError}
+        />
       </div>
 
       <button
         type="submit"
         className="login-btn-cta"
-        disabled={isLoading}
+        disabled={isLoading || code.replace(/\D/g, '').length < 6}
       >
         {isLoading ? (
           <span className="inline-flex items-center gap-2">

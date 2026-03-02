@@ -7,7 +7,8 @@
     "digit": "Password must contain at least one digit",
     "special": "Password must contain at least one special character (e.g. @$!%*?&)"
   },
-  "error": { "generic": "An error occurred", "unexpected": "An unexpected error occurred" },
+  "error": { "generic": "An error occurred", "unexpected": "An unexpected error occurred", "offlineNoCache": "No cached data. Reconnect to load lists." },
+  "offlineBanner": "You are offline. Lists show the last cached data when available.",
   "communication": {
     "errorLoadMessagesReceived": "Error loading received messages",
     "errorLoadMessagesSent": "Error loading sent messages",
@@ -95,8 +96,143 @@
       "materiaux": "Materials",
       "qualite": "Quality",
       "securite": "Safety",
-      "messagerie": "Messaging",
-      "reporting": "Reporting"
+      "messagerie": "Messaging"
+    }
+  },
+  "db": {
+    "header": "Dashboard",
+    "subtitle": "Strategic overview — real-time indicators",
+    "seeMore": "See details →",
+    "seeAll": "See all",
+    "quickAccess": "Quick Access",
+    "kpi": {
+      "totalProjects": "Projects",
+      "active": "active",
+      "delayed": "delayed",
+      "globalProgress": "Overall Progress",
+      "tasks": "tasks",
+      "budgetConsumed": "Budget Consumed",
+      "qualityRate": "Conformity",
+      "controls": "controls",
+      "projectsInProgress": "In progress",
+      "projectsCompleted": "Completed",
+      "totalAmount": "Total amount (excl. tax)",
+      "avgProgress": "Average progress"
+    },
+    "projectsOverview": {
+      "title": "Overview — Projects",
+      "subtitle": "Distribution by status · Total amount and average progress"
+    },
+    "evolution": {
+      "title": "Monthly Evolution",
+      "subtitle": "Expenses, tasks and indicators over 6 months",
+      "expenses": "Expenses (M)",
+      "tasksDone": "Tasks completed",
+      "controls": "Controls",
+      "incidents": "Incidents"
+    },
+    "radial": {
+      "title": "Key Indicators",
+      "subtitle": "Rate in %",
+      "budget": "Budget",
+      "progress": "Progress",
+      "quality": "Conformity"
+    },
+    "pie": {
+      "title": "Project Distribution",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "delayed": "Delayed",
+      "other": "Other",
+      "total": "Total"
+    },
+    "projects": {
+      "title": "Active Projects",
+      "name": "Project",
+      "amount": "Amount",
+      "progress": "Progress",
+      "manager": "Project Manager",
+      "empty": "No active projects"
+    },
+    "planning": {
+      "title": "Planning",
+      "total": "Total tasks",
+      "inProgress": "In progress",
+      "completed": "Completed",
+      "overdue": "Overdue",
+      "progressLabel": "Overall progress"
+    },
+    "safety": {
+      "title": "Safety",
+      "totalIncidents": "Total incidents",
+      "serious": "Serious incidents",
+      "criticalRisks": "Critical risks",
+      "daysStopped": "Days stopped"
+    },
+    "equipment": {
+      "title": "Equipment Park",
+      "total": "Total equipment",
+      "available": "Available",
+      "inUse": "In service"
+    },
+    "budgetDetail": {
+      "title": "Budget",
+      "planned": "Planned budget",
+      "spent": "Total expenses",
+      "remaining": "Variance",
+      "consumption": "Consumption"
+    },
+    "charts": {
+      "budgetTitle": "Global Budget",
+      "consumed": "consumed",
+      "remaining": "Remaining",
+      "tasksTitle": "Tasks by Status",
+      "advancement": "advancement",
+      "qualityTitle": "Quality Compliance",
+      "compliant": "Compliant",
+      "nonCompliant": "Non-compliant",
+      "conformity": "compliance rate",
+      "sitesTitle": "Sites",
+      "totalSites": "total sites",
+      "active": "Active",
+      "completed": "Completed",
+      "incidentsReported": "incidents reported",
+      "available": "Available",
+      "inUse": "In service",
+      "units": "units",
+      "budgetBreakdown": "Budget Breakdown",
+      "plannedVsSpent": "Planned vs spent"
+    },
+    "report": {
+      "title": "Detailed Report by Project",
+      "subtitle": "Select a project to display its indicators",
+      "choose": "— Select a project —",
+      "status": "Status",
+      "sites": "sites",
+      "subprojects": "sub-projects",
+      "consumed": "Consumed",
+      "remaining": "Remaining",
+      "qualitySafety": "Quality & Safety"
+    },
+    "alerts": {
+      "projectsDelayed": "{{count}} project(s) delayed",
+      "tasksDelayed": "{{count}} task(s) delayed",
+      "seriousIncidents": "{{count}} serious incident(s)",
+      "criticalRisks": "{{count}} critical risk(s)",
+      "materialsLow": "{{count}} material(s) low in stock",
+      "ncOpen": "{{count}} open non-conformit(ies)"
+    },
+    "shortcuts": {
+      "projets": "Projects",
+      "planning": "Planning",
+      "budget": "Budget",
+      "engins": "Equipment",
+      "materiaux": "Materials",
+      "qualite": "Quality",
+      "securite": "Safety",
+      "messagerie": "Messages",
+      "equipes": "Teams",
+      "documents": "Documents"
     }
   },
   "meteo": {

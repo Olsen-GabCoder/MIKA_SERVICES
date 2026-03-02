@@ -1,9 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import type { User } from '@/types'
+import type { RootState } from '@/store/store'
 import { userApi } from '@/api/userApi'
 import type { UserCreateRequest, UserUpdateRequest, UserGetAllParams } from '@/api/userApi'
-import { handleApiError } from '@/utils/errorHandler'
+import type { PaginatedResponse } from '@/api/userApi'
+import { handleApiError, isNetworkError } from '@/utils/errorHandler'
+import { getUsersCache, getUsersCacheIfValid, setUsersCache, CACHE_DURATION_MS } from '@/utils/offlineCache'
+import { logoutUser } from './authSlice'
 
 interface UserState {
   users: User[]
@@ -43,11 +47,49 @@ export interface FetchUsersParams extends Partial<UserGetAllParams> {
   size?: number
 }
 
+/** Requête "liste complète" (sans filtre) : préchargement, messagerie, sélecteurs. On ne lit pas le cache pour éviter d’afficher une liste vide mise en cache par une requête filtrée (ex. Gestion utilisateurs). */
+function isUnfilteredListRequest(params: FetchUsersParams): boolean {
+  return (
+    params.search === undefined &&
+    params.actif === undefined &&
+    params.roleId === undefined
+  )
+}
+
 export const fetchUsers = createAsyncThunk(
   'user/fetchUsers',
-  async (params: FetchUsersParams = {}) => {
-    const response = await userApi.getAll(params)
-    return response
+  async (params: FetchUsersParams = {}, { getState, rejectWithValue }) => {
+    const state = getState() as RootState
+    const offlineMode = state.ui.offlineModeEnabled
+    const cacheEnabled = state.ui.cacheEnabled
+    const cacheDuration = state.ui.cacheDuration
+    const offline = typeof navigator !== 'undefined' && !navigator.onLine
+    const unfiltered = isUnfilteredListRequest(params)
+
+    if (offline && offlineMode) {
+      const cached = getUsersCache()
+      if (cached) return cached as PaginatedResponse<User>
+      return rejectWithValue('offline_no_cache')
+    }
+    // En ligne : pour les requêtes filtrées (ex. Gestion utilisateurs), réutiliser le cache si valide.
+    // Pour la liste complète (messagerie, préchargement), ne jamais lire le cache pour éviter d’afficher
+    // une liste vide mise en cache par un filtre qui ne renvoie aucun résultat.
+    if (!offline && cacheEnabled && !unfiltered) {
+      const maxAgeMs = CACHE_DURATION_MS[cacheDuration as keyof typeof CACHE_DURATION_MS]
+      const cached = getUsersCacheIfValid(maxAgeMs)
+      if (cached) return cached as PaginatedResponse<User>
+    }
+    try {
+      const response = await userApi.getAll(params)
+      if (offlineMode || cacheEnabled) setUsersCache(response)
+      return response
+    } catch (e) {
+      if (offlineMode && isNetworkError(e)) {
+        const cached = getUsersCache()
+        if (cached) return cached as PaginatedResponse<User>
+      }
+      throw e
+    }
   }
 )
 
@@ -156,7 +198,7 @@ const userSlice = createSlice({
     })
     builder.addCase(fetchUsers.rejected, (state, action) => {
       state.isLoading = false
-      state.error = action.error.message || 'Erreur lors du chargement des utilisateurs'
+      state.error = (typeof action.payload === 'string' ? action.payload : action.error.message) || 'Erreur lors du chargement des utilisateurs'
     })
 
     // Fetch user by ID
@@ -230,6 +272,12 @@ const userSlice = createSlice({
     builder.addCase(deleteUser.rejected, (state, action) => {
       state.isLoading = false
       state.error = (action.payload as string) || action.error.message || 'Erreur lors de la suppression de l\'utilisateur'
+    })
+
+    // Reset currentUser on logout to prevent stale data across sessions
+    builder.addCase(logoutUser.fulfilled, (state) => {
+      state.currentUser = null
+      state.selectedUser = null
     })
   },
 })

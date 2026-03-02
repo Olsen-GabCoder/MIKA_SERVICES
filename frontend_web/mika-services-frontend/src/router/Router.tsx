@@ -9,6 +9,7 @@ import { UserManagementPage } from '@/features/user/pages/UserManagementPage'
 import { UserDetailPage } from '@/features/user/pages/UserDetailPage'
 import { ProjetListPage } from '@/features/projet/pages/ProjetListPage'
 import { ProjetDetailPage } from '@/features/projet/pages/ProjetDetailPage'
+import { ProjetHistoriquePage } from '@/features/projet/pages/ProjetHistoriquePage'
 import { ProjetFormPage } from '@/features/projet/pages/ProjetFormPage'
 import { EquipeListPage } from '@/features/equipe/pages/EquipeListPage'
 import { EquipeFormPage } from '@/features/equipe/pages/EquipeFormPage'
@@ -21,7 +22,7 @@ import QualitePage from '@/features/qualite/pages/QualitePage'
 import SecuritePage from '@/features/securite/pages/SecuritePage'
 import MessageriePage from '@/features/communication/pages/MessageriePage'
 import NotificationsPage from '@/features/communication/pages/NotificationsPage'
-import ReportingPage from '@/features/reporting/pages/ReportingPage'
+
 import DocumentPage from '@/features/document/pages/DocumentPage'
 import FournisseurPage from '@/features/fournisseur/pages/FournisseurPage'
 import DashboardPage from '@/features/dashboard/pages/DashboardPage'
@@ -113,6 +114,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute requireAdmin={true}>
             <ProjetFormPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'projets/:id/historique',
+        element: (
+          <ProtectedRoute>
+            <ProjetHistoriquePage />
           </ProtectedRoute>
         ),
       },
@@ -260,14 +269,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      {
-        path: 'reporting',
-        element: (
-          <ProtectedRoute>
-            <ReportingPage />
-          </ProtectedRoute>
-        ),
-      },
+
       {
         path: 'documents',
         element: (

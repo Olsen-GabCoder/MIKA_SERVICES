@@ -39,9 +39,9 @@ class JwtTokenProvider(
             .compact()
     }
     
-    fun generateRefreshToken(username: String): String {
+    fun generateRefreshToken(username: String, expirationMs: Long = SecurityConstants.DEFAULT_REFRESH_TOKEN_EXPIRATION_MS): String {
         val now = Date()
-        val expiryDate = Date(now.time + SecurityConstants.DEFAULT_REFRESH_TOKEN_EXPIRATION_MS)
+        val expiryDate = Date(now.time + expirationMs)
         
         return Jwts.builder()
             .setSubject(username)

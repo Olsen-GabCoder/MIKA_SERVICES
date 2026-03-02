@@ -1,6 +1,5 @@
 package com.mikaservices.platform.modules.projet.repository
 
-import com.mikaservices.platform.common.enums.StatutPrevision
 import com.mikaservices.platform.common.enums.TypePrevision
 import com.mikaservices.platform.modules.projet.entity.Prevision
 import org.springframework.data.domain.Page
@@ -15,5 +14,4 @@ interface PrevisionRepository : JpaRepository<Prevision, Long> {
     fun findByProjetIdAndAnnee(projetId: Long, annee: Int): List<Prevision>
     fun findByProjetIdAndSemaineAndAnnee(projetId: Long, semaine: Int, annee: Int): List<Prevision>
     fun findByType(type: TypePrevision): List<Prevision>
-    fun findByStatut(statut: StatutPrevision): List<Prevision>
 }

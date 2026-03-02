@@ -8,18 +8,25 @@ import { AppRouter } from './router/Router'
 import { ConfirmProvider } from './contexts/ConfirmContext'
 import './index.css'
 import { getStoredTheme, applyThemeToDocument } from './utils/themeStorage'
+import { getStoredAnimationPreference, applyAnimationsToDocument } from './utils/animationPreferences'
 import { i18nReady } from './i18n'
 
-// Appliquer le thème dès le chargement (source: localStorage, avant tout rendu)
+// Appliquer le thème et les animations dès le chargement (source: localStorage, avant tout rendu)
 applyThemeToDocument(getStoredTheme())
+applyAnimationsToDocument(getStoredAnimationPreference())
 
-// Synchronisation état → document après chaque dispatch (garantit le retour au mode clair)
+// Synchronisation état → document après chaque dispatch (thème + animations)
 let prevTheme = store.getState().ui.theme
+let prevAnimations = store.getState().ui.animationPreference
 store.subscribe(() => {
-  const theme = store.getState().ui.theme
-  if (theme !== prevTheme) {
-    prevTheme = theme
-    applyThemeToDocument(theme)
+  const state = store.getState().ui
+  if (state.theme !== prevTheme) {
+    prevTheme = state.theme
+    applyThemeToDocument(state.theme)
+  }
+  if (state.animationPreference !== prevAnimations) {
+    prevAnimations = state.animationPreference
+    applyAnimationsToDocument(state.animationPreference)
   }
 })
 

@@ -15,7 +15,7 @@ export function ProjetPdfFiche({ data }: { data: ProjetPdfData }) {
           <Text style={s.headerSubtitle}>Fiche projet - {projet.nom}</Text>
           <View style={s.headerMeta}>
             <Text style={s.badge}>{projet.statut.replace(/_/g, ' ')}</Text>
-            <Text style={s.badge}>{projet.type.replace(/_/g, ' ')}</Text>
+            <Text style={s.badge}>{(projet.type ?? 'AUTRE').replace(/_/g, ' ')}</Text>
           </View>
         </View>
 
@@ -57,7 +57,7 @@ export function ProjetPdfFiche({ data }: { data: ProjetPdfData }) {
           <Text style={s.paragraph}>{[projet.province, projet.ville, projet.quartier].filter(Boolean).join(' / ') || '-'}</Text>
         </View>
 
-        <Text style={s.footer}>Document genere le {new Date().toLocaleDateString('fr-FR')} - Mika Services - Fiche projet {projet.nom}</Text>
+        <Text style={s.footer}>Document genere le {formatDate(new Date().toISOString())} - Mika Services - Fiche projet {projet.nom}</Text>
       </Page>
     </Document>
   )

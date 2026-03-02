@@ -55,7 +55,18 @@ export const fetchConversation = createAsyncThunk(
 
 export const envoyerMessage = createAsyncThunk(
   'communication/envoyerMessage',
-  async ({ expediteurId, request }: { expediteurId: number; request: MessageCreateRequest }) => {
+  async ({
+    expediteurId,
+    request,
+    files,
+  }: {
+    expediteurId: number
+    request: MessageCreateRequest
+    files?: File[]
+  }) => {
+    if (files?.length) {
+      return await messageApi.envoyerAvecPiecesJointes(expediteurId, request, files)
+    }
     return await messageApi.envoyer(expediteurId, request)
   }
 )
@@ -64,6 +75,13 @@ export const fetchMessagesNonLusCount = createAsyncThunk(
   'communication/fetchMsgNonLusCount',
   async (userId: number) => {
     return await messageApi.countNonLus(userId)
+  }
+)
+
+export const marquerMessageLu = createAsyncThunk(
+  'communication/marquerMessageLu',
+  async ({ messageId, userId }: { messageId: number; userId: number }) => {
+    return await messageApi.marquerLu(messageId, userId)
   }
 )
 
@@ -146,6 +164,17 @@ const communicationSlice = createSlice({
     builder.addCase(envoyerMessage.fulfilled, (state, action) => {
       state.messagesEnvoyes.unshift(action.payload)
       state.conversation.push(action.payload)
+    })
+
+    // Marquer message lu
+    builder.addCase(marquerMessageLu.fulfilled, (state, action) => {
+      const msg = action.payload as Message
+      const idx = state.messagesRecus.findIndex(m => m.id === msg.id)
+      if (idx !== -1) {
+        const wasUnread = !state.messagesRecus[idx].lu
+        state.messagesRecus[idx] = msg
+        if (wasUnread) state.messagesNonLusCount = Math.max(0, state.messagesNonLusCount - 1)
+      }
     })
 
     // Compteurs

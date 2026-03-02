@@ -15,13 +15,14 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { UserEditForm } from '../components/UserEditForm'
 import type { UserUpdateRequest } from '@/api/userApi'
 import { validatePassword } from '@/utils/passwordValidation'
+import { useFormatDate } from '@/hooks/useFormatDate'
 
 const SECTION_CLASS = 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 overflow-hidden min-h-[200px] flex flex-col'
 const SECTION_HEADER_CLASS = 'text-lg font-semibold text-gray-900 dark:text-gray-100 px-6 py-4 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 shrink-0'
 const SECTION_BODY_CLASS = 'p-6 flex-1 text-gray-900 dark:text-gray-100'
 
 export const UserDetailPage = () => {
-  const { t, i18n } = useTranslation('user')
+  const { t } = useTranslation('user')
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
@@ -98,10 +99,7 @@ export const UserDetailPage = () => {
     }).catch(() => setAuditLogs([]))
   }, [user?.id, auditPage])
 
-  const lang = i18n.language === 'en' ? 'en-GB' : 'fr-FR'
-  const formatDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString(lang) : '—')
-  const formatDateTime = (d?: string | null) =>
-    d ? new Date(d).toLocaleDateString(lang, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
+  const formatDate = useFormatDate()
 
   const isSelf = authUser?.id === user?.id
 
@@ -300,15 +298,15 @@ export const UserDetailPage = () => {
               </div>
               <div>
                 <dt className="text-gray-500 dark:text-gray-400">{t('detail.createdAt')}</dt>
-                <dd className="font-medium text-gray-900 dark:text-gray-100">{formatDateTime(user.createdAt)}</dd>
+                <dd className="font-medium text-gray-900 dark:text-gray-100">{formatDate(user.createdAt, { includeTime: true })}</dd>
               </div>
               <div>
                 <dt className="text-gray-500 dark:text-gray-400">{t('detail.updatedAt')}</dt>
-                <dd className="font-medium text-gray-900 dark:text-gray-100">{formatDateTime(user.updatedAt)}</dd>
+                <dd className="font-medium text-gray-900 dark:text-gray-100">{formatDate(user.updatedAt, { includeTime: true })}</dd>
               </div>
               <div>
                 <dt className="text-gray-500 dark:text-gray-400">{t('detail.lastLogin')}</dt>
-                <dd className="font-medium text-gray-900 dark:text-gray-100">{formatDateTime(user.lastLogin)}</dd>
+                <dd className="font-medium text-gray-900 dark:text-gray-100">{formatDate(user.lastLogin, { includeTime: true })}</dd>
               </div>
             </dl>
           </div>
@@ -392,7 +390,7 @@ export const UserDetailPage = () => {
                     <tbody>
                       {auditLogs.map((log) => (
                         <tr key={log.id} className="border-b border-gray-100 dark:border-gray-600">
-                          <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">{formatDate(log.createdAt)}</td>
+                          <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">{formatDate(log.createdAt, { includeTime: true })}</td>
                           <td className="py-2 pr-4 font-medium text-gray-900 dark:text-gray-100">{log.module}</td>
                           <td className="py-2 pr-4 text-gray-900 dark:text-gray-100">{log.action}</td>
                           <td className="py-2 text-gray-500 dark:text-gray-400 truncate max-w-[200px]">{log.details || '—'}</td>

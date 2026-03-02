@@ -15,15 +15,30 @@ class EmailService(
 ) {
     private val logger = LoggerFactory.getLogger(EmailService::class.java)
 
+    private fun htmlEscape(s: String): String = s
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
+        .replace("'", "&#39;")
+
+    private fun signatureHtml(): String {
+        val logoUrl = "$frontendBaseUrl/Logo_mika_services.png"
+        return """
+            <p style="margin-top: 1.5em; color: #666; font-size: 0.95em;">—<br>L'équipe MIKA Services</p>
+            <p style="margin-top: 0.5em;"><img src="$logoUrl" alt="MIKA Services" style="max-width: 200px; height: auto;" /></p>
+        """.trimIndent()
+    }
+
     /**
-     * Envoie un email de bienvenue au nouvel utilisateur avec son mot de passe temporaire
-     * et l'invite à le modifier à la première connexion.
-     * Utilise le même chemin d'envoi que les autres notifications (sendGenericNotification).
+     * Envoie un email de bienvenue au nouvel utilisateur avec son mot de passe temporaire,
+     * l'invite à le modifier à la première connexion et recommande l'activation de la 2FA.
      */
     fun sendWelcomeEmail(to: String, prenom: String, temporaryPassword: String) {
         val loginLink = "$frontendBaseUrl/login"
+        val profileLink = "$frontendBaseUrl/profile"
         val subject = "Bienvenue sur MIKA Services — Vos identifiants de connexion"
-        val body = """
+        val plainBody = """
             Bonjour $prenom,
 
             Votre compte MIKA Services a été créé. Vous pouvez vous connecter avec les identifiants suivants :
@@ -35,12 +50,24 @@ class EmailService(
 
             Pour des raisons de sécurité, vous devrez modifier ce mot de passe lors de votre première connexion.
 
+            Nous vous recommandons également d'activer l'authentification à deux facteurs (2FA) pour renforcer la sécurité de votre compte. La 2FA n'est pas obligatoire mais vivement conseillée. Vous pourrez l'activer depuis votre profil après connexion : $profileLink
+
             Si vous n'êtes pas à l'origine de cette création de compte, contactez immédiatement votre administrateur.
 
             —
-            MIKA Services
+            L'équipe MIKA Services
         """.trimIndent()
-        sendGenericNotification(to, subject, body, "bienvenue")
+        val htmlBody = """
+            <p>Bonjour ${htmlEscape(prenom)},</p>
+            <p>Votre compte MIKA Services a été créé. Vous pouvez vous connecter avec les identifiants suivants :</p>
+            <p><strong>Email :</strong> ${htmlEscape(to)}<br><strong>Mot de passe temporaire :</strong> ${htmlEscape(temporaryPassword)}</p>
+            <p><a href="$loginLink" style="color: #e65100;">Se connecter</a></p>
+            <p>Pour des raisons de sécurité, vous devrez <strong>modifier ce mot de passe lors de votre première connexion</strong>.</p>
+            <p>Nous vous recommandons également d'<strong>activer l'authentification à deux facteurs (2FA)</strong> pour renforcer la sécurité de votre compte. La 2FA n'est pas obligatoire mais vivement conseillée. Vous pourrez l'activer depuis votre <a href="$profileLink">profil</a> après connexion.</p>
+            <p>Si vous n'êtes pas à l'origine de cette création de compte, contactez immédiatement votre administrateur.</p>
+            ${signatureHtml()}
+        """.trimIndent()
+        sendGenericNotification(to, subject, plainBody, htmlBody, "bienvenue")
     }
 
     /**
@@ -50,7 +77,7 @@ class EmailService(
     fun sendPasswordResetEmail(to: String, prenom: String, token: String) {
         val resetLink = "$frontendBaseUrl/reset-password?token=$token"
         val subject = "MIKA Services — Réinitialisation de votre mot de passe"
-        val body = """
+        val plainBody = """
             Bonjour $prenom,
 
             Vous avez demandé une réinitialisation de votre mot de passe MIKA Services.
@@ -63,9 +90,17 @@ class EmailService(
             Si vous n'êtes pas à l'origine de cette demande, ignorez cet email. Votre mot de passe restera inchangé.
 
             —
-            MIKA Services
+            L'équipe MIKA Services
         """.trimIndent()
-        sendGenericNotification(to, subject, body, "reset mot de passe")
+        val htmlBody = """
+            <p>Bonjour ${htmlEscape(prenom)},</p>
+            <p>Vous avez demandé une réinitialisation de votre mot de passe MIKA Services.</p>
+            <p><a href="$resetLink" style="color: #e65100;">Définir un nouveau mot de passe</a></p>
+            <p>Ce lien est valide pendant 1 heure. Après ce délai, vous devrez effectuer une nouvelle demande.</p>
+            <p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet email. Votre mot de passe restera inchangé.</p>
+            ${signatureHtml()}
+        """.trimIndent()
+        sendGenericNotification(to, subject, plainBody, htmlBody, "reset mot de passe")
     }
 
     /**
@@ -75,7 +110,7 @@ class EmailService(
         val subject = "MIKA Services — Nouvelle connexion détectée"
         val ipInfo = ip?.takeIf { it.isNotBlank() } ?: "non disponible"
         val uaInfo = userAgent?.takeIf { it.isNotBlank() }?.take(200) ?: "non disponible"
-        val body = """
+        val plainBody = """
             Bonjour $prenom,
 
             Une connexion à votre compte MIKA Services a été enregistrée.
@@ -86,9 +121,16 @@ class EmailService(
             Si vous n'êtes pas à l'origine de cette connexion, changez immédiatement votre mot de passe et contactez votre administrateur.
 
             —
-            MIKA Services
+            L'équipe MIKA Services
         """.trimIndent()
-        sendGenericNotification(to, subject, body, "login")
+        val htmlBody = """
+            <p>Bonjour ${htmlEscape(prenom)},</p>
+            <p>Une connexion à votre compte MIKA Services a été enregistrée.</p>
+            <p><strong>Adresse IP :</strong> ${htmlEscape(ipInfo)}<br><strong>Navigateur / appareil :</strong> ${htmlEscape(uaInfo)}</p>
+            <p>Si vous n'êtes pas à l'origine de cette connexion, changez immédiatement votre mot de passe et contactez votre administrateur.</p>
+            ${signatureHtml()}
+        """.trimIndent()
+        sendGenericNotification(to, subject, plainBody, htmlBody, "login")
     }
 
     /**
@@ -96,7 +138,7 @@ class EmailService(
      */
     fun sendPasswordChangedNotification(to: String, prenom: String) {
         val subject = "MIKA Services — Votre mot de passe a été modifié"
-        val body = """
+        val plainBody = """
             Bonjour $prenom,
 
             Le mot de passe de votre compte MIKA Services a été modifié avec succès.
@@ -104,9 +146,15 @@ class EmailService(
             Si vous n'êtes pas à l'origine de cette modification, contactez immédiatement votre administrateur.
 
             —
-            MIKA Services
+            L'équipe MIKA Services
         """.trimIndent()
-        sendGenericNotification(to, subject, body, "password changed")
+        val htmlBody = """
+            <p>Bonjour ${htmlEscape(prenom)},</p>
+            <p>Le mot de passe de votre compte MIKA Services a été modifié avec succès.</p>
+            <p>Si vous n'êtes pas à l'origine de cette modification, contactez immédiatement votre administrateur.</p>
+            ${signatureHtml()}
+        """.trimIndent()
+        sendGenericNotification(to, subject, plainBody, htmlBody, "password changed")
     }
 
     /**
@@ -114,7 +162,7 @@ class EmailService(
      */
     fun send2FAEnabledNotification(to: String, prenom: String) {
         val subject = "MIKA Services — Authentification à deux facteurs activée"
-        val body = """
+        val plainBody = """
             Bonjour $prenom,
 
             L'authentification à deux facteurs (2FA) a été activée sur votre compte MIKA Services.
@@ -124,9 +172,16 @@ class EmailService(
             Si vous n'avez pas effectué cette modification, contactez immédiatement votre administrateur.
 
             —
-            MIKA Services
+            L'équipe MIKA Services
         """.trimIndent()
-        sendGenericNotification(to, subject, body, "2FA enabled")
+        val htmlBody = """
+            <p>Bonjour ${htmlEscape(prenom)},</p>
+            <p>L'authentification à deux facteurs (2FA) a été activée sur votre compte MIKA Services.</p>
+            <p>Vous devrez désormais saisir un code à usage unique à chaque connexion.</p>
+            <p>Si vous n'avez pas effectué cette modification, contactez immédiatement votre administrateur.</p>
+            ${signatureHtml()}
+        """.trimIndent()
+        sendGenericNotification(to, subject, plainBody, htmlBody, "2FA enabled")
     }
 
     /**
@@ -134,7 +189,7 @@ class EmailService(
      */
     fun send2FADisabledNotification(to: String, prenom: String) {
         val subject = "MIKA Services — Authentification à deux facteurs désactivée"
-        val body = """
+        val plainBody = """
             Bonjour $prenom,
 
             L'authentification à deux facteurs (2FA) a été désactivée sur votre compte MIKA Services.
@@ -142,28 +197,186 @@ class EmailService(
             Si vous n'avez pas effectué cette modification, contactez immédiatement votre administrateur et réactivez la 2FA.
 
             —
-            MIKA Services
+            L'équipe MIKA Services
         """.trimIndent()
-        sendGenericNotification(to, subject, body, "2FA disabled")
+        val htmlBody = """
+            <p>Bonjour ${htmlEscape(prenom)},</p>
+            <p>L'authentification à deux facteurs (2FA) a été désactivée sur votre compte MIKA Services.</p>
+            <p>Si vous n'avez pas effectué cette modification, contactez immédiatement votre administrateur et réactivez la 2FA.</p>
+            ${signatureHtml()}
+        """.trimIndent()
+        sendGenericNotification(to, subject, plainBody, htmlBody, "2FA disabled")
     }
 
-    private fun sendGenericNotification(to: String, subject: String, body: String, logLabel: String) {
+    /**
+     * E-mail pour une notification in-app (si l'utilisateur a activé les notifications par e-mail).
+     * N'échoue pas l'appelant : les erreurs sont loggées.
+     */
+    fun sendInAppNotificationEmail(to: String, prenom: String, titre: String, contenu: String?, lien: String?) {
+        val effectiveLink = lien?.takeIf { it.isNotBlank() } ?: "$frontendBaseUrl/notifications"
+        val subject = "MIKA Services — Notification : ${titre.take(60)}${if (titre.length > 60) "…" else ""}"
+        val plainBody = """
+            Bonjour $prenom,
+
+            Vous avez une nouvelle notification sur MIKA Services :
+
+            $titre
+            ${contenu?.take(500)?.lines()?.joinToString(" ") ?: ""}
+
+            Consulter : $effectiveLink
+
+            —
+            L'équipe MIKA Services
+        """.trimIndent()
+        val bodyEscaped = contenu?.take(500)?.let { htmlEscape(it) } ?: ""
+        val htmlBody = """
+            <p>Bonjour ${htmlEscape(prenom)},</p>
+            <p>Vous avez une nouvelle notification sur MIKA Services :</p>
+            <p><strong>${htmlEscape(titre.take(200))}</strong></p>
+            ${if (bodyEscaped.isNotEmpty()) "<p>${bodyEscaped}</p>" else ""}
+            <p><a href="$effectiveLink" style="color: #e65100;">Voir la notification</a></p>
+            ${signatureHtml()}
+        """.trimIndent()
+        try {
+            sendGenericNotification(to, subject, plainBody, htmlBody, "notification in-app")
+        } catch (e: Exception) {
+            logger.warn("Envoi email notification in-app échoué vers $to: ${e.message}")
+        }
+    }
+
+    /**
+     * E-mail pour un nouveau message interne (si le destinataire a activé les notifications par e-mail).
+     * N'échoue pas l'appelant : les erreurs sont loggées.
+     */
+    fun sendNewMessageEmail(to: String, prenom: String, expediteurNom: String, sujet: String?, contenuExtrait: String? = null) {
+        val sujetSafe = sujet.orEmpty()
+        val messagerieLink = "$frontendBaseUrl/messagerie"
+        val subject = "MIKA Services — Nouveau message : ${sujetSafe.take(50)}${if (sujetSafe.length > 50) "…" else ""}"
+        val extract = contenuExtrait?.take(300)?.lines()?.joinToString(" ") ?: ""
+        val plainBody = """
+            Bonjour $prenom,
+
+            Vous avez reçu un nouveau message de $expediteurNom sur MIKA Services.
+
+            Sujet : $sujetSafe
+            ${if (extract.isNotEmpty()) "\n$extract\n" else ""}
+
+            Consulter votre messagerie : $messagerieLink
+
+            —
+            L'équipe MIKA Services
+        """.trimIndent()
+        val htmlBody = """
+            <p>Bonjour ${htmlEscape(prenom)},</p>
+            <p>Vous avez reçu un nouveau message de <strong>${htmlEscape(expediteurNom)}</strong> sur MIKA Services.</p>
+            <p><strong>Sujet :</strong> ${htmlEscape(sujetSafe.take(200))}</p>
+            ${if (contenuExtrait?.isNotBlank() == true) "<p>${htmlEscape(contenuExtrait.take(200))}</p>" else ""}
+            <p><a href="$messagerieLink" style="color: #e65100;">Ouvrir la messagerie</a></p>
+            ${signatureHtml()}
+        """.trimIndent()
+        try {
+            sendGenericNotification(to, subject, plainBody, htmlBody, "nouveau message")
+        } catch (e: Exception) {
+            logger.warn("Envoi email nouveau message échoué vers $to: ${e.message}")
+        }
+    }
+
+    /**
+     * Résumé quotidien par e-mail (notifications et messages non lus).
+     * N'échoue pas l'appelant : les erreurs sont loggées.
+     */
+    fun sendDailyDigestEmail(to: String, prenom: String, unreadNotificationsCount: Long, unreadMessagesCount: Long) {
+        val appLink = "$frontendBaseUrl/notifications"
+        val messagerieLink = "$frontendBaseUrl/messagerie"
+        val subject = "MIKA Services — Résumé du jour"
+        val plainBody = """
+            Bonjour $prenom,
+
+            Voici votre résumé MIKA Services pour aujourd'hui :
+
+            • Notifications non lues : $unreadNotificationsCount
+            • Messages non lus : $unreadMessagesCount
+
+            Consulter les notifications : $appLink
+            Consulter la messagerie : $messagerieLink
+
+            —
+            L'équipe MIKA Services
+        """.trimIndent()
+        val htmlBody = """
+            <p>Bonjour ${htmlEscape(prenom)},</p>
+            <p>Voici votre résumé MIKA Services pour aujourd'hui :</p>
+            <ul>
+                <li><strong>Notifications non lues :</strong> $unreadNotificationsCount</li>
+                <li><strong>Messages non lus :</strong> $unreadMessagesCount</li>
+            </ul>
+            <p><a href="$appLink" style="color: #e65100;">Voir les notifications</a> — <a href="$messagerieLink" style="color: #e65100;">Ouvrir la messagerie</a></p>
+            ${signatureHtml()}
+        """.trimIndent()
+        try {
+            sendGenericNotification(to, subject, plainBody, htmlBody, "digest quotidien")
+        } catch (e: Exception) {
+            logger.warn("Envoi digest quotidien échoué vers $to: ${e.message}")
+        }
+    }
+
+    /**
+     * Résumé hebdomadaire par e-mail (même contenu que quotidien).
+     * N'échoue pas l'appelant : les erreurs sont loggées.
+     */
+    fun sendWeeklyDigestEmail(to: String, prenom: String, unreadNotificationsCount: Long, unreadMessagesCount: Long) {
+        val appLink = "$frontendBaseUrl/notifications"
+        val messagerieLink = "$frontendBaseUrl/messagerie"
+        val subject = "MIKA Services — Résumé de la semaine"
+        val plainBody = """
+            Bonjour $prenom,
+
+            Voici votre résumé hebdomadaire MIKA Services :
+
+            • Notifications non lues : $unreadNotificationsCount
+            • Messages non lus : $unreadMessagesCount
+
+            Consulter les notifications : $appLink
+            Consulter la messagerie : $messagerieLink
+
+            —
+            L'équipe MIKA Services
+        """.trimIndent()
+        val htmlBody = """
+            <p>Bonjour ${htmlEscape(prenom)},</p>
+            <p>Voici votre résumé hebdomadaire MIKA Services :</p>
+            <ul>
+                <li><strong>Notifications non lues :</strong> $unreadNotificationsCount</li>
+                <li><strong>Messages non lus :</strong> $unreadMessagesCount</li>
+            </ul>
+            <p><a href="$appLink" style="color: #e65100;">Voir les notifications</a> — <a href="$messagerieLink" style="color: #e65100;">Ouvrir la messagerie</a></p>
+            ${signatureHtml()}
+        """.trimIndent()
+        try {
+            sendGenericNotification(to, subject, plainBody, htmlBody, "digest hebdo")
+        } catch (e: Exception) {
+            logger.warn("Envoi digest hebdo échoué vers $to: ${e.message}")
+        }
+    }
+
+    private fun sendGenericNotification(to: String, subject: String, plainBody: String, htmlBody: String, logLabel: String) {
         try {
             val message = mailSender.createMimeMessage()
             val helper = MimeMessageHelper(message, true, "UTF-8")
             helper.setFrom(from)
             helper.setTo(to)
             helper.setSubject(subject)
-            helper.setText(body, false)
+            helper.setText(plainBody, htmlBody)
             mailSender.send(message)
             logger.info("Email $logLabel envoyé à $to")
         } catch (e: Exception) {
-            var cause: Throwable? = e.cause
+            var c: Throwable? = e.cause
             val causeChain = buildString {
                 append(e.javaClass.name).append(": ").append(e.message)
-                while (cause != null) {
-                    append(" | cause: ").append(cause.javaClass.name).append(": ").append(cause.message)
-                    cause = cause.cause
+                while (true) {
+                    val cur = c ?: break
+                    append(" | cause: ").append(cur.javaClass.name).append(": ").append(cur.message)
+                    c = cur.cause
                 }
             }
             logger.error("Échec envoi email [$logLabel] vers $to — $causeChain", e)

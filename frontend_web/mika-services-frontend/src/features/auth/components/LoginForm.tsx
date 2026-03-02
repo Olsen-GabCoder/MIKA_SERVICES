@@ -7,10 +7,11 @@ import { useAppSelector } from '@/store/hooks'
 interface LoginFormData {
   email: string
   password: string
+  rememberMe: boolean
 }
 
 interface LoginFormProps {
-  onSubmit: (email: string, password: string) => void
+  onSubmit: (email: string, password: string, rememberMe: boolean) => void
 }
 
 export const LoginForm = ({ onSubmit }: LoginFormProps) => {
@@ -34,7 +35,7 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
   } = useForm<LoginFormData>()
 
   const onFormSubmit = (data: LoginFormData) => {
-    onSubmit(data.email, data.password)
+    onSubmit(data.email, data.password, data.rememberMe)
   }
 
   const displayError = getLoginErrorMessage(error)
@@ -109,6 +110,18 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
         <div className="login-forgot">
           <Link to="/forgot-password">{t('login.forgotPassword')}</Link>
         </div>
+      </div>
+
+      <div className="flex items-center gap-2 mb-4">
+        <input
+          id="login-remember"
+          type="checkbox"
+          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+          {...register('rememberMe')}
+        />
+        <label htmlFor="login-remember" className="text-sm text-gray-600 cursor-pointer select-none">
+          {t('login.rememberMe')}
+        </label>
       </div>
 
       <button

@@ -6,6 +6,7 @@ import type {
   SousProjet, SousProjetCreateRequest,
   PointBloquant, PointBloquantCreateRequest, PointBloquantUpdateRequest,
   AvancementEtudeProjet, Prevision, CAPrevisionnelRealise,
+  ProjetHistoriqueResponse,
   PageResponse, StatutProjet, TypeProjet
 } from '@/types/projet'
 
@@ -143,6 +144,11 @@ export const projetApi = {
     return response.data
   },
 
+  replaceSuiviMensuel: async (id: number, data: { mois: number; annee: number; caPrevisionnel?: number; caRealise?: number }[]): Promise<CAPrevisionnelRealise[]> => {
+    const response = await apiClient.put<CAPrevisionnelRealise[]>(API_ENDPOINTS.PROJETS.SUIVI_MENSUEL_REPLACE(id), data)
+    return response.data
+  },
+
   getPrevisions: async (id: number): Promise<Prevision[]> => {
     if (USE_MOCK) return Promise.resolve([])
     try {
@@ -154,12 +160,20 @@ export const projetApi = {
     }
   },
 
-  createPrevision: async (projetId: number, data: { semaine?: number; annee: number; description?: string; type: string; dateDebut?: string; dateFin?: string; statut?: string }): Promise<Prevision> => {
+  getHistorique: async (id: number, maxSemaines = 52): Promise<ProjetHistoriqueResponse> => {
+    if (USE_MOCK) return Promise.resolve({ projetId: id, projetNom: '', periodes: [] })
+    const response = await apiClient.get<ProjetHistoriqueResponse>(API_ENDPOINTS.PROJETS.HISTORIQUE(id), {
+      params: { maxSemaines },
+    })
+    return response.data
+  },
+
+  createPrevision: async (projetId: number, data: { semaine?: number; annee: number; description?: string; type: string; dateDebut?: string; dateFin?: string; avancementPct?: number }): Promise<Prevision> => {
     const response = await apiClient.post<Prevision>(API_ENDPOINTS.PROJETS.PREVISIONS(projetId), data)
     return response.data
   },
 
-  updatePrevision: async (projetId: number, previsionId: number, data: { semaine?: number; annee?: number; description?: string; type?: string; dateDebut?: string; dateFin?: string; statut?: string }): Promise<Prevision> => {
+  updatePrevision: async (projetId: number, previsionId: number, data: { semaine?: number; annee?: number; description?: string; type?: string; dateDebut?: string; dateFin?: string; avancementPct?: number }): Promise<Prevision> => {
     const response = await apiClient.put<Prevision>(API_ENDPOINTS.PROJETS.PREVISION_BY_ID(projetId, previsionId), data)
     return response.data
   },

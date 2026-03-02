@@ -7,7 +7,7 @@ export interface LigneChiffreAffaires {
   caPrevisionnel: number
   caRealise: number
   ecart: number
-  avancementCumule: number
+  avancementCumule: number | null
 }
 
 export interface ProjetPdfData {
@@ -16,6 +16,8 @@ export interface ProjetPdfData {
   lignesCA: LigneChiffreAffaires[]
   pointsBloquants: PointBloquant[]
   previsions: Prevision[]
+  semaineCalendaire: number
+  anneeCalendaire: number
   formatMontant: (n?: number) => string
   formatDate: (d?: string) => string
 }

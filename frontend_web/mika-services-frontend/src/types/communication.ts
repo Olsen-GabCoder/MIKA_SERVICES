@@ -19,6 +19,13 @@ export interface UserMinimal {
   email: string
 }
 
+export interface PieceJointe {
+  id: number
+  nomOriginal: string
+  typeMime: string | null
+  tailleOctets: number
+}
+
 export interface Message {
   id: number
   expediteur: UserMinimal
@@ -29,6 +36,8 @@ export interface Message {
   lu: boolean
   dateLecture: string | null
   parentId: number | null
+  piecesJointes?: PieceJointe[]
+  mentions?: UserMinimal[]
   createdAt: string
   updatedAt: string
 }
@@ -49,6 +58,7 @@ export interface MessageCreateRequest {
   sujet?: string
   contenu: string
   parentId?: number
+  mentionIds?: number[]
 }
 
 export interface PaginatedResponse<T> {

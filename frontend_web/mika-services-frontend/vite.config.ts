@@ -28,7 +28,8 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     host: '127.0.0.1',
-    // Backend sert sous context-path /api (aligné avec API_BASE_URL)
+    // Backend sert sous context-path /api (aligné avec API_BASE_URL).
+    // Les en-têtes Set-Cookie du backend sont transmis tels quels (cookie refreshToken pour la durée de session).
     proxy: {
       '/api': {
         target: 'http://localhost:9090',

@@ -2,9 +2,9 @@ package com.mikaservices.platform.modules.projet.mapper
 
 import com.mikaservices.platform.common.enums.StatutPointBloquant
 import com.mikaservices.platform.common.enums.TypeProjet
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-import com.mikaservices.platform.modules.projet.dto.response.AvancementEtudeProjetResponse
 import com.mikaservices.platform.modules.projet.dto.response.ProjetResponse
 import com.mikaservices.platform.modules.projet.dto.response.ProjetSummaryResponse
 import com.mikaservices.platform.modules.projet.dto.response.ProjetUserSummary
@@ -20,18 +20,30 @@ object ProjetMapper {
     }
 
     fun toUserSummary(user: User?): ProjetUserSummary? {
-        if (user == null) return null
+        if (user == null || user.id == null) return null
+        val id = user.id!!
         return ProjetUserSummary(
-            id = user.id!!,
-            nom = user.nom,
-            prenom = user.prenom,
-            email = user.email
+            id = id,
+            nom = user.nom ?: "",
+            prenom = user.prenom ?: "",
+            email = user.email ?: ""
         )
     }
 
     private fun effectiveTypes(entity: Projet): List<TypeProjet> {
-        val list = entity.types.toList()
-        return if (list.isEmpty()) listOf(entity.type) else list.sortedBy { it.name }
+        try {
+            val list = entity.types.toList()
+            return if (list.isEmpty() && entity.type != null) {
+                listOf(entity.type)
+            } else if (list.isNotEmpty()) {
+                list.sortedBy { it.name }
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            // Fallback si problème avec types
+            return if (entity.type != null) listOf(entity.type) else emptyList()
+        }
     }
 
     fun toResponse(entity: Projet): ProjetResponse = ProjetResponse(
@@ -54,6 +66,7 @@ object ProjetMapper {
         montantInitial = entity.montantInitial,
         montantRevise = entity.montantRevise,
         delaiMois = entity.delaiMois ?: computeDelaiMois(entity.dateDebut, entity.dateFin),
+        modeSuiviMensuel = entity.modeSuiviMensuel ?: com.mikaservices.platform.common.enums.ModeSuiviMensuel.AUTO,
         dateDebut = entity.dateDebut,
         dateFin = entity.dateFin,
         dateDebutReel = entity.dateDebutReel,
@@ -76,18 +89,30 @@ object ProjetMapper {
         updatedAt = entity.updatedAt
     )
 
-    fun toSummaryResponse(entity: Projet): ProjetSummaryResponse = ProjetSummaryResponse(
-        id = entity.id!!,
-        nom = entity.nom,
-        type = entity.type,
-        types = effectiveTypes(entity),
-        typePersonnalise = entity.typePersonnalise,
-        statut = entity.statut,
-        clientNom = entity.client?.nom,
-        montantHT = entity.montantHT,
-        avancementGlobal = entity.avancementGlobal,
-        dateDebut = entity.dateDebut,
-        dateFin = entity.dateFin,
-        responsableNom = entity.responsableProjet?.let { "${it.prenom} ${it.nom}" }
-    )
+    fun toSummaryResponse(entity: Projet): ProjetSummaryResponse {
+        return try {
+            val id = entity.id ?: throw IllegalStateException("Projet sans ID")
+            val effectiveType = entity.type ?: TypeProjet.AUTRE
+            ProjetSummaryResponse(
+                id = id,
+                nom = entity.nom ?: "",
+                type = effectiveType,
+                types = effectiveTypes(entity),
+                typePersonnalise = entity.typePersonnalise,
+                statut = entity.statut,
+                clientNom = entity.client?.nom,
+                montantHT = entity.montantHT,
+                avancementGlobal = entity.avancementGlobal ?: BigDecimal.ZERO,
+                dateDebut = entity.dateDebut,
+                dateFin = entity.dateFin,
+                responsableNom = entity.responsableProjet?.let { 
+                    val prenom = it.prenom ?: ""
+                    val nom = it.nom ?: ""
+                    "$prenom $nom".trim().ifBlank { null }
+                }
+            )
+        } catch (e: Exception) {
+            throw IllegalStateException("Erreur lors du mapping du projet ID=${entity.id}: ${e.message}", e)
+        }
+    }
 }

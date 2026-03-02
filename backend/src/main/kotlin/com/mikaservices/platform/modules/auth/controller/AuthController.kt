@@ -10,7 +10,6 @@ import com.mikaservices.platform.modules.auth.dto.request.Verify2FARequest
 import com.mikaservices.platform.modules.auth.dto.request.Verify2FASetupRequest
 import com.mikaservices.platform.modules.auth.dto.request.Disable2FARequest
 import com.mikaservices.platform.modules.auth.dto.response.AuthResponse
-import com.mikaservices.platform.modules.auth.dto.response.Login2FAPendingResponse
 import com.mikaservices.platform.modules.auth.dto.response.LoginResult
 import com.mikaservices.platform.modules.auth.dto.response.Setup2FAResponse
 import com.mikaservices.platform.modules.auth.service.AuthService
@@ -32,8 +31,19 @@ import org.springframework.web.bind.annotation.*
 class AuthController(
     private val authService: AuthService,
     private val authCookieHelper: AuthCookieHelper,
-    @Value("\${app.auth.refresh-cookie.name:refreshToken}") private val refreshCookieName: String
+    @Value("\${app.auth.refresh-cookie.name:refreshToken}") private val refreshCookieName: String,
+    @Value("\${app.auth.lockout-max-attempts:5}") private val lockoutMaxAttempts: Int,
+    @Value("\${app.auth.lockout-duration-minutes:15}") private val lockoutDurationMinutes: Int
 ) {
+
+    @GetMapping("/login-policy")
+    @Operation(summary = "Politique de verrouillage", description = "Règles applicables après échecs de connexion (lecture seule)")
+    fun getLoginPolicy(): ResponseEntity<Map<String, Int>> {
+        return ResponseEntity.ok(mapOf(
+            "lockoutMaxAttempts" to lockoutMaxAttempts,
+            "lockoutDurationMinutes" to lockoutDurationMinutes
+        ))
+    }
     
     @PostMapping("/login")
     @Operation(summary = "Connexion", description = "Authentification. Si 2FA activé, retourne requires2FA + tempToken ; sinon retourne les tokens.")
@@ -44,7 +54,8 @@ class AuthController(
     ): ResponseEntity<Any> {
         return when (val result = authService.login(request, httpRequest)) {
             is LoginResult.Success -> {
-                authCookieHelper.addRefreshTokenCookie(httpResponse, result.response.refreshToken)
+                val cookieMaxAge = result.response.sessionExpiresIn?.toInt()
+                authCookieHelper.addRefreshTokenCookie(httpResponse, result.response.refreshToken, cookieMaxAge)
                 ResponseEntity.ok(result.response)
             }
             is LoginResult.Requires2FA -> ResponseEntity.ok(result.pending)
@@ -54,12 +65,13 @@ class AuthController(
     @PostMapping("/verify-2fa")
     @Operation(summary = "Vérifier le code 2FA", description = "Valide le code TOTP et retourne les tokens (après login avec 2FA activé)")
     fun verify2FA(
-        @Valid @RequestBody request: Verify2FARequest,
+        @RequestBody request: Verify2FARequest,
         httpRequest: HttpServletRequest,
         httpResponse: HttpServletResponse
     ): ResponseEntity<AuthResponse> {
         val response = authService.verify2FA(request, httpRequest)
-        authCookieHelper.addRefreshTokenCookie(httpResponse, response.refreshToken)
+        val cookieMaxAge = response.sessionExpiresIn?.toInt()
+        authCookieHelper.addRefreshTokenCookie(httpResponse, response.refreshToken, cookieMaxAge)
         return ResponseEntity.ok(response)
     }
 
@@ -74,7 +86,7 @@ class AuthController(
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Valider la configuration 2FA", description = "Vérifie le code et active la 2FA")
     fun verifySetup2FA(
-        @Valid @RequestBody request: Verify2FASetupRequest
+        @RequestBody request: Verify2FASetupRequest
     ): ResponseEntity<UserResponse> {
         val user = authService.verifySetup2FA(request)
         return ResponseEntity.ok(user)
@@ -89,7 +101,7 @@ class AuthController(
         authService.disable2FA(request)
         return ResponseEntity.ok(mapOf("message" to "Authentification à deux facteurs désactivée"))
     }
-    
+
     @PostMapping("/refresh")
     @Operation(summary = "Renouvellement de token", description = "Renouvelle le token d'accès (refresh token en cookie httpOnly ou dans le body)")
     fun refreshToken(
@@ -100,7 +112,8 @@ class AuthController(
         val refreshToken = getRefreshTokenFromRequest(request, httpRequest)
             ?: throw BadRequestException("Refresh token manquant (cookie ou body)")
         val response = authService.refreshToken(RefreshTokenRequest(refreshToken))
-        authCookieHelper.addRefreshTokenCookie(httpResponse, response.refreshToken)
+        val cookieMaxAge = response.sessionExpiresIn?.toInt()
+        authCookieHelper.addRefreshTokenCookie(httpResponse, response.refreshToken, cookieMaxAge)
         return ResponseEntity.ok(response)
     }
     

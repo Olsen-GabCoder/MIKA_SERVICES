@@ -20,7 +20,7 @@ export function getMockProjetsPage(page = 0, size = 20): PageResponse<ProjetSumm
   return pageResponse(mockProjetSummaries, page, size)
 }
 
-const PHASES: PhaseEtude[] = ['APS', 'APD', 'EXE', 'GEOTECHNIQUE', 'HYDRAULIQUE', 'EIES']
+const PHASES: PhaseEtude[] = ['APS', 'APD', 'EXE', 'GEOTECHNIQUE', 'HYDRAULIQUE', 'EIES', 'PAES']
 
 function mockAvancementEtudes(projetId: number): AvancementEtudeProjet[] {
   return PHASES.map((phase, i) => ({
@@ -68,6 +68,7 @@ export function getMockProjetById(id: number): (Projet & { _fromMock?: boolean }
     montantInitial: s.montantHT,
     montantRevise: s.montantHT ? Math.round(s.montantHT * 1.05) : undefined,
     delaiMois: s.id <= 2 ? 8 : s.id === 3 ? 12 : 6,
+    modeSuiviMensuel: 'AUTO',
     dateDebut: s.dateDebut,
     dateFin: s.dateFin,
     dateDebutReel: s.dateDebut,
@@ -106,8 +107,8 @@ export function getMockPointsBloquants(projetId: number): PointBloquant[] {
 export function getMockPrevisions(projetId: number): Prevision[] {
   const nom = mockProjetSummaries.find((p) => p.id === projetId)?.nom ?? ''
   return [
-    { id: projetId * 10 + 1, projetId, projetNom: nom, type: 'HEBDOMADAIRE', annee: 2025, semaine: 2, description: 'Décompte N°3', statut: 'VALIDEE', dateDebut: '2025-01-06', dateFin: '2025-01-12' },
-    { id: projetId * 10 + 2, projetId, projetNom: nom, type: 'MENSUELLE', annee: 2025, description: 'Transmission documents MTPC - validation DQE', statut: 'BROUILLON' },
-    { id: projetId * 10 + 3, projetId, projetNom: nom, type: 'TRIMESTRIELLE', annee: 2025, description: 'Délai d\'exécution actualisé à communiquer en S2', statut: 'VALIDEE' },
+    { id: projetId * 10 + 1, projetId, projetNom: nom, type: 'HEBDOMADAIRE', annee: 2025, semaine: 2, description: 'Décompte N°3', avancementPct: 75, dateDebut: '2025-01-06', dateFin: '2025-01-12' },
+    { id: projetId * 10 + 2, projetId, projetNom: nom, type: 'MENSUELLE', annee: 2025, description: 'Transmission documents MTPC - validation DQE', avancementPct: 30 },
+    { id: projetId * 10 + 3, projetId, projetNom: nom, type: 'TRIMESTRIELLE', annee: 2025, description: 'Délai d\'exécution actualisé à communiquer en S2', avancementPct: 100 },
   ]
 }

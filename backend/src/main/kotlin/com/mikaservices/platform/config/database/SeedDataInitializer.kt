@@ -203,9 +203,9 @@ class SeedDataInitializer(
         if (projets.isEmpty()) return
         val previsions = mutableListOf<Prevision>()
         projets.take(3).forEach { p ->
-            previsions.add(Prevision(p, 2, 2025, "Décompte N°3", TypePrevision.HEBDOMADAIRE, LocalDate.of(2025, 1, 6), LocalDate.of(2025, 1, 12), StatutPrevision.VALIDEE))
-            previsions.add(Prevision(p, null, 2025, "Transmission documents MTPC - validation DQE", TypePrevision.MENSUELLE, null, null, StatutPrevision.BROUILLON))
-            previsions.add(Prevision(p, null, 2025, "Délai d'exécution actualisé S2", TypePrevision.TRIMESTRIELLE, null, null, StatutPrevision.VALIDEE))
+            previsions.add(Prevision(p, 2, 2025, "Décompte N°3", TypePrevision.HEBDOMADAIRE, LocalDate.of(2025, 1, 6), LocalDate.of(2025, 1, 12), avancementPct = 75))
+            previsions.add(Prevision(p, null, 2025, "Transmission documents MTPC - validation DQE", TypePrevision.MENSUELLE, null, null, avancementPct = 30))
+            previsions.add(Prevision(p, null, 2025, "Délai d'exécution actualisé S2", TypePrevision.TRIMESTRIELLE, null, null, avancementPct = 100))
         }
         previsionRepository.saveAll(previsions)
         logger.info("${previsions.size} prévisions créées")

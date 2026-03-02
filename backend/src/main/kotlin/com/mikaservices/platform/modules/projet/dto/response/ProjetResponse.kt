@@ -3,6 +3,7 @@ package com.mikaservices.platform.modules.projet.dto.response
 import com.mikaservices.platform.common.enums.SourceFinancement
 import com.mikaservices.platform.common.enums.StatutProjet
 import com.mikaservices.platform.common.enums.TypeProjet
+import com.mikaservices.platform.common.enums.ModeSuiviMensuel
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -27,6 +28,7 @@ data class ProjetResponse(
     val montantInitial: BigDecimal?,
     val montantRevise: BigDecimal?,
     val delaiMois: Int?,
+    val modeSuiviMensuel: ModeSuiviMensuel,
     val dateDebut: LocalDate?,
     val dateFin: LocalDate?,
     val dateDebutReel: LocalDate?,

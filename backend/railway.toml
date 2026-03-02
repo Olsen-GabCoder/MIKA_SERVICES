@@ -1,0 +1,4 @@
+# Force Railway à utiliser le Dockerfile (pas Railpack)
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"

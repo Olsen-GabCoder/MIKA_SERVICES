@@ -6,5 +6,6 @@ enum class PhaseEtude {
     EXE,
     GEOTECHNIQUE,
     HYDRAULIQUE,
-    EIES
+    EIES,
+    PAES
 }

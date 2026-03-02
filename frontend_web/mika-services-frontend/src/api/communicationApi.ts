@@ -16,6 +16,26 @@ export const messageApi = {
     const response = await api.post(API_ENDPOINTS.MESSAGES.ENVOYER(expediteurId), request)
     return response.data
   },
+  envoyerAvecPiecesJointes: async (
+    expediteurId: number,
+    request: MessageCreateRequest,
+    files: File[]
+  ): Promise<Message> => {
+    const form = new FormData()
+    form.append('request', new Blob([JSON.stringify(request)], { type: 'application/json' }))
+    files.forEach((f) => form.append('files', f))
+    const response = await api.post(API_ENDPOINTS.MESSAGES.ENVOYER_AVEC_PIECES(expediteurId), form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
+  downloadPieceJointe: async (pieceJointeId: number, userId: number): Promise<{ blob: Blob; filename: string }> => {
+    const url = API_ENDPOINTS.MESSAGES.PIECE_JOINTE_DOWNLOAD(pieceJointeId, userId)
+    const res = await api.get(url, { responseType: 'blob' })
+    const disposition = res.headers['content-disposition'] as string | undefined
+    const filename = disposition?.match(/filename="?([^"]+)"?/)?.[1] ?? 'piece-jointe'
+    return { blob: res.data as Blob, filename }
+  },
   getRecus: async (userId: number, page = 0, size = 20): Promise<PaginatedResponse<Message>> => {
     if (USE_MOCK) return Promise.resolve(getMockMessagesRecus(userId, page, size))
     try {
@@ -56,6 +76,19 @@ export const messageApi = {
   },
   delete: async (messageId: number): Promise<void> => {
     await api.delete(API_ENDPOINTS.MESSAGES.DELETE(messageId))
+  },
+  archiveConversation: async (userId: number, peerUserId: number): Promise<void> => {
+    await api.post(API_ENDPOINTS.MESSAGES.ARCHIVE, null, { params: { userId, peerUserId } })
+  },
+  unarchiveConversation: async (userId: number, peerUserId: number): Promise<void> => {
+    await api.post(API_ENDPOINTS.MESSAGES.UNARCHIVE, null, { params: { userId, peerUserId } })
+  },
+  getArchivedPeerIds: async (userId: number): Promise<number[]> => {
+    const response = await api.get<number[]>(API_ENDPOINTS.MESSAGES.ARCHIVED_PEERS(userId))
+    return response.data
+  },
+  suppressForMe: async (messageId: number, userId: number): Promise<void> => {
+    await api.post(API_ENDPOINTS.MESSAGES.SUPPRESS_FOR_ME(messageId), null, { params: { userId } })
   },
 }
 

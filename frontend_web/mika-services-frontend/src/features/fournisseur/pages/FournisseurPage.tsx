@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { fetchFournisseurs, fetchCommandes, createFournisseur, deleteFournisseur } from '../../../store/slices/fournisseurSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { useFormatNumber } from '@/hooks/useFormatNumber'
 const statutColors: Record<string, string> = {
   BROUILLON: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200', ENVOYEE: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200',
   CONFIRMEE: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-200', EN_LIVRAISON: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200',
@@ -11,12 +12,12 @@ const statutColors: Record<string, string> = {
 }
 
 export default function FournisseurPage() {
-  const { t, i18n } = useTranslation('fournisseur')
+  const { t } = useTranslation('fournisseur')
+  const { formatMontant } = useFormatNumber()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
   const { fournisseurs, commandes, loading, error, totalFournisseurs, totalCommandes } = useAppSelector(s => s.fournisseur)
   const [tab, setTab] = useState<'fournisseurs' | 'commandes'>('fournisseurs')
-  const locale = i18n.language === 'en' ? 'en-GB' : 'fr-FR'
   const [showModal, setShowModal] = useState(false)
   const [formNom, setFormNom] = useState(''); const [formTel, setFormTel] = useState('')
   const [formEmail, setFormEmail] = useState(''); const [formSpec, setFormSpec] = useState('')
@@ -41,8 +42,6 @@ export default function FournisseurPage() {
   }
 
   const resetForm = () => { setFormNom(''); setFormTel(''); setFormEmail(''); setFormSpec(''); setFormAdresse(''); setFormContact('') }
-
-  const formatMontant = (v: number | null) => v ? new Intl.NumberFormat(locale, { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(v) : '—'
 
   return (
     <PageContainer size="wide" className="space-y-6">

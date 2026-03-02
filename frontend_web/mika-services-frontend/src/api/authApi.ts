@@ -1,10 +1,12 @@
 import apiClient from './axios'
 import type { AuthResponse, Login2FAPendingResponse } from '@/types'
 import { API_ENDPOINTS } from '@/constants/api'
+import { setTokenStorageMode, setAccessToken, getAccessToken, removeAccessToken } from '@/utils/tokenStorage'
 
 export interface LoginRequest {
   email: string
   password: string
+  rememberMe?: boolean
 }
 
 export type LoginResponse = AuthResponse | Login2FAPendingResponse
@@ -39,17 +41,19 @@ export const authApi = {
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, credentials)
     const data = response.data
-    // Si succès direct (sans 2FA), stocker l'access token
+    // Si succès direct (sans 2FA), appliquer le mode de stockage (logout on close) puis stocker le token
     if (!isLogin2FAPending(data) && data.accessToken) {
-      localStorage.setItem('accessToken', data.accessToken)
+      setTokenStorageMode(data.user?.logoutOnBrowserClose ?? false)
+      setAccessToken(data.accessToken)
     }
     return data
   },
 
-  verify2FA: async (tempToken: string, code: string): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.VERIFY_2FA, { tempToken, code })
+  verify2FA: async (tempToken: string, code: string, rememberMe: boolean = false): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.VERIFY_2FA, { tempToken, code, rememberMe })
     if (response.data.accessToken) {
-      localStorage.setItem('accessToken', response.data.accessToken)
+      setTokenStorageMode(response.data.user?.logoutOnBrowserClose ?? false)
+      setAccessToken(response.data.accessToken)
     }
     return response.data
   },
@@ -72,13 +76,14 @@ export const authApi = {
   refreshToken: async (): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.REFRESH, {})
     if (response.data.accessToken) {
-      localStorage.setItem('accessToken', response.data.accessToken)
+      setTokenStorageMode(response.data.user?.logoutOnBrowserClose ?? false)
+      setAccessToken(response.data.accessToken)
     }
     return response.data
   },
 
   logout: async (): Promise<void> => {
-    const token = localStorage.getItem('accessToken')
+    const token = getAccessToken()
     if (token) {
       try {
         await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT, {}, {
@@ -90,11 +95,19 @@ export const authApi = {
         console.error('Erreur lors de la déconnexion:', error)
       }
     }
-    localStorage.removeItem('accessToken')
+    removeAccessToken()
   },
 
   getMe: async (): Promise<AuthResponse['user']> => {
     const response = await apiClient.get<AuthResponse['user']>(API_ENDPOINTS.AUTH.ME)
+    return response.data
+  },
+
+  /** Politique de verrouillage après échecs de connexion (lecture seule). */
+  getLoginPolicy: async (): Promise<{ lockoutMaxAttempts: number; lockoutDurationMinutes: number }> => {
+    const response = await apiClient.get<{ lockoutMaxAttempts: number; lockoutDurationMinutes: number }>(
+      API_ENDPOINTS.AUTH.LOGIN_POLICY
+    )
     return response.data
   },
 

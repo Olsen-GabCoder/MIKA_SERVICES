@@ -62,6 +62,7 @@ app:
   scheduler:
     session-cleanup-cron: ${SESSION_CLEANUP_CRON:0 0 3 * * ?}
     password-reset-cleanup-cron: ${PASSWORD_RESET_CLEANUP_CRON:0 0 4 * * ?}
+    digest-cron: ${DIGEST_CRON:0 0 * * * ?}
   rate-limit:
     login-max-attempts: ${LOGIN_RATE_LIMIT_MAX:5}
     login-window-minutes: ${LOGIN_RATE_LIMIT_WINDOW_MINUTES:1}

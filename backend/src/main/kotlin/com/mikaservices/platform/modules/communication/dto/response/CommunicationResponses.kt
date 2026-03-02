@@ -10,6 +10,13 @@ data class UserMinimalResponse(
     val email: String
 )
 
+data class PieceJointeResponse(
+    val id: Long,
+    val nomOriginal: String,
+    val typeMime: String?,
+    val tailleOctets: Long
+)
+
 data class MessageResponse(
     val id: Long,
     val expediteur: UserMinimalResponse,
@@ -20,6 +27,8 @@ data class MessageResponse(
     val lu: Boolean,
     val dateLecture: LocalDateTime?,
     val parentId: Long?,
+    val piecesJointes: List<PieceJointeResponse> = emptyList(),
+    val mentions: List<UserMinimalResponse> = emptyList(),
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
 )

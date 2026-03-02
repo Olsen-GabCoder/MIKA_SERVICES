@@ -12,11 +12,16 @@ import {
   createRisque,
   deleteRisque,
 } from '../../../store/slices/securiteSlice'
+import { fetchProjets } from '@/store/slices/projetSlice'
 import {
   TypeIncident, GraviteIncident, StatutIncident, NiveauRisque,
 } from '../../../types/securite'
 import { PageContainer } from '@/components/layout/PageContainer'
 import type { IncidentCreateRequest, IncidentUpdateRequest, RisqueCreateRequest } from '../../../types/securite'
+
+const CARD = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm dark:shadow-none overflow-hidden'
+const CARD_HEADER = 'px-5 py-3 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide'
+const CARD_BODY = 'p-5'
 
 const statutColors: Record<StatutIncident, string> = {
   [StatutIncident.DECLARE]: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-200',
@@ -64,6 +69,10 @@ export default function SecuritePage() {
   const [rNiveau, setRNiveau] = useState<NiveauRisque>(NiveauRisque.MOYEN)
   const [rDescription, setRDescription] = useState('')
   const [rZone, setRZone] = useState('')
+
+  useEffect(() => {
+    dispatch(fetchProjets({ page: 0, size: 100 }))
+  }, [dispatch])
 
   useEffect(() => {
     if (selectedProjetId) {
@@ -124,7 +133,7 @@ export default function SecuritePage() {
   const resetRisqueForm = () => { setRTitre(''); setRNiveau(NiveauRisque.MOYEN); setRDescription(''); setRZone('') }
 
   return (
-    <PageContainer size="wide" className="space-y-6">
+    <PageContainer size="full" className="space-y-6 bg-gray-50/80 dark:bg-gray-900/80">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('pageTitle')}</h1>
@@ -133,138 +142,141 @@ export default function SecuritePage() {
         {selectedProjetId && (
           <button
             onClick={() => activeTab === 'incidents' ? setShowIncidentModal(true) : setShowRisqueModal(true)}
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition flex items-center gap-2"
+            className="bg-primary text-white px-5 py-2.5 rounded-lg hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary font-medium shadow-sm transition flex items-center gap-2"
           >
-            <span className="text-lg">+</span>
+            <span className="text-lg leading-none">+</span>
             {activeTab === 'incidents' ? t('declareIncident') : t('addRisk')}
           </button>
         )}
       </div>
 
-      {/* Sélection projet */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-4">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('selectProject')}</label>
-        <select
-          value={selectedProjetId ?? ''}
-          onChange={(e) => setSelectedProjetId(e.target.value ? Number(e.target.value) : null)}
-          className="w-full md:w-1/2 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
-        >
-          <option value="">{t('chooseProject')}</option>
-          {projets.map((p) => (
-            <option key={p.id} value={p.id}>{p.nom}</option>
-          ))}
-        </select>
-      </div>
+      {/* Filtres : sélection projet */}
+      <section className={CARD}>
+        <h2 className={CARD_HEADER}>{t('selectProject')}</h2>
+        <div className={CARD_BODY}>
+          <select
+            value={selectedProjetId ?? ''}
+            onChange={(e) => setSelectedProjetId(e.target.value ? Number(e.target.value) : null)}
+            className="w-full max-w-md border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary focus:border-primary transition"
+          >
+            <option value="">{t('chooseProject')}</option>
+            {projets.map((p) => (
+              <option key={p.id} value={p.id}>{p.nom}</option>
+            ))}
+          </select>
+        </div>
+      </section>
 
       {/* KPI */}
       {summary && selectedProjetId && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-600 p-4 text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{summary.totalIncidents}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{t('totalIncidents')}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-600 p-4 text-center">
-            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{summary.incidentsGraves}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{t('seriousIncidents')}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-600 p-4 text-center">
-            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{summary.risquesCritiques}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{t('criticalRisks')}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-600 p-4 text-center">
-            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{summary.totalJoursArret}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{t('daysOff')}</p>
-          </div>
+          {[
+            { value: summary.totalIncidents, label: t('totalIncidents'), className: 'text-gray-900 dark:text-gray-100' },
+            { value: summary.incidentsGraves, label: t('seriousIncidents'), className: 'text-red-600 dark:text-red-400' },
+            { value: summary.risquesCritiques, label: t('criticalRisks'), className: 'text-orange-600 dark:text-orange-400' },
+            { value: summary.totalJoursArret, label: t('daysOff'), className: 'text-yellow-600 dark:text-yellow-400' },
+          ].map((kpi, i) => (
+            <div key={i} className={CARD}>
+              <div className={`${CARD_BODY} text-center`}>
+                <p className={`text-2xl font-bold tabular-nums ${kpi.className}`}>{kpi.value}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{kpi.label}</p>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Onglets */}
+      {/* Onglets + Liste incidents / risques */}
       {selectedProjetId && (
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-fit">
-          <button
-            onClick={() => setActiveTab('incidents')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'incidents' ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-          >
-            {t('tabIncidents')} ({incidents.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('risques')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'risques' ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-          >
-            {t('tabRisques')} ({risques.length})
-          </button>
-        </div>
-      )}
-
-      {/* Liste incidents */}
-      {selectedProjetId && activeTab === 'incidents' && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600">
-          {loading ? (
-            <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('loading')}</div>
-          ) : incidents.length === 0 ? (
-            <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('noIncidentsDeclared')}</div>
-          ) : (
-            <div className="divide-y divide-gray-100 dark:divide-gray-600">
-              {incidents.map((inc) => (
-                <div key={inc.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/70 transition">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-mono text-gray-400 dark:text-gray-500">{inc.reference}</span>
-                        <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{inc.titre}</h3>
+        <section className={CARD}>
+          <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 px-5 py-3">
+            <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mr-2">{t('tabIncidents')} / {t('tabRisques')}</span>
+            <div className="flex rounded-lg bg-gray-200/80 dark:bg-gray-600/80 p-1 gap-0.5">
+              <button
+                onClick={() => setActiveTab('incidents')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition shadow-sm ${
+                  activeTab === 'incidents'
+                    ? 'bg-primary text-white hover:bg-primary-dark dark:bg-primary-light'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/50 dark:hover:bg-gray-500/30'
+                }`}
+              >
+                {t('tabIncidents')} ({incidents.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('risques')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition shadow-sm ${
+                  activeTab === 'risques'
+                    ? 'bg-primary text-white hover:bg-primary-dark dark:bg-primary-light'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/50 dark:hover:bg-gray-500/30'
+                }`}
+              >
+                {t('tabRisques')} ({risques.length})
+              </button>
+            </div>
+          </div>
+          {activeTab === 'incidents' ? (
+            loading ? (
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('loading')}</div>
+            ) : incidents.length === 0 ? (
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('noIncidentsDeclared')}</div>
+            ) : (
+              <div className="divide-y divide-gray-200 dark:divide-gray-600">
+                {incidents.map((inc) => (
+                  <div key={inc.id} className="px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-mono text-gray-500 dark:text-gray-400">{inc.reference}</span>
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{inc.titre}</h3>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs mt-2">
+                          <span className={`px-2.5 py-1 rounded-md font-medium ${statutColors[inc.statut]}`}>{t(`statut.${inc.statut}`)}</span>
+                          <span className={`px-2.5 py-1 rounded-md font-medium ${graviteColors[inc.gravite]}`}>{t(`gravite.${inc.gravite}`)}</span>
+                          <span className="px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-200">{t(`type.${inc.typeIncident}`)}</span>
+                          <span className="px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{inc.dateIncident}</span>
+                          {inc.lieu && <span className="px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{inc.lieu}</span>}
+                          {inc.nbBlesses > 0 && <span className="px-2.5 py-1 rounded-md bg-red-50 dark:bg-red-900/40 text-red-600 dark:text-red-200">{inc.nbBlesses} {t('injured')}</span>}
+                          {inc.arretTravail && <span className="px-2.5 py-1 rounded-md bg-orange-50 dark:bg-orange-900/40 text-orange-600 dark:text-orange-200">{inc.nbJoursArret} {t('daysOffShort')}</span>}
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2 text-xs mt-2">
-                        <span className={`px-2 py-1 rounded-full font-medium ${statutColors[inc.statut]}`}>{t(`statut.${inc.statut}`)}</span>
-                        <span className={`px-2 py-1 rounded-full font-medium ${graviteColors[inc.gravite]}`}>{t(`gravite.${inc.gravite}`)}</span>
-                        <span className="px-2 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200">{t(`type.${inc.typeIncident}`)}</span>
-                        <span className="px-2 py-1 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{inc.dateIncident}</span>
-                        {inc.lieu && <span className="px-2 py-1 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{inc.lieu}</span>}
-                        {inc.nbBlesses > 0 && <span className="px-2 py-1 rounded-full bg-red-50 dark:bg-red-900/40 text-red-600 dark:text-red-200">{inc.nbBlesses} {t('injured')}</span>}
-                        {inc.arretTravail && <span className="px-2 py-1 rounded-full bg-orange-50 dark:bg-orange-900/40 text-orange-600 dark:text-orange-200">{inc.nbJoursArret} {t('daysOffShort')}</span>}
+                      <div className="flex flex-col gap-2 shrink-0">
+                        <select value={inc.statut} onChange={(e) => handleStatusChange(inc.id, e.target.value as StatutIncident)} className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary">
+                          {Object.values(StatutIncident).map((s) => (<option key={s} value={s}>{t(`statut.${s}`)}</option>))}
+                        </select>
+                        <button onClick={() => handleDeleteIncident(inc.id)} className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition">{t('delete')}</button>
                       </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <select value={inc.statut} onChange={(e) => handleStatusChange(inc.id, e.target.value as StatutIncident)} className="text-xs border border-gray-200 dark:border-gray-600 rounded px-2 py-1 dark:bg-gray-700 dark:text-gray-100">
-                        {Object.values(StatutIncident).map((s) => (<option key={s} value={s}>{t(`statut.${s}`)}</option>))}
-                      </select>
-                      <button onClick={() => handleDeleteIncident(inc.id)} className="text-xs text-red-500 hover:text-red-700 transition">{t('delete')}</button>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Liste risques */}
-      {selectedProjetId && activeTab === 'risques' && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600">
-          {loading ? (
-            <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('loading')}</div>
-          ) : risques.length === 0 ? (
-            <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('noRisksIdentified')}</div>
+                ))}
+              </div>
+            )
           ) : (
-            <div className="divide-y divide-gray-100 dark:divide-gray-600">
-              {risques.map((r) => (
-                <div key={r.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/70 transition">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate mb-1">{r.titre}</h3>
-                      {r.description && <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">{r.description}</p>}
-                      <div className="flex flex-wrap gap-2 text-xs">
-                        <span className={`px-2 py-1 rounded-full font-medium ${niveauColors[r.niveau]}`}>{t(`niveau.${r.niveau}`)}</span>
-                        {r.zoneConcernee && <span className="px-2 py-1 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{r.zoneConcernee}</span>}
-                        <span className={`px-2 py-1 rounded-full ${r.actif ? 'bg-green-50 dark:bg-green-900/40 text-green-700 dark:text-green-200' : 'bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500'}`}>{r.actif ? t('active') : t('inactive')}</span>
+            loading ? (
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('loading')}</div>
+            ) : risques.length === 0 ? (
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('noRisksIdentified')}</div>
+            ) : (
+              <div className="divide-y divide-gray-200 dark:divide-gray-600">
+                {risques.map((r) => (
+                  <div key={r.id} className="px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate mb-1">{r.titre}</h3>
+                        {r.description && <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">{r.description}</p>}
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          <span className={`px-2.5 py-1 rounded-md font-medium ${niveauColors[r.niveau]}`}>{t(`niveau.${r.niveau}`)}</span>
+                          {r.zoneConcernee && <span className="px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{r.zoneConcernee}</span>}
+                          <span className={`px-2.5 py-1 rounded-md ${r.actif ? 'bg-green-50 dark:bg-green-900/40 text-green-700 dark:text-green-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'}`}>{r.actif ? t('active') : t('inactive')}</span>
+                        </div>
                       </div>
+                      <button onClick={() => handleDeleteRisque(r.id)} className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition shrink-0">{t('delete')}</button>
                     </div>
-                    <button onClick={() => handleDeleteRisque(r.id)} className="text-xs text-red-500 hover:text-red-700 transition">{t('delete')}</button>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )
           )}
-        </div>
+        </section>
       )}
 
       {/* Modal incident */}

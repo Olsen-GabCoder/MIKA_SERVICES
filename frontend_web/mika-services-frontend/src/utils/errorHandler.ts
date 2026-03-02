@@ -1,6 +1,14 @@
 import { AxiosError } from 'axios'
 import { i18n } from '@/i18n'
 
+/** Indique si l'erreur est due à l'absence de réseau (pour fallback cache mode hors ligne). */
+export function isNetworkError(error: unknown): boolean {
+  if (error instanceof AxiosError) {
+    return !error.response && (error.code === 'ERR_NETWORK' || error.message === 'Network Error')
+  }
+  return false
+}
+
 export interface ApiError {
   timestamp?: string
   status: number

@@ -54,6 +54,7 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.POST, "/auth/forgot-password").permitAll()
                     .requestMatchers(HttpMethod.POST, "/auth/reset-password").permitAll()
                     .requestMatchers(HttpMethod.POST, "/auth/verify-2fa").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/auth/login-policy").permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
                     .requestMatchers("/swagger-ui.html").permitAll()
                     .requestMatchers("/v3/api-docs/**").permitAll()

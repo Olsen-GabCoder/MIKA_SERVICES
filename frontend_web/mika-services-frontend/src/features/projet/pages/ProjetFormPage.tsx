@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useConfirm } from '@/contexts/ConfirmContext'
@@ -9,7 +9,8 @@ import { createProjet, updateProjet, fetchProjetById, fetchClients, createClient
 import { userApi } from '@/api/userApi'
 import { projetApi, pointBloquantApi } from '@/api/projetApi'
 import type { User } from '@/types'
-import type { ProjetCreateRequest, ProjetUpdateRequest, TypeProjet, StatutProjet, SourceFinancement, TypeClient, PhaseEtude, AvancementEtudeProjet, PointBloquant, Prevision, Priorite, StatutPointBloquant, TypePrevision, StatutPrevision } from '@/types/projet'
+import type { ProjetCreateRequest, ProjetUpdateRequest, TypeProjet, StatutProjet, SourceFinancement, TypeClient, PhaseEtude, EtatValidationEtude, PointBloquant, Prevision, Priorite, StatutPointBloquant, TypePrevision, ModeSuiviMensuel } from '@/types/projet'
+import { useFormatNumber } from '@/hooks/useFormatNumber'
 
 /** Types de projet : chaque type est distinct (sans regroupement) + type personnalisé */
 const TYPE_OPTIONS: { value: TypeProjet; label: string }[] = [
@@ -296,12 +297,6 @@ const TYPE_PREVISION_OPTIONS: { value: TypePrevision; label: string }[] = [
   { value: 'MATERIEL', label: 'Matériel' },
 ]
 
-const STATUT_PREVISION_OPTIONS: { value: StatutPrevision; label: string }[] = [
-  { value: 'BROUILLON', label: 'Brouillon' },
-  { value: 'VALIDEE', label: 'Validée' },
-  { value: 'REALISEE', label: 'Réalisée' },
-  { value: 'ANNULEE', label: 'Annulée' },
-]
 
 const STATUT_OPTIONS: { value: StatutProjet; label: string }[] = [
   { value: 'EN_ATTENTE', label: 'En attente' },
@@ -333,7 +328,9 @@ const TYPE_CLIENT_OPTIONS: { value: TypeClient; label: string }[] = [
   { value: 'PARTICULIER', label: 'Particulier' },
 ]
 
-const PHASES_ETUDE: PhaseEtude[] = ['APS', 'APD', 'EXE', 'GEOTECHNIQUE', 'HYDRAULIQUE', 'EIES']
+const PHASES_ETUDE: PhaseEtude[] = ['APS', 'APD', 'EXE', 'GEOTECHNIQUE', 'HYDRAULIQUE', 'EIES', 'PAES']
+/** Valeurs possibles pour l'état de validation (liste déroulante) */
+const ETATS_VALIDATION_ETUDE: EtatValidationEtude[] = ['NON_DEPOSE', 'EN_ATTENTE', 'EN_COURS', 'VALIDE', 'REFUSE']
 
 /** Calcule la date de fin contractuelle à partir de la date de début et du délai en mois (imposé par le client). */
 function computeDateFinFromDebutEtDelai(dateDebut: string, delaiMois: number | undefined): string {
@@ -445,7 +442,8 @@ export interface SuiviMensuelRow {
 }
 
 export const ProjetFormPage = () => {
-  const { t, i18n } = useTranslation('projet')
+  const { t } = useTranslation('projet')
+  const { formatNumber } = useFormatNumber()
   const monthsShort = useMemo(() => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => t(`detail.monthsShort_${i}`)), [t])
   const confirm = useConfirm()
   const { id } = useParams<{ id: string }>()
@@ -458,8 +456,9 @@ export const ProjetFormPage = () => {
   const [dateErrors, setDateErrors] = useState<{ dateDebut?: string; dateFin?: string; dateDebutReel?: string; dateFinReelle?: string }>({})
   const [users, setUsers] = useState<User[]>([])
 
+  const isAdmin = currentUser?.roles?.some((r) => r.code === 'ADMIN' || r.code === 'SUPER_ADMIN') ?? false
   const isChefDeProjet = !isEdit || Boolean(projetDetail?.responsableProjet && currentUser?.id === projetDetail.responsableProjet.id)
-  const readOnly = isEdit && !isChefDeProjet
+  const readOnly = isEdit && !isChefDeProjet && !isAdmin
 
   const [form, setForm] = useState<ProjetCreateRequest>({
     nom: '',
@@ -467,12 +466,17 @@ export const ProjetFormPage = () => {
     statut: 'EN_ATTENTE',
     description: '',
     numeroMarche: '',
+    modeSuiviMensuel: 'AUTO',
   })
   const [sansNumeroMarche, setSansNumeroMarche] = useState(false)
   const [clientModalOpen, setClientModalOpen] = useState(false)
   const [newClient, setNewClient] = useState({ nom: '', type: 'ENTREPRISE_PRIVEE' as TypeClient })
   const [suiviMensuelRows, setSuiviMensuelRows] = useState<SuiviMensuelRow[]>([])
   const [savedSuiviMensuel, setSavedSuiviMensuel] = useState<{ mois: number; annee: number; caPrevisionnel: number; caRealise: number }[]>([])
+  const prevSuiviModeRef = useRef<ModeSuiviMensuel>('AUTO')
+  const [manualSuiviNewMonth, setManualSuiviNewMonth] = useState<number>(new Date().getMonth() + 1)
+  const [manualSuiviNewYear, setManualSuiviNewYear] = useState<number>(new Date().getFullYear())
+  const [manualSuiviError, setManualSuiviError] = useState<string | null>(null)
   const [avancementEtudesRows, setAvancementEtudesRows] = useState<{ phase: PhaseEtude; avancementPct?: number; dateDepot?: string; etatValidation?: string }[]>([])
   const [pointsBloquants, setPointsBloquants] = useState<PointBloquant[]>([])
   const [addingPointBloquant, setAddingPointBloquant] = useState(false)
@@ -498,7 +502,7 @@ export const ProjetFormPage = () => {
       }
       const initial = {
         nom: projetDetail.nom,
-        types: (projetDetail.types && projetDetail.types.length > 0) ? projetDetail.types : (projetDetail.type ? [projetDetail.type] : ['VOIRIE']),
+        types: ((projetDetail.types && projetDetail.types.length > 0) ? projetDetail.types : (projetDetail.type ? [projetDetail.type] : ['VOIRIE'])) as TypeProjet[],
         typePersonnalise: projetDetail.typePersonnalise || '',
         statut: projetDetail.statut,
         description: projetDetail.description || '',
@@ -511,6 +515,7 @@ export const ProjetFormPage = () => {
         montantInitial: projetDetail.montantInitial || undefined,
         montantRevise: projetDetail.montantRevise || undefined,
         delaiMois,
+        modeSuiviMensuel: (projetDetail.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO',
         dateDebut,
         dateFin,
         dateDebutReel: projetDetail.dateDebutReel || '',
@@ -571,12 +576,60 @@ export const ProjetFormPage = () => {
     }).catch(() => setAvancementEtudesRows(PHASES_ETUDE.map((phase) => ({ phase }))))
   }, [isEdit, id])
 
-  // Construire les lignes du suivi mensuel (mois entre dates + fusion avec sauvegardé ou éditions en cours)
+  // Construire les lignes du suivi mensuel :
+  // - AUTO (logique existante) : mois entre dates contractuelles, fusion avec sauvegardé/édition
+  // - MANUEL : liste libre (initialisée depuis le backend, puis éditable sans recalcul)
   useEffect(() => {
-    if (!isEdit) return
+    const mode = (form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO'
+    const prevMode = prevSuiviModeRef.current
+
+    if (mode === 'MANUEL') {
+      // En mode manuel, on initialise la liste depuis le backend à l'entrée dans le mode.
+      // Ensuite, la liste est gérée manuellement (ajout/suppression) sans recalcul automatique.
+      if (isEdit) {
+        const enteringManual = prevMode !== 'MANUEL'
+        if (enteringManual) {
+          const rows = savedSuiviMensuel
+            .slice()
+            .sort((a, b) => (a.annee - b.annee) || (a.mois - b.mois))
+            .map((r) => ({
+              label: `${monthsShort[(r.mois ?? 1) - 1] ?? ''}-${r.annee}`,
+              mois: r.mois,
+              annee: r.annee,
+              caPrevisionnel: r.caPrevisionnel,
+              caRealise: r.caRealise,
+            }))
+          setSuiviMensuelRows(rows)
+        } else if (savedSuiviMensuel.length > 0) {
+          // 1er chargement : si aucune ligne encore affichée, initialiser depuis le backend.
+          setSuiviMensuelRows((prev) => {
+            if (prev.length > 0) return prev
+            return savedSuiviMensuel
+              .slice()
+              .sort((a, b) => (a.annee - b.annee) || (a.mois - b.mois))
+              .map((r) => ({
+                label: `${monthsShort[(r.mois ?? 1) - 1] ?? ''}-${r.annee}`,
+                mois: r.mois,
+                annee: r.annee,
+                caPrevisionnel: r.caPrevisionnel,
+                caRealise: r.caRealise,
+              }))
+          })
+        }
+      }
+      prevSuiviModeRef.current = mode
+      return
+    }
+
+    // AUTO : en édition uniquement (comportement existant)
+    if (!isEdit) {
+      prevSuiviModeRef.current = mode
+      return
+    }
     const months = getMoisEntreDates(form.dateDebut, form.dateFin, monthsShort)
     if (months.length === 0) {
       setSuiviMensuelRows([])
+      prevSuiviModeRef.current = mode
       return
     }
     const bySaved: Record<string, { caPrevisionnel: number; caRealise: number }> = {}
@@ -587,12 +640,26 @@ export const ProjetFormPage = () => {
       return months.map((m) => {
         const existing = byPrev[`${m.mois}-${m.annee}`]
         const saved = bySaved[`${m.mois}-${m.annee}`]
-        if (existing && (existing.caPrevisionnel !== 0 || existing.caRealise !== 0)) return existing
+        if (existing && (existing.caPrevisionnel !== 0 || existing.caRealise !== 0)) return { ...existing, label: m.label }
         if (saved) return { ...m, caPrevisionnel: saved.caPrevisionnel, caRealise: saved.caRealise }
-        return existing ?? { ...m, caPrevisionnel: 0, caRealise: 0 }
+        return existing ? { ...existing, label: m.label } : { ...m, caPrevisionnel: 0, caRealise: 0 }
       })
     })
-  }, [isEdit, form.dateDebut, form.dateFin, savedSuiviMensuel, monthsShort])
+    prevSuiviModeRef.current = mode
+  }, [isEdit, form.modeSuiviMensuel, form.dateDebut, form.dateFin, savedSuiviMensuel, monthsShort])
+
+  // Mettre à jour les libellés des mois quand la langue change, sans toucher aux valeurs.
+  useEffect(() => {
+    setSuiviMensuelRows((prev) => {
+      let changed = false
+      const next = prev.map((r) => {
+        const label = `${monthsShort[(r.mois ?? 1) - 1] ?? ''}-${r.annee}`
+        if (label !== r.label) changed = true
+        return { ...r, label }
+      })
+      return changed ? next : prev
+    })
+  }, [monthsShort])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -680,7 +747,7 @@ export const ProjetFormPage = () => {
     }
     try {
       const payload = { ...form }
-      payload.numeroMarche = sansNumeroMarche ? null : (form.numeroMarche?.trim() || null)
+      payload.numeroMarche = sansNumeroMarche ? undefined : (form.numeroMarche?.trim() || undefined)
       if (form.montantHT != null && payload.montantTTC == null) {
         payload.montantTTC = Math.round(form.montantHT * 1.19)
       }
@@ -701,7 +768,15 @@ export const ProjetFormPage = () => {
           dateDepot: r.dateDepot || undefined,
           etatValidation: r.etatValidation || undefined,
         })))
-        if (suiviMensuelRows.length > 0) {
+        const mode = (payload.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO'
+        if (mode === 'MANUEL') {
+          await projetApi.replaceSuiviMensuel(Number(id), suiviMensuelRows.map((r) => ({
+            mois: r.mois,
+            annee: r.annee,
+            caPrevisionnel: r.caPrevisionnel || undefined,
+            caRealise: r.caRealise || undefined,
+          })))
+        } else if (suiviMensuelRows.length > 0) {
           await projetApi.saveSuiviMensuel(Number(id), suiviMensuelRows.map((r) => ({
             mois: r.mois,
             annee: r.annee,
@@ -710,7 +785,16 @@ export const ProjetFormPage = () => {
           })))
         }
       } else {
-        await dispatch(createProjet(payload)).unwrap()
+        const created = await dispatch(createProjet(payload)).unwrap()
+        const mode = (payload.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO'
+        if (mode === 'MANUEL') {
+          await projetApi.replaceSuiviMensuel(created.id, suiviMensuelRows.map((r) => ({
+            mois: r.mois,
+            annee: r.annee,
+            caPrevisionnel: r.caPrevisionnel || undefined,
+            caRealise: r.caRealise || undefined,
+          })))
+        }
       }
       setDateErrors({})
       navigate(isEdit ? `/projets/${id}` : '/projets')
@@ -911,18 +995,18 @@ export const ProjetFormPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.travauxSupplementaires')}</label>
               <input type="number" name="montantInitial" value={form.montantInitial || ''} onChange={handleNumberChange} disabled={readOnly}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100"
-                placeholder={form.montantHT != null ? t('form.max15pctHT', { val: new Intl.NumberFormat(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 }).format(Math.round(form.montantHT * 0.15)) }) : t('form.max15pctHTShort')} />
+                placeholder={form.montantHT != null ? t('form.max15pctHT', { val: formatNumber(Math.round(form.montantHT * 0.15)) }) : t('form.max15pctHTShort')} />
               {form.montantHT != null && (
-                <p className="mt-1 text-xs text-gray-500">{t('form.seuil15', { val: new Intl.NumberFormat(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 }).format(Math.round(form.montantHT * 0.15)) })}</p>
+                <p className="mt-1 text-xs text-gray-500">{t('form.seuil15', { val: formatNumber(Math.round(form.montantHT * 0.15)) })}</p>
               )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.avenant')}</label>
               <input type="number" name="montantRevise" value={form.montantRevise || ''} onChange={handleNumberChange} disabled={readOnly}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100"
-                placeholder={form.montantHT != null ? t('form.between15and30', { min: new Intl.NumberFormat(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 }).format(Math.round(form.montantHT * 0.15)), max: new Intl.NumberFormat(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 }).format(Math.round(form.montantHT * 0.30)) }) : t('form.between15and30Short')} />
+                placeholder={form.montantHT != null ? t('form.between15and30', { min: formatNumber(Math.round(form.montantHT * 0.15)), max: formatNumber(Math.round(form.montantHT * 0.30)) }) : t('form.between15and30Short')} />
               {form.montantHT != null && (
-                <p className="mt-1 text-xs text-gray-500">{t('form.plageAvenant', { min: new Intl.NumberFormat(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 }).format(Math.round(form.montantHT * 0.15)), max: new Intl.NumberFormat(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 }).format(Math.round(form.montantHT * 0.30)) })}</p>
+                <p className="mt-1 text-xs text-gray-500">{t('form.plageAvenant', { min: formatNumber(Math.round(form.montantHT * 0.15)), max: formatNumber(Math.round(form.montantHT * 0.30)) })}</p>
               )}
             </div>
             <div className="md:col-span-2 lg:col-span-4">
@@ -978,6 +1062,49 @@ export const ProjetFormPage = () => {
               />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('form.calculatedAutoShort')}</p>
             </div>
+
+            <div className="md:col-span-2 lg:col-span-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('form.suiviMensuelModeLabel')}
+              </label>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <label className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="modeSuiviMensuel"
+                    value="AUTO"
+                    checked={((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'AUTO'}
+                    onChange={() => {
+                      setManualSuiviError(null)
+                      setForm((prev) => ({ ...prev, modeSuiviMensuel: 'AUTO' }))
+                    }}
+                    disabled={readOnly}
+                    className="text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-200">{t('form.suiviMensuelModeAuto')}</span>
+                </label>
+                <label className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="modeSuiviMensuel"
+                    value="MANUEL"
+                    checked={((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL'}
+                    onChange={() => {
+                      setManualSuiviError(null)
+                      setForm((prev) => ({ ...prev, modeSuiviMensuel: 'MANUEL' }))
+                    }}
+                    disabled={readOnly}
+                    className="text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-200">{t('form.suiviMensuelModeManual')}</span>
+                </label>
+              </div>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                {((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL'
+                  ? t('form.suiviMensuelModeManualHint')
+                  : t('form.suiviMensuelModeAutoHint')}
+              </p>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.dateDebutReelle')}</label>
               <input
@@ -1012,23 +1139,102 @@ export const ProjetFormPage = () => {
           </div>
         </div>
 
-        {/* Tableau de suivi mensuel — en édition uniquement */}
-        {isEdit && !readOnly && form.dateDebut && form.dateFin && suiviMensuelRows.length > 0 && (
+        {/* Tableau de suivi mensuel */}
+        {(!readOnly && (
+          (((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL')
+          || (isEdit && ((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'AUTO' && form.dateDebut && form.dateFin && suiviMensuelRows.length > 0)
+        )) && (
           <div className="mika-theme-card rounded-xl shadow-sm border p-6">
             <h2 className="text-lg font-semibold mb-2">{t('form.suiviMensuelTitle')}</h2>
-            <p className="text-sm text-gray-500 mb-4">{t('form.suiviMensuelHint')}</p>
+            <p className="text-sm text-gray-500 mb-4">
+              {((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL'
+                ? t('form.suiviMensuelManualHint')
+                : t('form.suiviMensuelHint')}
+            </p>
+
+            {((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL' && (
+              <div className="mb-4 space-y-2">
+                {manualSuiviError && (
+                  <div className="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                    {manualSuiviError}
+                  </div>
+                )}
+                <div className="flex flex-col md:flex-row md:items-end gap-3">
+                  <div className="w-full md:w-56">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.mois')}</label>
+                    <select
+                      value={manualSuiviNewMonth}
+                      onChange={(e) => setManualSuiviNewMonth(Number(e.target.value))}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
+                        <option key={m} value={m}>
+                          {monthsShort[m - 1] ?? m}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="w-full md:w-40">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.annee')}</label>
+                    <input
+                      type="number"
+                      value={manualSuiviNewYear}
+                      onChange={(e) => setManualSuiviNewYear(e.target.value ? Number(e.target.value) : new Date().getFullYear())}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setManualSuiviError(null)
+                      const mois = manualSuiviNewMonth
+                      const annee = manualSuiviNewYear
+                      if (!annee || Number.isNaN(annee) || annee < 1900 || annee > 2100) {
+                        setManualSuiviError(t('form.suiviMensuelManualYearError'))
+                        return
+                      }
+                      const key = `${mois}-${annee}`
+                      if (suiviMensuelRows.some((r) => `${r.mois}-${r.annee}` === key)) {
+                        setManualSuiviError(t('form.suiviMensuelManualDuplicate'))
+                        return
+                      }
+                      const label = `${monthsShort[mois - 1] ?? ''}-${annee}`
+                      setSuiviMensuelRows((prev) =>
+                        [...prev, { label, mois, annee, caPrevisionnel: 0, caRealise: 0 }].sort((a, b) => (a.annee - b.annee) || (a.mois - b.mois))
+                      )
+                    }}
+                    className="md:mb-0 px-4 py-2 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition"
+                  >
+                    {t('form.suiviMensuelManualAdd')}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL' && suiviMensuelRows.length === 0 ? (
+              <p className="text-sm text-gray-600 dark:text-gray-300">{t('form.suiviMensuelManualEmpty')}</p>
+            ) : null}
+
             <div className="w-full min-w-0 overflow-x-auto">
               <table className="w-full text-sm border-collapse table-fixed">
                 <colgroup>
                   <col style={{ width: '14%' }} />
                   <col style={{ width: '22%' }} />
                   <col style={{ width: '22%' }} />
+                  {((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL' && (
+                    <col style={{ width: '12%' }} />
+                  )}
                 </colgroup>
                 <thead>
                   <tr>
                     <th className="py-2.5 px-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">{t('form.mois')}</th>
                     <th className="py-2.5 px-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">{t('form.caPrevisionnel')}</th>
                     <th className="py-2.5 px-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">{t('form.caRealise')}</th>
+                    {((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL' && (
+                      <th className="py-2.5 px-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                        {t('form.actions')}
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -1059,6 +1265,21 @@ export const ProjetFormPage = () => {
                           className="w-full text-right px-2 py-1.5 border rounded focus:ring-2 focus:ring-primary"
                         />
                       </td>
+                      {((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL' && (
+                        <td className="py-2 px-3 border-b border-gray-100 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setManualSuiviError(null)
+                              setSuiviMensuelRows((prev) => prev.filter((_, i) => i !== idx))
+                            }}
+                            className="text-red-600 hover:text-red-800 font-semibold"
+                            aria-label={t('form.deleteLabel')}
+                          >
+                            {t('form.deleteLabel')}
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -1114,14 +1335,17 @@ export const ProjetFormPage = () => {
                           className="w-full px-2 py-1.5 border rounded focus:ring-2 focus:ring-primary"
                         />
                       </td>
-                      <td className="py-2 px-3 border-b border-gray-100">
-                        <input
-                          type="text"
+                      <td className="py-2 px-3 border-b border-gray-100 dark:border-gray-600">
+                        <select
                           value={row.etatValidation ?? ''}
-                          onChange={(e) => setAvancementEtudesRows((prev) => prev.map((r, i) => (i === idx ? { ...r, etatValidation: e.target.value || undefined } : r)))}
-                          className="w-full px-2 py-1.5 border rounded focus:ring-2 focus:ring-primary"
-                          placeholder={t('form.etatValidationPlaceholder')}
-                        />
+                          onChange={(e) => setAvancementEtudesRows((prev) => prev.map((r, i) => (i === idx ? { ...r, etatValidation: (e.target.value || undefined) as EtatValidationEtude | undefined } : r)))}
+                          className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-primary bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                        >
+                          <option value="">{t('form.etatValidationNonRenseigne')}</option>
+                          {ETATS_VALIDATION_ETUDE.map((ev) => (
+                            <option key={ev} value={ev}>{t(`enums.etatValidationEtude.${ev}`)}</option>
+                          ))}
+                        </select>
                       </td>
                     </tr>
                   ))}
@@ -1179,7 +1403,6 @@ export const ProjetFormPage = () => {
                     const titre = (document.getElementById('pb-titre-custom') as HTMLInputElement)?.value?.trim() || sel?.value
                     if (!titre) return
                     const priorite = (document.getElementById('pb-priorite') as HTMLSelectElement)?.value as Priorite
-                    const statut = (document.getElementById('pb-statut') as HTMLSelectElement)?.value as StatutPointBloquant
                     if (addingPointBloquant) return
                     setAddingPointBloquant(true)
                     try {
@@ -1220,8 +1443,18 @@ export const ProjetFormPage = () => {
                   <li key={pb.id} className="flex flex-wrap items-center gap-2 py-2 border-b border-gray-100 last:border-0">
                     <span className="font-medium text-gray-900 dark:text-gray-100 flex-1 min-w-0">
                       {((): string => {
-                        const optKey = POINT_BLOQUANT_OPTION_KEYS[pb.titre] ?? slugForI18n(pb.titre)
-                        return t(`form.pointBloquant.options.${optKey}`) || pb.titre
+                        const raw = pb.titre
+                        const keyPrefix = 'form.pointBloquant.options.'
+                        if (raw.startsWith(keyPrefix)) {
+                          const suffix = raw.slice(keyPrefix.length)
+                          const translated = t(`form.pointBloquant.options.${suffix}`)
+                          if (translated !== `form.pointBloquant.options.${suffix}`) return translated
+                          return suffix.replace(/_/g, ' ')
+                        }
+                        const optKey = POINT_BLOQUANT_OPTION_KEYS[raw] ?? slugForI18n(raw)
+                        const translated = t(`form.pointBloquant.options.${optKey}`)
+                        if (translated !== `form.pointBloquant.options.${optKey}`) return translated
+                        return raw
                       })()}
                     </span>
                     <select
@@ -1272,15 +1505,18 @@ export const ProjetFormPage = () => {
 
         {/* Prévisions (tâches planifiées) — toute semaine, passée, en cours ou future */}
         {isEdit && !readOnly && id && (() => {
-          const addPrevision = async (semaine: number, annee: number, description: string, type: TypePrevision = 'HEBDOMADAIRE', statut: StatutPrevision = 'BROUILLON') => {
+          const addPrevision = async (semaine: number, annee: number, description: string, type: TypePrevision = 'HEBDOMADAIRE') => {
             try {
-              const created = await projetApi.createPrevision(Number(id), { semaine, annee, description, type, statut })
+              const created = await projetApi.createPrevision(Number(id), { semaine, annee, description, type })
               setPrevisions((prev) => [...prev, created])
             } catch (err) { setError((err as Error).message) }
           }
           const updatePrevision = async (p: Prevision, updates: Partial<Prevision>) => {
             try {
-              const updated = await projetApi.updatePrevision(Number(id), p.id, updates)
+              const filtered = Object.fromEntries(
+                Object.entries(updates).filter(([_, v]) => v !== null && v !== undefined)
+              ) as { semaine?: number; annee?: number; description?: string; type?: string; dateDebut?: string; dateFin?: string; avancementPct?: number }
+              const updated = await projetApi.updatePrevision(Number(id), p.id, filtered)
               setPrevisions((prev) => prev.map((x) => (x.id === p.id ? updated : x)))
             } catch (err) { setError((err as Error).message) }
           }
@@ -1386,13 +1622,34 @@ export const ProjetFormPage = () => {
                                 if (!raw) return ''
                                 const isTypePrevision = (TYPE_PREVISION_OPTIONS as { value: string }[]).some((o) => o.value === raw)
                                 if (isTypePrevision) return t(`enums.typePrevision.${raw}`) || raw
+                                // Si la valeur stockée est déjà une clé i18n (ex. form.prevision.options.xxx), utiliser le suffixe pour éviter le double préfixe
+                                const keyPrefix = 'form.prevision.options.'
+                                if (raw.startsWith(keyPrefix)) {
+                                  const suffix = raw.slice(keyPrefix.length)
+                                  const translated = t(`form.prevision.options.${suffix}`)
+                                  if (translated !== `form.prevision.options.${suffix}`) return translated
+                                  return suffix.replace(/_/g, ' ')
+                                }
                                 const optKey = slugForI18n(raw)
-                                return t(`form.prevision.options.${optKey}`) || raw
+                                const translated = t(`form.prevision.options.${optKey}`)
+                                if (translated !== `form.prevision.options.${optKey}`) return translated
+                                return raw
                               })()}
                             </span>
-                              <select value={p.statut} onChange={(e) => updatePrevision(p, { statut: e.target.value as StatutPrevision })} className="px-2 py-0.5 border rounded text-xs w-24">
-                                {STATUT_PREVISION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(`enums.statutPrevision.${o.value}`)}</option>)}
-                              </select>
+                              <input
+                                type="number"
+                                min={0}
+                                max={100}
+                                step={1}
+                                value={p.avancementPct ?? ''}
+                                onChange={(e) => {
+                                  const v = e.target.value === '' ? undefined : Math.min(100, Math.max(0, Number(e.target.value)))
+                                  updatePrevision(p, { avancementPct: v } as Partial<Prevision>)
+                                }}
+                                placeholder={t('form.avancementPctPlaceholder')}
+                                className="w-16 px-1.5 py-0.5 border rounded text-xs text-center"
+                                title={t('form.avancementPct')}
+                              />
                               <button type="button" onClick={() => deletePrevision(p)} className="text-red-600 hover:text-red-800" aria-label={t('form.deleteLabel')}>×</button>
                             </li>
                           ))}
@@ -1473,12 +1730,16 @@ export const ProjetFormPage = () => {
                   })}
                 </select>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {parseBesoinsList(form.besoinsMateriel).map((item) => (
+                  {parseBesoinsList(form.besoinsMateriel).map((item) => {
+                    const optKey = slugForI18n(item)
+                    const translated = t(`form.besoinsMateriel.options.${optKey}`)
+                    const label = translated !== `form.besoinsMateriel.options.${optKey}` ? translated : item
+                    return (
                     <span
                       key={item}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-gray-100 text-gray-800"
                     >
-                      {t(`form.besoinsMateriel.options.${slugForI18n(item)}`) || item}
+                      {label}
                       {!readOnly && (
                         <button
                           type="button"
@@ -1490,7 +1751,8 @@ export const ProjetFormPage = () => {
                         </button>
                       )}
                     </span>
-                  ))}
+                    )
+                  })}
                 </div>
                 {!readOnly && (
                   <div className="flex gap-2 mt-2">
@@ -1558,12 +1820,16 @@ export const ProjetFormPage = () => {
                   })}
                 </select>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {parseBesoinsList(form.besoinsHumain).map((item) => (
+                  {parseBesoinsList(form.besoinsHumain).map((item) => {
+                    const optKey = slugForI18n(item)
+                    const translated = t(`form.besoinsHumain.options.${optKey}`)
+                    const label = translated !== `form.besoinsHumain.options.${optKey}` ? translated : item
+                    return (
                     <span
                       key={item}
                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-blue-50 text-blue-800"
                     >
-                      {t(`form.besoinsHumain.options.${slugForI18n(item)}`) || item}
+                      {label}
                       {!readOnly && (
                         <button
                           type="button"
@@ -1575,7 +1841,8 @@ export const ProjetFormPage = () => {
                         </button>
                       )}
                     </span>
-                  ))}
+                    )
+                  })}
                 </div>
                 {!readOnly && (
                   <div className="flex gap-2 mt-2">

@@ -3,6 +3,7 @@ package com.mikaservices.platform.modules.projet.dto.request
 import com.mikaservices.platform.common.enums.SourceFinancement
 import com.mikaservices.platform.common.enums.StatutProjet
 import com.mikaservices.platform.common.enums.TypeProjet
+import com.mikaservices.platform.common.enums.ModeSuiviMensuel
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
@@ -36,6 +37,7 @@ data class ProjetCreateRequest(
     val montantTTC: BigDecimal? = null,
     val montantInitial: BigDecimal? = null,
     val delaiMois: Int? = null,
+    val modeSuiviMensuel: ModeSuiviMensuel = ModeSuiviMensuel.AUTO,
     val dateDebut: LocalDate? = null,
     val dateFin: LocalDate? = null,
     val responsableProjetId: Long? = null,

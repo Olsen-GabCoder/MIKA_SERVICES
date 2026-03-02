@@ -33,6 +33,59 @@
   animation: progress-fill 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+/* Dashboard — titre « Tableau de bord » : shimmer infini (gradient qui balaie le texte) */
+@keyframes dashboard-title-shimmer {
+  0%, 100% {
+    background-position: 200% 50%;
+  }
+  50% {
+    background-position: 0% 50%;
+  }
+}
+
+.dashboard-title-shimmer {
+  background: linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.95) 25%,
+    rgba(255, 140, 97, 0.95) 45%,
+    rgba(255, 255, 255, 1) 55%,
+    rgba(255, 255, 255, 0.95) 75%,
+    rgba(255, 255, 255, 1) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: dashboard-title-shimmer 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-title-shimmer {
+    animation: none;
+    color: white;
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+  }
+}
+
+/* Préférence utilisateur « Animations » (Paramètres > Affichage) — data-animations sur html */
+html[data-animations="reduced"] *,
+html[data-animations="reduced"] *::before,
+html[data-animations="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  transition-duration: 0.01ms !important;
+}
+
+html[data-animations="none"] *,
+html[data-animations="none"] *::before,
+html[data-animations="none"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
 /* Masquer la scrollbar tout en gardant le défilement (sidebar, etc.) */
 .scrollbar-hide {
   scrollbar-width: none;
@@ -55,6 +108,369 @@ html[data-theme="dark"] {
   --mika-border-card: rgb(75 85 99);
   --mika-text-primary: rgb(243 244 246);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MESSAGERIE — Design professionnel (variables + scrollbar + animations)
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --msg-accent: #E85A2A;
+  --msg-accent-hover: #D94E1F;
+  --msg-accent-muted: rgba(232, 90, 42, 0.12);
+  --msg-bg-panel: #ffffff;
+  --msg-bg-list: #f8fafc;
+  --msg-bg-list-hover: #f1f5f9;
+  --msg-bg-selected: #fff7ed;
+  --msg-border: #e2e8f0;
+  --msg-border-subtle: #f1f5f9;
+  --msg-text-primary: #0f172a;
+  --msg-text-secondary: #475569;
+  --msg-text-muted: #64748b;
+  --msg-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --msg-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --msg-radius: 10px;
+  --msg-radius-sm: 8px;
+}
+html[data-theme="dark"] {
+  --msg-accent: #f97316;
+  --msg-accent-hover: #ea580c;
+  --msg-accent-muted: rgba(249, 115, 22, 0.15);
+  --msg-bg-panel: #1e293b;
+  --msg-bg-list: #0f172a;
+  --msg-bg-list-hover: #1e293b;
+  --msg-bg-selected: #1c1917;
+  --msg-border: #334155;
+  --msg-border-subtle: #1e293b;
+  --msg-text-primary: #f8fafc;
+  --msg-text-secondary: #cbd5e1;
+  --msg-text-muted: #94a3b8;
+  --msg-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --msg-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.25), 0 2px 4px -2px rgba(0, 0, 0, 0.15);
+}
+
+.msg-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.msg-scroll::-webkit-scrollbar { width: 6px; }
+.msg-scroll::-webkit-scrollbar-track { background: transparent; }
+.msg-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 10px;
+}
+.msg-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.55);
+}
+html[data-theme="dark"] .msg-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+}
+html[data-theme="dark"] .msg-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+@keyframes msg-fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.msg-fade { animation: msg-fadeIn 0.22s ease-out forwards; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTRASTE ÉLEVÉ (accessibilité) — appliqué partout dans l'application
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* —— Variables et base —— */
+html[data-high-contrast-cards="true"] {
+  --mika-border-card: rgb(0 0 0);
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] {
+  --mika-border-card: rgb(255 255 255);
+}
+
+/* —— Toutes les bordures grises → noir (light) / blanc (dark), 2px —— */
+html[data-high-contrast-cards="true"] [class*="border-gray"],
+html[data-high-contrast-cards="true"] .border-gray-50,
+html[data-high-contrast-cards="true"] .border-gray-100,
+html[data-high-contrast-cards="true"] .border-gray-200,
+html[data-high-contrast-cards="true"] .border-gray-300,
+html[data-high-contrast-cards="true"] .border-gray-400,
+html[data-high-contrast-cards="true"] .border-gray-500,
+html[data-high-contrast-cards="true"] .border-gray-600,
+html[data-high-contrast-cards="true"] .border-gray-700,
+html[data-high-contrast-cards="true"] .border-gray-800 {
+  border-color: rgb(0 0 0) !important;
+  border-width: 2px !important;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="border-gray"],
+html[data-theme="dark"][data-high-contrast-cards="true"] .border-gray-50,
+html[data-theme="dark"][data-high-contrast-cards="true"] .border-gray-100,
+html[data-theme="dark"][data-high-contrast-cards="true"] .border-gray-200,
+html[data-theme="dark"][data-high-contrast-cards="true"] .border-gray-300,
+html[data-theme="dark"][data-high-contrast-cards="true"] .border-gray-400,
+html[data-theme="dark"][data-high-contrast-cards="true"] .border-gray-500,
+html[data-theme="dark"][data-high-contrast-cards="true"] .border-gray-600,
+html[data-theme="dark"][data-high-contrast-cards="true"] .border-gray-700,
+html[data-theme="dark"][data-high-contrast-cards="true"] .border-gray-800 {
+  border-color: rgb(243 244 246) !important;
+  border-width: 2px !important;
+}
+
+/* —— Bordures partielles (border-t, border-b) : couleur + épaisseur sur le bon côté —— */
+html[data-high-contrast-cards="true"] [class*="border-t"]:not([class*="border-0"]) {
+  border-top-width: 2px !important;
+  border-top-color: rgb(0 0 0) !important;
+}
+html[data-high-contrast-cards="true"] [class*="border-b"]:not([class*="border-0"]) {
+  border-bottom-width: 2px !important;
+  border-bottom-color: rgb(0 0 0) !important;
+}
+html[data-high-contrast-cards="true"] [class*="border-l"]:not([class*="border-0"]) {
+  border-left-width: 2px !important;
+  border-left-color: rgb(0 0 0) !important;
+}
+html[data-high-contrast-cards="true"] [class*="border-r"]:not([class*="border-0"]) {
+  border-right-width: 2px !important;
+  border-right-color: rgb(0 0 0) !important;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="border-t"]:not([class*="border-0"]) {
+  border-top-color: rgb(243 244 246) !important;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="border-b"]:not([class*="border-0"]) {
+  border-bottom-color: rgb(243 244 246) !important;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="border-l"]:not([class*="border-0"]) {
+  border-left-color: rgb(243 244 246) !important;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="border-r"]:not([class*="border-0"]) {
+  border-right-color: rgb(243 244 246) !important;
+}
+
+/* —— Tout élément avec classe border (sans border-0) et rounded → 2px —— */
+html[data-high-contrast-cards="true"] .border:not(.border-0),
+html[data-high-contrast-cards="true"] [class*="rounded-xl"][class*="border"]:not([class*="border-0"]),
+html[data-high-contrast-cards="true"] [class*="rounded-lg"][class*="border"]:not([class*="border-0"]),
+html[data-high-contrast-cards="true"] [class*="rounded-2xl"][class*="border"]:not([class*="border-0"]),
+html[data-high-contrast-cards="true"] [class*="rounded-md"][class*="border"]:not([class*="border-0"]) {
+  border-width: 2px !important;
+  border-color: rgb(0 0 0) !important;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] .border:not(.border-0),
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="rounded-xl"][class*="border"]:not([class*="border-0"]),
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="rounded-lg"][class*="border"]:not([class*="border-0"]),
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="rounded-2xl"][class*="border"]:not([class*="border-0"]),
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="rounded-md"][class*="border"]:not([class*="border-0"]) {
+  border-width: 2px !important;
+  border-color: rgb(243 244 246) !important;
+}
+
+/* —— Bordures rouge / amber (alertes) — renforcer sans perdre la sémantique —— */
+html[data-high-contrast-cards="true"] [class*="border-red"] {
+  border-width: 2px !important;
+  border-color: rgb(185 28 28) !important;
+}
+html[data-high-contrast-cards="true"] [class*="border-amber"] {
+  border-width: 2px !important;
+  border-color: rgb(180 83 9) !important;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="border-red"] {
+  border-color: rgb(252 165 165) !important;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="border-amber"] {
+  border-color: rgb(253 230 138) !important;
+}
+
+/* —— Inputs, textarea, select, surface, mika-theme-card —— */
+html[data-high-contrast-cards="true"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-high-contrast-cards="true"] textarea,
+html[data-high-contrast-cards="true"] select,
+html[data-high-contrast-cards="true"] .surface,
+html[data-high-contrast-cards="true"] .surface-elevated,
+html[data-high-contrast-cards="true"] .mika-theme-card {
+  border-width: 2px !important;
+  border-color: rgb(0 0 0) !important;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-theme="dark"][data-high-contrast-cards="true"] textarea,
+html[data-theme="dark"][data-high-contrast-cards="true"] select,
+html[data-theme="dark"][data-high-contrast-cards="true"] .surface,
+html[data-theme="dark"][data-high-contrast-cards="true"] .surface-elevated,
+html[data-theme="dark"][data-high-contrast-cards="true"] .mika-theme-card {
+  border-width: 2px !important;
+  border-color: rgb(243 244 246) !important;
+}
+
+/* —— Boutons —— */
+html[data-high-contrast-cards="true"] button:not(:disabled),
+html[data-high-contrast-cards="true"] [role="button"] {
+  border-width: 2px !important;
+  border-style: solid;
+  border-color: currentColor;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] button:not(:disabled),
+html[data-theme="dark"][data-high-contrast-cards="true"] [role="button"] {
+  border-color: rgb(243 244 246) !important;
+}
+
+/* —— Tables : thead, th, td, tr —— */
+html[data-high-contrast-cards="true"] thead,
+html[data-high-contrast-cards="true"] th,
+html[data-high-contrast-cards="true"] td,
+html[data-high-contrast-cards="true"] tr {
+  border-color: rgb(0 0 0) !important;
+  border-width: 2px !important;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] thead,
+html[data-theme="dark"][data-high-contrast-cards="true"] th,
+html[data-theme="dark"][data-high-contrast-cards="true"] td,
+html[data-theme="dark"][data-high-contrast-cards="true"] tr {
+  border-color: rgb(243 244 246) !important;
+  border-width: 2px !important;
+}
+
+/* —— CONTRASTE ÉLEVÉ : TEXTES (option « Textes ») ——
+   Pas de changement de couleurs : les couleurs restent identiques.
+   Seul le texte est « appuyé » (font-weight renforcé) pour la lisibilité. */
+
+/* Textes gris et sémantiques : renforcer la graisse uniquement */
+html[data-high-contrast-text="true"] .text-gray-300,
+html[data-high-contrast-text="true"] .text-gray-400,
+html[data-high-contrast-text="true"] .text-gray-500,
+html[data-high-contrast-text="true"] .text-gray-600,
+html[data-high-contrast-text="true"] .text-gray-700,
+html[data-high-contrast-text="true"] .text-gray-800,
+html[data-high-contrast-text="true"] [class*="text-gray-300"],
+html[data-high-contrast-text="true"] [class*="text-gray-400"],
+html[data-high-contrast-text="true"] [class*="text-gray-500"],
+html[data-high-contrast-text="true"] [class*="text-gray-600"],
+html[data-high-contrast-text="true"] [class*="text-gray-700"],
+html[data-high-contrast-text="true"] [class*="text-gray-800"],
+html[data-high-contrast-text="true"] .text-medium,
+html[data-high-contrast-text="true"] .text-secondary,
+html[data-high-contrast-text="true"] .text-muted {
+  font-weight: 600 !important;
+}
+
+/* Body, main, paragraphes, labels, cellules, listes : texte appuyé */
+html[data-high-contrast-text="true"] body,
+html[data-high-contrast-text="true"] main,
+html[data-high-contrast-text="true"] p,
+html[data-high-contrast-text="true"] label,
+html[data-high-contrast-text="true"] th,
+html[data-high-contrast-text="true"] td,
+html[data-high-contrast-text="true"] li {
+  font-weight: 600 !important;
+}
+
+/* Titres : encore plus appuyés */
+html[data-high-contrast-text="true"] h1,
+html[data-high-contrast-text="true"] h2,
+html[data-high-contrast-text="true"] h3,
+html[data-high-contrast-text="true"] h4 {
+  font-weight: 700 !important;
+}
+
+/* Spans (sans couleurs sémantiques) : appuyés, couleur inchangée */
+html[data-high-contrast-text="true"] span:not([class*="text-primary"]):not([class*="text-red"]):not([class*="text-amber"]):not([class*="text-green"]):not([class*="text-blue"]):not([class*="text-white"]):not([class*="text-danger"]):not([class*="text-success"]):not([class*="text-warning"]):not([class*="text-info"]) {
+  font-weight: 600 !important;
+}
+
+/* Liens : soulignement pour visibilité, couleur inchangée */
+html[data-high-contrast-text="true"] a:not(aside a):not([class*="text-white"]) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600 !important;
+}
+
+/* Textes blancs avec opacité : opacité à 1 pour renforcer (même couleur) */
+html[data-high-contrast-text="true"] [class*="text-white/"],
+html[data-theme="dark"][data-high-contrast-text="true"] [class*="text-white/"] {
+  opacity: 1 !important;
+}
+
+/* Déjà en gras / semi / medium : renforcer à 700 */
+html[data-high-contrast-text="true"] [class*="font-bold"],
+html[data-high-contrast-text="true"] [class*="font-semibold"],
+html[data-high-contrast-text="true"] [class*="font-medium"] {
+  font-weight: 700 !important;
+}
+
+/* Placeholders : graisse appuyée uniquement, couleur inchangée */
+html[data-high-contrast-text="true"] input::placeholder,
+html[data-high-contrast-text="true"] textarea::placeholder {
+  font-weight: 600 !important;
+}
+
+/* —— Lignes de séparation (bg-gray en w-px / h-px) —— */
+html[data-high-contrast-cards="true"] .bg-gray-100[class*="h-px"],
+html[data-high-contrast-cards="true"] .bg-gray-200[class*="h-px"],
+html[data-high-contrast-cards="true"] .bg-gray-100[class*="w-px"],
+html[data-high-contrast-cards="true"] .bg-gray-200[class*="w-px"],
+html[data-high-contrast-cards="true"] [class*="bg-gray-100"][class*="h-px"],
+html[data-high-contrast-cards="true"] [class*="bg-gray-200"][class*="h-px"] {
+  background-color: rgb(0 0 0) !important;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] .bg-gray-100[class*="h-px"],
+html[data-theme="dark"][data-high-contrast-cards="true"] .bg-gray-200[class*="h-px"],
+html[data-theme="dark"][data-high-contrast-cards="true"] .bg-gray-600[class*="h-px"],
+html[data-theme="dark"][data-high-contrast-cards="true"] .bg-gray-700[class*="h-px"],
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="bg-gray-600"][class*="h-px"],
+html[data-theme="dark"][data-high-contrast-cards="true"] [class*="bg-gray-700"][class*="h-px"] {
+  background-color: rgb(243 244 246) !important;
+}
+
+/* —— Sidebar : bordures (border-white/10) → visibles —— */
+html[data-high-contrast-cards="true"] aside [class*="border-white"],
+html[data-high-contrast-cards="true"] .sidebar-header,
+html[data-high-contrast-cards="true"] .sidebar-footer {
+  border-color: rgba(255 255 255 / 0.6) !important;
+  border-width: 2px !important;
+}
+
+/* —— Header : ligne du bas —— */
+html[data-high-contrast-cards="true"] header [class*="bg-gray-100"],
+html[data-high-contrast-cards="true"] header [class*="bg-gray-200"] {
+  background-color: rgb(0 0 0) !important;
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] header [class*="bg-gray-700"],
+html[data-theme="dark"][data-high-contrast-cards="true"] header [class*="bg-gray-600"] {
+  background-color: rgb(243 244 246) !important;
+}
+
+/* —— Footer —— */
+html[data-high-contrast-cards="true"] footer {
+  border-top: 2px solid rgb(0 0 0);
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] footer {
+  border-top: 2px solid rgb(243 244 246);
+}
+
+/* —— Bordures pointillées → pleines pour meilleure visibilité —— */
+html[data-high-contrast-cards="true"] .border-dashed,
+html[data-high-contrast-cards="true"] [class*="border-dashed"] {
+  border-style: solid !important;
+}
+
+/* —— Badges / pills (SoonBadge, statuts) — bordure visible —— */
+html[data-high-contrast-cards="true"] [class*="rounded-full"][class*="border"],
+html[data-high-contrast-cards="true"] [class*="rounded-md"][class*="px-"][class*="py-1"] {
+  border-width: 2px !important;
+}
+
+/* —— Page de connexion —— */
+html[data-high-contrast-cards="true"] .login-page {
+  --login-input-border: rgba(0,0,0,.7);
+  --login-form-border: rgba(0,0,0,.75);
+  --login-right-border: rgba(0,0,0,.65);
+}
+html[data-theme="dark"][data-high-contrast-cards="true"] .login-page {
+  --login-input-border: rgba(255,255,255,.7);
+  --login-form-border: rgba(255,255,255,.75);
+  --login-right-border: rgba(255,255,255,.65);
+}
+html[data-high-contrast-cards="true"] .login-page input,
+html[data-high-contrast-cards="true"] .login-page .login-form-panel,
+html[data-high-contrast-cards="true"] .login-page [class*="border"] {
+  border-width: 2px !important;
+}
+
 .mika-theme-bg { background-color: var(--mika-bg-content) !important; }
 .mika-theme-card { background-color: var(--mika-bg-card) !important; border-color: var(--mika-border-card) !important; }
 
@@ -68,13 +484,24 @@ select {
 }
 
 @layer base {
+  /* Taille de base augmentée : tous les textes (rem) et espacements scale uniformément dans toute l’app */
+  html {
+    font-size: var(--mika-font-size, 112.5%);
+  }
   * {
     @apply box-border;
   }
   
   body {
-    @apply m-0 font-sans antialiased;
+    @apply m-0 antialiased;
     @apply bg-light text-dark;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  html[data-font="inter"] body {
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+  html[data-font="open-sans"] body {
+    font-family: 'Open Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
   }
   /* Mode sombre : classe .dark ou data-theme pour garantir l’application */
   html.dark body,
@@ -128,6 +555,63 @@ select {
   html[data-theme="dark"] aside a:focus-visible,
   html[data-theme="dark"] aside button:focus-visible {
     @apply text-white outline-none;
+  }
+
+  /* Densité de l'interface (Paramètres) : --mika-density-scale défini par JS sur html */
+  html[data-density] main {
+    padding: calc(var(--mika-density-scale, 1) * 1rem);
+  }
+  @media (min-width: 640px) {
+    html[data-density] main {
+      padding: calc(var(--mika-density-scale, 1) * 1.5rem);
+    }
+  }
+  @media (min-width: 1024px) {
+    html[data-density] main {
+      padding: calc(var(--mika-density-scale, 1) * 2rem);
+    }
+  }
+  html[data-density] .px-lg {
+    padding-left: calc(24px * var(--mika-density-scale, 1));
+    padding-right: calc(24px * var(--mika-density-scale, 1));
+  }
+  html[data-density] .py-md {
+    padding-top: calc(16px * var(--mika-density-scale, 1));
+    padding-bottom: calc(16px * var(--mika-density-scale, 1));
+  }
+  html[data-density] .p-4 {
+    padding: calc(1rem * var(--mika-density-scale, 1));
+  }
+  html[data-density] .p-5 {
+    padding: calc(1.25rem * var(--mika-density-scale, 1));
+  }
+  html[data-density] .p-6 {
+    padding: calc(1.5rem * var(--mika-density-scale, 1));
+  }
+  html[data-density] .px-4 { padding-left: calc(1rem * var(--mika-density-scale, 1)); padding-right: calc(1rem * var(--mika-density-scale, 1)); }
+  html[data-density] .px-5 { padding-left: calc(1.25rem * var(--mika-density-scale, 1)); padding-right: calc(1.25rem * var(--mika-density-scale, 1)); }
+  html[data-density] .px-6 { padding-left: calc(1.5rem * var(--mika-density-scale, 1)); padding-right: calc(1.5rem * var(--mika-density-scale, 1)); }
+  html[data-density] .py-4 { padding-top: calc(1rem * var(--mika-density-scale, 1)); padding-bottom: calc(1rem * var(--mika-density-scale, 1)); }
+  html[data-density] .gap-3 { gap: calc(0.75rem * var(--mika-density-scale, 1)); }
+  html[data-density] .gap-4 { gap: calc(1rem * var(--mika-density-scale, 1)); }
+  html[data-density] .gap-6 { gap: calc(1.5rem * var(--mika-density-scale, 1)); }
+  html[data-density] .space-y-4 > * + * { margin-top: calc(1rem * var(--mika-density-scale, 1)); }
+  html[data-density] .space-y-5 > * + * { margin-top: calc(1.25rem * var(--mika-density-scale, 1)); }
+  html[data-density] .space-y-6 > * + * { margin-top: calc(1.5rem * var(--mika-density-scale, 1)); }
+  html[data-density] .space-y-8 > * + * { margin-top: calc(2rem * var(--mika-density-scale, 1)); }
+
+  /* Taille des cartes et vignettes (Paramètres) : .mika-tile */
+  [data-card-size] .mika-tile {
+    padding: calc(var(--mika-card-scale, 1) * 1rem);
+    font-size: calc(var(--mika-card-scale, 1) * 1em);
+  }
+  [data-card-size] .mika-tile .text-sm { font-size: calc(var(--mika-card-scale, 1) * 0.875rem); }
+  [data-card-size] .mika-tile .text-xs { font-size: calc(var(--mika-card-scale, 1) * 0.75rem); }
+  [data-card-size] tr.mika-tile td {
+    padding-top: calc(var(--mika-card-scale, 1) * 1rem);
+    padding-bottom: calc(var(--mika-card-scale, 1) * 1rem);
+    padding-left: calc(var(--mika-card-scale, 1) * 1.5rem);
+    padding-right: calc(var(--mika-card-scale, 1) * 1.5rem);
   }
 }
 

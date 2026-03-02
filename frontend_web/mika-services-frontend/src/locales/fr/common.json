@@ -12,8 +12,10 @@
   },
   "error": {
     "generic": "Une erreur est survenue",
-    "unexpected": "Une erreur inattendue est survenue"
+    "unexpected": "Une erreur inattendue est survenue",
+    "offlineNoCache": "Pas de données en cache. Reconnectez-vous pour charger les listes."
   },
+  "offlineBanner": "Vous êtes hors ligne. Les listes affichent les dernières données en cache si disponibles.",
   "communication": {
     "errorLoadMessagesReceived": "Erreur chargement messages reçus",
     "errorLoadMessagesSent": "Erreur chargement messages envoyés",
@@ -101,8 +103,143 @@
       "materiaux": "Matériaux",
       "qualite": "Qualité",
       "securite": "Sécurité",
-      "messagerie": "Messagerie",
-      "reporting": "Reporting"
+      "messagerie": "Messagerie"
+    }
+  },
+  "db": {
+    "header": "Tableau de Bord",
+    "subtitle": "Vue d'ensemble stratégique — indicateurs en temps réel",
+    "seeMore": "Voir les détails →",
+    "seeAll": "Voir tout",
+    "quickAccess": "Accès rapide",
+    "kpi": {
+      "totalProjects": "Projets",
+      "active": "actifs",
+      "delayed": "en retard",
+      "globalProgress": "Avancement global",
+      "tasks": "tâches",
+      "budgetConsumed": "Budget consommé",
+      "qualityRate": "Conformité",
+      "controls": "contrôles",
+      "projectsInProgress": "En cours",
+      "projectsCompleted": "Terminés",
+      "totalAmount": "Montant total (HT)",
+      "avgProgress": "Avancement moyen"
+    },
+    "projectsOverview": {
+      "title": "Vue d'ensemble — Projets",
+      "subtitle": "Répartition par statut · Montant total et avancement moyen"
+    },
+    "evolution": {
+      "title": "Évolution mensuelle",
+      "subtitle": "Dépenses, tâches et indicateurs sur 6 mois",
+      "expenses": "Dépenses (M)",
+      "tasksDone": "Tâches terminées",
+      "controls": "Contrôles",
+      "incidents": "Incidents"
+    },
+    "radial": {
+      "title": "Indicateurs clés",
+      "subtitle": "Taux en %",
+      "budget": "Budget",
+      "progress": "Avancement",
+      "quality": "Conformité"
+    },
+    "pie": {
+      "title": "Répartition des projets",
+      "inProgress": "En cours",
+      "completed": "Terminés",
+      "delayed": "En retard",
+      "other": "Autres",
+      "total": "Total"
+    },
+    "projects": {
+      "title": "Projets actifs",
+      "name": "Projet",
+      "amount": "Montant",
+      "progress": "Avancement",
+      "manager": "Chef de projet",
+      "empty": "Aucun projet actif"
+    },
+    "planning": {
+      "title": "Planning",
+      "total": "Tâches totales",
+      "inProgress": "En cours",
+      "completed": "Terminées",
+      "overdue": "En retard",
+      "progressLabel": "Avancement global"
+    },
+    "safety": {
+      "title": "Sécurité",
+      "totalIncidents": "Total incidents",
+      "serious": "Incidents graves",
+      "criticalRisks": "Risques critiques",
+      "daysStopped": "Jours d'arrêt"
+    },
+    "equipment": {
+      "title": "Parc matériel",
+      "total": "Engins total",
+      "available": "Disponibles",
+      "inUse": "En service"
+    },
+    "budgetDetail": {
+      "title": "Budget",
+      "planned": "Budget prévu",
+      "spent": "Dépenses totales",
+      "remaining": "Écart",
+      "consumption": "Consommation"
+    },
+    "charts": {
+      "budgetTitle": "Budget global",
+      "consumed": "consommé",
+      "remaining": "Restant",
+      "tasksTitle": "Tâches par statut",
+      "advancement": "avancement",
+      "qualityTitle": "Conformité qualité",
+      "compliant": "Conformes",
+      "nonCompliant": "Non conformes",
+      "conformity": "taux de conformité",
+      "sitesTitle": "Chantiers",
+      "totalSites": "chantiers au total",
+      "active": "Actifs",
+      "completed": "Terminés",
+      "incidentsReported": "incidents déclarés",
+      "available": "Disponibles",
+      "inUse": "En service",
+      "units": "engins",
+      "budgetBreakdown": "Répartition budget",
+      "plannedVsSpent": "Prévu vs dépensé"
+    },
+    "report": {
+      "title": "Rapport détaillé par projet",
+      "subtitle": "Sélectionnez un projet pour afficher ses indicateurs",
+      "choose": "— Sélectionner un projet —",
+      "status": "Statut",
+      "sites": "chantiers",
+      "subprojects": "sous-projets",
+      "consumed": "Consommé",
+      "remaining": "Restant",
+      "qualitySafety": "Qualité & Sécurité"
+    },
+    "alerts": {
+      "projectsDelayed": "{{count}} projet(s) en retard",
+      "tasksDelayed": "{{count}} tâche(s) en retard",
+      "seriousIncidents": "{{count}} incident(s) grave(s)",
+      "criticalRisks": "{{count}} risque(s) critique(s)",
+      "materialsLow": "{{count}} matériau(x) en stock bas",
+      "ncOpen": "{{count}} non-conformité(s) ouverte(s)"
+    },
+    "shortcuts": {
+      "projets": "Projets",
+      "planning": "Planning",
+      "budget": "Budget",
+      "engins": "Engins",
+      "materiaux": "Matériaux",
+      "qualite": "Qualité",
+      "securite": "Sécurité",
+      "messagerie": "Messages",
+      "equipes": "Équipes",
+      "documents": "Documents"
     }
   },
   "meteo": {

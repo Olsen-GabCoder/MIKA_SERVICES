@@ -37,7 +37,18 @@ data class UserResponse(
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
     /** Présent uniquement après création : true si l'email de bienvenue a été envoyé. */
-    val welcomeEmailSent: Boolean? = null
+    val welcomeEmailSent: Boolean? = null,
+    val emailNotificationsEnabled: Boolean = true,
+    val alertNewLoginEnabled: Boolean = true,
+    val dailyDigestEnabled: Boolean = false,
+    val weeklyDigestEnabled: Boolean = false,
+    val digestTime: String? = "18:00",
+    val inAppNotificationsEnabled: Boolean = true,
+    val notificationSoundEnabled: Boolean = true,
+    /** Durée de session par défaut : "SHORT" (1 h) ou "LONG" (5 h). Null = choix au login (rememberMe). */
+    val defaultSessionDuration: String? = null,
+    /** Déconnexion à la fermeture du navigateur (client stocke le token en sessionStorage). */
+    val logoutOnBrowserClose: Boolean = false
 )
 
 data class UserSummaryResponse(
@@ -46,4 +57,13 @@ data class UserSummaryResponse(
     val nom: String,
     val prenom: String,
     val email: String
+)
+
+/** Résumé utilisateur pour la messagerie (liste destinataires). Accessible à tout utilisateur connecté. */
+data class UserForMessagingResponse(
+    val id: Long,
+    val nom: String,
+    val prenom: String,
+    val email: String,
+    val roleLabel: String
 )

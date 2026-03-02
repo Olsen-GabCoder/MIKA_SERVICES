@@ -15,7 +15,7 @@ object PrevisionMapper {
         type = entity.type,
         dateDebut = entity.dateDebut,
         dateFin = entity.dateFin,
-        statut = entity.statut,
+        avancementPct = entity.avancementPct,
         createdAt = entity.createdAt
     )
 }

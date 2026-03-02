@@ -88,7 +88,7 @@ export const UserEditForm = ({ user, onSuccess, onCancel }: UserEditFormProps) =
       niveauExperience: data.niveauExperience,
       actif: data.actif,
       roleIds: selectedRoleIds.length > 0 ? selectedRoleIds : undefined,
-      superieurHierarchiqueId: superieurId != null && superieurId !== '' ? Number(superieurId) : null,
+      superieurHierarchiqueId: superieurId != null ? Number(superieurId) : null,
     }
     try {
       await dispatch(updateUser({ id: user.id, data: payload })).unwrap()

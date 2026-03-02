@@ -2,8 +2,10 @@ package com.mikaservices.platform.modules.communication.mapper
 
 import com.mikaservices.platform.modules.communication.dto.response.MessageResponse
 import com.mikaservices.platform.modules.communication.dto.response.NotificationResponse
+import com.mikaservices.platform.modules.communication.dto.response.PieceJointeResponse
 import com.mikaservices.platform.modules.communication.dto.response.UserMinimalResponse
 import com.mikaservices.platform.modules.communication.entity.Message
+import com.mikaservices.platform.modules.communication.entity.MessagePieceJointe
 import com.mikaservices.platform.modules.communication.entity.Notification
 import com.mikaservices.platform.modules.user.entity.User
 
@@ -18,7 +20,20 @@ object CommunicationMapper {
         )
     }
 
-    fun toMessageResponse(entity: Message): MessageResponse {
+    fun toPieceJointeResponse(pj: MessagePieceJointe): PieceJointeResponse {
+        return PieceJointeResponse(
+            id = pj.id!!,
+            nomOriginal = pj.nomOriginal,
+            typeMime = pj.typeMime,
+            tailleOctets = pj.tailleOctets
+        )
+    }
+
+    fun toMessageResponse(
+        entity: Message,
+        piecesJointes: List<MessagePieceJointe> = emptyList(),
+        mentions: List<UserMinimalResponse> = emptyList()
+    ): MessageResponse {
         return MessageResponse(
             id = entity.id!!,
             expediteur = toUserMinimal(entity.expediteur),
@@ -29,6 +44,8 @@ object CommunicationMapper {
             lu = entity.lu,
             dateLecture = entity.dateLecture,
             parentId = entity.parent?.id,
+            piecesJointes = piecesJointes.map { toPieceJointeResponse(it) },
+            mentions = mentions,
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt
         )

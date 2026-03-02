@@ -7,5 +7,6 @@ data class AuthResponse(
     val refreshToken: String,
     val tokenType: String = "Bearer",
     val expiresIn: Long,
+    val sessionExpiresIn: Long? = null,
     val user: UserResponse
 )

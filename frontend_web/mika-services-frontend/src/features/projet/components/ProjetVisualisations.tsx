@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { i18n } from '@/i18n'
+import { formatDisplayNumber } from '@/utils/formatDisplayNumber'
+import { getStoredNumberFormat } from '@/utils/numberFormatPreferences'
 import type { ProjetReport } from '@/types/reporting'
 
 const formatMontant = (montant?: number) =>
-  montant != null ? new Intl.NumberFormat(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(montant) : '—'
+  formatDisplayNumber(montant, { numberFormat: getStoredNumberFormat(), style: 'currency', currency: 'XAF', maximumFractionDigits: 0 })
 
 /** Pourcentage affiché avec 2 décimales (sans troncature ni arrondi implicite au-delà). */
 const formatPct = (v: number) => (Number.isFinite(v) ? Math.round(v * 100) / 100 : 0)

@@ -81,6 +81,16 @@ export interface ChangePasswordRequest {
   newPassword: string
 }
 
+export interface NotificationPreferencesUpdatePayload {
+  emailNotificationsEnabled?: boolean
+  alertNewLoginEnabled?: boolean
+  dailyDigestEnabled?: boolean
+  weeklyDigestEnabled?: boolean
+  digestTime?: string | null
+  inAppNotificationsEnabled?: boolean
+  notificationSoundEnabled?: boolean
+}
+
 export interface UserGetAllParams {
   search?: string
   actif?: boolean
@@ -88,6 +98,15 @@ export interface UserGetAllParams {
   page?: number
   size?: number
   sort?: string
+}
+
+/** Réponse GET /users/me/peers : destinataires possibles pour la messagerie. */
+export interface UserForMessaging {
+  id: number
+  nom: string
+  prenom: string
+  email: string
+  roleLabel: string
 }
 
 export interface PaginatedResponse<T> {
@@ -98,10 +117,18 @@ export interface PaginatedResponse<T> {
   number: number
 }
 
+export interface LoginHistoryEntry {
+  createdAt: string
+  ipAddress: string | null
+  deviceSummary: string | null
+}
+
 export interface Session {
   id: number
   ipAddress: string | null
   userAgent: string | null
+  deviceName: string | null
+  isCurrent: boolean
   dateDebut: string
   lastActivity: string | null
 }
@@ -130,6 +157,12 @@ export const userApi = {
 
   getMe: async (): Promise<User> => {
     const response = await apiClient.get<User>('/users/me')
+    return response.data
+  },
+
+  /** Liste des autres utilisateurs (destinataires messagerie). Accessible à tout utilisateur connecté. */
+  getPeersForMessaging: async (): Promise<UserForMessaging[]> => {
+    const response = await apiClient.get<UserForMessaging[]>('/users/me/peers')
     return response.data
   },
 
@@ -198,12 +231,31 @@ export const userApi = {
     await apiClient.put('/users/me/password', data)
   },
 
+  updateNotificationPreferences: async (payload: NotificationPreferencesUpdatePayload): Promise<User> => {
+    const response = await apiClient.patch<User>('/users/me/preferences/notifications', payload)
+    return response.data
+  },
+
+  /** Préférences de session : durée par défaut et déconnexion à la fermeture du navigateur. */
+  updateSessionPreferences: async (payload: {
+    defaultSessionDuration?: 'SHORT' | 'LONG' | null
+    logoutOnBrowserClose?: boolean
+  }): Promise<User> => {
+    const response = await apiClient.patch<User>('/users/me/preferences/session', payload)
+    return response.data
+  },
+
   adminResetPassword: async (userId: number, newPassword: string): Promise<void> => {
     await apiClient.put(`/users/${userId}/admin-reset-password`, { newPassword })
   },
 
   adminDisable2FA: async (userId: number): Promise<void> => {
     await apiClient.post(`/users/${userId}/admin-disable-2fa`)
+  },
+
+  getMyLoginHistory: async (): Promise<LoginHistoryEntry[]> => {
+    const response = await apiClient.get<LoginHistoryEntry[]>('/users/me/login-history')
+    return response.data
   },
 
   getMySessions: async (): Promise<Session[]> => {

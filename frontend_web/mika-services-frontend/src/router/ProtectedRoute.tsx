@@ -34,7 +34,7 @@ export const ProtectedRoute = ({
   // Route nécessitant les droits admin
   if (requireAdmin) {
     const isAdmin = user?.roles?.some(
-      (role) => role.code === 'ADMIN' || role.code === 'SUPER_ADMIN'
+      (role: { code: string }) => role.code === 'ADMIN' || role.code === 'SUPER_ADMIN'
     )
     
     if (!isAdmin) {

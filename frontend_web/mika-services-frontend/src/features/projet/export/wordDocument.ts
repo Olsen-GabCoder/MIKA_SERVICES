@@ -1,8 +1,7 @@
 /**
- * Génération du document Word (.docx) — MIKA Services
- * Document professionnel, complet et structuré. Contient l'intégralité des données
- * de la page détail projet : date d'export, semaine en cours, données stratégiques,
- * financières et opérationnelles, tableaux détaillés, indicateurs, hiérarchie claire.
+ * Génération du document Word (.docx) Premium — MIKA Services
+ * Template professionnel de haut niveau : page de garde, en-têtes/pieds de page
+ * avec numérotation, logo, KPI, tableaux alternés, historique complet, alertes.
  */
 import {
   Document,
@@ -15,594 +14,566 @@ import {
   WidthType,
   BorderStyle,
   AlignmentType,
-  HeadingLevel,
   convertInchesToTwip,
   ShadingType,
+  ImageRun,
+  Header,
+  Footer,
+  PageNumber,
+  PageBreak,
+  Tab,
 } from 'docx'
 import type { ProjetDocumentPayload } from './types'
 import { getAvancementEtudesWithLabels } from './types'
 import { getTypeProjetDisplay, getProjetTypes } from '@/types/projet'
 
-// ——— Constantes de mise en forme ———
-const COULEUR_TITRE = '1E40AF'
-const COULEUR_TEXTE = '111827'
-const COULEUR_SECONDAIRE = '6B7280'
-const FOND_ENTETE_TABLEAU = 'F3F4F6'
-const FOND_ALERTE = 'FEF3C7'
-const TAILLE_TITRE = 22
-const TAILLE_SECTION = 14
-const TAILLE_SOUS_SECTION = 12
-const TAILLE_CORPS = 11
-const TAILLE_PIED = 9
+const P = '2E5266'
+const A = 'FF6B35'
+const TXT = '1A1A2E'
+const TXT2 = '4A5568'
+const MUTED = '94A3B8'
+const BG = 'F8FAFC'
+const BG_ALT = 'F1F5F9'
+const BORDER = 'E2E8F0'
+const SUCCESS = '059669'
+const DANGER = 'DC2626'
+const LOGO_URL = '/Logo_mika_services.png'
 
-/** Date d'export formatée (jour de la semaine + date complète en français) */
-function getDateExportComplete(): string {
-  const d = new Date()
-  const jours = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
-  const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
-  return `${jours[d.getDay()]} ${d.getDate()} ${mois[d.getMonth()]} ${d.getFullYear()}`
+const SZ = { title: 52, h1: 28, h2: 24, body: 20, small: 18, tiny: 16, micro: 14 } as const
+const SP = { section: { before: 320, after: 200 }, sub: { before: 200, after: 120 }, para: { after: 100 }, big: { after: 240 } } as const
+
+const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'] as const
+const MOIS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'] as const
+function dateFr() { const d = new Date(); return `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS_FR[d.getMonth()]} ${d.getFullYear()}` }
+function heureFr() { return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }
+
+const BORD = {
+  top: { style: BorderStyle.SINGLE, size: 2, color: BORDER },
+  bottom: { style: BorderStyle.SINGLE, size: 2, color: BORDER },
+  left: { style: BorderStyle.SINGLE, size: 2, color: BORDER },
+  right: { style: BorderStyle.SINGLE, size: 2, color: BORDER },
 }
 
-/** Heure d'export (optionnel, pour traçabilité) */
-function getHeureExport(): string {
-  return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-}
-
-// ——— Helpers cellules tableaux ———
-function cellLabel(text: string): TableCell {
+function cHdr(text: string, width?: number): TableCell {
   return new TableCell({
-    children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: TAILLE_CORPS * 2, color: COULEUR_TEXTE })] })],
-    width: { size: 28, type: WidthType.PERCENTAGE },
-    shading: { fill: 'F9FAFB', type: ShadingType.CLEAR },
+    children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: SZ.body, color: 'FFFFFF' })], alignment: AlignmentType.LEFT })],
+    shading: { fill: P, type: ShadingType.SOLID },
+    ...(width ? { width: { size: width, type: WidthType.PERCENTAGE } } : {}),
+  })
+}
+function cHdrR(text: string, width?: number): TableCell {
+  return new TableCell({
+    children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: SZ.body, color: 'FFFFFF' })], alignment: AlignmentType.RIGHT })],
+    shading: { fill: P, type: ShadingType.SOLID },
+    ...(width ? { width: { size: width, type: WidthType.PERCENTAGE } } : {}),
+  })
+}
+function cLbl(text: string): TableCell {
+  return new TableCell({
+    children: [new Paragraph({ children: [new TextRun({ text, size: SZ.body, color: TXT2 })] })],
+    width: { size: 35, type: WidthType.PERCENTAGE },
+    shading: { fill: BG, type: ShadingType.CLEAR },
+    borders: BORD,
+  })
+}
+function cVal(text: string, bold = true): TableCell {
+  return new TableCell({
+    children: [new Paragraph({ children: [new TextRun({ text, bold, size: SZ.body, color: TXT })] })],
+    borders: BORD,
+  })
+}
+function cBody(text: string, width?: number): TableCell {
+  return new TableCell({
+    children: [new Paragraph({ children: [new TextRun({ text, size: SZ.body, color: TXT })] })],
+    borders: BORD,
+    ...(width ? { width: { size: width, type: WidthType.PERCENTAGE } } : {}),
+  })
+}
+function cBodyR(text: string, width?: number): TableCell {
+  return new TableCell({
+    children: [new Paragraph({ children: [new TextRun({ text, size: SZ.body, color: TXT })], alignment: AlignmentType.RIGHT })],
+    borders: BORD,
+    ...(width ? { width: { size: width, type: WidthType.PERCENTAGE } } : {}),
+  })
+}
+function cBodyBold(text: string, width?: number): TableCell {
+  return new TableCell({
+    children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: SZ.body, color: TXT })] })],
+    borders: BORD,
+    ...(width ? { width: { size: width, type: WidthType.PERCENTAGE } } : {}),
+  })
+}
+function cBodyColor(text: string, color: string, width?: number): TableCell {
+  return new TableCell({
+    children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: SZ.body, color })], alignment: AlignmentType.RIGHT })],
+    borders: BORD,
+    ...(width ? { width: { size: width, type: WidthType.PERCENTAGE } } : {}),
   })
 }
 
-function cellValue(text: string, bold = false): TableCell {
-  return new TableCell({
-    children: [new Paragraph({ children: [new TextRun({ text, bold, size: TAILLE_CORPS * 2, color: COULEUR_TEXTE })] })],
-    width: { size: 72, type: WidthType.PERCENTAGE },
-  })
+function shadedRow(cells: TableCell[], alt: boolean): TableRow {
+  if (alt) cells.forEach((c) => { (c as unknown as { shading: unknown }).shading = { fill: BG_ALT, type: ShadingType.CLEAR } })
+  return new TableRow({ children: cells })
 }
 
-function cellHeader(text: string): TableCell {
-  return new TableCell({
-    children: [new Paragraph({ children: [new TextRun({ text, bold: true, size: TAILLE_CORPS * 2, color: 'FFFFFF' })] })],
-    shading: { fill: COULEUR_TITRE, type: ShadingType.SOLID },
-  })
-}
-
-function cellBody(text: string): TableCell {
-  return new TableCell({
-    children: [new Paragraph({ children: [new TextRun({ text, size: TAILLE_CORPS * 2, color: COULEUR_TEXTE })] })],
-  })
-}
-
-const BORDURES_TABLEAU = {
-  top: { style: BorderStyle.SINGLE, size: 4, color: 'E5E7EB' },
-  bottom: { style: BorderStyle.SINGLE, size: 4, color: 'E5E7EB' },
-  left: { style: BorderStyle.SINGLE, size: 4, color: 'E5E7EB' },
-  right: { style: BorderStyle.SINGLE, size: 4, color: 'E5E7EB' },
-}
-
-function paraVide(apres = 120): Paragraph {
-  return new Paragraph({ text: '', spacing: { after: apres } })
-}
-
-function paraCorps(text: string, bold = false): Paragraph {
+function secHeading(text: string): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text, bold, size: TAILLE_CORPS * 2, color: COULEUR_TEXTE })],
-    spacing: { after: 80 },
+    children: [
+      new TextRun({ text: '  ', size: SZ.h1 }),
+      new TextRun({ text, bold: true, size: SZ.h1, color: P }),
+    ],
+    spacing: SP.section,
+    border: { left: { style: BorderStyle.SINGLE, size: 12, color: A, space: 8 } },
+  })
+}
+function subHeading(text: string): Paragraph {
+  return new Paragraph({
+    children: [
+      new TextRun({ text: '  ', size: SZ.h2 }),
+      new TextRun({ text, bold: true, size: SZ.h2, color: TXT }),
+    ],
+    spacing: SP.sub,
+    border: { left: { style: BorderStyle.SINGLE, size: 8, color: P, space: 6 } },
+  })
+}
+function para(text: string, bold = false): Paragraph {
+  return new Paragraph({ children: [new TextRun({ text, bold, size: SZ.body, color: TXT })], spacing: SP.para })
+}
+function paraMuted(text: string): Paragraph {
+  return new Paragraph({ children: [new TextRun({ text, size: SZ.small, color: MUTED, italics: true })], spacing: SP.para })
+}
+function spacer(after = 200): Paragraph {
+  return new Paragraph({ text: '', spacing: { after } })
+}
+
+function kvTable(rows: [string, string][]): Table {
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: BORD,
+    rows: rows.map(([l, v], i) => shadedRow([cLbl(l), cVal(v)], i % 2 === 1)),
   })
 }
 
 export async function buildProjetWord(payload: ProjetDocumentPayload): Promise<Blob> {
-  const {
-    projet,
-    rapport,
-    lignesCA,
-    pointsBloquants,
-    previsions,
-    budgetPrevu,
-    depensesTotales,
-    semaineCalendaire,
-    anneeCalendaire,
-    delaiMois,
-    formatMontant,
-    formatDate,
-  } = payload
+  const { projet, rapport, lignesCA, pointsBloquants, previsions, budgetPrevu, depensesTotales, semaineCalendaire, anneeCalendaire, delaiMois, formatMontant, formatDate, formatTime } = payload
   const etudes = getAvancementEtudesWithLabels(projet.avancementEtudes)
-  const dateExport = getDateExportComplete()
-  const heureExport = getHeureExport()
+  const dateExp = dateFr()
+  const heureExp = formatTime ? formatTime() : heureFr()
+  const ref = projet.numeroMarche ?? String(projet.id)
 
-  const contenu: (Paragraph | Table)[] = []
+  let logoBuffer: ArrayBuffer | null = null
+  try { const res = await fetch(LOGO_URL); if (res.ok) logoBuffer = await res.arrayBuffer() } catch { /* optional */ }
 
-  // ==================== EN-TÊTE INSTITUTIONNEL ====================
-  contenu.push(
-    new Paragraph({
-      children: [new TextRun({ text: 'MIKA SERVICES', bold: true, size: 28, color: COULEUR_TITRE })],
+  const tachesRealiseSemaine = previsions.filter((p) => p.semaine === semaineCalendaire && p.annee === anneeCalendaire)
+  const semaineSuivante = semaineCalendaire < 53 ? semaineCalendaire + 1 : 1
+  const anneeSuivante = semaineCalendaire < 53 ? anneeCalendaire : anneeCalendaire + 1
+  const tachesPrevuesExplicites = previsions.filter((p) => p.semaine === semaineSuivante && p.annee === anneeSuivante)
+  const tachesReportees = previsions.filter((p) => {
+    const a = p.annee ?? 0; const sw = p.semaine ?? 0
+    return (a < anneeCalendaire || (a === anneeCalendaire && sw < semaineCalendaire)) && (p.avancementPct == null || p.avancementPct < 100)
+  })
+  const tachesPrevuesSuivante = [...tachesPrevuesExplicites, ...tachesReportees]
+  const avancementsRealise = tachesRealiseSemaine.map((t) => t.avancementPct).filter((v): v is number => v != null)
+  const globalPct = avancementsRealise.length > 0 ? Math.round((avancementsRealise.reduce((a, b) => a + b, 0) / avancementsRealise.length) * 100) / 100 : null
+
+  const pastWeekKeys = Array.from(
+    new Set(previsions.filter((p) => { const a = p.annee ?? 0; const sw = p.semaine ?? 0; return a < anneeCalendaire || (a === anneeCalendaire && sw < semaineCalendaire) }).map((p) => `${p.annee ?? 0}-${p.semaine ?? 0}`))
+  ).map((k) => { const [a, sw] = k.split('-').map(Number); return { annee: a, semaine: sw } }).sort((x, y) => x.annee !== y.annee ? x.annee - y.annee : x.semaine - y.semaine)
+
+  const hasHistory = pastWeekKeys.length > 0
+  const hasAlertes = pointsBloquants.length > 0 || (rapport && (rapport.planning.tachesEnRetard > 0 || rapport.securite.risquesCritiques > 0))
+  const secNums = (() => { let n = 0; return { contract: ++n, dashboard: ++n, suivi: ++n, etudes: ++n, travaux: ++n, history: hasHistory ? ++n : 0, desc: ++n, actors: ++n, alerts: hasAlertes ? ++n : 0 } })()
+
+  /* ═══════════════════════════════════════════
+     COVER PAGE
+     ═══════════════════════════════════════════ */
+  const coverChildren: (Paragraph | Table)[] = []
+
+  coverChildren.push(spacer(600))
+
+  if (logoBuffer && logoBuffer.byteLength > 0) {
+    coverChildren.push(new Paragraph({
+      children: [new ImageRun({ type: 'png', data: logoBuffer, transformation: { width: 80, height: 80 } })],
       alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
-    }),
+      spacing: { after: 200 },
+    }))
+  }
+
+  coverChildren.push(
+    new Paragraph({ children: [new TextRun({ text: 'MIKA SERVICES', bold: true, size: SZ.title, color: A })], alignment: AlignmentType.CENTER, spacing: { after: 80 } }),
+    new Paragraph({ children: [new TextRun({ text: 'Bureau d\'Études Techniques', size: SZ.h2, color: P })], alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
     new Paragraph({
-      children: [new TextRun({ text: 'Rapport de projet – Document officiel', size: TAILLE_SOUS_SECTION * 2, color: COULEUR_SECONDAIRE })],
+      children: [new TextRun({ text: '━━━━━━━━━━━━━━━━━━━━', size: SZ.h2, color: A })],
       alignment: AlignmentType.CENTER,
       spacing: { after: 400 },
     }),
-    new Paragraph({
-      children: [
-        new TextRun({ text: 'Date d\'export : ', bold: true, size: TAILLE_CORPS * 2 }),
-        new TextRun({ text: `${dateExport} à ${heureExport}`, size: TAILLE_CORPS * 2, color: COULEUR_TEXTE }),
-      ],
-      spacing: { after: 60 },
-    }),
-    new Paragraph({
-      children: [
-        new TextRun({ text: 'Semaine en cours : ', bold: true, size: TAILLE_CORPS * 2 }),
-        new TextRun({ text: `Semaine ${semaineCalendaire} (${anneeCalendaire})`, size: TAILLE_CORPS * 2, color: COULEUR_TEXTE }),
-      ],
-      spacing: { after: 320 },
-    })
+    new Paragraph({ children: [new TextRun({ text: 'RAPPORT DE SUIVI DE PROJET', bold: true, size: SZ.h1, color: P })], alignment: AlignmentType.CENTER, spacing: { after: 300 } }),
+    new Paragraph({ children: [new TextRun({ text: projet.nom, bold: true, size: 36, color: P })], alignment: AlignmentType.CENTER, spacing: { after: 120 } }),
+    new Paragraph({ children: [new TextRun({ text: `Réf. ${ref}`, size: SZ.h2, color: TXT2 })], alignment: AlignmentType.CENTER, spacing: { after: 500 } }),
   )
 
-  // ==================== IDENTIFICATION DU PROJET ====================
-  contenu.push(
-    new Paragraph({
-      text: 'Identification du projet',
-      heading: HeadingLevel.HEADING_1,
-      spacing: { before: 240, after: 160 },
-    }),
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: projet.numeroMarche ? `${projet.numeroMarche} — ${projet.nom}` : projet.nom,
-          bold: true,
-          size: TAILLE_SECTION * 2,
-          color: COULEUR_TITRE,
-        }),
-      ],
-      spacing: { after: 80 },
-    }),
-    new Paragraph({
-      text: 'Numéro(s) de marché et intitulé(s) complet(s)',
-      spacing: { after: 120 },
-    }),
-    new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      borders: BORDURES_TABLEAU,
-      rows: [
-        new TableRow({
-          children: [
-            cellLabel('Statut du projet'),
-            cellValue(projet.statut.replace(/_/g, ' ')),
-          ],
-        }),
-        new TableRow({
-          children: [
-            cellLabel('Type de projet'),
-            cellValue(getTypeProjetDisplay(getProjetTypes(projet), projet.typePersonnalise)),
-          ],
-        }),
-        new TableRow({
-          children: [
-            cellLabel('Chef de projet'),
-            cellValue(projet.responsableProjet ? `${projet.responsableProjet.prenom} ${projet.responsableProjet.nom}` : '—'),
-          ],
-        }),
-      ],
-    }),
-    paraVide(200)
+  const coverMetaRows: [string, string][] = [
+    ['Statut', projet.statut.replace(/_/g, ' ')],
+    ['Type de projet', getTypeProjetDisplay(getProjetTypes(projet), projet.typePersonnalise)],
+    ['Chef de projet', projet.responsableProjet ? `${projet.responsableProjet.prenom} ${projet.responsableProjet.nom}` : '—'],
+    ['Client', projet.client?.nom ?? '—'],
+    ['Période', `${formatDate(projet.dateDebut)} — ${formatDate(projet.dateFin)}`],
+    ['Semaine en cours', `Semaine ${semaineCalendaire} (${anneeCalendaire})`],
+    ['Avancement global', `${projet.avancementGlobal} %`],
+  ]
+  coverChildren.push(kvTable(coverMetaRows))
+  coverChildren.push(
+    spacer(400),
+    new Paragraph({ children: [new TextRun({ text: `Exporté le ${dateExp} à ${heureExp}`, size: SZ.body, color: TXT2 })], alignment: AlignmentType.CENTER, spacing: { after: 300 } }),
+    new Paragraph({ children: [new TextRun({ text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', size: SZ.small, color: BORDER })], alignment: AlignmentType.CENTER, spacing: { after: 100 } }),
+    new Paragraph({ children: [new TextRun({ text: 'DOCUMENT CONFIDENTIEL', bold: true, size: SZ.small, color: MUTED })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: 'Usage interne et transmission officielle uniquement', size: SZ.tiny, color: MUTED })], alignment: AlignmentType.CENTER }),
   )
 
-  // ==================== 1. INFORMATIONS CONTRACTUELLES ====================
-  contenu.push(
-    new Paragraph({
-      text: '1. Informations contractuelles',
-      heading: HeadingLevel.HEADING_1,
-      spacing: { before: 280, after: 160 },
-    }),
-    new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      borders: BORDURES_TABLEAU,
-      rows: [
-        new TableRow({ children: [cellLabel('Montant marché (HT)'), cellValue(formatMontant(projet.montantHT))] }),
-        new TableRow({ children: [cellLabel('Montant TTC'), cellValue(formatMontant(projet.montantTTC))] }),
-        new TableRow({ children: [cellLabel('Travaux supplémentaires (FCFA)'), cellValue(formatMontant(projet.montantInitial))] }),
-        new TableRow({ children: [cellLabel('Avenant (FCFA)'), cellValue(formatMontant(projet.montantRevise))] }),
-        new TableRow({ children: [cellLabel('Délai'), cellValue(delaiMois != null ? `${delaiMois} mois` : '—')] }),
-        new TableRow({ children: [cellLabel('Date de début prévue'), cellValue(formatDate(projet.dateDebut))] }),
-        new TableRow({ children: [cellLabel('Date de fin prévue'), cellValue(formatDate(projet.dateFin))] }),
-        new TableRow({ children: [cellLabel('Date de début réelle'), cellValue(formatDate(projet.dateDebutReel))] }),
-        new TableRow({ children: [cellLabel('Date de fin réelle'), cellValue(formatDate(projet.dateFinReelle))] }),
-        new TableRow({ children: [cellLabel('Imputation budgétaire'), cellValue(projet.imputationBudgetaire ?? '—')] }),
-        new TableRow({ children: [cellLabel('Source de financement'), cellValue(projet.sourceFinancement?.replace(/_/g, ' ') ?? '—')] }),
-      ],
-    }),
-    paraVide(200)
-  )
+  /* ═══════════════════════════════════════════
+     CONTENT
+     ═══════════════════════════════════════════ */
+  const content: (Paragraph | Table)[] = []
 
-  // ==================== 2. TABLEAU DE SUIVI MENSUEL ====================
-  contenu.push(
-    new Paragraph({
-      text: '2. Tableau de suivi mensuel',
-      heading: HeadingLevel.HEADING_1,
-      spacing: { before: 280, after: 160 },
-    })
-  )
+  /* ── Section 1: Informations contractuelles ── */
+  content.push(secHeading(`${secNums.contract}. Informations contractuelles`))
+  content.push(kvTable([
+    ['Numéro de marché', ref],
+    ['Statut du projet', projet.statut.replace(/_/g, ' ')],
+    ['Type de projet', getTypeProjetDisplay(getProjetTypes(projet), projet.typePersonnalise)],
+    ['Montant marché (HT)', formatMontant(projet.montantHT)],
+    ['Montant TTC', formatMontant(projet.montantTTC)],
+    ['Travaux supplémentaires', formatMontant(projet.montantInitial)],
+    ['Avenant', formatMontant(projet.montantRevise)],
+    ['Délai contractuel', delaiMois != null ? `${delaiMois} mois` : '—'],
+    ['Date début prévue', formatDate(projet.dateDebut)],
+    ['Date fin prévue', formatDate(projet.dateFin)],
+    ['Date début réelle', formatDate(projet.dateDebutReel)],
+    ['Date fin réelle', formatDate(projet.dateFinReelle)],
+    ['Imputation budgétaire', projet.imputationBudgetaire ?? '—'],
+    ['Source de financement', projet.sourceFinancement?.replace(/_/g, ' ') ?? '—'],
+  ]))
+
+  /* ── Section 2: Tableau de bord ── */
+  content.push(secHeading(`${secNums.dashboard}. Tableau de bord synthétique`))
+
+  const kpiData: [string, string][] = [
+    ['Avancement global', `${projet.avancementGlobal} %`],
+    ['Avancement physique', `${projet.avancementPhysiquePct ?? projet.avancementGlobal} %`],
+    ['Budget consommé', `${rapport?.budget?.tauxConsommation ?? 0} %`],
+    ['Budget prévu / Dépenses', `${formatMontant(budgetPrevu)} / ${formatMontant(depensesTotales)}`],
+    ['Conformité qualité', `${rapport?.qualite?.tauxConformite ?? 0} %`],
+    ['Non-conformités ouvertes', String(rapport?.qualite?.ncOuvertes ?? 0)],
+    ['Incidents sécurité', String(rapport?.securite?.incidentsTotal ?? 0)],
+    ['Risques critiques', String(rapport?.securite?.risquesCritiques ?? 0)],
+    ['Planning — tâches terminées / en cours / en retard', `${rapport?.planning?.tachesTerminees ?? 0} / ${rapport?.planning?.tachesEnCours ?? 0} / ${rapport?.planning?.tachesEnRetard ?? 0}`],
+    ['Taux d\'avancement planning', `${rapport?.planning?.tauxAvancement ?? 0} %`],
+  ]
+  content.push(new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: BORD,
+    rows: [
+      new TableRow({ children: [cHdr('Indicateur'), cHdrR('Valeur')] }),
+      ...kpiData.map(([l, v], i) => shadedRow([cLbl(l), cVal(v)], i % 2 === 1)),
+    ],
+  }))
+
+  /* ── Section 3: Suivi mensuel ── */
+  content.push(secHeading(`${secNums.suivi}. Suivi mensuel du chiffre d'affaires`))
   if (lignesCA.length > 0) {
-    contenu.push(
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: BORDURES_TABLEAU,
-        rows: [
-          new TableRow({
-            children: [
-              cellHeader('Mois'),
-              cellHeader('CA prévisionnel'),
-              cellHeader('CA réalisé'),
-              cellHeader('Écart'),
-              cellHeader('Avancement cumulé %'),
-            ],
-          }),
-          ...lignesCA.map((ligne) =>
-            new TableRow({
-              children: [
-                cellBody(ligne.label),
-                cellBody(ligne.caPrevisionnel === 0 ? '—' : formatMontant(ligne.caPrevisionnel)),
-                cellBody(ligne.caRealise === 0 ? '—' : formatMontant(ligne.caRealise)),
-                cellBody(ligne.ecart === 0 ? '—' : formatMontant(ligne.ecart)),
-                cellBody(ligne.avancementCumule === 0 ? '—' : `${ligne.avancementCumule} %`),
-              ],
-            })
-          ),
-        ],
-      }),
-      new Paragraph({
-        children: [
-          new TextRun({ text: 'Synthèse budgétaire : ', bold: true, size: TAILLE_CORPS * 2 }),
-          new TextRun({
-            text: `Budget total prévu ${formatMontant(budgetPrevu)} — Dépenses réalisées ${formatMontant(depensesTotales)} — Écart ${formatMontant(rapport?.budget?.ecart ?? depensesTotales - budgetPrevu)}.`,
-            size: TAILLE_CORPS * 2,
-            color: COULEUR_TEXTE,
-          }),
+    const totP = lignesCA.reduce((acc, l) => acc + l.caPrevisionnel, 0)
+    const totR = lignesCA.reduce((acc, l) => acc + l.caRealise, 0)
+    const totE = lignesCA.reduce((acc, l) => acc + l.ecart, 0)
+    const lastA = [...lignesCA].reverse().find((l) => l.avancementCumule != null)?.avancementCumule
+
+    content.push(new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      borders: BORD,
+      rows: [
+        new TableRow({ children: [cHdr('Mois', 18), cHdrR('CA prév.', 20), cHdrR('CA réalisé', 20), cHdrR('Écart', 20), cHdrR('Avanc. %', 22)] }),
+        ...lignesCA.map((l, i) => shadedRow([
+          cBodyBold(l.label, 18),
+          cBodyR(l.caPrevisionnel === 0 ? '—' : formatMontant(l.caPrevisionnel), 20),
+          cBodyR(l.caRealise === 0 ? '—' : formatMontant(l.caRealise), 20),
+          cBodyColor(l.ecart === 0 ? '—' : formatMontant(l.ecart), l.ecart > 0 ? SUCCESS : l.ecart < 0 ? DANGER : TXT, 20),
+          cBodyR(l.avancementCumule == null || l.avancementCumule === 0 ? '—' : `${l.avancementCumule} %`, 22),
+        ], i % 2 === 1)),
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'TOTAL', bold: true, size: SZ.body, color: P })], alignment: AlignmentType.LEFT })], shading: { fill: 'EDF2F7', type: ShadingType.CLEAR }, borders: BORD, width: { size: 18, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: formatMontant(totP), bold: true, size: SZ.body, color: TXT })], alignment: AlignmentType.RIGHT })], shading: { fill: 'EDF2F7', type: ShadingType.CLEAR }, borders: BORD, width: { size: 20, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: formatMontant(totR), bold: true, size: SZ.body, color: TXT })], alignment: AlignmentType.RIGHT })], shading: { fill: 'EDF2F7', type: ShadingType.CLEAR }, borders: BORD, width: { size: 20, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: formatMontant(totE), bold: true, size: SZ.body, color: totE >= 0 ? SUCCESS : DANGER })], alignment: AlignmentType.RIGHT })], shading: { fill: 'EDF2F7', type: ShadingType.CLEAR }, borders: BORD, width: { size: 20, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: lastA != null ? `${lastA} %` : '—', bold: true, size: SZ.body, color: TXT })], alignment: AlignmentType.RIGHT })], shading: { fill: 'EDF2F7', type: ShadingType.CLEAR }, borders: BORD, width: { size: 22, type: WidthType.PERCENTAGE } }),
+          ],
+        }),
+      ],
+    }))
+    content.push(new Paragraph({
+      children: [
+        new TextRun({ text: 'Synthèse : ', bold: true, size: SZ.body }),
+        new TextRun({ text: `budget prévu ${formatMontant(budgetPrevu)} — dépenses ${formatMontant(depensesTotales)} — écart ${formatMontant(rapport?.budget?.ecart ?? depensesTotales - budgetPrevu)}.`, size: SZ.body, color: TXT }),
         ],
         spacing: { before: 120, after: 200 },
-      })
-    )
+    }))
   } else {
-    contenu.push(
-      paraCorps('Aucune donnée de suivi mensuel. Définir les dates de début et de fin du projet et renseigner le CA prévisionnel et réalisé via le module Budget.', true),
-      paraVide(200)
-    )
+    content.push(paraMuted('Aucune donnée de suivi mensuel disponible.'))
   }
 
-  // ==================== 3. ÉTAT D'AVANCEMENT DES ÉTUDES ====================
-  contenu.push(
-    new Paragraph({
-      text: '3. État d\'avancement des études',
-      heading: HeadingLevel.HEADING_1,
-      spacing: { before: 280, after: 160 },
-    }),
-    new Table({
+  /* ── Section 4: Études ── */
+  content.push(secHeading(`${secNums.etudes}. État d'avancement des études`))
+  content.push(new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
-      borders: BORDURES_TABLEAU,
+    borders: BORD,
       rows: [
-        new TableRow({
-          children: [
-            cellHeader('Type'),
-            cellHeader('Avancement %'),
-            cellHeader('Dépôt à l\'administration'),
-            cellHeader('État de validation'),
-          ],
-        }),
-        ...etudes.map((e) =>
-          new TableRow({
-            children: [
-              cellBody(e.phase),
-              cellBody(e.avancementPct != null ? `${e.avancementPct} %` : '—'),
-              cellBody(e.dateDepot),
-              cellBody(e.etatValidation),
-            ],
-          })
-        ),
-      ],
-    }),
-    paraVide(200)
-  )
+      new TableRow({ children: [cHdr('Phase'), cHdrR('Avanc. %'), cHdr('Dépôt'), cHdr('Validation')] }),
+      ...etudes.map((e, i) => shadedRow([
+        cBodyBold(e.phase),
+        cBodyR(e.avancementPct != null ? `${e.avancementPct} %` : '—'),
+        cBody(e.dateDepot),
+        cBody(e.etatValidation),
+      ], i % 2 === 1)),
+    ],
+  }))
 
-  // ==================== 4. AVANCEMENT DES TRAVAUX / PRÉVISIONS ====================
-  contenu.push(
-    new Paragraph({
-      text: '4. Avancement des travaux et prévisions',
-      heading: HeadingLevel.HEADING_1,
-      spacing: { before: 280, after: 160 },
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: `Avancement global du projet : ${projet.avancementGlobal} %`, bold: true, size: TAILLE_CORPS * 2, color: COULEUR_TITRE })],
+  /* ── Section 5: Travaux ── */
+  content.push(secHeading(`${secNums.travaux}. Avancement des travaux — Semaine ${semaineCalendaire} (${anneeCalendaire})`))
+
+  if (globalPct != null) {
+    content.push(new Paragraph({
+      children: [new TextRun({ text: `Avancement global semaine : ${globalPct} %`, bold: true, size: SZ.h2, color: A })],
       spacing: { after: 200 },
-    }),
-    new Paragraph({
-      text: '4.1 Points bloquants',
-      heading: HeadingLevel.HEADING_2,
-      spacing: { before: 160, after: 120 },
-    })
-  )
+    }))
+  }
+
+  content.push(subHeading(`${secNums.travaux}.1 Réalisé — Semaine ${semaineCalendaire} (${anneeCalendaire})`))
+  if (tachesRealiseSemaine.length > 0) {
+    content.push(new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      borders: BORD,
+      rows: [
+        new TableRow({ children: [cHdr('Tâche / Description', 75), cHdrR('Avancement', 25)] }),
+        ...tachesRealiseSemaine.map((p, i) => shadedRow([
+          cBody(p.description ?? p.type.replace(/_/g, ' '), 75),
+          cBodyR(p.avancementPct != null ? `${p.avancementPct} %` : '—', 25),
+        ], i % 2 === 1)),
+      ],
+    }))
+  } else {
+    content.push(paraMuted('Aucune tâche enregistrée pour la semaine en cours.'))
+  }
+
+  content.push(subHeading(`${secNums.travaux}.2 Prévisions — Semaine ${semaineSuivante} (${anneeSuivante})`))
+  if (tachesReportees.length > 0) {
+    content.push(paraMuted('Les tâches non achevées des semaines précédentes sont reportées automatiquement.'))
+  }
+  if (tachesPrevuesSuivante.length > 0) {
+    content.push(new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      borders: BORD,
+      rows: [
+        new TableRow({ children: [cHdr('Tâche / Description', 75), cHdrR('Avancement', 25)] }),
+        ...tachesPrevuesSuivante.map((p, i) => {
+          const isRep = tachesReportees.some((r) => r.id === p.id)
+          const desc = (p.description ?? p.type.replace(/_/g, ' ')) + (isRep && p.semaine != null && p.annee != null ? ` ← reportée S${p.semaine} (${p.annee})` : '')
+          const row = shadedRow([cBody(desc, 75), cBodyR(p.avancementPct != null ? `${p.avancementPct} %` : '—', 25)], i % 2 === 1)
+          if (isRep) {
+            ;(row as unknown as { children: Array<{ shading?: unknown }> }).children.forEach((c: { shading?: unknown }) => { c.shading = { fill: 'FFFBEB', type: ShadingType.CLEAR } })
+          }
+          return row
+        }),
+      ],
+    }))
+  } else {
+    content.push(paraMuted('Aucune tâche planifiée pour la semaine prochaine.'))
+  }
+
+  content.push(subHeading(`${secNums.travaux}.3 Points bloquants`))
   if (pointsBloquants.length > 0) {
-    contenu.push(
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: BORDURES_TABLEAU,
-        rows: [
-          new TableRow({
-            children: [cellHeader('Titre'), cellHeader('Description'), cellHeader('Priorité'), cellHeader('Statut')],
-          }),
-          ...pointsBloquants.map((pb) =>
-            new TableRow({
-              children: [
-                cellBody(pb.titre),
-                cellBody(pb.description ?? '—'),
-                cellBody(pb.priorite),
-                cellBody(pb.statut),
-              ],
-            })
-          ),
-        ],
-      })
-    )
-  } else {
-    contenu.push(paraCorps('Aucun point bloquant.'))
-  }
-
-  contenu.push(
-    new Paragraph({
-      text: `4.2 Prévisions — Semaine ${semaineCalendaire} (${anneeCalendaire}) en cours`,
-      heading: HeadingLevel.HEADING_2,
-      spacing: { before: 200, after: 120 },
-    })
-  )
-  if (previsions.length > 0) {
-    contenu.push(
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: BORDURES_TABLEAU,
-        rows: [
-          new TableRow({
-            children: [cellHeader('Période / Type'), cellHeader('Description'), cellHeader('Statut')],
-          }),
-          ...previsions.map((p) => {
-            const periode = p.semaine != null && p.annee != null ? `Semaine ${p.semaine} (${p.annee})` : p.type.replace(/_/g, ' ')
-            return new TableRow({
-              children: [
-                cellBody(periode),
-                cellBody(p.description ?? '—'),
-                cellBody(p.statut?.replace(/_/g, ' ') ?? '—'),
-              ],
-            })
-          }),
-        ],
-      })
-    )
-  } else {
-    contenu.push(paraCorps('Aucune prévision.'))
-  }
-
-  contenu.push(
-    new Paragraph({ text: '4.3 Besoins matériels', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 80 } }),
-    paraCorps(projet.besoinsMateriel || '—'),
-    new Paragraph({ text: '4.4 Besoins humains', heading: HeadingLevel.HEADING_2, spacing: { before: 160, after: 80 } }),
-    paraCorps(projet.besoinsHumain || '—'),
-    paraVide(200)
-  )
-
-  // ==================== 5. DESCRIPTION, OBSERVATIONS ET PROPOSITIONS ====================
-  contenu.push(
-    new Paragraph({
-      text: '5. Description, observations et propositions d\'amélioration',
-      heading: HeadingLevel.HEADING_1,
-      spacing: { before: 280, after: 160 },
-    }),
-    new Paragraph({ text: 'Description du projet', heading: HeadingLevel.HEADING_2, spacing: { after: 80 } }),
-    new Paragraph({ text: projet.description || '—', spacing: { after: 200 } }),
-    new Paragraph({ text: 'Observations', heading: HeadingLevel.HEADING_2, spacing: { after: 80 } }),
-    new Paragraph({ text: projet.observations || '—', spacing: { after: 200 } }),
-    new Paragraph({ text: 'Propositions d\'amélioration', heading: HeadingLevel.HEADING_2, spacing: { after: 80 } }),
-    new Paragraph({ text: projet.propositionsAmelioration || '—', spacing: { after: 200 } }),
-    paraVide(200)
-  )
-
-  // ==================== 6. ALERTES ET INDICATEURS ====================
-  const hasAlertes = pointsBloquants.length > 0 || (rapport && (rapport.planning.tachesEnRetard > 0 || rapport.securite.risquesCritiques > 0))
-  if (hasAlertes) {
-    contenu.push(
-      new Paragraph({
-        text: '6. Alertes et indicateurs de vigilance',
-        heading: HeadingLevel.HEADING_1,
-        spacing: { before: 280, after: 160 },
-      }),
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: BORDURES_TABLEAU,
-        rows: [
-          ...(pointsBloquants.length > 0
-            ? [new TableRow({ children: [cellLabel('Points bloquants'), cellValue(`${pointsBloquants.length} point(s) à traiter`, true)] })]
-            : []),
-          ...(rapport && rapport.planning.tachesEnRetard > 0
-            ? [new TableRow({ children: [cellLabel('Tâches en retard'), cellValue(`${rapport.planning.tachesEnRetard} tâche(s)`, true)] })]
-            : []),
-          ...(rapport && rapport.securite.risquesCritiques > 0
-            ? [new TableRow({ children: [cellLabel('Risques critiques'), cellValue(`${rapport.securite.risquesCritiques} risque(s)`, true)] })]
-            : []),
-        ],
-      }),
-      paraVide(200)
-    )
-  }
-
-  // ==================== 7. SYNTHÈSE PROJET ====================
-  const sectionSynthèseNum = hasAlertes ? 7 : 6
-  contenu.push(
-    new Paragraph({
-      text: `${sectionSynthèseNum}. Synthèse projet`,
-      heading: HeadingLevel.HEADING_1,
-      spacing: { before: 280, after: 160 },
-    }),
-    new Table({
+    content.push(new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
-      borders: BORDURES_TABLEAU,
+      borders: BORD,
       rows: [
-        new TableRow({ children: [cellLabel('Type de projet'), cellValue(getTypeProjetDisplay(getProjetTypes(projet), projet.typePersonnalise))] }),
-        new TableRow({ children: [cellLabel('Nombre de sous-projets'), cellValue(String(projet.nombreSousProjets))] }),
-        new TableRow({ children: [cellLabel('Points bloquants ouverts'), cellValue(String(projet.nombrePointsBloquantsOuverts))] }),
-        new TableRow({ children: [cellLabel('Délai consommé'), cellValue(projet.delaiConsommePct != null ? `${projet.delaiConsommePct} %` : '—')] }),
-        new TableRow({ children: [cellLabel('Avancement global'), cellValue(`${projet.avancementGlobal} %`)] }),
-        new TableRow({ children: [cellLabel('Source de financement'), cellValue(projet.sourceFinancement?.replace(/_/g, ' ') ?? '—')] }),
-        new TableRow({ children: [cellLabel('Partenaire principal'), cellValue(projet.partenairePrincipal ?? '—')] }),
-        ...(projet.createdAt ? [new TableRow({ children: [cellLabel('Date de création'), cellValue(formatDate(projet.createdAt))] })] : []),
-        ...(projet.updatedAt ? [new TableRow({ children: [cellLabel('Dernière mise à jour'), cellValue(formatDate(projet.updatedAt))] })] : []),
+        new TableRow({ children: [cHdr('Titre', 25), cHdr('Description', 40), cHdr('Priorité', 18), cHdr('Statut', 17)] }),
+        ...pointsBloquants.map((pb, i) => shadedRow([
+          cBodyBold(pb.titre, 25),
+          cBody(pb.description ?? '—', 40),
+          cBody(pb.priorite, 18),
+          cBody(pb.statut, 17),
+        ], i % 2 === 1)),
       ],
-    }),
-    paraVide(200)
-  )
+    }))
+  } else {
+    content.push(paraMuted('Aucun point bloquant identifié.'))
+  }
 
-  // ==================== 8. DONNÉES STRATÉGIQUES ET INDICATEURS ====================
-  const sectionIndicateursNum = sectionSynthèseNum + 1
-  contenu.push(
-    new Paragraph({
-      text: `${sectionIndicateursNum}. Données stratégiques et indicateurs`,
-      heading: HeadingLevel.HEADING_1,
-      spacing: { before: 280, after: 160 },
-    }),
-    new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      borders: BORDURES_TABLEAU,
-      rows: [
-        new TableRow({
-          children: [
-            cellHeader('Indicateur'),
-            cellHeader('Valeur'),
-          ],
-        }),
-        new TableRow({ children: [cellLabel('Avancement physique'), cellValue(`${projet.avancementPhysiquePct ?? projet.avancementGlobal} %`)] }),
-        new TableRow({ children: [cellLabel('Avancement financier'), cellValue(`${rapport?.budget?.tauxConsommation ?? 0} %`)] }),
-        new TableRow({ children: [cellLabel('Budget prévu / Dépenses réalisées'), cellValue(`${formatMontant(budgetPrevu)} / ${formatMontant(depensesTotales)}`)] }),
-        new TableRow({ children: [cellLabel('Taux de conformité (qualité)'), cellValue(`${rapport?.qualite?.tauxConformite ?? 0} %`)] }),
-        new TableRow({ children: [cellLabel('Non-conformités ouvertes'), cellValue(String(rapport?.qualite?.ncOuvertes ?? 0))] }),
-        new TableRow({ children: [cellLabel('Incidents (sécurité)'), cellValue(String(rapport?.securite?.incidentsTotal ?? 0))] }),
-        new TableRow({ children: [cellLabel('Risques critiques (sécurité)'), cellValue(String(rapport?.securite?.risquesCritiques ?? 0))] }),
-        new TableRow({ children: [cellLabel('Tâches total (planning)'), cellValue(String(rapport?.planning?.tachesTotal ?? 0))] }),
-        new TableRow({ children: [cellLabel('Tâches terminées'), cellValue(String(rapport?.planning?.tachesTerminees ?? 0))] }),
-        new TableRow({ children: [cellLabel('Tâches en cours'), cellValue(String(rapport?.planning?.tachesEnCours ?? 0))] }),
-        new TableRow({ children: [cellLabel('Tâches en retard'), cellValue(String(rapport?.planning?.tachesEnRetard ?? 0))] }),
-        new TableRow({ children: [cellLabel('Taux d\'avancement planning'), cellValue(`${rapport?.planning?.tauxAvancement ?? 0} %`)] }),
-      ],
-    }),
-    paraVide(200)
-  )
+  content.push(subHeading(`${secNums.travaux}.4 Besoins matériels et humains`))
+  content.push(kvTable([
+    ['Besoins matériels', projet.besoinsMateriel || '—'],
+    ['Besoins humains', projet.besoinsHumain || '—'],
+  ]))
 
-  // ==================== 9. ACTEURS ET LOCALISATION ====================
-  const sectionActeursNum = sectionIndicateursNum + 1
-  contenu.push(
-    new Paragraph({
-      text: `${sectionActeursNum}. Acteurs et localisation`,
-      heading: HeadingLevel.HEADING_1,
-      spacing: { before: 280, after: 160 },
-    }),
-    new Paragraph({ text: 'Client', heading: HeadingLevel.HEADING_2, spacing: { after: 80 } })
-  )
+  /* ── Section 6: Historique (si applicable) ── */
+  if (hasHistory) {
+    content.push(secHeading(`${secNums.history}. Historique des semaines passées`))
+    content.push(paraMuted(`Récapitulatif chronologique des tâches enregistrées antérieurement à la semaine ${semaineCalendaire}.`))
+    for (const { annee, semaine } of pastWeekKeys) {
+      const taches = previsions.filter((p) => (p.annee ?? 0) === annee && (p.semaine ?? 0) === semaine)
+      if (taches.length === 0) continue
+      content.push(new Paragraph({
+        children: [new TextRun({ text: `  Semaine ${semaine} (${annee})`, bold: true, size: SZ.h2, color: P })],
+        spacing: { before: 160, after: 80 },
+        border: { left: { style: BorderStyle.SINGLE, size: 8, color: P, space: 6 } },
+      }))
+      content.push(new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: BORD,
+        rows: [
+          new TableRow({ children: [cHdr('Tâche / Description', 75), cHdrR('Avancement', 25)] }),
+          ...taches.map((p, i) => shadedRow([
+            cBody(p.description ?? p.type.replace(/_/g, ' '), 75),
+            cBodyR(p.avancementPct != null ? `${p.avancementPct} %` : '—', 25),
+          ], i % 2 === 1)),
+        ],
+      }))
+    }
+  }
+
+  /* ── Section: Description ── */
+  content.push(secHeading(`${secNums.desc}. Description, observations et propositions`))
+  content.push(subHeading('Description du projet'))
+  content.push(para(projet.description || '—'))
+  content.push(subHeading('Observations'))
+  content.push(para(projet.observations || '—'))
+  content.push(subHeading('Propositions d\'amélioration'))
+  content.push(para(projet.propositionsAmelioration || '—'))
+
+  /* ── Section: Acteurs ── */
+  content.push(secHeading(`${secNums.actors}. Acteurs et localisation`))
+  content.push(subHeading('Client'))
   if (projet.client) {
-    contenu.push(
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: BORDURES_TABLEAU,
-        rows: [
-          new TableRow({ children: [cellLabel('Raison sociale'), cellValue(projet.client.nom)] }),
-          new TableRow({ children: [cellLabel('Type de client'), cellValue(projet.client.type.replace(/_/g, ' '))] }),
-          ...(projet.client.contactPrincipal ? [new TableRow({ children: [cellLabel('Contact principal'), cellValue(projet.client.contactPrincipal)] })] : []),
-          ...(projet.client.telephoneContact ? [new TableRow({ children: [cellLabel('Téléphone'), cellValue(projet.client.telephoneContact)] })] : []),
-          ...(projet.client.email ? [new TableRow({ children: [cellLabel('E-mail'), cellValue(projet.client.email)] })] : []),
-          ...(projet.client.adresse ? [new TableRow({ children: [cellLabel('Adresse'), cellValue(projet.client.adresse)] })] : []),
-        ],
-      })
-    )
+    content.push(kvTable([
+      ['Raison sociale', projet.client.nom],
+      ['Type', projet.client.type.replace(/_/g, ' ')],
+      ...(projet.client.contactPrincipal ? [['Contact principal', projet.client.contactPrincipal] as [string, string]] : []),
+      ...(projet.client.telephoneContact ? [['Téléphone', projet.client.telephoneContact] as [string, string]] : []),
+      ...(projet.client.email ? [['E-mail', projet.client.email] as [string, string]] : []),
+      ...(projet.client.adresse ? [['Adresse', projet.client.adresse] as [string, string]] : []),
+    ]))
   } else {
-    contenu.push(paraCorps('—'))
+    content.push(paraMuted('—'))
   }
-
-  contenu.push(
-    new Paragraph({ text: 'Chef de projet', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 80 } })
-  )
+  content.push(subHeading('Chef de projet'))
   if (projet.responsableProjet) {
-    contenu.push(
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: BORDURES_TABLEAU,
-        rows: [
-          new TableRow({ children: [cellLabel('Nom'), cellValue(`${projet.responsableProjet.prenom} ${projet.responsableProjet.nom}`)] }),
-          new TableRow({ children: [cellLabel('E-mail'), cellValue(projet.responsableProjet.email)] }),
-        ],
-      })
-    )
+    content.push(kvTable([
+      ['Nom', `${projet.responsableProjet.prenom} ${projet.responsableProjet.nom}`],
+      ['E-mail', projet.responsableProjet.email],
+    ]))
   } else {
-    contenu.push(paraCorps('—'))
+    content.push(paraMuted('—'))
+  }
+  content.push(subHeading('Localisation'))
+  content.push(para([projet.province, projet.ville, projet.quartier].filter(Boolean).join(' · ') || '—'))
+
+  /* ── Section: Alertes (si applicable) ── */
+  if (hasAlertes) {
+    content.push(secHeading(`${secNums.alerts}. Alertes et vigilance`))
+    const alertRows: [string, string][] = []
+    if (pointsBloquants.length > 0) alertRows.push(['Points bloquants', `${pointsBloquants.length} point(s) à traiter en priorité`])
+    if (rapport && rapport.planning.tachesEnRetard > 0) alertRows.push(['Tâches en retard', `${rapport.planning.tachesEnRetard} tâche(s) dépassant l'échéance`])
+    if (rapport && rapport.securite.risquesCritiques > 0) alertRows.push(['Risques critiques', `${rapport.securite.risquesCritiques} risque(s) critique(s) identifié(s)`])
+    content.push(kvTable(alertRows))
   }
 
-  const localisation = [projet.province, projet.ville, projet.quartier].filter(Boolean).join(' · ') || '—'
-  contenu.push(
-    new Paragraph({ text: 'Localisation du projet', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 80 } }),
-    paraCorps(localisation),
-    paraVide(280)
+  /* ── Synthèse ── */
+  content.push(secHeading('Synthèse du projet'))
+  content.push(kvTable([
+    ['Projet', projet.nom],
+    ['Référence', ref],
+    ['Sous-projets', String(projet.nombreSousProjets)],
+    ['Points bloquants ouverts', String(projet.nombrePointsBloquantsOuverts)],
+    ['Délai consommé', projet.delaiConsommePct != null ? `${projet.delaiConsommePct} %` : '—'],
+    ['Avancement global', `${projet.avancementGlobal} %`],
+    ['Source de financement', projet.sourceFinancement?.replace(/_/g, ' ') ?? '—'],
+    ['Partenaire principal', projet.partenairePrincipal ?? '—'],
+    ...(projet.createdAt ? [['Date de création', formatDate(projet.createdAt)] as [string, string]] : []),
+    ...(projet.updatedAt ? [['Dernière mise à jour', formatDate(projet.updatedAt)] as [string, string]] : []),
+  ]))
+
+  /* ── Closing ── */
+  content.push(
+    spacer(400),
+    new Paragraph({ children: [new TextRun({ text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', size: SZ.small, color: BORDER })], alignment: AlignmentType.CENTER, spacing: { after: 120 } }),
+    new Paragraph({ children: [new TextRun({ text: `Document généré le ${dateExp} à ${heureExp} — Semaine ${semaineCalendaire} (${anneeCalendaire})`, size: SZ.small, color: MUTED })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: 'Document confidentiel – MIKA Services – Usage interne et transmission officielle', size: SZ.small, color: MUTED })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }),
+    new Paragraph({ children: [new TextRun({ text: `Référence : ${ref} — ${projet.nom}`, italics: true, size: SZ.tiny, color: MUTED })], alignment: AlignmentType.CENTER }),
   )
 
-  // ==================== PIED DE PAGE DOCUMENT ====================
-  contenu.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: `Document généré le ${dateExport} à ${heureExport} — Semaine ${semaineCalendaire} (${anneeCalendaire})`,
-          size: TAILLE_PIED * 2,
-          color: COULEUR_SECONDAIRE,
-        }),
-      ],
-      alignment: AlignmentType.CENTER,
-      spacing: { before: 200 },
-    }),
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: 'Document confidentiel – MIKA Services – Usage interne et transmission officielle',
-          size: TAILLE_PIED * 2,
-          color: COULEUR_SECONDAIRE,
-        }),
-      ],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 80 },
-    }),
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: `Référence : ${projet.numeroMarche ?? projet.id} — ${projet.nom}`,
-          italics: true,
-          size: TAILLE_PIED * 2,
-          color: COULEUR_SECONDAIRE,
-        }),
-      ],
-      alignment: AlignmentType.CENTER,
-    })
+  /* ═══════════════════════════════════════════
+     BUILD DOCUMENT
+     ═══════════════════════════════════════════ */
+  const headerChildren: (TextRun | ImageRun | Tab)[] = []
+  if (logoBuffer && logoBuffer.byteLength > 0) {
+    headerChildren.push(new ImageRun({ type: 'png', data: logoBuffer, transformation: { width: 16, height: 16 } }))
+    headerChildren.push(new TextRun({ text: '  ', size: SZ.small }))
+  }
+  headerChildren.push(
+    new TextRun({ text: 'MIKA SERVICES', bold: true, size: SZ.small, color: P }),
+    new TextRun({ text: `  —  Réf. ${ref}`, size: SZ.tiny, color: MUTED }),
+    new Tab(),
+    new TextRun({ text: 'Page ', size: SZ.tiny, color: MUTED }),
+    new TextRun({ children: [PageNumber.CURRENT], size: SZ.tiny, color: MUTED }),
+    new TextRun({ text: ' / ', size: SZ.tiny, color: MUTED }),
+    new TextRun({ children: [PageNumber.TOTAL_PAGES], size: SZ.tiny, color: MUTED }),
   )
 
   const doc = new Document({
     sections: [
       {
         properties: {
-          page: {
-            margin: {
-              top: convertInchesToTwip(0.75),
-              right: convertInchesToTwip(0.75),
-              bottom: convertInchesToTwip(0.75),
-              left: convertInchesToTwip(0.75),
-            },
-          },
+          page: { margin: { top: convertInchesToTwip(1.2), right: convertInchesToTwip(0.85), bottom: convertInchesToTwip(1), left: convertInchesToTwip(0.85) } },
+          titlePage: true,
         },
-        children: contenu,
+        headers: {
+          default: new Header({
+            children: [
+              new Paragraph({
+                children: headerChildren,
+                border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: BORDER, space: 4 } },
+                tabStops: [{ type: 'right' as const, position: convertInchesToTwip(6.8) }],
+              }),
+            ],
+          }),
+          first: new Header({ children: [] }),
+        },
+        footers: {
+          default: new Footer({
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({ text: `Document confidentiel – MIKA Services – ${projet.nom}`, size: SZ.tiny, color: MUTED }),
+                  new Tab(),
+                  new TextRun({ text: `${dateExp}`, size: SZ.tiny, color: MUTED }),
+                ],
+                border: { top: { style: BorderStyle.SINGLE, size: 2, color: BORDER, space: 4 } },
+                tabStops: [{ type: 'right' as const, position: convertInchesToTwip(6.8) }],
+              }),
+            ],
+          }),
+          first: new Footer({
+            children: [
+              new Paragraph({
+                children: [new TextRun({ text: `MIKA Services — ${dateExp}`, size: SZ.tiny, color: MUTED })],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+        },
+        children: [
+          ...coverChildren,
+          new Paragraph({ children: [new PageBreak()] }),
+          ...content,
+        ],
       },
     ],
   })

@@ -4,6 +4,7 @@ export const API_VERSION = 'v1'
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',
+    LOGIN_POLICY: '/auth/login-policy',
     REFRESH: '/auth/refresh',
     LOGOUT: '/auth/logout',
     FORGOT_PASSWORD: '/auth/forgot-password',
@@ -47,7 +48,9 @@ export const API_ENDPOINTS = {
     AVANCEMENT_ETUDES: (id: number) => `/projets/${id}/avancement-etudes`,
     PREVISIONS: (id: number) => `/projets/${id}/previsions`,
     PREVISION_BY_ID: (projetId: number, previsionId: number) => `/projets/${projetId}/previsions/${previsionId}`,
+    HISTORIQUE: (id: number) => `/projets/${id}/historique`,
     SUIVI_MENSUEL: (id: number) => `/projets/${id}/suivi-mensuel`,
+    SUIVI_MENSUEL_REPLACE: (id: number) => `/projets/${id}/suivi-mensuel/replace`,
   },
   SOUS_PROJETS: {
     BASE: '/sous-projets',
@@ -93,6 +96,13 @@ export const API_ENDPOINTS = {
     MARQUER_LU: (messageId: number, userId: number) => `/messages/${messageId}/lu/${userId}`,
     NON_LUS: (userId: number) => `/messages/non-lus/${userId}`,
     DELETE: (messageId: number) => `/messages/${messageId}`,
+    ENVOYER_AVEC_PIECES: (expediteurId: number) => `/messages/${expediteurId}/with-attachments`,
+    PIECE_JOINTE_DOWNLOAD: (pieceJointeId: number, userId: number) =>
+      `/messages/pieces-jointes/${pieceJointeId}/download?userId=${userId}`,
+    ARCHIVE: '/messages/archive',
+    UNARCHIVE: '/messages/unarchive',
+    ARCHIVED_PEERS: (userId: number) => `/messages/archived-peers/${userId}`,
+    SUPPRESS_FOR_ME: (messageId: number) => `/messages/${messageId}/suppress-for-me`,
   },
   NOTIFICATIONS: {
     BASE: '/notifications',

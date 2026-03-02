@@ -12,7 +12,7 @@ const PHASE_LABELS: Record<string, string> = {
 }
 
 export function ProjetPdfRapportComplet({ data }: { data: ProjetPdfData }) {
-  const { projet, rapport, lignesCA, pointsBloquants, previsions, formatMontant, formatDate } = data
+  const { projet, rapport, lignesCA, pointsBloquants, previsions, semaineCalendaire, anneeCalendaire, formatMontant, formatDate } = data
   const s = pdfStyles
   const budgetPrevu = rapport?.budget?.budgetTotalPrevu ?? projet.montantHT ?? 0
   const depensesTotales = rapport?.budget?.depensesTotales ?? 0
@@ -28,7 +28,7 @@ export function ProjetPdfRapportComplet({ data }: { data: ProjetPdfData }) {
           <Text style={s.headerSubtitle}>Rapport détaillé — {projet.nom}</Text>
           <View style={s.headerMeta}>
             <Text style={s.badge}>{projet.statut.replace(/_/g, ' ')}</Text>
-            <Text style={s.badge}>{projet.type.replace(/_/g, ' ')}</Text>
+            <Text style={s.badge}>{(projet.type ?? '—').replace(/_/g, ' ')}</Text>
             <Text style={s.badge}>Chef de projet : {projet.responsableProjet ? `${projet.responsableProjet.prenom} ${projet.responsableProjet.nom}` : '—'}</Text>
           </View>
         </View>
@@ -63,7 +63,7 @@ export function ProjetPdfRapportComplet({ data }: { data: ProjetPdfData }) {
                 <Text style={s.tableCellFixedRight}>{formatMontant(ligne.caPrevisionnel)}</Text>
                 <Text style={s.tableCellFixedRight}>{formatMontant(ligne.caRealise)}</Text>
                 <Text style={s.tableCellFixedRight}>{formatMontant(ligne.ecart)}</Text>
-                <Text style={s.tableCellFixedRight}>{ligne.avancementCumule} %</Text>
+                <Text style={s.tableCellFixedRight}>{ligne.avancementCumule != null ? `${ligne.avancementCumule} %` : '—'}</Text>
               </View>
             ))}
           </View>
@@ -73,7 +73,7 @@ export function ProjetPdfRapportComplet({ data }: { data: ProjetPdfData }) {
         </View>
 
         <Text style={s.footer}>
-          Document généré le {new Date().toLocaleDateString('fr-FR')} — Mika Services — Rapport détaillé {projet.nom} — Page 1
+          Document généré le {formatDate(new Date().toISOString())} — Mika Services — Rapport détaillé {projet.nom} — Page 1
         </Text>
       </Page>
 
@@ -108,33 +108,44 @@ export function ProjetPdfRapportComplet({ data }: { data: ProjetPdfData }) {
           </View>
         </View>
 
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Avancement des travaux / Prévisions</Text>
-          <Text style={s.paragraph}>Avancement global : <Text style={{ fontWeight: 'bold' }}>{projet.avancementGlobal} %</Text> {projet.dateFin && `(fin prévue ${formatDate(projet.dateFin)})`}</Text>
-          {pointsBloquants.length > 0 && (
-            <>
-              <Text style={[s.paragraph, { fontWeight: 'bold', marginTop: 6 }]}>Points bloquants</Text>
-              {pointsBloquants.map((pb) => (
-                <View key={pb.id} style={s.alert}>
-                  <Text style={s.alertTitle}>{pb.titre}</Text>
-                  {pb.description && <Text style={s.alertText}>{pb.description}</Text>}
-                  <Text style={s.alertText}>Priorité : {pb.priorite} · Statut : {pb.statut} · Détecté le : {formatDate(pb.dateDetection)}</Text>
-                </View>
-              ))}
-            </>
-          )}
-          {previsions.length > 0 && (
-            <>
-              <Text style={[s.paragraph, { fontWeight: 'bold', marginTop: 6 }]}>Prévisions</Text>
-              {previsions.slice(0, 8).map((p) => (
+        {(() => {
+          const tachesRealiseSemaine = previsions.filter((p) => p.semaine === semaineCalendaire && p.annee === anneeCalendaire)
+          const semaineSuivante = semaineCalendaire < 53 ? semaineCalendaire + 1 : 1
+          const anneeSuivante = semaineCalendaire < 53 ? anneeCalendaire : anneeCalendaire + 1
+          const tachesPrevuesSuivante = previsions.filter((p) => p.semaine === semaineSuivante && p.annee === anneeSuivante)
+          const avancementsR = tachesRealiseSemaine.map((t) => t.avancementPct).filter((v): v is number => v != null)
+          const globalPct = avancementsR.length > 0 ? Math.round((avancementsR.reduce((a, b) => a + b, 0) / avancementsR.length) * 100) / 100 : null
+          return (
+            <View style={s.section}>
+              <Text style={s.sectionTitle}>Avancement des travaux — S{semaineCalendaire} ({anneeCalendaire})</Text>
+              {globalPct != null && <Text style={s.paragraph}>Avancement global semaine : <Text style={{ fontWeight: 'bold' }}>{globalPct} %</Text></Text>}
+              <Text style={[s.paragraph, { fontWeight: 'bold', marginTop: 6 }]}>Réalisé — S{semaineCalendaire}</Text>
+              {tachesRealiseSemaine.length > 0 ? tachesRealiseSemaine.map((p) => (
                 <View key={p.id} style={s.row}>
-                  <Text style={s.value}>{p.type.replace(/_/g, ' ')} · {p.annee}{p.semaine ? ` S${p.semaine}` : ''} · {p.statut?.replace(/_/g, ' ') ?? '—'}</Text>
+                  <Text style={s.value}>{p.description ?? p.type.replace(/_/g, ' ')}{p.avancementPct != null ? ` · ${p.avancementPct} %` : ''}</Text>
                 </View>
-              ))}
-              {previsions.length > 8 && <Text style={s.paragraph}>… et {previsions.length - 8} autre(s) prévision(s)</Text>}
-            </>
-          )}
-        </View>
+              )) : <Text style={s.paragraph}>Aucune tâche enregistrée.</Text>}
+              <Text style={[s.paragraph, { fontWeight: 'bold', marginTop: 6 }]}>Prévisions — S{semaineSuivante} ({anneeSuivante})</Text>
+              {tachesPrevuesSuivante.length > 0 ? tachesPrevuesSuivante.map((p) => (
+                <View key={p.id} style={s.row}>
+                  <Text style={s.value}>{p.description ?? p.type.replace(/_/g, ' ')}</Text>
+                </View>
+              )) : <Text style={s.paragraph}>Aucune tâche planifiée.</Text>}
+              {pointsBloquants.length > 0 && (
+                <>
+                  <Text style={[s.paragraph, { fontWeight: 'bold', marginTop: 6 }]}>Points bloquants</Text>
+                  {pointsBloquants.map((pb) => (
+                    <View key={pb.id} style={s.alert}>
+                      <Text style={s.alertTitle}>{pb.titre}</Text>
+                      {pb.description && <Text style={s.alertText}>{pb.description}</Text>}
+                      <Text style={s.alertText}>Priorité : {pb.priorite} · Statut : {pb.statut} · Détecté le : {formatDate(pb.dateDetection)}</Text>
+                    </View>
+                  ))}
+                </>
+              )}
+            </View>
+          )
+        })()}
 
         <View style={s.section}>
           <Text style={s.sectionTitle}>Description, besoins et observations</Text>
@@ -146,7 +157,7 @@ export function ProjetPdfRapportComplet({ data }: { data: ProjetPdfData }) {
 
         <View style={s.section}>
           <Text style={s.sectionTitle}>Synthèse projet</Text>
-          <View style={s.row}><Text style={s.label}>Type</Text><Text style={s.value}>{projet.type.replace(/_/g, ' ')}</Text></View>
+          <View style={s.row}><Text style={s.label}>Type</Text><Text style={s.value}>{(projet.type ?? '—').replace(/_/g, ' ')}</Text></View>
           <View style={s.row}><Text style={s.label}>Sous-projets</Text><Text style={s.value}>{projet.nombreSousProjets}</Text></View>
           <View style={s.row}><Text style={s.label}>Points bloquants ouverts</Text><Text style={s.value}>{projet.nombrePointsBloquantsOuverts}</Text></View>
           <View style={s.row}><Text style={s.label}>Délai consommé</Text><Text style={s.value}>{projet.delaiConsommePct != null ? `${projet.delaiConsommePct} %` : '—'}</Text></View>
@@ -161,7 +172,7 @@ export function ProjetPdfRapportComplet({ data }: { data: ProjetPdfData }) {
         </View>
 
         <Text style={s.footer}>
-          Document généré le {new Date().toLocaleDateString('fr-FR')} — Mika Services — Rapport détaillé {projet.nom} — Page 2
+          Document généré le {formatDate(new Date().toISOString())} — Mika Services — Rapport détaillé {projet.nom} — Page 2
         </Text>
       </Page>
     </Document>

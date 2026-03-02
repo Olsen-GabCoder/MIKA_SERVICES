@@ -9,9 +9,13 @@ import com.mikaservices.platform.modules.auth.repository.PasswordResetTokenRepos
 import com.mikaservices.platform.modules.auth.repository.SessionRepository
 import com.mikaservices.platform.modules.user.dto.request.AdminResetPasswordRequest
 import com.mikaservices.platform.modules.user.dto.request.ChangePasswordRequest
+import com.mikaservices.platform.modules.user.dto.request.NotificationPreferencesUpdateRequest
+import com.mikaservices.platform.modules.user.dto.request.SessionPreferencesUpdateRequest
 import com.mikaservices.platform.modules.user.dto.request.UserCreateRequest
 import com.mikaservices.platform.modules.user.dto.request.UserUpdateRequest
 import com.mikaservices.platform.modules.user.dto.response.AuditLogResponse
+import com.mikaservices.platform.modules.user.dto.response.LoginHistoryEntryResponse
+import com.mikaservices.platform.modules.user.dto.response.UserForMessagingResponse
 import com.mikaservices.platform.modules.user.dto.response.UserResponse
 import com.mikaservices.platform.modules.user.entity.Departement
 import com.mikaservices.platform.modules.user.entity.Role
@@ -25,6 +29,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.Resource
 import org.springframework.core.io.UrlResource
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
@@ -188,6 +193,58 @@ class UserService(
         return findByEmail(email)
     }
 
+    /** Liste des autres utilisateurs actifs (destinataires possibles pour la messagerie). Accessible à tout utilisateur connecté. */
+    fun getPeersForMessaging(): List<UserForMessagingResponse> {
+        val currentUser = getCurrentUserEntityOrNull()
+            ?: throw BadRequestException("Utilisateur non authentifié")
+        val currentId = currentUser.id!!
+        return userRepository.findByActifTrue()
+            .filter { it.id != currentId }
+            .map { UserMapper.toForMessagingResponse(it) }
+    }
+
+    /** Dernières connexions (audit AUTH/LOGIN), les plus récentes en premier. */
+    fun getMyLoginHistory(userId: Long): List<LoginHistoryEntryResponse> {
+        val page = auditLogRepository.findByUser_IdAndModuleAndActionOrderByCreatedAtDesc(
+            userId, "AUTH", "LOGIN", PageRequest.of(0, 50)
+        )
+        return page.content.map { log ->
+            val deviceSummary = log.details?.substringBefore(" | Par: ")?.takeIf { it.isNotBlank() }
+            LoginHistoryEntryResponse(
+                createdAt = log.createdAt,
+                ipAddress = log.ipAddress,
+                deviceSummary = deviceSummary
+            )
+        }
+    }
+
+    fun updateMyNotificationPreferences(request: NotificationPreferencesUpdateRequest): UserResponse {
+        val user = getCurrentUserEntityOrNull()
+            ?: throw BadRequestException("Utilisateur non authentifié")
+        request.emailNotificationsEnabled?.let { user.emailNotificationsEnabled = it }
+        request.alertNewLoginEnabled?.let { user.alertNewLoginEnabled = it }
+        request.dailyDigestEnabled?.let { user.dailyDigestEnabled = it }
+        request.weeklyDigestEnabled?.let { user.weeklyDigestEnabled = it }
+        request.digestTime?.takeIf { it.matches(Regex("^([01]?[0-9]|2[0-3]):[0-5][0-9]$")) }?.let { user.digestTime = it }
+        request.inAppNotificationsEnabled?.let { user.inAppNotificationsEnabled = it }
+        request.notificationSoundEnabled?.let { user.notificationSoundEnabled = it }
+        userRepository.save(user)
+        logger.debug("Préférences notifications mises à jour pour: ${user.email}")
+        return UserMapper.toResponse(user)
+    }
+
+    fun updateMySessionPreferences(request: SessionPreferencesUpdateRequest): UserResponse {
+        val user = getCurrentUserEntityOrNull()
+            ?: throw BadRequestException("Utilisateur non authentifié")
+        request.defaultSessionDuration?.let { value ->
+            user.defaultSessionDuration = if (value == "SHORT" || value == "LONG") value else null
+        }
+        request.logoutOnBrowserClose?.let { user.logoutOnBrowserClose = it }
+        userRepository.save(user)
+        logger.debug("Préférences session mises à jour pour: ${user.email} (defaultSessionDuration=${user.defaultSessionDuration}, logoutOnBrowserClose=${user.logoutOnBrowserClose})")
+        return UserMapper.toResponse(user)
+    }
+
     private fun getCurrentUserEntityOrNull(): User? {
         val email = SecurityContextHolder.getContext().authentication?.name ?: return null
         return userRepository.findByEmail(email).orElse(null)
@@ -293,10 +350,12 @@ class UserService(
         userRepository.save(user)
         auditLogService.log(user, "USER", "PASSWORD_CHANGE", "Mot de passe modifié par l'utilisateur")
         logger.info("Mot de passe changé avec succès pour l'utilisateur: ${user.email}")
-        try {
-            emailService.sendPasswordChangedNotification(user.email, user.prenom)
-        } catch (e: Exception) {
-            logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
+        if (user.emailNotificationsEnabled) {
+            try {
+                emailService.sendPasswordChangedNotification(user.email, user.prenom)
+            } catch (e: Exception) {
+                logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
+            }
         }
     }
 
@@ -320,10 +379,12 @@ class UserService(
         userRepository.save(user)
         auditLogService.log(user, "USER", "PASSWORD_CHANGE", "Mot de passe modifié par un administrateur")
         logger.info("Mot de passe changé avec succès pour l'utilisateur: ${user.email}")
-        try {
-            emailService.sendPasswordChangedNotification(user.email, user.prenom)
-        } catch (e: Exception) {
-            logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
+        if (user.emailNotificationsEnabled) {
+            try {
+                emailService.sendPasswordChangedNotification(user.email, user.prenom)
+            } catch (e: Exception) {
+                logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
+            }
         }
     }
 
@@ -340,10 +401,12 @@ class UserService(
         userRepository.save(user)
         auditLogService.log(user, "USER", "PASSWORD_RESET", "Mot de passe réinitialisé par un administrateur")
         logger.info("Mot de passe réinitialisé par admin pour l'utilisateur: ${user.email}")
-        try {
-            emailService.sendPasswordChangedNotification(user.email, user.prenom)
-        } catch (e: Exception) {
-            logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
+        if (user.emailNotificationsEnabled) {
+            try {
+                emailService.sendPasswordChangedNotification(user.email, user.prenom)
+            } catch (e: Exception) {
+                logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
+            }
         }
     }
 
@@ -358,10 +421,12 @@ class UserService(
         userRepository.save(user)
         auditLogService.log(user, "USER", "2FA_DISABLE", "2FA désactivé par un administrateur")
         logger.info("2FA désactivé par admin pour l'utilisateur: ${user.email}")
-        try {
-            emailService.send2FADisabledNotification(user.email, user.prenom)
-        } catch (e: Exception) {
-            logger.warn("Envoi notification 2FA désactivée échoué: ${e.message}")
+        if (user.emailNotificationsEnabled) {
+            try {
+                emailService.send2FADisabledNotification(user.email, user.prenom)
+            } catch (e: Exception) {
+                logger.warn("Envoi notification 2FA désactivée échoué: ${e.message}")
+            }
         }
     }
 

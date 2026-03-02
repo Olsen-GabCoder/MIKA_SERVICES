@@ -1,6 +1,7 @@
 package com.mikaservices.platform.config.security
 
 import com.mikaservices.platform.common.constants.SecurityConstants
+import com.mikaservices.platform.modules.auth.repository.SessionRepository
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -11,10 +12,13 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 @Component
 class JwtAuthenticationFilter(
-    private val jwtTokenProvider: JwtTokenProvider
+    private val jwtTokenProvider: JwtTokenProvider,
+    private val sessionRepository: SessionRepository
 ) : OncePerRequestFilter() {
 
     private val log = LoggerFactory.getLogger(JwtAuthenticationFilter::class.java)
@@ -23,7 +27,6 @@ class JwtAuthenticationFilter(
         val path = request.requestURI
         val method = request.method
         
-        // Ne pas filtrer les requêtes OPTIONS (preflight CORS)
         if (method == "OPTIONS") return true
         
         return SecurityConstants.PUBLIC_PATHS.any { path.startsWith(it) }
@@ -43,6 +46,13 @@ class JwtAuthenticationFilter(
                 val token = authHeader.substring(SecurityConstants.JWT_PREFIX.length)
                 
                 if (jwtTokenProvider.validateToken(token)) {
+                    val session = sessionRepository.findByToken(token).orElse(null)
+                    if (session == null || !session.active) {
+                        log.warn("Session inactive ou absente pour le token: ${request.requestURI}")
+                        filterChain.doFilter(request, response)
+                        return
+                    }
+
                     val username = jwtTokenProvider.getUsernameFromToken(token)
                     val roles = jwtTokenProvider.getRolesFromToken(token)
                     
@@ -57,6 +67,13 @@ class JwtAuthenticationFilter(
                     
                     SecurityContextHolder.getContext().authentication = authentication
                     log.debug("Utilisateur authentifié: $username avec rôles: $roles")
+
+                    val now = LocalDateTime.now()
+                    val lastActivity = session.lastActivity
+                    if (lastActivity == null || ChronoUnit.MINUTES.between(lastActivity, now) >= ACTIVITY_THROTTLE_MINUTES) {
+                        session.lastActivity = now
+                        sessionRepository.save(session)
+                    }
                 } else {
                     log.warn("Token JWT invalide pour la requête: ${request.requestURI}")
                 }
@@ -68,5 +85,9 @@ class JwtAuthenticationFilter(
         }
         
         filterChain.doFilter(request, response)
+    }
+
+    companion object {
+        private const val ACTIVITY_THROTTLE_MINUTES = 5L
     }
 }

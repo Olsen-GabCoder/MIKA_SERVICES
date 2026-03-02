@@ -98,6 +98,7 @@
       "lastActivity": "Last activity",
       "revoke": "Sign out",
       "revoking": "Signing out…",
+      "current": "Current session",
       "errorLoad": "Unable to load sessions.",
       "errorRevoke": "Unable to revoke session."
     },

@@ -15,9 +15,10 @@ export const LoginPage = () => {
   const location = useLocation()
   const dispatch = useAppDispatch()
   const { isAuthenticated, user, twoFactorPending } = useAppSelector((state) => state.auth)
+  const defaultHomePath = useAppSelector((state) => state.ui.defaultHomePath)
   const { t } = useTranslation('auth')
   const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/'
-  const destination = user?.mustChangePassword ? '/profile' : from
+  const destination = user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from)
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -25,11 +26,11 @@ export const LoginPage = () => {
     }
   }, [isAuthenticated, navigate, destination])
 
-  const handleLogin = async (email: string, password: string) => {
+  const handleLogin = async (email: string, password: string, rememberMe: boolean) => {
     try {
-      const result = await dispatch(login({ email, password })).unwrap()
+      const result = await dispatch(login({ email, password, rememberMe })).unwrap()
       if (!isLogin2FAPending(result)) {
-        navigate(result.user?.mustChangePassword ? '/profile' : from, { replace: true })
+        navigate(result.user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from), { replace: true })
       }
     } catch {
       // Erreur affichée par le formulaire
@@ -39,8 +40,8 @@ export const LoginPage = () => {
   const handleVerify2FA = async (code: string) => {
     if (!twoFactorPending) return
     try {
-      const result = await dispatch(verify2FA({ tempToken: twoFactorPending.tempToken, code })).unwrap()
-      navigate(result.user?.mustChangePassword ? '/profile' : from, { replace: true })
+      const result = await dispatch(verify2FA({ tempToken: twoFactorPending.tempToken, code, rememberMe: twoFactorPending.rememberMe })).unwrap()
+      navigate(result.user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from), { replace: true })
     } catch {
       // Erreur affichée par Verify2FAForm
     }

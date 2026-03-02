@@ -21,8 +21,10 @@ export const ProfilePage = () => {
   const userForDisplay = currentUser ?? authUser
 
   useEffect(() => {
-    if (!currentUser && authUser) {
-      dispatch(fetchCurrentUser())
+    if (authUser) {
+      if (!currentUser || currentUser.id !== authUser.id) {
+        dispatch(fetchCurrentUser())
+      }
     }
   }, [dispatch, currentUser, authUser])
 

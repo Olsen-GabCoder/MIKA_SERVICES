@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { setItemsPerPage } from '@/store/slices/uiSlice'
 import {
   fetchUsers,
   setPage,
-  setPageSize,
   setSearch,
   setActifFilter,
   setRoleIdFilter,
@@ -18,6 +18,7 @@ import { UserList } from '../components/UserList'
 import { UserForm } from '../components/UserForm'
 import { Modal } from '@/components/ui/Modal'
 import { roleApi, type Role } from '@/api/roleApi'
+import { getEffectiveConnectionQuality, AUTO_REFRESH_INTERVAL_MS } from '@/utils/connectionQualityPreferences'
 
 export const UserManagementPage = () => {
   const { t } = useTranslation(['common', 'user'])
@@ -27,7 +28,6 @@ export const UserManagementPage = () => {
     totalPages,
     totalElements,
     currentPage,
-    pageSize,
     search,
     actifFilter,
     roleIdFilter,
@@ -35,6 +35,7 @@ export const UserManagementPage = () => {
     isLoading,
     error,
   } = useAppSelector((state) => state.user)
+  const { itemsPerPage: pageSize, autoRefreshListsEnabled, connectionQuality } = useAppSelector((state) => state.ui)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [roles, setRoles] = useState<Role[]>([])
 
@@ -60,7 +61,7 @@ export const UserManagementPage = () => {
   }
 
   const handlePageSizeChange = (size: number) => {
-    dispatch(setPageSize(size))
+    dispatch(setItemsPerPage(size))
     dispatch(setPage(0))
   }
 
@@ -81,6 +82,16 @@ export const UserManagementPage = () => {
       })
     )
   }
+
+  const refetchUsersRef = useRef(refetchUsers)
+  refetchUsersRef.current = refetchUsers
+  useEffect(() => {
+    if (!autoRefreshListsEnabled) return
+    const effective = getEffectiveConnectionQuality(connectionQuality)
+    const ms = AUTO_REFRESH_INTERVAL_MS[effective]
+    const interval = setInterval(() => refetchUsersRef.current(), ms)
+    return () => clearInterval(interval)
+  }, [autoRefreshListsEnabled, connectionQuality])
 
   const handleUserCreated = () => {
     setIsCreateModalOpen(false)
@@ -109,7 +120,7 @@ export const UserManagementPage = () => {
 
       {error && (
         <div className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-200 flex justify-between items-center">
-          <span>{error}</span>
+          <span>{error === 'offline_no_cache' ? t('common:error.offlineNoCache') : error}</span>
           <button
             type="button"
             onClick={() => dispatch(clearError())}

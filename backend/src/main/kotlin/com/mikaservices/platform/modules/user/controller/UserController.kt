@@ -5,13 +5,18 @@ import com.mikaservices.platform.modules.auth.dto.response.SessionResponse
 import com.mikaservices.platform.modules.auth.service.AuthService
 import com.mikaservices.platform.modules.user.dto.request.AdminResetPasswordRequest
 import com.mikaservices.platform.modules.user.dto.request.ChangePasswordRequest
+import com.mikaservices.platform.modules.user.dto.request.NotificationPreferencesUpdateRequest
+import com.mikaservices.platform.modules.user.dto.request.SessionPreferencesUpdateRequest
 import com.mikaservices.platform.modules.user.dto.request.UserCreateRequest
 import com.mikaservices.platform.modules.user.dto.request.UserUpdateRequest
+import com.mikaservices.platform.modules.user.dto.response.LoginHistoryEntryResponse
+import com.mikaservices.platform.modules.user.dto.response.UserForMessagingResponse
 import com.mikaservices.platform.modules.user.dto.response.UserResponse
 import com.mikaservices.platform.modules.user.service.UserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import com.mikaservices.platform.modules.user.dto.response.AuditLogResponse
 import org.springframework.core.io.Resource
@@ -64,6 +69,13 @@ class UserController(
         return ResponseEntity.ok(user)
     }
 
+    @GetMapping("/me/peers")
+    @Operation(summary = "Liste des destinataires messagerie", description = "Autres utilisateurs actifs (pour choisir un destinataire). Accessible à tout utilisateur connecté.")
+    fun getPeersForMessaging(): ResponseEntity<List<UserForMessagingResponse>> {
+        val peers = userService.getPeersForMessaging()
+        return ResponseEntity.ok(peers)
+    }
+
     @PostMapping("/me/photo", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @Operation(summary = "Photo de profil", description = "Upload de la photo de profil de l'utilisateur connecté")
     fun uploadPhoto(@RequestParam("file") file: MultipartFile): ResponseEntity<UserResponse> {
@@ -90,11 +102,38 @@ class UserController(
         return ResponseEntity.ok(mapOf("message" to "Mot de passe modifié avec succès"))
     }
 
+    @PatchMapping("/me/preferences/notifications")
+    @Operation(summary = "Préférences de notifications", description = "Mise à jour des préférences de notifications par e-mail (utilisateur connecté)")
+    fun updateMyNotificationPreferences(
+        @RequestBody request: NotificationPreferencesUpdateRequest
+    ): ResponseEntity<UserResponse> {
+        val user = userService.updateMyNotificationPreferences(request)
+        return ResponseEntity.ok(user)
+    }
+
+    @PatchMapping("/me/preferences/session")
+    @Operation(summary = "Préférences de session", description = "Durée de session par défaut à la connexion : SHORT (1 h) ou LONG (5 h)")
+    fun updateMySessionPreferences(
+        @RequestBody request: SessionPreferencesUpdateRequest
+    ): ResponseEntity<UserResponse> {
+        val user = userService.updateMySessionPreferences(request)
+        return ResponseEntity.ok(user)
+    }
+
+    @GetMapping("/me/login-history")
+    @Operation(summary = "Mon historique des connexions", description = "Dernières connexions (date, IP, appareil)")
+    fun getMyLoginHistory(): ResponseEntity<List<LoginHistoryEntryResponse>> {
+        val user = userService.getCurrentUser()
+        val history = userService.getMyLoginHistory(user.id)
+        return ResponseEntity.ok(history)
+    }
+
     @GetMapping("/me/sessions")
     @Operation(summary = "Mes sessions actives", description = "Liste des sessions actives de l'utilisateur connecté")
-    fun getMySessions(): ResponseEntity<List<SessionResponse>> {
+    fun getMySessions(httpRequest: HttpServletRequest): ResponseEntity<List<SessionResponse>> {
         val user = userService.getCurrentUser()
-        val sessions = authService.getMySessions(user.id!!)
+        val currentToken = httpRequest.getHeader("Authorization")?.removePrefix("Bearer ")?.trim()
+        val sessions = authService.getMySessions(user.id!!, currentToken)
         return ResponseEntity.ok(sessions)
     }
 

@@ -6,6 +6,8 @@ data class SessionResponse(
     val id: Long,
     val ipAddress: String?,
     val userAgent: String?,
+    val deviceName: String?,
+    val isCurrent: Boolean,
     val dateDebut: LocalDateTime,
     val lastActivity: LocalDateTime?
 )

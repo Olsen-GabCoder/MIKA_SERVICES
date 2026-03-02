@@ -11,7 +11,8 @@ export interface LigneChiffreAffaires {
   caPrevisionnel: number
   caRealise: number
   ecart: number
-  avancementCumule: number
+  /** Avancement cumulé en % ; null si aucun CA enregistré pour ce mois */
+  avancementCumule: number | null
 }
 
 export type DocumentExportFormat = 'word' | 'excel' | 'pdf'
@@ -33,6 +34,8 @@ export interface ProjetDocumentPayload {
   delaiMois: number | null
   formatMontant: (n?: number) => string
   formatDate: (d?: string) => string
+  /** Heure courante formatée selon la préférence utilisateur (12h/24h). Utilisé dans en-têtes/pieds de page. */
+  formatTime?: () => string
 }
 
 /** Labels pour phases d'études (affichage) */
@@ -43,13 +46,14 @@ export const PHASE_ETUDE_LABELS: Record<string, string> = {
   GEOTECHNIQUE: 'Géotechnique',
   HYDRAULIQUE: 'Hydrologique / Hydraulique',
   EIES: 'EIES / Notice EIES',
+  PAES: 'PAES',
 }
 
 /** Avancement études (avec label phase) pour export */
 export function getAvancementEtudesWithLabels(
   etudes: AvancementEtudeProjet[] | undefined
 ): { phase: string; avancementPct: number | null; dateDepot: string; etatValidation: string }[] {
-  const phases = ['APS', 'APD', 'EXE', 'GEOTECHNIQUE', 'HYDRAULIQUE', 'EIES'] as const
+  const phases = ['APS', 'APD', 'EXE', 'GEOTECHNIQUE', 'HYDRAULIQUE', 'EIES', 'PAES'] as const
   return phases.map((phase) => {
     const e = etudes?.find((x) => x.phase === phase)
     return {

@@ -8,10 +8,11 @@ import { equipeApi } from '@/api/chantierApi'
 import { userApi } from '@/api/userApi'
 import type { TypeEquipe, MembreEquipeResponse, RoleDansEquipe } from '@/types/chantier'
 import type { User } from '@/types'
+import { useFormatDate } from '@/hooks/useFormatDate'
 
 export const EquipeDetailPage = () => {
-  const { t, i18n } = useTranslation('equipe')
-  const locale = i18n.language === 'en' ? 'en-GB' : 'fr-FR'
+  const { t } = useTranslation('equipe')
+  const formatDate = useFormatDate()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -203,7 +204,7 @@ export const EquipeDetailPage = () => {
                         </td>
                         <td className="py-2">{ROLE_LABELS[m.role] ?? m.role}</td>
                         <td className="py-2 text-gray-500">
-                          {m.dateAffectation ? new Date(m.dateAffectation).toLocaleDateString(locale) : '-'}
+                          {m.dateAffectation ? formatDate(m.dateAffectation) : '-'}
                         </td>
                       </tr>
                     ))}

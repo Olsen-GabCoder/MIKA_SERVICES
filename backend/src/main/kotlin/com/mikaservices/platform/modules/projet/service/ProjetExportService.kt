@@ -1,7 +1,11 @@
 package com.mikaservices.platform.modules.projet.service
 
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
-import com.mikaservices.platform.modules.projet.dto.response.*
+import com.mikaservices.platform.modules.projet.dto.response.AvancementEtudeProjetResponse
+import com.mikaservices.platform.modules.projet.dto.response.CAPrevisionnelRealiseResponse
+import com.mikaservices.platform.modules.projet.dto.response.PointBloquantResponse
+import com.mikaservices.platform.modules.projet.dto.response.PrevisionResponse
+import com.mikaservices.platform.modules.projet.dto.response.ProjetResponse
 import com.mikaservices.platform.modules.projet.mapper.PointBloquantMapper
 import com.mikaservices.platform.modules.projet.repository.PointBloquantRepository
 import com.mikaservices.platform.modules.reporting.dto.response.ProjetReportResponse
@@ -134,7 +138,7 @@ class ProjetExportService(
 
         // 3. État d'avancement des études
         addSectionTitle(doc, "3. État d'avancement des études")
-        val phases = listOf("APS", "APD", "EXE", "GEOTECHNIQUE", "HYDRAULIQUE", "EIES")
+        val phases = listOf("APS", "APD", "EXE", "GEOTECHNIQUE", "HYDRAULIQUE", "EIES", "PAES")
         val tableEtudes = doc.createTable()
         tableEtudes.width = 9635
         val hEtudes = tableEtudes.getRow(0)
@@ -153,22 +157,42 @@ class ProjetExportService(
         }
         addEmptyParagraph(doc)
 
-        // 4. Avancement des travaux / prévisions
-        addSectionTitle(doc, "4. Avancement des travaux / prévisions")
-        addParagraph(doc, "Avancement global : ${projet.avancementGlobal} %", bold = true)
-        addSubtitle(doc, "Points bloquants")
+        // 4. Avancement des travaux
+        val now = java.time.LocalDate.now()
+        val weekFields = java.time.temporal.WeekFields.ISO
+        val semaineCalendaire = now.get(weekFields.weekOfWeekBasedYear())
+        val anneeCalendaire = now.year
+        val semaineSuivante = if (semaineCalendaire < 53) semaineCalendaire + 1 else 1
+        val anneeSuivante = if (semaineCalendaire < 53) anneeCalendaire else anneeCalendaire + 1
+        val tachesRealiseSemaine = previsions.filter { it.semaine == semaineCalendaire && it.annee == anneeCalendaire }
+        val tachesPrevuesSuivante = previsions.filter { it.semaine == semaineSuivante && it.annee == anneeSuivante }
+        val avancementsRealise = tachesRealiseSemaine.mapNotNull { it.avancementPct }
+        val globalPct = if (avancementsRealise.isNotEmpty()) Math.round(avancementsRealise.sum().toDouble() / avancementsRealise.size * 100.0) / 100.0 else null
+
+        addSectionTitle(doc, "4. Avancement des travaux — Semaine $semaineCalendaire ($anneeCalendaire)")
+        if (globalPct != null) addParagraph(doc, "Avancement global semaine : $globalPct %", bold = true)
+
+        addSubtitle(doc, "4.1 Réalisé — Semaine $semaineCalendaire ($anneeCalendaire)")
+        if (tachesRealiseSemaine.isEmpty()) addParagraph(doc, "Aucune tâche enregistrée pour la semaine en cours.")
+        else tachesRealiseSemaine.forEach { p ->
+            val pct = if (p.avancementPct != null) " — ${p.avancementPct} %" else ""
+            addParagraph(doc, "${fmt(p.description)}$pct")
+        }
+
+        addSubtitle(doc, "4.2 Prévisions — Semaine $semaineSuivante ($anneeSuivante)")
+        if (tachesPrevuesSuivante.isEmpty()) addParagraph(doc, "Aucune tâche planifiée pour la semaine prochaine.")
+        else tachesPrevuesSuivante.forEach { p ->
+            addParagraph(doc, fmt(p.description))
+        }
+
+        addSubtitle(doc, "4.3 Points bloquants")
         if (pointsBloquants.isEmpty()) addParagraph(doc, "Aucun point bloquant.")
         else pointsBloquants.forEach { pb ->
             addParagraph(doc, "${pb.titre} — ${fmt(pb.description)} (Priorité : ${pb.priorite}, Statut : ${pb.statut}, Détecté le : ${fmtDate(pb.dateDetection)})")
         }
-        addSubtitle(doc, "Prévisions")
-        if (previsions.isEmpty()) addParagraph(doc, "Aucune prévision.")
-        else previsions.forEach { p ->
-            addParagraph(doc, "Semaine ${p.semaine ?: "—"} (${p.annee}) — ${p.type.name.replace("_", " ")} — ${fmt(p.description)} — ${p.statut.name.replace("_", " ")}")
-        }
-        addSubtitle(doc, "Besoins matériels")
+        addSubtitle(doc, "4.4 Besoins matériels")
         addParagraph(doc, fmt(projet.besoinsMateriel))
-        addSubtitle(doc, "Besoins humains")
+        addSubtitle(doc, "4.5 Besoins humains")
         addParagraph(doc, fmt(projet.besoinsHumain))
         addEmptyParagraph(doc)
 
@@ -318,7 +342,7 @@ class ProjetExportService(
             rowHeaderE.createCell(i).setCellValue(h)
             rowHeaderE.getCell(i).cellStyle = headerStyle
         }
-        val phases = listOf("APS", "APD", "EXE", "GEOTECHNIQUE", "HYDRAULIQUE", "EIES")
+        val phases = listOf("APS", "APD", "EXE", "GEOTECHNIQUE", "HYDRAULIQUE", "EIES", "PAES")
         val etudesByPhase = avancementEtudes.associateBy { it.phase.name }
         phases.forEach { phase ->
             val e = etudesByPhase[phase]
@@ -329,21 +353,40 @@ class ProjetExportService(
             row.createCell(3).setCellValue(fmt(e?.etatValidation))
         }
 
-        // Feuille 4 : Prévisions
-        val shPrev = wb.createSheet("Prévisions")
+        // Feuille 4 : Réalisé semaine en cours
+        val nowXls = java.time.LocalDate.now()
+        val weekFieldsXls = java.time.temporal.WeekFields.ISO
+        val semaineXls = nowXls.get(weekFieldsXls.weekOfWeekBasedYear())
+        val anneeXls = nowXls.year
+        val semaineSuivanteXls = if (semaineXls < 53) semaineXls + 1 else 1
+        val anneeSuivanteXls = if (semaineXls < 53) anneeXls else anneeXls + 1
+        val tachesRealiseXls = previsions.filter { it.semaine == semaineXls && it.annee == anneeXls }
+        val tachesPrevuesXls = previsions.filter { it.semaine == semaineSuivanteXls && it.annee == anneeSuivanteXls }
+
+        val shRealise = wb.createSheet("Réalisé S$semaineXls")
+        rowNum = 0
+        val rowHeaderR = shRealise.createRow(rowNum++)
+        listOf("Tâche", "Avancement (%)").forEachIndexed { i, h ->
+            rowHeaderR.createCell(i).setCellValue(h)
+            rowHeaderR.getCell(i).cellStyle = headerStyle
+        }
+        tachesRealiseXls.forEach { p ->
+            val row = shRealise.createRow(rowNum++)
+            row.createCell(0).setCellValue(fmt(p.description))
+            row.createCell(1).setCellValue((p.avancementPct ?: 0).toDouble())
+        }
+
+        // Feuille 5 : Prévisions semaine suivante
+        val shPrev = wb.createSheet("Prévisions S$semaineSuivanteXls")
         rowNum = 0
         val rowHeaderP = shPrev.createRow(rowNum++)
-        listOf("Semaine", "Année", "Type", "Description", "Statut").forEachIndexed { i, h ->
+        listOf("Tâche").forEachIndexed { i, h ->
             rowHeaderP.createCell(i).setCellValue(h)
             rowHeaderP.getCell(i).cellStyle = headerStyle
         }
-        previsions.forEach { p ->
+        tachesPrevuesXls.forEach { p ->
             val row = shPrev.createRow(rowNum++)
-            row.createCell(0).setCellValue((p.semaine ?: 0).toDouble())
-            row.createCell(1).setCellValue(p.annee.toDouble())
-            row.createCell(2).setCellValue(p.type.name.replace("_", " "))
-            row.createCell(3).setCellValue(fmt(p.description))
-            row.createCell(4).setCellValue(p.statut.name.replace("_", " "))
+            row.createCell(0).setCellValue(fmt(p.description))
         }
 
         // Feuille 5 : Points bloquants

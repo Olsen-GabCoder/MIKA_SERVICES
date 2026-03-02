@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useFormatDate } from '@/hooks/useFormatDate'
+import { useFormatNumber } from '@/hooks/useFormatNumber'
 import { ProjetDownloadDocumentModal } from '@/features/projet/components/ProjetDownloadDocumentModal'
 import { generateProjetDocument } from '@/features/projet/export'
 import type { ProjetDocumentPayload, DocumentExportFormat } from '@/features/projet/export/types'
@@ -10,17 +12,9 @@ import { fetchProjetById, clearProjetDetail } from '@/store/slices/projetSlice'
 import { projetApi, pointBloquantApi } from '@/api/projetApi'
 import { reportingApi } from '@/api/reportingApi'
 import { ProjetVisualisationsSection } from '@/features/projet/components/ProjetVisualisations'
-import type { PointBloquant, Prevision } from '@/types/projet'
+import type { PointBloquant, Prevision, ModeSuiviMensuel } from '@/types/projet'
 import { getTypeProjetDisplay, getProjetTypes } from '@/types/projet'
 import type { ProjetReport } from '@/types/reporting'
-
-const STATUT_COLORS: Record<string, string> = {
-  EN_ATTENTE: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
-  PLANIFIE: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200',
-  EN_COURS: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200',
-  SUSPENDU: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200',
-  TERMINE: 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200',
-}
 
 /** Liste des mois entre dateDebut et dateFin (période du projet). */
 function getMoisEntreDates(
@@ -51,7 +45,8 @@ export interface LigneChiffreAffaires {
   caPrevisionnel: number
   caRealise: number
   ecart: number
-  avancementCumule: number
+  /** Avancement cumulé en % ; null si aucun CA enregistré pour ce mois (cellule vide) */
+  avancementCumule: number | null
 }
 
 /** Numéro de la semaine calendaire (ISO 8601) pour une date : 1–53, indépendant du projet. */
@@ -77,10 +72,9 @@ const TABLE_WRAP = 'w-full min-w-0 overflow-x-auto'
 const TABLE_BASE = 'w-full text-sm border-collapse table-fixed'
 const TH_BASE = 'py-2.5 px-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600'
 const TD_BASE = 'py-2.5 px-3 border-b border-gray-100 dark:border-gray-600 text-gray-800 dark:text-gray-200'
-const TD_LAST = 'border-b-0'
 
 export const ProjetDetailPage = () => {
-  const { t, i18n } = useTranslation('projet')
+  const { t } = useTranslation('projet')
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
@@ -96,6 +90,7 @@ export const ProjetDetailPage = () => {
   const [suiviMensuelExpanded, setSuiviMensuelExpanded] = useState(false)
 
   const monthsShort = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => t(`detail.monthsShort_${i}`))
+  const isAdmin = currentUser?.roles?.some((r) => r.code === 'ADMIN' || r.code === 'SUPER_ADMIN') ?? false
   const isChefDeProjet = Boolean(projet?.responsableProjet && currentUser?.id === projet.responsableProjet.id)
 
   useEffect(() => {
@@ -120,13 +115,8 @@ export const ProjetDetailPage = () => {
     }).catch(() => setSuiviMensuel([]))
   }, [projet?.id])
 
-  const locale = i18n.language === 'en' ? 'en-GB' : 'fr-FR'
-  const formatMontant = (montant?: number) => {
-    if (montant == null) return '—'
-    return new Intl.NumberFormat(locale, { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(montant)
-  }
-
-  const formatDate = (d?: string) => (d ? new Date(d).toLocaleDateString(locale) : '—')
+  const formatDate = useFormatDate()
+  const { formatMontant } = useFormatNumber()
 
   /** Délai en mois calculé à partir de dateDebut et dateFin */
   const delaiMois = projet?.delaiMois ?? (projet?.dateDebut && projet?.dateFin
@@ -135,10 +125,20 @@ export const ProjetDetailPage = () => {
 
   const budgetPrevu = rapport?.budget?.budgetTotalPrevu ?? projet?.montantHT ?? 0
   const depensesTotales = rapport?.budget?.depensesTotales ?? 0
-  // Tableau de suivi mensuel synchronisé avec les dates réelles (fallback sur dates prévues)
+  // Tableau de suivi mensuel :
+  // - AUTO : synchronisé avec les dates réelles (fallback sur dates prévues)
+  // - MANUEL : liste affichée telle quelle (triée par année/mois), sans recalcul de plage de dates
+  const modeSuiviMensuel = ((projet?.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO')
   const dateDebutSuivi = projet?.dateDebutReel ?? projet?.dateDebut
   const dateFinSuivi = projet?.dateFinReelle ?? projet?.dateFin
-  const moisSuivi = getMoisEntreDates(dateDebutSuivi, dateFinSuivi, monthsShort)
+
+  const moisSuivi = modeSuiviMensuel === 'MANUEL'
+    ? suiviMensuel
+        .slice()
+        .sort((a, b) => (a.annee - b.annee) || (a.mois - b.mois))
+        .map((r) => ({ label: `${monthsShort[(r.mois ?? 1) - 1] ?? ''}-${r.annee}`, mois: r.mois, annee: r.annee }))
+    : getMoisEntreDates(dateDebutSuivi, dateFinSuivi, monthsShort)
+
   const bySuivi: Record<string, { caPrevisionnel: number; caRealise: number; ecart: number; avancementCumule: number }> = {}
   suiviMensuel.forEach((r) => {
     bySuivi[`${r.mois}-${r.annee}`] = {
@@ -148,14 +148,20 @@ export const ProjetDetailPage = () => {
       avancementCumule: r.avancementCumule ?? 0,
     }
   })
+
   let cumulRealise = 0
   const lignesCA: LigneChiffreAffaires[] = moisSuivi.map(({ label, mois, annee }) => {
     const saved = bySuivi[`${mois}-${annee}`]
     const caPrevisionnel = saved?.caPrevisionnel ?? 0
     const caRealise = saved?.caRealise ?? 0
     const ecart = saved?.ecart ?? caRealise - caPrevisionnel
-    cumulRealise += caRealise
-    const avancementCumule = budgetPrevu > 0 ? Math.round((cumulRealise / budgetPrevu) * 10000) / 100 : (saved?.avancementCumule ?? 0)
+    const hasData = saved != null && (caPrevisionnel !== 0 || caRealise !== 0)
+    if (hasData) cumulRealise += caRealise
+    const avancementCumule: number | null = hasData && budgetPrevu > 0
+      ? Math.round((cumulRealise / budgetPrevu) * 10000) / 100
+      : hasData && saved?.avancementCumule != null
+        ? saved.avancementCumule
+        : null
     return { label, caPrevisionnel, caRealise, ecart, avancementCumule }
   })
   const { week: semaineCalendaire, year: anneeCalendaire } = getSemaineCalendaireActuelle()
@@ -169,7 +175,7 @@ export const ProjetDetailPage = () => {
         caPrevisionnel: lignesCA.reduce((s, l) => s + l.caPrevisionnel, 0),
         caRealise: lignesCA.reduce((s, l) => s + l.caRealise, 0),
         ecart: lignesCA.reduce((s, l) => s + l.ecart, 0),
-        avancementCumule: lignesCA[lignesCA.length - 1]?.avancementCumule ?? null,
+        avancementCumule: (() => { const lastWithPct = [...lignesCA].reverse().find((l) => l.avancementCumule != null); return lastWithPct?.avancementCumule ?? null })(),
       }
     : null
 
@@ -191,6 +197,7 @@ export const ProjetDetailPage = () => {
         delaiMois: delaiMois ?? null,
         formatMontant,
         formatDate,
+        formatTime: () => formatDate(new Date().toISOString(), { timeOnly: true }),
       }
       await generateProjetDocument(payload, format, baseFilename)
       setDownloadModalOpen(false)
@@ -247,13 +254,20 @@ export const ProjetDetailPage = () => {
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <button
               type="button"
+              onClick={() => navigate(`/projets/${projet.id}/historique`)}
+              className="bg-white/20 hover:bg-white/30 text-white font-semibold px-5 py-2 rounded-lg transition"
+            >
+              {t('historique.buttonLabel')}
+            </button>
+            <button
+              type="button"
               onClick={() => setDownloadModalOpen(true)}
               disabled={exportingDocument}
               className="bg-white/20 hover:bg-white/30 text-white font-semibold px-5 py-2 rounded-lg transition disabled:opacity-60"
             >
               {exportingDocument ? t('detail.downloadGenerating') : t('detail.downloadDocument')}
             </button>
-            {isChefDeProjet && (
+            {(isChefDeProjet || isAdmin) && (
               <button onClick={() => navigate(`/projets/${projet.id}/edit`)} className="bg-white dark:bg-gray-100 text-primary hover:bg-white/90 dark:hover:bg-gray-200 font-semibold px-5 py-2 rounded-lg shadow">
                 {t('detail.editProject')}
               </button>
@@ -287,7 +301,7 @@ export const ProjetDetailPage = () => {
         <section className={CARD}>
           <div className={`${CARD_HEADER} flex items-center justify-between gap-3`}>
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">{t('detail.section2')}</h2>
-            {moisSuivi.length > 0 && suiviMensuelHasMore && (
+            {lignesCA.length > 0 && suiviMensuelHasMore && (
               <button
                 type="button"
                 onClick={() => setSuiviMensuelExpanded((e) => !e)}
@@ -298,9 +312,9 @@ export const ProjetDetailPage = () => {
             )}
           </div>
           <div className={CARD_BODY}>
-            {moisSuivi.length === 0 ? (
+            {lignesCA.length === 0 ? (
               <p className="text-gray-600 text-sm py-4">
-                {t('detail.suiviMensuelEmpty')}
+                {modeSuiviMensuel === 'MANUEL' ? t('detail.suiviMensuelEmptyManual') : t('detail.suiviMensuelEmpty')}
               </p>
             ) : (
               <>
@@ -329,7 +343,7 @@ export const ProjetDetailPage = () => {
                           <td className={`${TD_BASE} text-right tabular-nums text-gray-500`}>{ligne.caPrevisionnel === 0 ? '—' : formatMontant(ligne.caPrevisionnel)}</td>
                           <td className={`${TD_BASE} text-right tabular-nums text-gray-500`}>{ligne.caRealise === 0 ? '—' : formatMontant(ligne.caRealise)}</td>
                           <td className={`${TD_BASE} text-right tabular-nums font-medium ${ligne.ecart === 0 ? 'text-gray-500' : ligne.ecart >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>{ligne.ecart === 0 ? '—' : formatMontant(ligne.ecart)}</td>
-                          <td className={`${TD_BASE} text-right tabular-nums font-semibold text-gray-500 dark:text-gray-400`}>{ligne.avancementCumule === 0 ? '—' : `${ligne.avancementCumule} %`}</td>
+                          <td className={`${TD_BASE} text-right tabular-nums font-semibold text-gray-500 dark:text-gray-400`}>{ligne.avancementCumule == null ? '—' : ligne.avancementCumule === 0 ? '—' : `${ligne.avancementCumule} %`}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -381,11 +395,11 @@ export const ProjetDetailPage = () => {
                         <td className={`${TD_BASE} font-medium text-gray-900 dark:text-gray-100`}>{t(`enums.phaseEtude.${e.phase}`) || e.phase}</td>
                         <td className={`${TD_BASE} tabular-nums`}>{e.avancementPct != null ? `${e.avancementPct} %` : '—'}</td>
                         <td className={TD_BASE}>{formatDate(e.dateDepot)}</td>
-                        <td className={TD_BASE}>{e.etatValidation || '—'}</td>
+                        <td className={TD_BASE}>{e.etatValidation && ['NON_DEPOSE', 'EN_ATTENTE', 'EN_COURS', 'VALIDE', 'REFUSE'].includes(e.etatValidation) ? t(`enums.etatValidationEtude.${e.etatValidation}`) : (e.etatValidation || '—')}</td>
                       </tr>
                     ))
                   ) : (
-                    (['APS', 'APD', 'EXE', 'GEOTECHNIQUE', 'HYDRAULIQUE', 'EIES'] as const).map((phase) => (
+                    (['APS', 'APD', 'EXE', 'GEOTECHNIQUE', 'HYDRAULIQUE', 'EIES', 'PAES'] as const).map((phase) => (
                       <tr key={phase} className="hover:bg-gray-50/60 dark:hover:bg-gray-700/60 transition-colors">
                         <td className={`${TD_BASE} font-medium text-gray-900 dark:text-gray-100`}>{t(`enums.phaseEtude.${phase}`) || phase}</td>
                         <td className={TD_BASE}>—</td>
@@ -400,80 +414,190 @@ export const ProjetDetailPage = () => {
           </div>
         </section>
 
-        {/* 4. Avancement des travaux / prévisions */}
-        <section className={CARD}>
-          <h2 className={CARD_HEADER}>{t('detail.section4')}</h2>
-          <div className={CARD_BODY}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('detail.pointsBloquants')}</h3>
-                {pointsBloquants.length > 0 ? (
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-                    {pointsBloquants.map((pb) => (
-                      <li key={pb.id}>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{pb.titre}</span>
-                        {pb.description && <span className="text-gray-600"> — {pb.description}</span>}
-                        <span className="text-xs text-gray-500"> ({pb.priorite}, {pb.statut})</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-500 text-sm">{t('detail.noPointsBloquants')}</p>
-                )}
-              </div>
+        {/* 4. Avancement des travaux — pilotage hebdomadaire */}
+        {(() => {
+          const tachesRealiseSemaine = previsions.filter(
+            (p) => p.semaine === semaineCalendaire && p.annee === anneeCalendaire
+          )
+          const semaineProchaine = semaineCalendaire < 53 ? semaineCalendaire + 1 : 1
+          const anneeProchaine = semaineCalendaire < 53 ? anneeCalendaire : anneeCalendaire + 1
+          const tachesPrevuesExplicites = previsions.filter(
+            (p) => p.semaine === semaineProchaine && p.annee === anneeProchaine
+          )
+          const tachesReportees = previsions.filter((p) => {
+            const a = p.annee ?? 0
+            const s = p.semaine ?? 0
+            const isPast = a < anneeCalendaire || (a === anneeCalendaire && s < semaineCalendaire)
+            const isIncomplete = p.avancementPct == null || p.avancementPct < 100
+            return isPast && isIncomplete
+          })
+          const tachesPrevuesSemaineSuivante = [...tachesPrevuesExplicites, ...tachesReportees]
+          const avancementsRealise = tachesRealiseSemaine
+            .map((t) => t.avancementPct)
+            .filter((v): v is number => v != null)
+          const globalPct = avancementsRealise.length > 0
+            ? Math.round((avancementsRealise.reduce((a, b) => a + b, 0) / avancementsRealise.length) * 100) / 100
+            : null
 
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-                  {t('detail.previsions')}
-                  <span className="ml-2 font-normal normal-case text-primary">— {t('detail.weekInProgress', { week: semaineCalendaire, year: anneeCalendaire })}</span>
-                </h3>
-                {previsions.length > 0 ? (
-                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-                    {previsions.map((p) => (
-                        <li key={p.id}>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">
-                            {p.semaine != null && p.annee != null
-                              ? t('detail.weekLabel', { week: p.semaine, year: p.annee })
-                              : p.type.replace(/_/g, ' ')}
-                          </span>
-                          {p.description && <span className="text-gray-600"> — {p.description}</span>}
-                          <span className="text-xs text-gray-500"> ({p.statut?.replace(/_/g, ' ') ?? '—'})</span>
-                        </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-500 text-sm">{t('detail.noPrevisions')}</p>
+          return (
+            <section className={CARD}>
+              <div className={`${CARD_HEADER} flex items-center justify-between gap-3`}>
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
+                  {t('detail.section4')}
+                  <span className="ml-2 font-normal normal-case text-primary">
+                    — {t('detail.weekInProgress', { week: semaineCalendaire, year: anneeCalendaire })}
+                  </span>
+                </h2>
+                {globalPct != null && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300">
+                    {t('detail.section4GlobalProgress', { pct: globalPct })}
+                  </span>
                 )}
               </div>
+              <div className={CARD_BODY}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Réalisé — Semaine en cours */}
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                      {t('detail.section4Realise')}
+                    </h3>
+                    {tachesRealiseSemaine.length > 0 ? (
+                      <ul className="space-y-2">
+                        {tachesRealiseSemaine.map((p) => (
+                          <li key={p.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-100 dark:border-gray-600">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {p.description || p.type.replace(/_/g, ' ')}
+                              </p>
+                            </div>
+                            {p.avancementPct != null && (
+                              <div className="flex-shrink-0 flex items-center gap-1.5">
+                                <div className="w-16 h-2 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${p.avancementPct >= 100 ? 'bg-green-500' : p.avancementPct >= 50 ? 'bg-primary' : 'bg-amber-500'}`}
+                                    style={{ width: `${Math.min(100, p.avancementPct)}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                  {p.avancementPct} %
+                                </span>
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.section4NoRealise')}</p>
+                    )}
+                  </div>
 
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('detail.besoinsMateriel')}</h3>
-                {projet.besoinsMateriel ? (
-                  <ul className="text-sm text-gray-700 space-y-1 list-disc list-inside">
-                    {projet.besoinsMateriel.split(/\s*•\s*/).filter(Boolean).map((s, i) => (
-                      <li key={i}>{s.trim()}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-500">—</p>
-                )}
-              </div>
+                  {/* Prévisions — Semaine suivante (explicites + reportées) */}
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                      {t('detail.section4Previsions')}
+                      <span className="ml-2 font-normal normal-case text-primary">
+                        — {t('detail.weekLabel', { week: semaineProchaine, year: anneeProchaine })}
+                      </span>
+                    </h3>
+                    {tachesReportees.length > 0 && (
+                      <p className="text-[11px] text-amber-700 dark:text-amber-400 mb-2">{t('detail.section4CarryOverNote')}</p>
+                    )}
+                    {tachesPrevuesSemaineSuivante.length > 0 ? (
+                      <ul className="space-y-2">
+                        {tachesPrevuesSemaineSuivante.map((p) => {
+                          const isReportee = tachesReportees.some((r) => r.id === p.id)
+                          return (
+                            <li
+                              key={p.id}
+                              className={`flex items-start gap-3 p-2.5 rounded-lg border ${
+                                isReportee
+                                  ? 'bg-amber-50/60 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40'
+                                  : 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/30'
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {p.description || p.type.replace(/_/g, ' ')}
+                                </p>
+                                {isReportee && (p.semaine != null && p.annee != null) && (
+                                  <span className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5 block">
+                                    {t('detail.section4Reportee', { week: p.semaine, year: p.annee })}
+                                  </span>
+                                )}
+                              </div>
+                              {p.avancementPct != null && (
+                                <div className="flex-shrink-0 flex items-center gap-1.5">
+                                  <div className="w-14 h-2 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${p.avancementPct >= 100 ? 'bg-green-500' : p.avancementPct >= 50 ? 'bg-primary' : 'bg-amber-500'}`}
+                                      style={{ width: `${Math.min(100, p.avancementPct)}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                    {p.avancementPct} %
+                                  </span>
+                                </div>
+                              )}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.section4NoPrevisions')}</p>
+                    )}
+                  </div>
+                </div>
 
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('detail.besoinsHumain')}</h3>
-                {projet.besoinsHumain ? (
-                  <ul className="text-sm text-gray-700 space-y-1 list-disc list-inside">
-                    {projet.besoinsHumain.split(/\s*•\s*/).filter(Boolean).map((s, i) => (
-                      <li key={i}>{s.trim()}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-500">—</p>
-                )}
+                {/* Points bloquants + Besoins */}
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('detail.pointsBloquants')}</h3>
+                    {pointsBloquants.length > 0 ? (
+                      <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                        {pointsBloquants.map((pb) => (
+                          <li key={pb.id}>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{pb.titre}</span>
+                            {pb.description && <span className="text-gray-600 dark:text-gray-400"> — {pb.description}</span>}
+                            <span className="text-xs text-gray-500"> ({pb.priorite}, {pb.statut})</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-gray-500 text-sm">{t('detail.noPointsBloquants')}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('detail.besoinsMateriel')}</h3>
+                      {projet.besoinsMateriel ? (
+                        <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1 list-disc list-inside">
+                          {projet.besoinsMateriel.split(/\s*•\s*/).filter(Boolean).map((s, i) => (
+                            <li key={i}>{s.trim()}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-gray-500">—</p>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('detail.besoinsHumain')}</h3>
+                      {projet.besoinsHumain ? (
+                        <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1 list-disc list-inside">
+                          {projet.besoinsHumain.split(/\s*•\s*/).filter(Boolean).map((s, i) => (
+                            <li key={i}>{s.trim()}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-gray-500">—</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </section>
+            </section>
+          )
+        })()}
 
         {/* 5. Description, observations et propositions */}
         <section className={CARD}>

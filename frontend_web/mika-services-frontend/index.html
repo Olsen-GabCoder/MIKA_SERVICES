@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bebas+Neue&family=Open+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <title>mika-services-frontend</title>
     <script>
       (function() {
@@ -30,6 +30,44 @@
           ? localStorage.getItem(key) : 'fr';
         document.documentElement.lang = stored;
         if (typeof window !== 'undefined') window.__INITIAL_LOCALE__ = stored;
+      })();
+    </script>
+    <script>
+      (function() {
+        var key = 'mika-animations';
+        var stored = typeof localStorage !== 'undefined' && ['full', 'reduced', 'none'].indexOf(localStorage.getItem(key)) >= 0
+          ? localStorage.getItem(key) : 'full';
+        document.documentElement.setAttribute('data-animations', stored);
+      })();
+    </script>
+    <script>
+      (function() {
+        var sizeKey = 'mika-font-size';
+        var familyKey = 'mika-font-family';
+        var densityKey = 'mika-density';
+        var sizeMap = { small: '87.5%', default: '112.5%', medium: '118.75%', large: '125%' };
+        var validSizes = ['small', 'default', 'medium', 'large'];
+        var validFamilies = ['inter', 'system', 'open-sans'];
+        var densityScale = { comfortable: 1, compact: 0.85, spacious: 1.15 };
+        var validDensities = ['comfortable', 'compact', 'spacious'];
+        var html = document.documentElement;
+        if (typeof localStorage !== 'undefined') {
+          var sizeStored = localStorage.getItem(sizeKey);
+          var size = validSizes.indexOf(sizeStored) >= 0 ? sizeStored : 'default';
+          html.style.setProperty('--mika-font-size', sizeMap[size]);
+          var familyStored = localStorage.getItem(familyKey);
+          var family = validFamilies.indexOf(familyStored) >= 0 ? familyStored : 'system';
+          html.setAttribute('data-font', family);
+          var densityStored = localStorage.getItem(densityKey);
+          var density = validDensities.indexOf(densityStored) >= 0 ? densityStored : 'comfortable';
+          html.setAttribute('data-density', density);
+          html.style.setProperty('--mika-density-scale', String(densityScale[density]));
+        } else {
+          html.style.setProperty('--mika-font-size', '112.5%');
+          html.setAttribute('data-font', 'system');
+          html.setAttribute('data-density', 'comfortable');
+          html.style.setProperty('--mika-density-scale', '1');
+        }
       })();
     </script>
   </head>

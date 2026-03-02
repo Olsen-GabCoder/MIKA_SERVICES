@@ -3,6 +3,10 @@ export interface ProjetStats {
   enCours: number
   termines: number
   enRetard: number
+  /** Montant total HT du portefeuille (optionnel, peut être calculé côté front si absent) */
+  montantTotal?: number
+  /** Avancement physique moyen en % (optionnel) */
+  avancementMoyen?: number
 }
 
 export interface ChantierStats {

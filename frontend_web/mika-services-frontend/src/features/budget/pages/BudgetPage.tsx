@@ -4,18 +4,15 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { fetchBudgetSummary } from '@/store/slices/budgetSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { useFormatNumber } from '@/hooks/useFormatNumber'
 
 export const BudgetPage = () => {
-  const { t, i18n } = useTranslation('budget')
+  const { t } = useTranslation('budget')
+  const { formatMontant } = useFormatNumber()
   const dispatch = useAppDispatch()
   const { budgetSummary } = useAppSelector((state) => state.budget)
   const { projets } = useAppSelector((state) => state.projet)
   const [selectedProjetId, setSelectedProjetId] = useState<number | null>(null)
-  const locale = i18n.language === 'en' ? 'en-GB' : 'fr-FR'
-  const formatMontant = (montant?: number) => {
-    if (!montant && montant !== 0) return '-'
-    return new Intl.NumberFormat(locale, { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(montant)
-  }
 
   useEffect(() => {
     dispatch(fetchProjets({ page: 0, size: 100 }))

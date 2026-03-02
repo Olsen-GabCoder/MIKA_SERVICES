@@ -10,16 +10,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { fullName } from '@/utils/userDisplay'
 import { updateUser } from '@/store/slices/userSlice'
 import type { UserUpdateRequest } from '@/api/userApi'
-
-function formatDate(value: string | undefined): string {
-  if (!value) return '—'
-  try {
-    const d = new Date(value)
-    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-  } catch {
-    return '—'
-  }
-}
+import { useFormatDate } from '@/hooks/useFormatDate'
 
 interface UserListProps {
   users: User[]
@@ -61,6 +52,7 @@ export const UserList = ({
   onUserUpdated,
 }: UserListProps) => {
   const { t } = useTranslation('user')
+  const formatDate = useFormatDate()
   const dispatch = useAppDispatch()
   const [toggleActifUser, setToggleActifUser] = useState<User | null>(null)
   const [openActionsId, setOpenActionsId] = useState<number | null>(null)
@@ -123,7 +115,7 @@ export const UserList = ({
       .catch(() => {})
   }, [dispatch, toggleActifUser, onUserUpdated])
 
-  const pageSizeOptions = [10, 25, 50]
+  const pageSizeOptions = [10, 20, 25, 50, 100]
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
@@ -241,10 +233,10 @@ export const UserList = ({
                     {user.totpEnabled ? t('list.twoFaOn') : t('list.twoFaOff')}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                    {formatDate(user.lastLogin)}
+                    {formatDate(user.lastLogin, { includeTime: true })}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                    {formatDate(user.createdAt)}
+                    {formatDate(user.createdAt, { includeTime: true })}
                   </td>
                   <td className="px-4 py-3 text-right text-sm">
                     {/* Desktop: boutons alignés */}

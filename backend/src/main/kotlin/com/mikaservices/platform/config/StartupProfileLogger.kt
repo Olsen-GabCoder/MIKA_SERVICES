@@ -15,7 +15,7 @@ import org.springframework.core.env.Environment
 class StartupProfileLogger {
 
     @Bean
-    fun startupProfileLogger(environment: Environment): ApplicationRunner {
+    fun logActiveProfilesAtStartup(environment: Environment): ApplicationRunner {
         return ApplicationRunner {
             val profiles = environment.activeProfiles
             val profileStr = if (profiles.isEmpty()) "aucun" else profiles.joinToString(", ")

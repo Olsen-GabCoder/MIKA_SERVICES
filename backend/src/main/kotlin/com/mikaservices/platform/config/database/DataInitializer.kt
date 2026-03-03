@@ -232,9 +232,12 @@ class DataInitializer(
     }
     
     private fun initAdminUser() {
-        logger.warn("MIKA DataInitializer: initAdminUser appelé (INIT_ADMIN_EMAIL défini: ${initAdminEmail.isNotBlank()})")
-        val email = initAdminEmail.trim()
-        val password = initAdminPassword
+        // Lecture directe des variables d'environnement (Railway les injecte ainsi ; Spring peut ne pas les voir via app.init.admin.*)
+        val emailFromEnv = System.getenv("INIT_ADMIN_EMAIL")?.trim().orEmpty()
+        val passwordFromEnv = System.getenv("INIT_ADMIN_PASSWORD").orEmpty()
+        val email = (initAdminEmail.trim().ifBlank { emailFromEnv }).trim()
+        val password = (initAdminPassword.ifBlank { passwordFromEnv })
+        logger.warn("MIKA DataInitializer: initAdminUser (app.init: ${initAdminEmail.isNotBlank()}, env INIT_ADMIN_EMAIL: ${emailFromEnv.isNotBlank()}, email final: ${email.isNotBlank()})")
         if (email.isBlank() || password.isBlank()) {
             logger.warn("Admin initial non créé: définir INIT_ADMIN_EMAIL et INIT_ADMIN_PASSWORD (variables d'environnement)")
             return

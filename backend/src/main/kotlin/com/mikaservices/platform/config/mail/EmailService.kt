@@ -17,6 +17,7 @@ class EmailService(
     private val restTemplate: RestTemplate,
     @Value("\${app.mail.from:noreply@mikaservices.com}") private val from: String,
     @Value("\${app.mail.frontend-base-url:http://localhost:5173}") private val frontendBaseUrl: String,
+    @Value("\${app.mail.brevo-api-key:}") private val brevoApiKey: String,
     @Value("\${app.mail.resend-api-key:}") private val resendApiKey: String
 ) {
     private val logger = LoggerFactory.getLogger(EmailService::class.java)
@@ -365,6 +366,13 @@ class EmailService(
         }
     }
 
+    private fun resolveBrevoApiKey(): String {
+        if (brevoApiKey.isNotBlank()) return brevoApiKey.trim()
+        System.getenv("BREVO_API_KEY")?.trim()?.let { if (it.isNotBlank()) return it }
+        System.getenv("brevo_api_key")?.trim()?.let { if (it.isNotBlank()) return it }
+        return ""
+    }
+
     private fun resolveResendApiKey(): String {
         if (resendApiKey.isNotBlank()) return resendApiKey.trim()
         System.getenv("RESEND_API_KEY")?.trim()?.let { if (it.isNotBlank()) return it }
@@ -373,9 +381,14 @@ class EmailService(
     }
 
     private fun sendGenericNotification(to: String, subject: String, plainBody: String, htmlBody: String, logLabel: String) {
-        val apiKey = resolveResendApiKey()
-        if (apiKey.isNotBlank()) {
-            sendViaResendApi(to, subject, plainBody, htmlBody, logLabel, apiKey)
+        val brevoKey = resolveBrevoApiKey()
+        if (brevoKey.isNotBlank()) {
+            sendViaBrevoApi(to, subject, plainBody, htmlBody, logLabel, brevoKey)
+            return
+        }
+        val resendKey = resolveResendApiKey()
+        if (resendKey.isNotBlank()) {
+            sendViaResendApi(to, subject, plainBody, htmlBody, logLabel, resendKey)
             return
         }
         try {
@@ -398,6 +411,30 @@ class EmailService(
                 }
             }
             logger.error("Échec envoi email [$logLabel] vers $to — $causeChain", e)
+            throw e
+        }
+    }
+
+    /** Envoi via l'API HTTP Brevo (port 443). Alternative simple à Resend. */
+    private fun sendViaBrevoApi(to: String, subject: String, plainBody: String, htmlBody: String, logLabel: String, apiKey: String) {
+        try {
+            val fromAddress = if (from.isNotBlank() && from.contains("@")) from.trim() else "noreply@mikaservices.com"
+            val headers = HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_JSON
+                set("api-key", apiKey)
+            }
+            val body = mapOf(
+                "sender" to mapOf("email" to fromAddress, "name" to "MIKA Services"),
+                "to" to listOf(mapOf("email" to to)),
+                "subject" to subject,
+                "htmlContent" to htmlBody,
+                "textContent" to plainBody
+            )
+            val entity = HttpEntity(body, headers)
+            restTemplate.postForObject("https://api.brevo.com/v3/smtp/email", entity, Map::class.java)
+            logger.info("Email $logLabel envoyé à $to (Brevo API)")
+        } catch (e: Exception) {
+            logger.error("Échec envoi email [$logLabel] vers $to via Brevo API — ${e.message}", e)
             throw e
         }
     }

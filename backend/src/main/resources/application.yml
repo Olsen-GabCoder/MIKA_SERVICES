@@ -60,7 +60,8 @@ app:
   mail:
     frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
     from: ${MAIL_FROM:noreply@mikaservices.com}
-    # Si défini, envoi via API Resend (port 443) au lieu de SMTP (évite timeout sur Railway)
+    # Priorité : Brevo > Resend > SMTP (toutes API en HTTPS, pas de blocage Railway)
+    brevo-api-key: ${BREVO_API_KEY:}
     resend-api-key: ${RESEND_API_KEY:}
     notify-on-login: ${MAIL_NOTIFY_ON_LOGIN:true}
   scheduler:

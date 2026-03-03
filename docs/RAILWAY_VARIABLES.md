@@ -46,9 +46,23 @@ Aucun identifiant admin n’est présent dans le code (dépôt public). Le premi
 
 Remplacez par votre domaine frontend Railway si différent.
 
-### 1.5 Envoi d’e-mails (SMTP)
+### 1.5 Envoi d’e-mails
 
-Sans ces variables, l’application démarre mais **l’envoi d’e-mails échouera** (bienvenue, reset mot de passe, notifications, etc.). À renseigner pour un déploiement pleinement fonctionnel.
+Sans configuration mail, l’application démarre mais **l’envoi d’e-mails échouera** (bienvenue, reset mot de passe, notifications, etc.).
+
+#### Option A – Resend par API HTTP (recommandé sur Railway)
+
+Sur Railway, les ports SMTP (587, 465) sont souvent bloqués, ce qui provoque des *Connect timed out*. L’envoi via l’**API HTTP Resend** (port 443) évite ce blocage.
+
+| Variable | Description |
+|----------|-------------|
+| `RESEND_API_KEY` | Clé API Resend (dashboard [resend.com](https://resend.com) → API Keys). Si définie, tous les e-mails partent via l’API au lieu du SMTP. |
+| `MAIL_FROM` | Adresse expéditrice **vérifiée** dans Resend (ex. `onboarding@resend.dev` ou votre domaine vérifié). |
+| `MAIL_NOTIFY_ON_LOGIN` | Envoyer un e-mail à chaque connexion réussie : `true` ou `false`. |
+
+Aucune autre variable SMTP n’est nécessaire lorsque `RESEND_API_KEY` est définie.
+
+#### Option B – SMTP (Gmail, SendGrid, Resend SMTP, etc.)
 
 | Variable | Description | Exemple (Gmail) | Exemple (SendGrid) |
 |----------|-------------|-----------------|--------------------|
@@ -63,9 +77,10 @@ Sans ces variables, l’application démarre mais **l’envoi d’e-mails échou
 
 **Exemples par fournisseur :**
 
+- **Resend (API)** : définir uniquement `RESEND_API_KEY` + `MAIL_FROM` (recommandé sur Railway).
 - **Gmail** : créer un [mot de passe d’application](https://myaccount.google.com/apppasswords). `MAIL_USERNAME` = adresse Gmail, `MAIL_PASSWORD` = ce mot de passe. `MAIL_FROM` = même adresse Gmail (ou alias).
 - **SendGrid** : créer une clé API. `MAIL_USERNAME` = `apikey`, `MAIL_PASSWORD` = la clé. `MAIL_FROM` = adresse vérifiée dans SendGrid.
-- **Resend** : SMTP Resend (voir leur doc). Même logique : host/port/user/password + `MAIL_FROM` vérifié.
+- **Resend (SMTP)** : host/port/user/password + `MAIL_FROM` vérifié (peut être bloqué sur Railway).
 - **Mailgun** : SMTP Mailgun (region) : host/port/user/password + `MAIL_FROM` du domaine vérifié.
 
 ### 1.6 Optionnel (valeurs par défaut correctes)

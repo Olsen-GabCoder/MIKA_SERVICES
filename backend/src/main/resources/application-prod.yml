@@ -1,5 +1,8 @@
 # Configuration Production
 app:
+  mail:
+    # En prod, pas de défaut localhost : uniquement FRONTEND_BASE_URL (à définir sur Railway).
+    frontend-base-url: ${FRONTEND_BASE_URL:}
   auth:
     refresh-cookie:
       secure: true   # Cookie envoyé uniquement en HTTPS

@@ -22,8 +22,18 @@ class EmailService(
 ) {
     private val logger = LoggerFactory.getLogger(EmailService::class.java)
 
-    /** URL de base du frontend sans slash final (pour éviter double slash dans les liens des emails). */
-    private val baseUrl: String = frontendBaseUrl.trim().removeSuffix("/").ifBlank { frontendBaseUrl.trim() }
+    /**
+     * URL de base du frontend pour les liens dans les emails.
+     * En prod (Railway), si la config pointe vers localhost, on utilise FRONTEND_BASE_URL (env) pour éviter les liens cassés.
+     */
+    private val baseUrl: String = run {
+        val fromProp = frontendBaseUrl.trim()
+        val useEnv = fromProp.isBlank() || fromProp.lowercase().contains("localhost")
+        val effective = if (useEnv) {
+            System.getenv("FRONTEND_BASE_URL")?.trim()?.takeIf { it.isNotBlank() } ?: fromProp
+        } else fromProp
+        effective.removeSuffix("/").ifBlank { fromProp }
+    }
 
     private fun htmlEscape(s: String): String = s
         .replace("&", "&amp;")

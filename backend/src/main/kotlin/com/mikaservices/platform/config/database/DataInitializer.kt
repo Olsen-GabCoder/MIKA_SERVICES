@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Profile
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.time.LocalDate
@@ -29,16 +30,20 @@ class DataInitializer(
     private val roleRepository: RoleRepository,
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val clientRepository: ClientRepository
+    private val clientRepository: ClientRepository,
+    @Value("\${app.init.admin.email:}") private val initAdminEmail: String,
+    @Value("\${app.init.admin.password:}") private val initAdminPassword: String,
+    @Value("\${spring.profiles.active:aucun}") private val activeProfile: String
 ) {
     
     private val logger = LoggerFactory.getLogger(DataInitializer::class.java)
     
     @Bean
-    @Profile("dev", "staging")
+    @Profile("dev", "staging", "docker", "prod")
     @Order(Ordered.HIGHEST_PRECEDENCE)
     fun initData(): CommandLineRunner {
         return CommandLineRunner {
+            logger.info("MIKA DataInitializer DEMARRAGE (profil actif: $activeProfile)")
             logger.info("Initialisation des données de base...")
             
             // Initialiser les permissions
@@ -227,21 +232,28 @@ class DataInitializer(
     }
     
     private fun initAdminUser() {
-        if (userRepository.existsByEmail("admin@mikaservices.com")) {
-            logger.info("L'utilisateur admin existe déjà")
+        logger.info("MIKA DataInitializer: initAdminUser appelé (INIT_ADMIN_EMAIL défini: ${initAdminEmail.isNotBlank()})")
+        val email = initAdminEmail.trim()
+        val password = initAdminPassword
+        if (email.isBlank() || password.isBlank()) {
+            logger.info("Admin initial non créé: définir INIT_ADMIN_EMAIL et INIT_ADMIN_PASSWORD (variables d'environnement)")
+            return
+        }
+        if (userRepository.existsByEmail(email)) {
+            logger.info("L'utilisateur admin pour $email existe déjà")
             return
         }
         
         val adminRole = roleRepository.findByCode("SUPER_ADMIN")
             .orElseThrow { IllegalStateException("Le rôle SUPER_ADMIN n'existe pas") }
         
-        val encodedPassword = passwordEncoder.encode("Admin@2024")!!
+        val encodedPassword = passwordEncoder.encode(password)!!
         val adminUser = User(
             matricule = "ADMIN001",
             nom = "Administrateur",
             prenom = "Système",
-            email = "admin@mikaservices.com",
-            motDePasse = encodedPassword, // Mot de passe par défaut
+            email = email,
+            motDePasse = encodedPassword,
             telephone = null,
             dateNaissance = null,
             adresse = null,
@@ -261,11 +273,7 @@ class DataInitializer(
         adminUser.roles.add(adminRole)
         userRepository.save(adminUser)
         
-        logger.info("========================================")
-        logger.info("UTILISATEUR ADMIN CRÉÉ AVEC SUCCÈS")
-        logger.info("Email: admin@mikaservices.com")
-        logger.info("Mot de passe: Admin@2024")
-        logger.info("========================================")
+        logger.info("Admin initial créé pour l'email: $email")
     }
     
     private fun initClientsPredefinis() {

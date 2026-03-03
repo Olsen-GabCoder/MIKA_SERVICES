@@ -2,16 +2,22 @@ package com.mikaservices.platform.config.mail
 
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestTemplate
 
 @Service
 class EmailService(
     private val mailSender: JavaMailSender,
+    private val restTemplate: RestTemplate,
     @Value("\${app.mail.from:noreply@mikaservices.com}") private val from: String,
-    @Value("\${app.mail.frontend-base-url:http://localhost:5173}") private val frontendBaseUrl: String
+    @Value("\${app.mail.frontend-base-url:http://localhost:5173}") private val frontendBaseUrl: String,
+    @Value("\${RESEND_API_KEY:}") private val resendApiKey: String
 ) {
     private val logger = LoggerFactory.getLogger(EmailService::class.java)
 
@@ -360,6 +366,11 @@ class EmailService(
     }
 
     private fun sendGenericNotification(to: String, subject: String, plainBody: String, htmlBody: String, logLabel: String) {
+        val apiKey = resendApiKey.ifBlank { System.getenv("RESEND_API_KEY") ?: "" }.trim()
+        if (apiKey.isNotBlank()) {
+            sendViaResendApi(to, subject, plainBody, htmlBody, logLabel, apiKey)
+            return
+        }
         try {
             val message = mailSender.createMimeMessage()
             val helper = MimeMessageHelper(message, true, "UTF-8")
@@ -380,6 +391,29 @@ class EmailService(
                 }
             }
             logger.error("Échec envoi email [$logLabel] vers $to — $causeChain", e)
+            throw e
+        }
+    }
+
+    /** Envoi via l'API HTTP Resend (port 443) lorsque SMTP est bloqué (ex. Railway). */
+    private fun sendViaResendApi(to: String, subject: String, plainBody: String, htmlBody: String, logLabel: String, apiKey: String) {
+        try {
+            val headers = HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_JSON
+                setBearerAuth(apiKey)
+            }
+            val body = mapOf(
+                "from" to from,
+                "to" to listOf(to),
+                "subject" to subject,
+                "text" to plainBody,
+                "html" to htmlBody
+            )
+            val entity = HttpEntity(body, headers)
+            restTemplate.postForObject("https://api.resend.com/emails", entity, Map::class.java)
+            logger.info("Email $logLabel envoyé à $to (Resend API)")
+        } catch (e: Exception) {
+            logger.error("Échec envoi email [$logLabel] vers $to via Resend API — ${e.message}", e)
             throw e
         }
     }

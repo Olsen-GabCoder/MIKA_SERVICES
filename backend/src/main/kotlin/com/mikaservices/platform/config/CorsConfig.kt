@@ -13,6 +13,9 @@ class CorsConfig {
     @Value("\${app.cors.allowed-origins:}")
     private val allowedOrigins: String = ""
     
+    @Value("\${app.mail.frontend-base-url:}")
+    private val frontendBaseUrl: String = ""
+    
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
@@ -25,7 +28,7 @@ class CorsConfig {
             "http://127.0.0.1:3000"
         )
         
-        // Ajouter les origines configurées via variable d'environnement
+        // CORS_ALLOWED_ORIGINS (liste séparée par des virgules)
         if (allowedOrigins.isNotBlank()) {
             allowedOrigins.split(",")
                 .map { it.trim() }
@@ -35,6 +38,14 @@ class CorsConfig {
                         origins.add(origin)
                     }
                 }
+        }
+        
+        // FRONTEND_BASE_URL utilisée aussi comme origine autorisée (ex. si CORS_ALLOWED_ORIGINS non appliquée)
+        if (frontendBaseUrl.isNotBlank()) {
+            val url = frontendBaseUrl.trim().removeSuffix("/")
+            if (url !in origins) {
+                origins.add(url)
+            }
         }
         
         configuration.allowedOrigins = origins

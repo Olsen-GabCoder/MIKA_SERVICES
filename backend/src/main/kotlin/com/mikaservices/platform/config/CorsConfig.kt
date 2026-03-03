@@ -1,5 +1,6 @@
 package com.mikaservices.platform.config
 
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -9,6 +10,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 class CorsConfig {
+    
+    private val logger = LoggerFactory.getLogger(CorsConfig::class.java)
     
     @Value("\${app.cors.allowed-origins:}")
     private val allowedOrigins: String = ""
@@ -40,7 +43,7 @@ class CorsConfig {
                 }
         }
         
-        // FRONTEND_BASE_URL utilisée aussi comme origine autorisée (ex. si CORS_ALLOWED_ORIGINS non appliquée)
+        // FRONTEND_BASE_URL utilisée aussi comme origine autorisée
         if (frontendBaseUrl.isNotBlank()) {
             val url = frontendBaseUrl.trim().removeSuffix("/")
             if (url !in origins) {
@@ -48,7 +51,14 @@ class CorsConfig {
             }
         }
         
-        configuration.allowedOrigins = origins
+        // En prod, autoriser tous les sous-domaines Railway (*.up.railway.app) si aucune origine HTTPS n'a été configurée
+        val hasHttpsOrigin = origins.any { it.startsWith("https://") }
+        if (!hasHttpsOrigin) {
+            origins.add("https://*.up.railway.app")
+        }
+        
+        configuration.allowedOriginPatterns = origins
+        logger.info("CORS allowed origins/patterns: {}", origins)
         
         // Méthodes HTTP autorisées
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")

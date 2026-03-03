@@ -87,7 +87,7 @@ class UserController(
     @Operation(summary = "Consulter ma photo", description = "Récupération de la photo de profil de l'utilisateur connecté")
     fun getMyPhoto(): ResponseEntity<Resource> {
         val resource = userService.getPhotoResource()
-            ?: return ResponseEntity.notFound().build()
+            ?: return ResponseEntity.noContent().build()
         return ResponseEntity.ok()
             .contentType(MediaType.IMAGE_JPEG)
             .body(resource)
@@ -160,7 +160,7 @@ class UserController(
     @Operation(summary = "Photo de profil par ID", description = "Récupération de la photo de profil d'un utilisateur (admin)")
     fun getPhotoById(@PathVariable id: Long): ResponseEntity<Resource> {
         val resource = userService.getPhotoResourceForUser(id)
-            ?: return ResponseEntity.notFound().build()
+            ?: return ResponseEntity.noContent().build()
         return ResponseEntity.ok()
             .contentType(MediaType.IMAGE_JPEG)
             .body(resource)

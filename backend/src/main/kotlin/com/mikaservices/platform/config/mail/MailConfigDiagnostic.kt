@@ -26,8 +26,12 @@ class MailConfigDiagnostic(
     private val logger = LoggerFactory.getLogger(MailConfigDiagnostic::class.java)
 
     override fun run(args: ApplicationArguments) {
-        if (environment.activeProfiles.contains("prod") && (frontendBaseUrl.trim().isBlank() || frontendBaseUrl.trim().lowercase().contains("localhost"))) {
-            logger.warn("En production, définir FRONTEND_BASE_URL (URL du frontend, ex. https://mika-services.up.railway.app) sur Railway pour que les liens dans les emails pointent vers le site et non localhost.")
+        if (environment.activeProfiles.contains("prod")) {
+            val url = frontendBaseUrl.trim()
+            val invalid = url.isBlank() || url.lowercase().contains("localhost") || (!url.startsWith("http://") && !url.startsWith("https://"))
+            if (invalid) {
+                logger.warn("En production, définir FRONTEND_BASE_URL avec l'URL complète (ex. https://mika-services.up.railway.app) sur Railway. Sinon les liens dans les emails seront invalides et Brevo peut afficher « invalid URL: host missing ».")
+            }
         }
         val envBrevo = System.getenv().keys.filter { it.uppercase().contains("BREVO") }.sorted()
         val envResend = System.getenv().keys.filter { it.uppercase().contains("RESEND") }.sorted()

@@ -365,8 +365,15 @@ class EmailService(
         }
     }
 
+    private fun resolveResendApiKey(): String {
+        if (resendApiKey.isNotBlank()) return resendApiKey.trim()
+        System.getenv("RESEND_API_KEY")?.trim()?.let { if (it.isNotBlank()) return it }
+        System.getenv("resend_api_key")?.trim()?.let { if (it.isNotBlank()) return it }
+        return ""
+    }
+
     private fun sendGenericNotification(to: String, subject: String, plainBody: String, htmlBody: String, logLabel: String) {
-        val apiKey = resendApiKey.ifBlank { System.getenv("RESEND_API_KEY") ?: "" }.trim()
+        val apiKey = resolveResendApiKey()
         if (apiKey.isNotBlank()) {
             sendViaResendApi(to, subject, plainBody, htmlBody, logLabel, apiKey)
             return
@@ -398,12 +405,14 @@ class EmailService(
     /** Envoi via l'API HTTP Resend (port 443) lorsque SMTP est bloqué (ex. Railway). */
     private fun sendViaResendApi(to: String, subject: String, plainBody: String, htmlBody: String, logLabel: String, apiKey: String) {
         try {
+            // Resend n'accepte que des adresses vérifiées ; si domaine en "Pending", utiliser l'expéditeur par défaut
+            val fromAddress = if (from.isBlank() || !from.contains("@")) "onboarding@resend.dev" else from.trim()
             val headers = HttpHeaders().apply {
                 contentType = MediaType.APPLICATION_JSON
                 setBearerAuth(apiKey)
             }
             val body = mapOf(
-                "from" to from,
+                "from" to fromAddress,
                 "to" to listOf(to),
                 "subject" to subject,
                 "text" to plainBody,

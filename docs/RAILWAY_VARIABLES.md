@@ -56,9 +56,17 @@ Sur Railway, les ports SMTP (587, 465) sont souvent bloqués, ce qui provoque de
 
 | Variable | Description |
 |----------|-------------|
-| `RESEND_API_KEY` | Clé API Resend (dashboard [resend.com](https://resend.com) → API Keys). Si définie, tous les e-mails partent via l’API au lieu du SMTP. |
-| `MAIL_FROM` | Adresse expéditrice **vérifiée** dans Resend (ex. `onboarding@resend.dev` ou votre domaine vérifié). |
+| `RESEND_API_KEY` | Clé API Resend (dashboard [resend.com](https://resend.com) → API Keys). **À ajouter sur le service Backend** (celui qui a JWT_SECRET, MAIL_*, PORT). Après ajout : **Redeploy** le service. |
+| `MAIL_FROM` | Adresse expéditrice. Si votre domaine est en **Pending** sur Resend (non vérifié), mettre `onboarding@resend.dev`. Sinon une adresse de votre domaine vérifié (ex. `noreply@votredomaine.com`). |
 | `MAIL_NOTIFY_ON_LOGIN` | Envoyer un e-mail à chaque connexion réussie : `true` ou `false`. |
+
+**Checklist rapide :**
+1. **Variables** du service **Backend** (onglet Variables du service MIKA_SERVICES, pas les variables partagées du projet).
+2. Ajouter **`RESEND_API_KEY`** = votre clé (ex. `re_xxxx...`). Nom exact, sensible à la casse.
+3. **MAIL_FROM** : tant que le domaine Resend est en « Pending », utiliser **`onboarding@resend.dev`**.
+4. **Déployer les variables** : sur Railway, les variables ajoutées peuvent être « staged » (en violet). Il faut cliquer sur **Deploy** (ou **Redeploy**) pour que le prochain déploiement les injecte dans le conteneur. Un simple sauvegarde des variables ne suffit pas si un nouveau déploiement n’est pas lancé.
+5. Au démarrage, les logs affichent une ligne du type : *« Variables env (noms) contenant RESEND: [RESEND_API_KEY] | MAIL: [...] »*. Si **RESEND** est vide `[]`, le processus Java ne reçoit pas la variable → revoir l’étape 4 et le bon service.
+6. Si la clé est vue : *« Envoi emails via Resend API (RESEND_API_KEY détectée) »*.
 
 Aucune autre variable SMTP n’est nécessaire lorsque `RESEND_API_KEY` est définie.
 

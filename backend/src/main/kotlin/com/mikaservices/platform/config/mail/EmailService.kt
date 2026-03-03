@@ -35,9 +35,13 @@ class EmailService(
         effective.removeSuffix("/").ifBlank { fromProp }
     }
 
-    /** Uniquement si baseUrl est une URL absolue (http/https), pour éviter "invalid URL: host missing" chez Brevo. */
+    /** URL absolue pour les liens (Brevo exige un host). Si la config est un domaine sans schéma, on préfixe https://. */
     private val baseUrlForLinks: String
-        get() = if (baseUrl.isNotBlank() && (baseUrl.startsWith("http://") || baseUrl.startsWith("https://"))) baseUrl else ""
+        get() = when {
+            baseUrl.isBlank() -> ""
+            baseUrl.startsWith("http://") || baseUrl.startsWith("https://") -> baseUrl
+            else -> "https://$baseUrl"
+        }
 
     private fun linkOrPlaceholder(path: String, fallbackHref: String = "#"): String =
         if (baseUrlForLinks.isNotBlank()) "$baseUrlForLinks$path" else fallbackHref

@@ -60,6 +60,8 @@ app:
   mail:
     frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
     from: ${MAIL_FROM:noreply@mikaservices.com}
+    # Si défini, envoi via API Resend (port 443) au lieu de SMTP (évite timeout sur Railway)
+    resend-api-key: ${RESEND_API_KEY:}
     notify-on-login: ${MAIL_NOTIFY_ON_LOGIN:true}
   scheduler:
     session-cleanup-cron: ${SESSION_CLEANUP_CRON:0 0 3 * * ?}

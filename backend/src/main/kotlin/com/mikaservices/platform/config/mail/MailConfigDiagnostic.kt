@@ -16,12 +16,13 @@ class MailConfigDiagnostic(
     @Value("\${spring.mail.host:}") private val host: String,
     @Value("\${spring.mail.port:0}") private val port: Int,
     @Value("\${spring.mail.username:}") private val username: String,
+    @Value("\${app.mail.resend-api-key:}") private val resendApiKeyFromProps: String,
 ) : ApplicationRunner {
 
     private val logger = LoggerFactory.getLogger(MailConfigDiagnostic::class.java)
 
     override fun run(args: ApplicationArguments) {
-        val resendApiKey = System.getenv("RESEND_API_KEY")?.trim().orEmpty()
+        val resendApiKey = resendApiKeyFromProps.ifBlank { System.getenv("RESEND_API_KEY")?.trim().orEmpty() }
         if (resendApiKey.isNotBlank()) {
             logger.info("Envoi emails via Resend API (RESEND_API_KEY définie). Définir MAIL_FROM pour l'expéditeur.")
             return

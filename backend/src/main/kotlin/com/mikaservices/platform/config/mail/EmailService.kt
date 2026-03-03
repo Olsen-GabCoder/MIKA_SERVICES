@@ -17,7 +17,7 @@ class EmailService(
     private val restTemplate: RestTemplate,
     @Value("\${app.mail.from:noreply@mikaservices.com}") private val from: String,
     @Value("\${app.mail.frontend-base-url:http://localhost:5173}") private val frontendBaseUrl: String,
-    @Value("\${RESEND_API_KEY:}") private val resendApiKey: String
+    @Value("\${app.mail.resend-api-key:}") private val resendApiKey: String
 ) {
     private val logger = LoggerFactory.getLogger(EmailService::class.java)
 

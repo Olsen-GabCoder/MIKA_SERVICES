@@ -17,8 +17,6 @@ FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
 RUN rm -f /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist .
-COPY frontend_web/mika-services-frontend/nginx.railway.conf /etc/nginx/conf.d/default.conf.template
-COPY frontend_web/mika-services-frontend/docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+COPY frontend_web/mika-services-frontend/nginx.railway.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
-CMD ["/docker-entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

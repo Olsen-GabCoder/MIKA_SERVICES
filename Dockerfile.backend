@@ -21,4 +21,7 @@ USER app
 COPY --from=builder /build/target/platform-*.jar app.jar
 
 EXPOSE 9090
+# Limite le heap pour éviter OOM sur Railway (plan gratuit ~512MB–1GB).
+# Overrider via variable Railway JAVA_TOOL_OPTIONS si besoin.
+ENV JAVA_TOOL_OPTIONS="-Xms256m -Xmx512m -XX:MaxMetaspaceSize=128m"
 ENTRYPOINT ["java", "-jar", "app.jar"]

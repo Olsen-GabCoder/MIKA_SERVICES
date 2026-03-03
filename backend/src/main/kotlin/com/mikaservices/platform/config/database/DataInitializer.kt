@@ -43,7 +43,7 @@ class DataInitializer(
     @Order(Ordered.HIGHEST_PRECEDENCE)
     fun initData(): CommandLineRunner {
         return CommandLineRunner {
-            logger.info("MIKA DataInitializer DEMARRAGE (profil actif: $activeProfile)")
+            logger.warn("MIKA DataInitializer DEMARRAGE (profil actif: $activeProfile)")
             logger.info("Initialisation des données de base...")
             
             // Initialiser les permissions
@@ -232,15 +232,15 @@ class DataInitializer(
     }
     
     private fun initAdminUser() {
-        logger.info("MIKA DataInitializer: initAdminUser appelé (INIT_ADMIN_EMAIL défini: ${initAdminEmail.isNotBlank()})")
+        logger.warn("MIKA DataInitializer: initAdminUser appelé (INIT_ADMIN_EMAIL défini: ${initAdminEmail.isNotBlank()})")
         val email = initAdminEmail.trim()
         val password = initAdminPassword
         if (email.isBlank() || password.isBlank()) {
-            logger.info("Admin initial non créé: définir INIT_ADMIN_EMAIL et INIT_ADMIN_PASSWORD (variables d'environnement)")
+            logger.warn("Admin initial non créé: définir INIT_ADMIN_EMAIL et INIT_ADMIN_PASSWORD (variables d'environnement)")
             return
         }
         if (userRepository.existsByEmail(email)) {
-            logger.info("L'utilisateur admin pour $email existe déjà")
+            logger.warn("L'utilisateur admin pour $email existe déjà")
             return
         }
         
@@ -273,7 +273,7 @@ class DataInitializer(
         adminUser.roles.add(adminRole)
         userRepository.save(adminUser)
         
-        logger.info("Admin initial créé pour l'email: $email")
+        logger.warn("Admin initial créé pour l'email: $email")
     }
     
     private fun initClientsPredefinis() {

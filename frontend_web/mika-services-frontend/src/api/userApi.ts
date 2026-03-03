@@ -187,6 +187,7 @@ export const userApi = {
   getPhotoBlobById: async (userId: number): Promise<Blob | null> => {
     try {
       const response = await apiClient.get<Blob>(API_ENDPOINTS.USERS.PHOTO_BY_ID(userId), { responseType: 'blob' })
+      if (response.status === 204 || !response.data) return null
       return response.data
     } catch {
       return null
@@ -207,6 +208,7 @@ export const userApi = {
   getPhotoBlob: async (): Promise<Blob | null> => {
     try {
       const response = await apiClient.get<Blob>('/users/me/photo', { responseType: 'blob' })
+      if (response.status === 204 || !response.data) return null
       return response.data
     } catch {
       return null

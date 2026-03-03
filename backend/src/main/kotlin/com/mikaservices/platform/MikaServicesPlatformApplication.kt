@@ -2,6 +2,7 @@ package com.mikaservices.platform
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.data.web.config.EnableSpringDataWebSupport
 import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.annotation.EnableScheduling
 import java.io.File
@@ -10,6 +11,7 @@ import java.nio.charset.StandardCharsets
 @SpringBootApplication
 @EnableScheduling
 @EnableAsync
+@EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 class MikaServicesPlatformApplication
 
 fun main(args: Array<String>) {

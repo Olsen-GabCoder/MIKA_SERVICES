@@ -314,8 +314,9 @@ class AuthService(
 
     fun refreshToken(request: RefreshTokenRequest): AuthResponse {
         logger.debug("Tentative de renouvellement de token")
-        
-        val session = sessionRepository.findByRefreshToken(request.refreshToken)
+        val token = request.refreshToken?.takeIf { it.isNotBlank() }
+            ?: throw UnauthorizedException("Refresh token manquant")
+        val session = sessionRepository.findByRefreshToken(token)
             .orElseThrow { UnauthorizedException("Refresh token invalide") }
         
         if (!session.active) {

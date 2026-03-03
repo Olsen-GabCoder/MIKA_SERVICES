@@ -4,18 +4,21 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
+import org.springframework.core.env.Environment
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
 /**
- * Au démarrage, log le mode d'envoi (Resend API ou SMTP) et la config SMTP si utilisée.
+ * Au démarrage, log le mode d'envoi (Brevo/Resend API ou SMTP) et avertit si en prod les liens emails pointent vers localhost.
  */
 @Component
 @Order(Int.MIN_VALUE)
 class MailConfigDiagnostic(
+    private val environment: Environment,
     @Value("\${spring.mail.host:}") private val host: String,
     @Value("\${spring.mail.port:0}") private val port: Int,
     @Value("\${spring.mail.username:}") private val username: String,
+    @Value("\${app.mail.frontend-base-url:}") private val frontendBaseUrl: String,
     @Value("\${app.mail.brevo-api-key:}") private val brevoApiKeyFromProps: String,
     @Value("\${app.mail.resend-api-key:}") private val resendApiKeyFromProps: String,
 ) : ApplicationRunner {
@@ -23,6 +26,9 @@ class MailConfigDiagnostic(
     private val logger = LoggerFactory.getLogger(MailConfigDiagnostic::class.java)
 
     override fun run(args: ApplicationArguments) {
+        if (environment.activeProfiles.contains("prod") && frontendBaseUrl.trim().lowercase().contains("localhost")) {
+            logger.warn("En production, FRONTEND_BASE_URL pointe vers localhost. Définir FRONTEND_BASE_URL (URL du frontend) sur Railway pour que les liens dans les emails soient corrects.")
+        }
         val envBrevo = System.getenv().keys.filter { it.uppercase().contains("BREVO") }.sorted()
         val envResend = System.getenv().keys.filter { it.uppercase().contains("RESEND") }.sorted()
         val envMail = System.getenv().keys.filter { it.uppercase().contains("MAIL") }.sorted()

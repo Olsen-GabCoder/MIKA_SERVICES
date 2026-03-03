@@ -22,6 +22,9 @@ class EmailService(
 ) {
     private val logger = LoggerFactory.getLogger(EmailService::class.java)
 
+    /** URL de base du frontend sans slash final (pour éviter double slash dans les liens des emails). */
+    private val baseUrl: String = frontendBaseUrl.trim().removeSuffix("/").ifBlank { frontendBaseUrl.trim() }
+
     private fun htmlEscape(s: String): String = s
         .replace("&", "&amp;")
         .replace("<", "&lt;")
@@ -30,7 +33,7 @@ class EmailService(
         .replace("'", "&#39;")
 
     private fun signatureHtml(): String {
-        val logoUrl = "$frontendBaseUrl/Logo_mika_services.png"
+        val logoUrl = "$baseUrl/Logo_mika_services.png"
         return """
             <p style="margin-top: 1.5em; color: #666; font-size: 0.95em;">—<br>L'équipe MIKA Services</p>
             <p style="margin-top: 0.5em;"><img src="$logoUrl" alt="MIKA Services" style="max-width: 200px; height: auto;" /></p>
@@ -42,8 +45,8 @@ class EmailService(
      * l'invite à le modifier à la première connexion et recommande l'activation de la 2FA.
      */
     fun sendWelcomeEmail(to: String, prenom: String, temporaryPassword: String) {
-        val loginLink = "$frontendBaseUrl/login"
-        val profileLink = "$frontendBaseUrl/profile"
+        val loginLink = "$baseUrl/login"
+        val profileLink = "$baseUrl/profile"
         val subject = "Bienvenue sur MIKA Services — Vos identifiants de connexion"
         val plainBody = """
             Bonjour $prenom,
@@ -82,7 +85,7 @@ class EmailService(
      * Contient un lien vers le frontend avec le token.
      */
     fun sendPasswordResetEmail(to: String, prenom: String, token: String) {
-        val resetLink = "$frontendBaseUrl/reset-password?token=$token"
+        val resetLink = "$baseUrl/reset-password?token=$token"
         val subject = "MIKA Services — Réinitialisation de votre mot de passe"
         val plainBody = """
             Bonjour $prenom,
@@ -220,7 +223,7 @@ class EmailService(
      * N'échoue pas l'appelant : les erreurs sont loggées.
      */
     fun sendInAppNotificationEmail(to: String, prenom: String, titre: String, contenu: String?, lien: String?) {
-        val effectiveLink = lien?.takeIf { it.isNotBlank() } ?: "$frontendBaseUrl/notifications"
+        val effectiveLink = lien?.takeIf { it.isNotBlank() } ?: "$baseUrl/notifications"
         val subject = "MIKA Services — Notification : ${titre.take(60)}${if (titre.length > 60) "…" else ""}"
         val plainBody = """
             Bonjour $prenom,
@@ -257,7 +260,7 @@ class EmailService(
      */
     fun sendNewMessageEmail(to: String, prenom: String, expediteurNom: String, sujet: String?, contenuExtrait: String? = null) {
         val sujetSafe = sujet.orEmpty()
-        val messagerieLink = "$frontendBaseUrl/messagerie"
+        val messagerieLink = "$baseUrl/messagerie"
         val subject = "MIKA Services — Nouveau message : ${sujetSafe.take(50)}${if (sujetSafe.length > 50) "…" else ""}"
         val extract = contenuExtrait?.take(300)?.lines()?.joinToString(" ") ?: ""
         val plainBody = """
@@ -293,8 +296,8 @@ class EmailService(
      * N'échoue pas l'appelant : les erreurs sont loggées.
      */
     fun sendDailyDigestEmail(to: String, prenom: String, unreadNotificationsCount: Long, unreadMessagesCount: Long) {
-        val appLink = "$frontendBaseUrl/notifications"
-        val messagerieLink = "$frontendBaseUrl/messagerie"
+        val appLink = "$baseUrl/notifications"
+        val messagerieLink = "$baseUrl/messagerie"
         val subject = "MIKA Services — Résumé du jour"
         val plainBody = """
             Bonjour $prenom,
@@ -332,8 +335,8 @@ class EmailService(
      * N'échoue pas l'appelant : les erreurs sont loggées.
      */
     fun sendWeeklyDigestEmail(to: String, prenom: String, unreadNotificationsCount: Long, unreadMessagesCount: Long) {
-        val appLink = "$frontendBaseUrl/notifications"
-        val messagerieLink = "$frontendBaseUrl/messagerie"
+        val appLink = "$baseUrl/notifications"
+        val messagerieLink = "$baseUrl/messagerie"
         val subject = "MIKA Services — Résumé de la semaine"
         val plainBody = """
             Bonjour $prenom,

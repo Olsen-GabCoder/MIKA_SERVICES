@@ -1,5 +1,0 @@
-# À la racine : force le build Docker pour le service qui utilise ce repo.
-# Pour le backend : Root Directory = backend dans le dashboard Railway.
-[build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile.backend"

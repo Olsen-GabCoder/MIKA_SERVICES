@@ -4,7 +4,7 @@ import { i18n } from '@/i18n'
 import { getAccessToken, setAccessToken, removeAccessToken } from '@/utils/tokenStorage'
 
 const apiClient: AxiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
   headers: {
     'Content-Type': 'application/json',
   },

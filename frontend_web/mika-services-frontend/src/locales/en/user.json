@@ -36,7 +36,7 @@
     "cancel": "Cancel",
     "createUser": "Create user",
     "errorCreate": "Error creating user",
-    "welcomeEmailNotSent": "User created successfully, but the welcome email could not be sent. Check the server SMTP configuration (MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM in .env) and check the backend logs.",
+    "welcomeEmailNotSent": "User created successfully, but the welcome email could not be sent. On Railway: set RESEND_API_KEY and MAIL_FROM (see docs/RAILWAY_VARIABLES.md). Locally: check SMTP (MAIL_*) or RESEND_API_KEY in .env and check backend logs.",
     "validation": {
       "matriculeRequired": "Employee ID is required",
       "emailRequired": "Email is required",

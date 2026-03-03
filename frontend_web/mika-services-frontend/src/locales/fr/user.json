@@ -36,7 +36,7 @@
     "cancel": "Annuler",
     "createUser": "Créer l'utilisateur",
     "errorCreate": "Erreur lors de la création de l'utilisateur",
-    "welcomeEmailNotSent": "Utilisateur créé avec succès, mais l'email de bienvenue n'a pas pu être envoyé. Vérifiez la configuration SMTP du serveur (MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM dans .env) et consultez les logs du backend.",
+    "welcomeEmailNotSent": "Utilisateur créé avec succès, mais l'email de bienvenue n'a pas pu être envoyé. Sur Railway : définissez RESEND_API_KEY et MAIL_FROM (voir docs/RAILWAY_VARIABLES.md). En local : vérifiez SMTP (MAIL_*) ou RESEND_API_KEY dans .env et consultez les logs du backend.",
     "validation": {
       "matriculeRequired": "Le matricule est requis",
       "emailRequired": "L'email est requis",

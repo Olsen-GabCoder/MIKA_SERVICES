@@ -1,4 +1,5 @@
-export const API_BASE_URL = '/api'
+// En prod (ex. Railway), définir VITE_API_BASE_URL (ex. https://mikaservices-production.up.railway.app/api)
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api'
 export const API_VERSION = 'v1'
 
 export const API_ENDPOINTS = {
@@ -145,4 +146,8 @@ export const API_ENDPOINTS = {
   },
 } as const
 
-export const WS_ENDPOINT = '/ws'
+// WebSocket : même origine que l’API (dérivé de VITE_API_BASE_URL si défini)
+export const WS_ENDPOINT =
+  API_BASE_URL.startsWith('http')
+    ? `${API_BASE_URL.replace(/\/$/, '')}/ws`
+    : '/ws'

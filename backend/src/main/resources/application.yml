@@ -27,9 +27,9 @@ spring:
           timeout: 15000
           writetimeout: 15000
 
-# Configuration serveur
+# Configuration serveur (PORT injecté par Railway en prod)
 server:
-  port: 9090
+  port: ${PORT:9090}
   servlet:
     context-path: /api
 
@@ -66,6 +66,12 @@ app:
   rate-limit:
     login-max-attempts: ${LOGIN_RATE_LIMIT_MAX:5}
     login-window-minutes: ${LOGIN_RATE_LIMIT_WINDOW_MINUTES:1}
+  init:
+    # Admin initial : uniquement via variables d'environnement (jamais en dur dans le code).
+    # Si les deux sont définis au démarrage, un compte SUPER_ADMIN est créé (une seule fois).
+    admin:
+      email: ${INIT_ADMIN_EMAIL:}
+      password: ${INIT_ADMIN_PASSWORD:}
 
 # Multipart (upload fichiers)
 spring.servlet.multipart:

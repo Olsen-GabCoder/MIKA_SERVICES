@@ -8,6 +8,19 @@ Le backend charge automatiquement un fichier **`.env`** au démarrage (format `K
 
 ---
 
+## 0. Admin initial (bootstrap)
+
+Aucun identifiant administrateur n’est codé en dur. Le premier compte SUPER_ADMIN est créé au démarrage **uniquement** si les deux variables suivantes sont définies :
+
+| Variable | Description | Requise |
+|----------|-------------|---------|
+| `INIT_ADMIN_EMAIL` | E-mail du compte admin à créer | Pour créer l’admin |
+| `INIT_ADMIN_PASSWORD` | Mot de passe initial (à changer à la première connexion) | Pour créer l’admin |
+
+Une fois le compte créé, vous pouvez retirer `INIT_ADMIN_PASSWORD` des secrets (recommandé en prod).
+
+---
+
 ## 1. Authentification JWT
 
 | Variable | Description | Défaut | Requise |
@@ -109,3 +122,4 @@ En cas de verrouillage, l’API renvoie **423 Locked**. Le déverrouillage est a
 - **Obligatoire** : `JWT_SECRET`, `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`
 - **Recommandé** : `CORS_ALLOWED_ORIGINS`, `FRONTEND_BASE_URL`, `MAIL_*` (si envoi d’emails)
 - Le cookie refresh est durci automatiquement en profil **prod** (`secure`, `same-site`).
+- **Sur Railway** : utiliser `SPRING_PROFILES_ACTIVE=prod` et renseigner toutes les variables (dont SMTP). Liste complète et exemples : **[docs/RAILWAY_VARIABLES.md](RAILWAY_VARIABLES.md)**.

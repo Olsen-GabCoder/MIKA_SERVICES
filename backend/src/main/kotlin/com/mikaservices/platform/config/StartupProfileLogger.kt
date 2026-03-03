@@ -19,7 +19,7 @@ class StartupProfileLogger {
         return ApplicationRunner {
             val profiles = environment.activeProfiles
             val profileStr = if (profiles.isEmpty()) "aucun" else profiles.joinToString(", ")
-            LoggerFactory.getLogger(javaClass).info("MIKA Démarrage - profil(s) actif(s): $profileStr")
+            LoggerFactory.getLogger(javaClass).warn("MIKA Démarrage - profil(s) actif(s): $profileStr")
         }
     }
 }

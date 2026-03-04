@@ -125,7 +125,7 @@ export const UserList = ({
           placeholder={t('list.filters.searchPlaceholder')}
           value={searchInput}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="min-w-[200px] max-w-xs"
+          className="min-w-0 w-full sm:min-w-[200px] sm:max-w-xs"
         />
         <select
           value={actifFilter === null ? '' : actifFilter ? 'true' : 'false'}
@@ -156,8 +156,59 @@ export const UserList = ({
         </select>
       </div>
 
-      {/* Tableau */}
-      <div className="overflow-x-auto">
+      {/* Vue cartes mobile */}
+      <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-600">
+        {users.length === 0 ? (
+          <div className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
+            {t('list.emptyNoUsers')}
+          </div>
+        ) : (
+          users.map((user) => (
+            <div key={user.id} className="p-4 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <Link to={`/users/${user.id}`} className="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:text-primary truncate block">
+                    {fullName(user)}
+                  </Link>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                </div>
+                <span
+                  className={`shrink-0 inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                    user.actif
+                      ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200'
+                      : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200'
+                  }`}
+                >
+                  {user.actif ? t('detail.active') : t('detail.inactive')}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                {user.matricule && <span>{user.matricule}</span>}
+                <span>{user.roles?.map((r) => r.nom).join(', ') || t('list.noRoles')}</span>
+                {user.totpEnabled && <span className="text-green-600 dark:text-green-400">2FA</span>}
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <Link to={`/users/${user.id}`}>
+                  <Button variant="outline" size="sm">{t('list.view')}</Button>
+                </Link>
+                <Link to={`/users/${user.id}`} state={{ openEdit: true }}>
+                  <Button variant="outline" size="sm">{t('list.edit')}</Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setToggleActifUser(user)}
+                >
+                  {user.actif ? t('list.deactivate') : t('list.activate')}
+                </Button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Tableau desktop */}
+      <div className="overflow-x-auto hidden md:block">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
           <thead className="bg-gray-50 dark:bg-gray-700/50">
             <tr>
@@ -310,12 +361,12 @@ export const UserList = ({
       </div>
 
       {/* Pagination + taille de page */}
-      <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3 border-t border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700/30">
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-700 dark:text-gray-300">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-3 sm:px-4 py-3 border-t border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700/30">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
             {t('list.paginationTotal', { total: totalElements })}
           </span>
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <label className="hidden sm:flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
             {t('list.pageSize')}
             <select
               value={pageSize}

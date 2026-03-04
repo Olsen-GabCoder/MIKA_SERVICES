@@ -995,24 +995,15 @@ html[data-theme="dark"] .login-page {
   position: relative;
   height: 280px;
   overflow: hidden;
-  border: 1px solid var(--login-ticker-border);
-  border-radius: 20px;
-  background: var(--login-ticker-bg);
-  box-shadow:
-    0 24px 48px -12px rgba(0,0,0,.4),
-    inset 0 1px 0 rgba(255,255,255,.04);
+  border: none;
+  border-radius: 0;
+  background: none;
+  margin-left: calc(var(--login-space-sm) * -1);
+  margin-right: calc(var(--login-space-sm) * -1);
 }
 
 .login-ticker-accent {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 80px;
-  height: 4px;
-  background: linear-gradient(90deg, var(--login-orange), transparent);
-  border-radius: 0 4px 0 0;
-  z-index: 2;
-  pointer-events: none;
+  display: none;
 }
 
 .login-ticker-box::before,
@@ -1022,20 +1013,18 @@ html[data-theme="dark"] .login-page {
   left: 0;
   right: 0;
   z-index: 2;
-  height: 52px;
+  height: 40px;
   pointer-events: none;
 }
 
 .login-ticker-box::before {
   top: 0;
-  background: linear-gradient(var(--login-ticker-fade), transparent 85%);
-  border-radius: 20px 20px 0 0;
+  background: linear-gradient(var(--login-ticker-fade), transparent 90%);
 }
 
 .login-ticker-box::after {
   bottom: 0;
-  background: linear-gradient(transparent 15%, var(--login-ticker-fade));
-  border-radius: 0 0 20px 20px;
+  background: linear-gradient(transparent 10%, var(--login-ticker-fade));
 }
 
 .login-ticker-inner {
@@ -1049,17 +1038,17 @@ html[data-theme="dark"] .login-page {
   display: flex;
   align-items: flex-start;
   gap: var(--login-space-md);
-  padding: var(--login-space-md) var(--login-space-lg);
-  border-bottom: 1px solid var(--login-ticker-item-border);
-  min-height: 100px;
+  padding: var(--login-space-sm) var(--login-space-sm);
+  border-left: 2px solid transparent;
+  min-height: 90px;
   flex-shrink: 0;
-  background: var(--login-ticker-item-bg);
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  background: none;
+  transition: border-color 0.25s ease, background 0.25s ease;
 }
 
 .login-ticker-item:hover {
+  border-left-color: var(--login-orange);
   background: var(--login-ticker-item-hover-bg);
-  box-shadow: inset 0 0 0 1px rgba(244,124,32,.08);
 }
 
 .login-t-num {
@@ -1693,62 +1682,177 @@ html[data-theme="dark"] .login-page {
     height: 220px;
   }
   .login-ticker-item {
-    min-height: 88px;
-    padding: var(--login-space-sm) var(--login-space-md);
+    min-height: 80px;
+    padding: var(--login-space-sm) var(--login-space-sm);
   }
 }
 
-/* Téléphone / tablette étroite (< 768) : une seule colonne (carte connexion), gauche masquée */
+/* Téléphone / tablette étroite (< 768) : colonne verticale, cartes fusionnées visuellement */
 @media (max-width: 767px) {
   .login-page {
     --login-card-max-width: 100%;
     --login-card-min-height: auto;
-    --login-panel-padding-top: var(--login-space-md);
-    --login-panel-padding-bottom: var(--login-space-md);
+    --login-panel-padding-top: 0;
+    --login-panel-padding-bottom: 0;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
-  .login-left {
+
+  /* Masquer le séparateur vertical entre les colonnes */
+  .login-left::after {
     display: none;
   }
-  .login-right {
-    flex: 1 1 100%;
+
+  /* ── Panneau gauche ── */
+  .login-left {
+    flex: none;
     width: 100%;
-    padding-left: var(--login-space-sm);
-    padding-right: var(--login-space-sm);
-    min-width: 0;
+    padding: var(--login-space-md) var(--login-space-sm) 0;
+    justify-content: center;
+    align-items: stretch;
+  }
+  .login-left-content {
+    min-height: auto;
+    padding: var(--login-space-lg) var(--login-space-md);
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+  }
+  /* Ligne latérale gauche : suit la forme (arrondi haut-gauche seulement) */
+  .login-left-content::before {
+    border-radius: 16px 0 0 0;
+  }
+  /* Supprimer la ligne décorative du bas pour la continuité */
+  .login-left-content::after {
+    display: none;
+  }
+
+  .login-logo-wrap {
+    margin-bottom: var(--login-space-lg);
+  }
+  .login-logo-wrap img {
+    width: 150px;
+  }
+  .login-headline {
+    font-size: clamp(36px, 9vw, 52px);
+    margin-bottom: var(--login-space-sm);
+  }
+  .login-sub-line {
+    font-size: 0.8rem;
+    margin-bottom: var(--login-space-lg);
+  }
+  .login-ticker-box {
+    height: 160px;
+    margin-left: calc(var(--login-space-xs) * -1);
+    margin-right: calc(var(--login-space-xs) * -1);
+  }
+  .login-ticker-box::before,
+  .login-ticker-box::after {
+    height: 24px;
+  }
+  .login-ticker-item {
+    min-height: 68px;
+    padding: var(--login-space-xs) var(--login-space-xs);
+    gap: var(--login-space-sm);
+  }
+  .login-t-num {
+    font-size: 2rem;
+    width: 36px;
+  }
+  .login-t-title { font-size: 0.88rem; }
+  .login-t-desc  { font-size: 0.78rem; }
+  .login-bottom-badge {
+    margin-top: var(--login-space-lg);
+  }
+
+  /* ── Panneau droit : carte collée en dessous, sans espace ── */
+  .login-right {
+    flex: none;
+    width: 100%;
+    padding: 0 var(--login-space-sm) var(--login-space-md);
+    border-left: none;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .login-right::before,
+  .login-right::after {
+    display: none;
   }
   .login-form-inner {
     max-width: 100%;
     min-height: auto;
     padding: var(--login-space-xl) var(--login-space-md);
-    border-radius: 20px;
+    border-radius: 0 0 16px 16px;
+    border-top: 1px solid var(--login-form-divider);
   }
+  /* Ligne latérale gauche : suit la forme (arrondi bas-gauche seulement) */
   .login-form-inner::before {
-    border-radius: 20px 0 0 20px;
+    border-radius: 0 0 0 16px;
   }
-}
-
-/* Téléphone petit (< 480) : padding réduit */
-@media (max-width: 479px) {
-  .login-page {
-    --login-panel-padding-top: var(--login-space-sm);
-    --login-panel-padding-bottom: var(--login-space-sm);
-  }
-  .login-right {
-    padding-left: var(--login-space-xs);
-    padding-right: var(--login-space-xs);
-  }
-  .login-form-inner {
-    padding: var(--login-space-lg) var(--login-space-sm);
-    border-radius: 16px;
-  }
-  .login-form-inner::before {
-    width: 2px;
-    border-radius: 16px 0 0 16px;
+  /* Supprimer la ligne décorative du bas de la carte connexion */
+  .login-form-inner::after {
+    display: none;
   }
   .login-form-title {
     font-size: 2.2rem;
   }
+}
+
+/* Téléphone petit (< 480) : compacter davantage */
+@media (max-width: 479px) {
+  .login-left {
+    padding: var(--login-space-sm) var(--login-space-xs) 0;
+  }
+  .login-left-content {
+    padding: var(--login-space-md) var(--login-space-sm);
+    border-radius: 14px 14px 0 0;
+  }
+  .login-left-content::before {
+    width: 2px;
+    border-radius: 14px 0 0 0;
+  }
+  .login-logo-wrap img { width: 130px; }
   .login-headline {
-    font-size: clamp(40px, 10vw, 56px);
+    font-size: clamp(30px, 8vw, 42px);
+  }
+  .login-sub-line {
+    font-size: 0.75rem;
+    margin-bottom: var(--login-space-md);
+  }
+  .login-ticker-box {
+    height: 130px;
+  }
+  .login-ticker-item {
+    min-height: 56px;
+    padding: var(--login-space-xs) var(--login-space-xs);
+  }
+  .login-t-num {
+    font-size: 1.6rem;
+    width: 28px;
+  }
+  .login-t-title { font-size: 0.8rem; }
+  .login-t-desc  { font-size: 0.7rem; }
+  .login-bottom-badge {
+    margin-top: var(--login-space-md);
+    gap: var(--login-space-xs);
+  }
+  .login-bb-text { font-size: 0.65rem; }
+
+  .login-right {
+    padding: 0 var(--login-space-xs) var(--login-space-sm);
+  }
+  .login-form-inner {
+    padding: var(--login-space-lg) var(--login-space-sm);
+    border-radius: 0 0 14px 14px;
+  }
+  .login-form-inner::before {
+    width: 2px;
+    border-radius: 0 0 0 14px;
+  }
+  .login-form-title {
+    font-size: 1.8rem;
   }
 }

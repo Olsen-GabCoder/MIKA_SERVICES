@@ -103,10 +103,7 @@ export const LoginPage = () => {
             </div>
           </div>
 
-          <div className="login-bottom-badge">
-            <div className="login-bb-dot" aria-hidden="true" />
-            <p className="login-bb-text">{t('login.bottomBadge')}</p>
-          </div>
+{/* Badge retiré pour un design plus épuré */}
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import {
   fetchMessagesRecus,
   fetchMessagesEnvoyes,
   fetchMessagesNonLusCount,
+  fetchConversation,
   envoyerMessage,
   marquerMessageLu,
 } from "@/store/slices/communicationSlice";
@@ -15,7 +16,7 @@ import type { UserMinimal } from "@/types/communication";
 import type { Message as ApiMessage } from "@/types/communication";
 import type { User as AppUser } from "@/types";
 
-// ── Types (UI) ──────────────────────────────────────────────────────────────
+// ── Types ────────────────────────────────────────────────────────────────
 interface User {
   id: number;
   prenom: string;
@@ -24,7 +25,6 @@ interface User {
   role: string;
   online?: boolean;
 }
-
 interface Message {
   id: number;
   lu: boolean;
@@ -39,634 +39,555 @@ interface Message {
   createdAt?: string;
   updatedAt?: string;
 }
+interface Conversation { peerId: number; peer: User; messages: Message[] }
 
 function mapUserMinimal(u: UserMinimal, role = ""): User {
   return { id: u.id, prenom: u.prenom, nom: u.nom, email: u.email, role };
 }
-
 function mapApiMessageToLocal(m: ApiMessage): Message {
-  return {
-    id: m.id,
-    lu: m.lu,
-    dateEnvoi: m.dateEnvoi,
-    sujet: m.sujet ?? null,
-    contenu: m.contenu,
-    expediteur: mapUserMinimal(m.expediteur),
-    destinataire: mapUserMinimal(m.destinataire),
-    parentId: m.parentId ?? null,
-    piecesJointes: m.piecesJointes,
-    mentions: m.mentions,
-    createdAt: m.createdAt ?? "",
-    updatedAt: m.updatedAt ?? "",
-  };
+  return { id: m.id, lu: m.lu, dateEnvoi: m.dateEnvoi, sujet: m.sujet ?? null, contenu: m.contenu, expediteur: mapUserMinimal(m.expediteur), destinataire: mapUserMinimal(m.destinataire), parentId: m.parentId ?? null, piecesJointes: m.piecesJointes, mentions: m.mentions, createdAt: m.createdAt ?? "", updatedAt: m.updatedAt ?? "" };
 }
 
-// ── Utils ─────────────────────────────────────────────────────────────────────
+// ── Utils ─────────────────────────────────────────────────────────────────
 const GRADS = [
   ["#7C3AED","#4F46E5"],["#0EA5E9","#0284C7"],["#10B981","#059669"],
   ["#F97316","#EA580C"],["#EC4899","#DB2777"],["#6366F1","#4338CA"],
   ["#14B8A6","#0D9488"],["#8B5CF6","#7C3AED"],
 ];
-function avatarGrad(name: string): [string, string] {
-  let h = 0; for (let i = 0; i < name.length; i++) h = (h*31+name.charCodeAt(i))&0xffff;
-  return GRADS[h % GRADS.length] as [string, string];
+function avatarGrad(name: string): [string,string] {
+  let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))&0xffff;
+  return GRADS[h%GRADS.length] as [string,string];
 }
-function initials(p?: string, n?: string): string { return `${p?.[0]??''}${n?.[0]??''}`.toUpperCase(); }
+function initials(p?:string,n?:string){return `${p?.[0]??''}${n?.[0]??''}`.toUpperCase()}
 
-/** Affiche le contenu d'un message en rendant les @Prénom Nom (mentions) en span cliquable et coloré */
-function renderMessageWithMentions(
-  contenu: string,
-  mentions: { id: number; prenom: string; nom: string }[] | undefined
-): React.ReactNode {
-  if (!mentions?.length) return contenu;
-  const patterns = mentions.map((m) => `@${m.prenom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} ${m.nom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`);
-  const regex = new RegExp(`(${patterns.join("|")})`, "g");
-  const parts = contenu.split(regex);
-  return parts.map((part, i) => {
-    const mention = mentions.find((m) => part === `@${m.prenom} ${m.nom}`);
-    if (mention) {
-      return (
-        <span
-          key={i}
-          role="button"
-          tabIndex={0}
-          onClick={() => {}}
-          onKeyDown={(e) => e.key === "Enter" && (() => {})()}
-          className="font-semibold cursor-pointer px-1 py-0.5 rounded text-[var(--msg-accent)] bg-[var(--msg-accent-muted)]"
-          title={`${mention.prenom} ${mention.nom}`}
-        >
-          {part}
-        </span>
-      );
-    }
-    return <span key={i}>{part}</span>;
+function renderMentions(contenu:string, mentions?:{id:number;prenom:string;nom:string}[]): React.ReactNode {
+  if(!mentions?.length) return contenu;
+  const pats=mentions.map(m=>`@${m.prenom.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")} ${m.nom.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}`);
+  const re=new RegExp(`(${pats.join("|")})`,"g");
+  return contenu.split(re).map((part,i)=>{
+    const mt=mentions.find(m=>part===`@${m.prenom} ${m.nom}`);
+    return mt ? <span key={i} className="font-semibold px-0.5 rounded bg-white/20">{part}</span> : <span key={i}>{part}</span>;
   });
 }
-function relTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff/60000), h = Math.floor(diff/3600000), d = Math.floor(diff/86400000);
-  if(m<1) return "À l'instant"; if(m<60) return `${m}m`; if(h<24) return `${h}h`;
-  if(d===1) return "Hier"; if(d<7) return new Date(iso).toLocaleDateString('fr-FR',{weekday:'short'});
+
+function relTime(iso:string):string {
+  const d=Date.now()-new Date(iso).getTime();
+  const m=Math.floor(d/60000),h=Math.floor(d/3600000),dd=Math.floor(d/86400000);
+  if(m<1)return"À l'instant";if(m<60)return`${m} min`;if(h<24)return`${h}h`;
+  if(dd===1)return"Hier";if(dd<7)return new Date(iso).toLocaleDateString('fr-FR',{weekday:'short'});
   return new Date(iso).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
 }
-function fullTime(iso: string): string {
-  return new Date(iso).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+function clockTime(iso:string){return new Date(iso).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}
+function dateLabel(iso:string):string {
+  const d=new Date(iso),now=new Date();
+  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const msgDay=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const diff=(today.getTime()-msgDay.getTime())/86400000;
+  if(diff===0)return"Aujourd'hui";if(diff===1)return"Hier";
+  if(diff<7)return d.toLocaleDateString('fr-FR',{weekday:'long'});
+  return d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
 }
+function sameDay(a:string,b:string){const da=new Date(a),db=new Date(b);return da.getFullYear()===db.getFullYear()&&da.getMonth()===db.getMonth()&&da.getDate()===db.getDate()}
 
-// ── Avatar (style professionnel) ───────────────────────────────────────────────
-function Av({ p, n, size = 40, online = false }: { p?: string; n?: string; size?: number; online?: boolean }) {
-  const [c1, c2] = avatarGrad((p ?? "") + (n ?? ""));
-  return (
+// ── Avatar ───────────────────────────────────────────────────────────────
+function Av({p,n,size=40,online}:{p?:string;n?:string;size?:number;online?:boolean}){
+  const[c1,c2]=avatarGrad((p??'')+(n??''));
+  return(
     <div className="relative flex-shrink-0 inline-flex">
-      <div
-        className="flex items-center justify-center rounded-full font-semibold text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10"
-        style={{
-          width: size,
-          height: size,
-          minWidth: size,
-          fontSize: Math.round(size * 0.38),
-          letterSpacing: "0.02em",
-          background: `linear-gradient(145deg, ${c1}, ${c2})`,
-        }}
-      >
-        {initials(p, n)}
+      <div className="flex items-center justify-center rounded-full font-bold text-white shadow-sm"
+        style={{width:size,height:size,minWidth:size,fontSize:Math.round(size*.36),letterSpacing:'.04em',background:`linear-gradient(135deg,${c1},${c2})`}}>
+        {initials(p,n)}
       </div>
-      {online && (
-        <span
-          className="absolute bottom-0 right-0 rounded-full border-2 border-[var(--msg-bg-panel)] bg-emerald-500"
-          style={{ width: Math.round(size * 0.28), height: Math.round(size * 0.28) }}
-          aria-hidden
-        />
-      )}
+      {online&&<span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-gray-900" />}
     </div>
   );
 }
 
-// ── Highlight ─────────────────────────────────────────────────────────────────
-function Hi({ text, q }: { text: string; q: string }) {
-  if (!q.trim()) return <>{text}</>;
-  const parts = text.split(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'));
-  return <>{parts.map((p: string, i: number) =>
-    p.toLowerCase()===q.toLowerCase()
-      ? <mark key={i} className="bg-[var(--msg-accent-muted)] text-[var(--msg-accent)] rounded px-0.5 font-medium">{p}</mark>
-      : <span key={i}>{p}</span>
+// ── Highlight ────────────────────────────────────────────────────────────
+function Hi({text,q}:{text:string;q:string}){
+  if(!q.trim())return<>{text}</>;
+  return<>{text.split(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi')).map((p,i)=>
+    p.toLowerCase()===q.toLowerCase()?<mark key={i} className="bg-amber-200/60 dark:bg-amber-500/30 text-inherit rounded px-0.5">{p}</mark>:<span key={i}>{p}</span>
   )}</>;
 }
 
-/** Une conversation = un interlocuteur + ses messages (triés par date) */
-interface Conversation {
-  peerId: number;
-  peer: User;
-  messages: Message[];
-}
+// ── Conversation Row ─────────────────────────────────────────────────────
+function ConvRow({conv,selected,q,onClick,meId}:{conv:Conversation;selected:boolean;q:string;onClick:()=>void;meId:number}){
+  const{peer,messages}=conv;
+  const last=messages[messages.length-1];
+  const unread=messages.filter(m=>!m.lu&&m.destinataire.id===meId).length;
+  const mine=last.expediteur.id===meId;
 
-// ── Ligne conversation (une ligne par interlocuteur, pas par message) ─────────
-function ConvRow({ conv, tab, selected, q, onClick, users: USERS }: { conv: Conversation; tab: "recus" | "envoyes"; selected: boolean; q: string; onClick: () => void; users: User[] }) {
-  const { peer, messages } = conv;
-  const last = messages[messages.length - 1];
-  const unreadCount = tab === "recus" ? messages.filter((m) => !m.lu).length : 0;
-  const user: Partial<User> = USERS.find((u) => u.id === peer.id) ?? {};
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`msg-row w-full text-left flex gap-3 cursor-pointer border-none border-b border-[var(--msg-border-subtle)] relative transition-[background-color,border-color] duration-150 ease-out
-        px-4 py-3.5
-        ${selected ? "bg-[var(--msg-bg-selected)] border-l-[3px] border-l-[var(--msg-accent)]" : "hover:bg-[var(--msg-bg-list-hover)]"}
-        ${unreadCount > 0 ? "bg-[var(--msg-bg-list)]" : ""}`}
-    >
-      <Av p={peer.prenom} n={peer.nom} size={42} online={user.online} />
-      <div className="flex-1 min-w-0 py-0.5">
-        <div className="flex items-baseline justify-between gap-2 mb-1">
-          <span className={`text-[13px] truncate leading-tight font-medium ${unreadCount > 0 ? "text-[var(--msg-text-primary)] font-semibold" : "text-[var(--msg-text-secondary)]"}`}>
-            <Hi text={`${peer.prenom} ${peer.nom}`} q={q} />
+  return(
+    <button type="button" onClick={onClick}
+      className={`w-full text-left flex items-center gap-3 px-4 py-3 transition-all duration-150 border-l-[3px]
+        ${selected
+          ? "border-l-[var(--msg-accent)] bg-[var(--msg-accent)]/5 dark:bg-[var(--msg-accent)]/10"
+          : "border-l-transparent hover:bg-gray-50 dark:hover:bg-white/5"}`}>
+      <div className="relative flex-shrink-0">
+        <Av p={peer.prenom} n={peer.nom} size={44} online={peer.online}/>
+        {unread>0&&<span className="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center bg-[var(--msg-accent)] text-white text-[10px] font-bold rounded-full px-1 shadow-sm">{unread>9?"9+":unread}</span>}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2 mb-0.5">
+          <span className={`text-[13.5px] truncate leading-tight ${unread>0?"font-bold text-gray-900 dark:text-white":"font-medium text-gray-700 dark:text-gray-200"}`}>
+            <Hi text={`${peer.prenom} ${peer.nom}`} q={q}/>
           </span>
-          <span className="flex items-center gap-1.5 shrink-0">
-            {unreadCount > 0 && <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-[var(--msg-accent)] text-white text-[10px] font-bold rounded-full">{unreadCount > 9 ? "9+" : unreadCount}</span>}
-            <span className="text-[11px] text-[var(--msg-text-muted)] tabular-nums font-medium">
-              {relTime(last.dateEnvoi)}
-            </span>
+          <span className={`text-[11px] tabular-nums flex-shrink-0 ${unread>0?"text-[var(--msg-accent)] font-semibold":"text-gray-400 dark:text-gray-500"}`}>
+            {relTime(last.dateEnvoi)}
           </span>
         </div>
-        {last.sujet && (
-          <p className="text-xs truncate mb-0.5 leading-tight text-[var(--msg-text-muted)]">
-            <Hi text={last.sujet} q={q} />
-          </p>
-        )}
-        <p className="text-[12px] text-[var(--msg-text-muted)] line-clamp-2 leading-snug m-0">
-          <Hi text={last.contenu} q={q} />
+        <p className={`text-[12.5px] leading-snug truncate m-0 ${unread>0?"text-gray-600 dark:text-gray-300":"text-gray-400 dark:text-gray-500"}`}>
+          {mine&&<span className="text-[var(--msg-accent)] font-medium">Vous : </span>}
+          <Hi text={last.contenu.replace(/\n/g," ").slice(0,80)} q={q}/>
         </p>
       </div>
     </button>
   );
 }
 
-// ── Reader (fil de conversation : tous les messages avec réponses associées) ───
-function Reader({ conversation, tab, onReply, users: USERS, onDownloadPieceJointe, isArchived, onArchive, onUnarchive, onSuppressForMe, t }: {
-  conversation: Conversation; tab: "recus" | "envoyes"; onReply: () => void; users: User[];
-  onDownloadPieceJointe: (pieceJointeId: number, filename: string) => void;
-  isArchived: boolean; onArchive: () => void; onUnarchive: () => void;
-  onSuppressForMe?: () => void;
-  t: (key: string) => string;
-}) {
-  const { peer, messages } = conversation;
-  const lastMsg = messages[messages.length - 1];
-  const unreadInConv = tab === "recus" ? messages.filter((m) => !m.lu).length : 0;
-  const user: Partial<User> = USERS.find(u=>u.id===peer.id) ?? {};
-  const [c1] = avatarGrad(peer.prenom+peer.nom);
-  const [actionsOpen, setActionsOpen] = useState(false);
-  const actionsTriggerRef = useRef<HTMLButtonElement>(null);
-  const MENU_MIN_WIDTH = 240;
-  const VIEWPORT_PADDING = 20;
-  const [menuPosition, setMenuPosition] = useState<{
-    top?: number; bottom?: number; right?: number; left?: number; maxHeight: number; width?: number;
-  } | null>(null);
+// ── Date Separator ───────────────────────────────────────────────────────
+function DateSep({date}:{date:string}){
+  return(
+    <div className="flex items-center gap-3 py-4 select-none">
+      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"/>
+      <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{dateLabel(date)}</span>
+      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"/>
+    </div>
+  );
+}
 
-  useLayoutEffect(() => {
-    if (!actionsOpen || !actionsTriggerRef.current) { setMenuPosition(null); return; }
-    const rect = actionsTriggerRef.current.getBoundingClientRect();
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const dropdownLeftEdge = rect.right - MENU_MIN_WIDTH;
-    const safeLeft = VIEWPORT_PADDING;
-    const useRight = dropdownLeftEdge >= safeLeft;
-    const right = useRight ? vw - rect.right : vw - (safeLeft + MENU_MIN_WIDTH);
-    const maxW = Math.min(320, vw - VIEWPORT_PADDING * 2);
-    const width = vw < 400 ? maxW : undefined;
-    const spaceBelow = vh - rect.bottom - VIEWPORT_PADDING;
-    const menuEstimatedHeight = 280;
-    const showAbove = spaceBelow < menuEstimatedHeight && rect.top > spaceBelow;
-    const maxHeight = showAbove ? rect.top - VIEWPORT_PADDING : vh - (rect.bottom + 6) - VIEWPORT_PADDING;
-    setMenuPosition({
-      ...(showAbove ? { bottom: vh - rect.top + 6 } : { top: rect.bottom + 6 }),
-      right: width ? undefined : right,
-      left: width ? VIEWPORT_PADDING : undefined,
-      ...(width ? { width } : {}),
-      maxHeight: Math.max(200, maxHeight),
-    });
-  }, [actionsOpen]);
+// ── Read Receipt ─────────────────────────────────────────────────────────
+function Receipt({lu}:{lu:boolean}){
+  return(
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" className={`inline ml-1 flex-shrink-0 ${lu?"text-emerald-300":"text-white/40"}`}>
+      <path d="M1 5.5L4.5 9L11 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      {lu&&<path d="M5 5.5L8.5 9L15 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>}
+    </svg>
+  );
+}
 
-  const closeActions = useCallback(() => setActionsOpen(false), []);
-  useEffect(() => {
-    if (!actionsOpen) return;
-    const onEscape = (e: KeyboardEvent) => { if (e.key === "Escape") closeActions(); };
-    window.addEventListener("keydown", onEscape);
-    return () => window.removeEventListener("keydown", onEscape);
-  }, [actionsOpen, closeActions]);
+// ── Chat Bubble ──────────────────────────────────────────────────────────
+const MSG_TRUNCATE_LEN = 280;
+const MSG_TRUNCATE_LINES = 8;
 
-  return (
-    <div className="flex flex-col h-full min-h-0 bg-[var(--msg-bg-panel)]">
-      <header className="flex-shrink-0 border-b border-[var(--msg-border)] px-5 sm:px-8 py-5 shadow-[var(--msg-shadow-sm)]">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div className="flex gap-4 items-start min-w-0 flex-1">
-            <Av p={peer.prenom} n={peer.nom} size={48} online={user.online}/>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                <span className="text-base font-semibold text-[var(--msg-text-primary)] truncate">
-                  {peer.prenom} {peer.nom}
-                </span>
-                <span className="text-[11px] px-2.5 py-1 rounded-md font-medium shrink-0 border border-[var(--msg-border)] bg-[var(--msg-bg-list)] text-[var(--msg-text-secondary)]" style={{ borderColor: `${c1}40` }}>
-                  {user.role || (tab==="recus"?t("messagerie.expediteur"):t("messagerie.destinataireLabel"))}
-                </span>
-                {unreadInConv > 0 && tab==="recus" && (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md font-medium bg-[var(--msg-accent-muted)] text-[var(--msg-accent)] shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--msg-accent)]" />
-                    {t("messagerie.unread")}
-                  </span>
-                )}
-              </div>
-              {peer.email && <p className="text-xs text-[var(--msg-text-muted)] truncate font-mono mb-1">{peer.email}</p>}
-              <div className="flex items-center gap-2 text-xs text-[var(--msg-text-muted)]">
-                <svg className="shrink-0 opacity-80" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                {messages.length} message(s) · {fullTime(lastMsg.dateEnvoi)}
-              </div>
+function Bubble({msg,isMine,isFirst,isLast,onDlPJ}:{msg:Message;isMine:boolean;isFirst:boolean;isLast:boolean;onDlPJ:(id:number,name:string)=>void}){
+  const hasPJ=(msg.piecesJointes?.length??0)>0;
+  const isLong=msg.contenu.length>MSG_TRUNCATE_LEN||msg.contenu.split("\n").length>MSG_TRUNCATE_LINES;
+  const[expanded,setExpanded]=useState(false);
+
+  const radiusSent  = isLast?"20px 6px 20px 20px":"20px 6px 6px 20px";
+  const radiusRecv  = isLast?"6px 20px 20px 20px":"6px 20px 20px 6px";
+
+  const displayText=useMemo(()=>{
+    if(!isLong||expanded)return msg.contenu;
+    const lines=msg.contenu.split("\n");
+    if(lines.length>MSG_TRUNCATE_LINES)return lines.slice(0,MSG_TRUNCATE_LINES).join("\n")+"…";
+    return msg.contenu.slice(0,MSG_TRUNCATE_LEN)+"…";
+  },[msg.contenu,isLong,expanded]);
+
+  return(
+    <div className={`msg-bubble-in flex ${isMine?"justify-end pl-6 sm:pl-12":"justify-start pr-6 sm:pr-12"} ${isFirst?"mt-3":"mt-[3px]"}`}>
+      <div className="max-w-[88%] sm:max-w-[75%] lg:max-w-[65%] relative group">
+        {msg.sujet&&isFirst&&(
+          <p className={`text-[10px] font-bold uppercase tracking-wider mb-1.5 px-1 ${isMine?"text-right":"text-left"} text-gray-400 dark:text-gray-500`}>
+            {msg.sujet}
+          </p>
+        )}
+        <div
+          style={{borderRadius: isMine?radiusSent:radiusRecv}}
+          className={`relative px-3.5 py-2 shadow-sm ${
+            isMine
+              ? "bg-gradient-to-br from-[var(--msg-accent)] to-[color-mix(in_srgb,var(--msg-accent),#000_12%)] text-white"
+              : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 ring-1 ring-gray-200/80 dark:ring-gray-700/80"
+          }`}
+        >
+          <p className="text-[14px] leading-[1.6] whitespace-pre-wrap break-words">{renderMentions(displayText,msg.mentions)}</p>
+
+          {isLong&&(
+            <button type="button" onClick={()=>setExpanded(e=>!e)}
+              className={`text-[12px] font-semibold mt-0.5 transition-colors ${
+                isMine
+                  ? "text-white/70 hover:text-white"
+                  : "text-[var(--msg-accent)] hover:text-[var(--msg-accent-hover,var(--msg-accent))]"
+              }`}>
+              {expanded?"Réduire ▲":"Voir plus ▼"}
+            </button>
+          )}
+
+          {hasPJ&&(
+            <div className={`mt-2 pt-2 flex flex-wrap gap-1.5 border-t ${isMine?"border-white/15":"border-gray-100 dark:border-gray-700"}`}>
+              {msg.piecesJointes!.map(pj=>(
+                <button key={pj.id} type="button" onClick={()=>onDlPJ(pj.id,pj.nomOriginal)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
+                    isMine?"bg-white/15 hover:bg-white/25 text-white":"bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
+                  }`}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span className="max-w-[100px] truncate">{pj.nomOriginal}</span>
+                </button>
+              ))}
             </div>
-          </div>
+          )}
 
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {tab==="recus" && (
-              <button type="button" onClick={onReply} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[var(--msg-radius-sm)] bg-[var(--msg-accent)] hover:bg-[var(--msg-accent-hover)] text-white text-sm font-semibold shadow-[var(--msg-shadow-sm)] transition-colors duration-150">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
-                {t("messagerie.reply")}
-              </button>
-            )}
-            <div className="relative">
-              <button ref={actionsTriggerRef} type="button" onClick={() => setActionsOpen((o) => !o)} className="p-2.5 rounded-[var(--msg-radius-sm)] border border-[var(--msg-border)] bg-[var(--msg-bg-list)] text-[var(--msg-text-secondary)] hover:bg-[var(--msg-bg-list-hover)] hover:text-[var(--msg-text-primary)] transition-colors duration-150" aria-label={t("messagerie.actions")} aria-expanded={actionsOpen} aria-haspopup="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-              </button>
-              {actionsOpen && menuPosition && typeof document !== "undefined" && ReactDOM.createPortal(
-                <>
-                  <div className="fixed inset-0 z-[9998]" aria-hidden onClick={closeActions} />
-                  <div className="fixed z-[9999] min-w-[240px] max-w-[calc(100vw-2.5rem)] rounded-xl border border-[var(--msg-border)] bg-[var(--msg-bg-panel)] shadow-lg overflow-hidden flex flex-col" style={{ top: menuPosition.top, bottom: menuPosition.bottom, left: menuPosition.left, right: menuPosition.right, width: menuPosition.width, maxHeight: menuPosition.maxHeight }} role="menu">
-                    <div className="px-3.5 py-2.5 border-b border-[var(--msg-border-subtle)] flex-shrink-0"><p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--msg-text-muted)]">{t("messagerie.actions")}</p></div>
-                    <div className="py-1.5 overflow-y-auto flex-1 min-h-0">
-                      {isArchived ? (
-                        <button type="button" role="menuitem" onClick={() => { onUnarchive(); closeActions(); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-[var(--msg-text-primary)] hover:bg-[var(--msg-bg-list-hover)] transition-colors">
-                          <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-[var(--msg-bg-list)] flex items-center justify-center text-[var(--msg-text-secondary)]"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
-                          <span className="font-medium">{t("messagerie.unarchive")}</span>
-                        </button>
-                      ) : (
-                        <button type="button" role="menuitem" onClick={() => { onArchive(); closeActions(); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-[var(--msg-text-primary)] hover:bg-[var(--msg-bg-list-hover)] transition-colors">
-                          <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-[var(--msg-bg-list)] flex items-center justify-center text-[var(--msg-text-secondary)]"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
-                          <span className="font-medium">{t("messagerie.archive")}</span>
-                        </button>
-                      )}
-                      {onSuppressForMe && (
-                        <>
-                          <div className="my-1 border-t border-[var(--msg-border-subtle)]" />
-                          <button type="button" role="menuitem" onClick={() => { onSuppressForMe(); closeActions(); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors">
-                            <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-600 dark:text-red-400"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></span>
-                            <span className="font-medium">{t("messagerie.deleteForMe")}</span>
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </>,
-                document.body
-              )}
-            </div>
+          <div className="flex items-center gap-0.5 mt-1 justify-end">
+            <span className={`text-[10px] tabular-nums leading-none ${isMine?"text-white/50":"text-gray-400 dark:text-gray-500"}`}>
+              {clockTime(msg.dateEnvoi)}
+            </span>
+            {isMine&&<Receipt lu={msg.lu}/>}
           </div>
-        </div>
-      </header>
-
-      <div className="msg-scroll flex-1 min-h-0 overflow-y-auto px-5 sm:px-8 py-6">
-        <div className="max-w-2xl space-y-8">
-          {messages.map((msg) => {
-            const parent = msg.parentId ? messages.find((m) => m.id === msg.parentId) : null;
-            const isFromPeer = msg.expediteur.id === peer.id;
-            return (
-              <article key={msg.id} className="border border-[var(--msg-border)] rounded-[var(--msg-radius-sm)] bg-[var(--msg-bg-list)]/50 overflow-hidden">
-                {parent && (
-                  <div className="px-4 py-2 border-b border-[var(--msg-border-subtle)] bg-[var(--msg-bg-panel)]/80 text-xs text-[var(--msg-text-muted)]">
-                    <span className="font-medium text-[var(--msg-accent)]">{t("messagerie.inReplyTo")}</span>
-                    {" : "}
-                    {parent.sujet || parent.contenu.slice(0, 80).replace(/\n/g, " ")}
-                    {parent.contenu.length > 80 ? "…" : ""}
-                  </div>
-                )}
-                <div className="px-4 py-3">
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-xs font-medium text-[var(--msg-text-secondary)]">
-                      {msg.expediteur.prenom} {msg.expediteur.nom} · {fullTime(msg.dateEnvoi)}
-                    </span>
-                    {!msg.lu && tab==="recus" && isFromPeer && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--msg-accent-muted)] text-[var(--msg-accent)]">{t("messagerie.unread")}</span>}
-                  </div>
-                  {msg.sujet && <h3 className="text-sm font-semibold text-[var(--msg-text-primary)] mb-2">{msg.sujet}</h3>}
-                  <p className="text-[15px] leading-[1.65] text-[var(--msg-text-primary)] whitespace-pre-wrap">
-                    {renderMessageWithMentions(msg.contenu, msg.mentions)}
-                  </p>
-                  {(msg.piecesJointes?.length ?? 0) > 0 && (
-                    <div className="mt-4 pt-4 border-t border-[var(--msg-border)]">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--msg-text-muted)] mb-2">{t("messagerie.attachments")}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {msg.piecesJointes!.map((pj) => (
-                          <button key={pj.id} type="button" onClick={() => onDownloadPieceJointe(pj.id, pj.nomOriginal)} className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-[var(--msg-bg-panel)] border border-[var(--msg-border)] text-sm text-[var(--msg-text-primary)] hover:bg-[var(--msg-bg-list-hover)] text-left min-w-0">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            <span className="truncate max-w-[140px]" title={pj.nomOriginal}>{pj.nomOriginal}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </article>
-            );
-          })}
         </div>
       </div>
     </div>
   );
 }
 
-// ── Empty Reader (état vide professionnel) ─────────────────────────────────────
-function EmptyReader({ onCompose, t }: { onCompose: () => void; t: (key: string) => string }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[280px] select-none px-6 bg-[var(--msg-bg-panel)]">
-      <div className="w-16 h-16 rounded-2xl bg-[var(--msg-bg-list)] border border-[var(--msg-border)] flex items-center justify-center mb-5 text-[var(--msg-text-muted)]">
-        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+// ── Chat Input ───────────────────────────────────────────────────────────
+function ChatInput({onSend,disabled,t}:{onSend:(c:string,f?:File[])=>void;disabled?:boolean;t:(k:string)=>string}){
+  const[text,setText]=useState("");
+  const[files,setFiles]=useState<File[]>([]);
+  const taRef=useRef<HTMLTextAreaElement>(null);
+  const fileRef=useRef<HTMLInputElement>(null);
+
+  const autoResize=()=>{const ta=taRef.current;if(!ta)return;ta.style.height="auto";ta.style.height=Math.min(ta.scrollHeight,120)+"px"};
+  useEffect(autoResize,[text]);
+
+  const send=()=>{
+    if(!text.trim()&&files.length===0)return;
+    onSend(text,files.length?files:undefined);
+    setText("");setFiles([]);
+    setTimeout(()=>{taRef.current?.focus();autoResize()},50);
+  };
+  const onKey=(e:React.KeyboardEvent)=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}};
+
+  return(
+    <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 sm:px-5 py-3">
+      {files.length>0&&(
+        <div className="flex flex-wrap gap-1.5 mb-2.5">
+          {files.map((f,i)=>(
+            <span key={i} className="inline-flex items-center gap-1.5 text-[11px] bg-gray-100 dark:bg-gray-800 rounded-lg px-2.5 py-1.5 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/></svg>
+              <span className="max-w-[90px] truncate">{f.name}</span>
+              <button type="button" onClick={()=>setFiles(p=>p.filter((_,j)=>j!==i))} className="hover:text-red-500 transition-colors">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="flex items-end gap-2">
+        <input ref={fileRef} type="file" multiple onChange={e=>{if(e.target.files)setFiles(p=>[...p,...Array.from(e.target.files!)]);e.target.value=""}} className="hidden"/>
+        <button type="button" onClick={()=>fileRef.current?.click()} disabled={disabled}
+          className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all disabled:opacity-30"
+          title={t("messagerie.addAttachment")}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        </button>
+        <div className="flex-1 relative">
+          <textarea ref={taRef} value={text} onChange={e=>setText(e.target.value)} onKeyDown={onKey}
+            placeholder={t("messagerie.composeMessagePlaceholder")} rows={1} disabled={disabled}
+            className="w-full resize-none rounded-2xl bg-gray-100 dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-800 dark:text-gray-100 outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-[var(--msg-accent)]/25 transition-all disabled:opacity-30 border-0"
+            style={{maxHeight:120}}/>
+        </div>
+        <button type="button" onClick={send} disabled={(!text.trim()&&files.length===0)||disabled}
+          className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+            text.trim()||files.length>0
+              ? "bg-[var(--msg-accent)] text-white shadow-lg shadow-[var(--msg-accent)]/30 hover:shadow-xl hover:scale-105 active:scale-95"
+              : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600"
+          }`}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Chat View ────────────────────────────────────────────────────────────
+function ChatView({conversation,chatMessages,meId,onSend,onDlPJ,isArchived,onArchive,onUnarchive,onSuppressForMe,loadingChat,t}:{
+  conversation:Conversation; chatMessages:Message[]; meId:number;
+  onSend:(c:string,f?:File[])=>void; onDlPJ:(id:number,name:string)=>void;
+  isArchived:boolean; onArchive:()=>void; onUnarchive:()=>void; onSuppressForMe?:()=>void;
+  loadingChat:boolean; t:(k:string,o?:Record<string,string|number>)=>string;
+}){
+  const{peer}=conversation;
+  const scrollRef=useRef<HTMLDivElement>(null);
+  const[actionsOpen,setActionsOpen]=useState(false);
+  const btnRef=useRef<HTMLButtonElement>(null);
+  const[menuPos,setMenuPos]=useState<{top?:number;bottom?:number;right?:number;maxHeight:number}|null>(null);
+
+  const messages=chatMessages.length>0?chatMessages:conversation.messages;
+
+  useEffect(()=>{const el=scrollRef.current;if(el)requestAnimationFrame(()=>{el.scrollTop=el.scrollHeight})},[messages.length,peer.id]);
+
+  useLayoutEffect(()=>{
+    if(!actionsOpen||!btnRef.current){setMenuPos(null);return}
+    const r=btnRef.current.getBoundingClientRect(),vh=window.innerHeight,vw=window.innerWidth;
+    const below=vh-r.bottom-16,above=r.top-16;
+    const showUp=below<180&&above>below;
+    setMenuPos({...(showUp?{bottom:vh-r.top+4}:{top:r.bottom+4}),right:vw-r.right,maxHeight:Math.max(160,showUp?above:below)});
+  },[actionsOpen]);
+
+  const closeMenu=useCallback(()=>setActionsOpen(false),[]);
+  useEffect(()=>{if(!actionsOpen)return;const h=(e:KeyboardEvent)=>{if(e.key==="Escape")closeMenu()};window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h)},[actionsOpen,closeMenu]);
+
+  return(
+    <div className="flex flex-col h-full min-h-0">
+      {/* Header */}
+      <header className="flex-shrink-0 flex items-center gap-3 px-4 sm:px-5 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+        <Av p={peer.prenom} n={peer.nom} size={38} online={peer.online}/>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">{peer.prenom} {peer.nom}</p>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{peer.role||peer.email}</p>
+        </div>
+        <span className="hidden sm:flex text-[11px] text-gray-400 dark:text-gray-500 tabular-nums">{messages.length} msg</span>
+        <div className="relative">
+          <button ref={btnRef} type="button" onClick={()=>setActionsOpen(o=>!o)}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+          {actionsOpen&&menuPos&&typeof document!=="undefined"&&ReactDOM.createPortal(
+            <>
+              <div className="fixed inset-0 z-[9998]" onClick={closeMenu}/>
+              <div className="fixed z-[9999] w-56 rounded-xl bg-white dark:bg-gray-800 shadow-xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden" style={{top:menuPos.top,bottom:menuPos.bottom,right:menuPos.right,maxHeight:menuPos.maxHeight}} role="menu">
+                <div className="py-1">
+                  {isArchived?(
+                    <button type="button" role="menuitem" onClick={()=>{onUnarchive();closeMenu()}} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                      {t("messagerie.unarchive")}
+                    </button>
+                  ):(
+                    <button type="button" role="menuitem" onClick={()=>{onArchive();closeMenu()}} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
+                      {t("messagerie.archive")}
+                    </button>
+                  )}
+                  {onSuppressForMe&&(
+                    <>
+                      <div className="border-t border-gray-100 dark:border-gray-700"/>
+                      <button type="button" role="menuitem" onClick={()=>{onSuppressForMe();closeMenu()}} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        {t("messagerie.deleteForMe")}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </>,document.body
+          )}
+        </div>
+      </header>
+
+      {/* Chat area */}
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-5 py-3 chat-area msg-scroll">
+        {loadingChat?(
+          <div className="flex items-center justify-center h-full">
+            <svg className="animate-spin w-6 h-6 text-[var(--msg-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          </div>
+        ):(
+          <div>
+            {messages.length>0&&(
+              <div className="flex justify-center mb-4">
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm px-3 py-1 rounded-full">
+                  {t("messagerie.messageCount",{count:messages.length})}
+                </span>
+              </div>
+            )}
+            {messages.map((msg,idx)=>{
+              const mine=msg.expediteur.id===meId;
+              const prev=idx>0?messages[idx-1]:null;
+              const next=idx<messages.length-1?messages[idx+1]:null;
+              const showDate=!prev||!sameDay(prev.dateEnvoi,msg.dateEnvoi);
+              const isFirst=!prev||prev.expediteur.id!==msg.expediteur.id||showDate;
+              const isLast=!next||next.expediteur.id!==msg.expediteur.id||(next&&!sameDay(msg.dateEnvoi,next.dateEnvoi));
+              return(
+                <React.Fragment key={msg.id}>
+                  {showDate&&<DateSep date={msg.dateEnvoi}/>}
+                  <Bubble msg={msg} isMine={mine} isFirst={isFirst} isLast={isLast} onDlPJ={onDlPJ}/>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <ChatInput onSend={onSend} t={t}/>
+    </div>
+  );
+}
+
+// ── Empty State ──────────────────────────────────────────────────────────
+function EmptyChat({onCompose,t}:{onCompose:()=>void;t:(k:string)=>string}){
+  return(
+    <div className="flex flex-col items-center justify-center h-full select-none px-6">
+      <div className="w-20 h-20 rounded-3xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-5">
+        <svg className="w-9 h-9 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
       </div>
-      <p className="text-base font-semibold text-[var(--msg-text-primary)] mb-1.5">
-        {t("messagerie.noMessageSelected")}
-      </p>
-      <p className="text-sm text-[var(--msg-text-muted)] max-w-[280px] text-center leading-relaxed mb-6">
-        {t("messagerie.selectOrCompose")}
-      </p>
-      <button
-        type="button"
-        onClick={onCompose}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--msg-radius-sm)] bg-[var(--msg-accent)] hover:bg-[var(--msg-accent-hover)] text-white text-sm font-semibold shadow-[var(--msg-shadow-sm)] transition-colors duration-150"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+      <p className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-1">{t("messagerie.noMessageSelected")}</p>
+      <p className="text-sm text-gray-400 dark:text-gray-500 max-w-[280px] text-center leading-relaxed mb-6">{t("messagerie.selectOrCompose")}</p>
+      <button type="button" onClick={onCompose}
+        className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--msg-accent)] hover:brightness-110 text-white text-sm font-semibold shadow-lg shadow-[var(--msg-accent)]/25 transition-all hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
         {t("messagerie.newMessage")}
       </button>
     </div>
   );
 }
 
-// ── Panneau Archivés (droite quand onglet Archivés) ───────────────────────────
-function ArchivesPanel({ t }: { t: (key: string) => string }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[280px] select-none px-6 bg-[var(--msg-bg-panel)]">
-      <div className="w-16 h-16 rounded-2xl bg-[var(--msg-bg-list)] border border-[var(--msg-border)] flex items-center justify-center mb-5 text-[var(--msg-text-muted)]">
-        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
-        </svg>
+// ── Archives Panel ───────────────────────────────────────────────────────
+function ArchivesPanel({t}:{t:(k:string)=>string}){
+  return(
+    <div className="flex flex-col items-center justify-center h-full select-none px-6">
+      <div className="w-20 h-20 rounded-3xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-5">
+        <svg className="w-9 h-9 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
       </div>
-      <p className="text-base font-semibold text-[var(--msg-text-primary)] mb-1.5">
-        {t("messagerie.archivesTitle")}
-      </p>
-      <p className="text-sm text-[var(--msg-text-muted)] max-w-[300px] text-center leading-relaxed">
-        {t("messagerie.archivesDescription")}
-      </p>
-      <p className="text-xs text-[var(--msg-text-muted)] max-w-[280px] text-center mt-3 opacity-90">
-        {t("messagerie.archivesRestoreHint")}
-      </p>
+      <p className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-1">{t("messagerie.archivesTitle")}</p>
+      <p className="text-sm text-gray-400 dark:text-gray-500 max-w-[300px] text-center leading-relaxed">{t("messagerie.archivesDescription")}</p>
     </div>
   );
 }
 
-// ── Ligne conversation archivée ──────────────────────────────────────────────
-function ArchivedRow({ user, onUnarchive, t }: { user: User; onUnarchive: () => void; t: (key: string) => string }) {
-  return (
-    <div className="flex items-center gap-3 p-3 rounded-[var(--msg-radius-sm)] border border-[var(--msg-border)] bg-[var(--msg-bg-panel)] hover:border-[var(--msg-accent)]/30 transition-colors">
-      <Av p={user.prenom} n={user.nom} size={40} />
+function ArchivedRow({user,onUnarchive,t}:{user:User;onUnarchive:()=>void;t:(k:string)=>string}){
+  return(
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-[var(--msg-accent)]/40 transition-all">
+      <Av p={user.prenom} n={user.nom} size={40}/>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-[var(--msg-text-primary)] truncate">{user.prenom} {user.nom}</p>
-        <p className="text-xs text-[var(--msg-text-muted)] truncate">{user.role || user.email}</p>
+        <p className="font-medium text-gray-800 dark:text-gray-200 truncate text-sm">{user.prenom} {user.nom}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{user.role||user.email}</p>
       </div>
-      <button
-        type="button"
-        onClick={onUnarchive}
-        className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-[var(--msg-radius-sm)] text-xs font-medium bg-[var(--msg-accent-muted)] text-[var(--msg-accent)] hover:bg-[var(--msg-accent)] hover:text-white transition-colors"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      <button type="button" onClick={onUnarchive}
+        className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[var(--msg-accent)] bg-[var(--msg-accent)]/10 hover:bg-[var(--msg-accent)] hover:text-white transition-all">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         {t("messagerie.unarchive")}
       </button>
     </div>
   );
 }
 
-// ── Compose Drawer ────────────────────────────────────────────────────────────
+// ── Compose Drawer ───────────────────────────────────────────────────────
 interface ComposeProps {
-  open: boolean;
-  onClose: () => void;
-  onSend: (payload: { destId: string; sujet: string; contenu: string; files?: File[]; mentionIds?: number[] }) => void;
-  replyTo: User | null;
-  users: User[];
-  usersLoading?: boolean;
-  onRefreshUsers?: () => void;
-  t: (key: string, opts?: Record<string, string | number>) => string;
+  open:boolean; onClose:()=>void;
+  onSend:(p:{destId:string;sujet:string;contenu:string;files?:File[];mentionIds?:number[]})=>void;
+  replyTo:User|null; users:User[]; usersLoading?:boolean; onRefreshUsers?:()=>void;
+  t:(k:string,o?:Record<string,string|number>)=>string;
 }
+function Compose({open,onClose,onSend,replyTo,users:USERS,usersLoading,onRefreshUsers,t}:ComposeProps){
+  const[destId,setDestId]=useState("");
+  const[sujet,setSujet]=useState("");
+  const[contenu,setContenu]=useState("");
+  const[files,setFiles]=useState<File[]>([]);
+  const[mentionIds,setMentionIds]=useState<number[]>([]);
+  const[mentionOpen,setMentionOpen]=useState(false);
+  const[mentionQuery,setMentionQuery]=useState("");
+  const[,setMentionStart]=useState(0);
+  const[sending,setSending]=useState(false);
+  const taRef=useRef<HTMLTextAreaElement|null>(null);
+  const fileRef=useRef<HTMLInputElement|null>(null);
+  const sendingRef=useRef(false);
+  const snapRef=useRef({contenu:"",mentionStart:0,mentionQuery:""});
 
-function matchMentionQuery(user: User, q: string): boolean {
-  const lower = q.toLowerCase();
-  const full = `${user.prenom} ${user.nom}`.toLowerCase();
-  const fullRev = `${user.nom} ${user.prenom}`.toLowerCase();
-  return full.includes(lower) || fullRev.includes(lower) || !!(user.email && user.email.toLowerCase().includes(lower));
-}
+  useEffect(()=>{
+    if(open){if(replyTo)setDestId(String(replyTo.id));setFiles([]);setMentionIds([]);setMentionOpen(false);setTimeout(()=>taRef.current?.focus(),200)}
+    else{setDestId("");setSujet("");setContenu("");setFiles([]);setMentionIds([]);setMentionOpen(false);setSending(false);sendingRef.current=false}
+  },[open,replyTo]);
 
-function Compose({ open, onClose, onSend, replyTo, users: USERS, usersLoading, onRefreshUsers, t }: ComposeProps) {
-  const [destId, setDestId] = useState("");
-  const [sujet, setSujet] = useState("");
-  const [contenu, setContenu] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
-  const [mentionIds, setMentionIds] = useState<number[]>([]);
-  const [mentionOpen, setMentionOpen] = useState(false);
-  const [mentionQuery, setMentionQuery] = useState("");
-  const [, setMentionStart] = useState(0);
-  const [sending, setSending] = useState(false);
-  const taRef = useRef<HTMLTextAreaElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const sendingRef = useRef(false);
-  const mentionSnapshotRef = useRef<{ contenu: string; mentionStart: number; mentionQuery: string }>({ contenu: "", mentionStart: 0, mentionQuery: "" });
+  const dest=USERS.find(u=>String(u.id)===destId);
+  const canSend=!!destId&&contenu.trim().length>0;
 
-  useEffect(() => {
-    if (open) {
-      if (replyTo) { setDestId(String(replyTo.id)); setSujet(s => s ? `Re: ${s}` : ""); }
-      setFiles([]);
-      setMentionIds([]);
-      setMentionOpen(false);
-      setTimeout(() => taRef.current?.focus(), 200);
-    } else { setDestId(""); setSujet(""); setContenu(""); setFiles([]); setMentionIds([]); setMentionOpen(false); setSending(false); sendingRef.current = false; }
-  }, [open, replyTo]);
-
-  const dest = USERS.find(u => String(u.id) === destId);
-  const canSend = !!destId && contenu.trim().length > 0;
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files ? Array.from(e.target.files) : [];
-    setFiles((prev) => [...prev, ...selected]);
-    e.target.value = "";
+  const handleContenu=(e:React.ChangeEvent<HTMLTextAreaElement>)=>{
+    const v=e.target.value,pos=e.target.selectionStart??v.length;setContenu(v);
+    const before=v.slice(0,pos),at=before.lastIndexOf("@");
+    if(at===-1){setMentionOpen(false);return}
+    const q=before.slice(at+1);
+    if(q.includes(" ")||q.length>30){setMentionOpen(false);return}
+    setMentionQuery(q);setMentionStart(at);setMentionOpen(true);
+    snapRef.current={contenu:v,mentionStart:at,mentionQuery:q};
   };
-  const removeFile = (index: number) => setFiles((prev) => prev.filter((_, i) => i !== index));
-
-  const handleContenuChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const v = e.target.value;
-    const pos = e.target.selectionStart ?? v.length;
-    setContenu(v);
-    const before = v.slice(0, pos);
-    const lastAt = before.lastIndexOf("@");
-    if (lastAt === -1 || (lastAt >= 0 && /\s/.test(before.slice(lastAt + 1)))) {
-      setMentionOpen(false);
-      return;
-    }
-    const query = before.slice(lastAt + 1);
-    if (query.includes(" ") || query.length > 30) { setMentionOpen(false); return; }
-    setMentionQuery(query);
-    setMentionStart(lastAt);
-    setMentionOpen(true);
-    mentionSnapshotRef.current = { contenu: v, mentionStart: lastAt, mentionQuery: query };
+  const mentionCandidates=USERS.filter(u=>String(u.id)!==destId&&`${u.prenom} ${u.nom}`.toLowerCase().includes(mentionQuery.toLowerCase())).slice(0,6);
+  const insertMention=(u:User)=>{
+    const s=snapRef.current,before=s.contenu.slice(0,s.mentionStart),after=s.contenu.slice(s.mentionStart+1+s.mentionQuery.length);
+    const ins=`@${u.prenom} ${u.nom} `,nc=before+ins+after;
+    setContenu(nc);setMentionIds(ids=>ids.includes(u.id)?ids:[...ids,u.id]);setMentionOpen(false);
+    snapRef.current={contenu:nc,mentionStart:s.mentionStart,mentionQuery:""};
+    setTimeout(()=>{taRef.current?.focus();const p=s.mentionStart+ins.length;taRef.current?.setSelectionRange(p,p)},80);
+  };
+  const handleSend=()=>{
+    if(!canSend||sending||sendingRef.current)return;sendingRef.current=true;setSending(true);
+    onSend({destId,sujet,contenu,files:files.length?files:undefined,mentionIds:mentionIds.length?mentionIds:undefined});
+    setSending(false);sendingRef.current=false;
   };
 
-  const mentionCandidates = USERS.filter(
-    (u) => String(u.id) !== destId && matchMentionQuery(u, mentionQuery)
-  ).slice(0, 8);
-
-  const insertMention = (user: User) => {
-    const snap = mentionSnapshotRef.current;
-    const queryLen = snap.mentionQuery.length;
-    const before = snap.contenu.slice(0, snap.mentionStart);
-    const after = snap.contenu.slice(snap.mentionStart + 1 + queryLen);
-    const insert = `@${user.prenom} ${user.nom} `;
-    const newContenu = before + insert + after;
-    setContenu(newContenu);
-    setMentionIds((ids) => (ids.includes(user.id) ? ids : [...ids, user.id]));
-    setMentionOpen(false);
-    setMentionQuery("");
-    mentionSnapshotRef.current = { contenu: newContenu, mentionStart: snap.mentionStart, mentionQuery: "" };
-    setTimeout(() => {
-      taRef.current?.focus();
-      const newPos = snap.mentionStart + insert.length;
-      taRef.current?.setSelectionRange(newPos, newPos);
-    }, 80);
-  };
-
-  const handleSend = () => {
-    if (!canSend || sending || sendingRef.current) return;
-    sendingRef.current = true;
-    setSending(true);
-    onSend({ destId, sujet, contenu, files: files.length ? files : undefined, mentionIds: mentionIds.length ? mentionIds : undefined });
-    setSending(false);
-    sendingRef.current = false;
-  };
-
-  return (
+  return(
     <>
-      <div
-        onClick={onClose}
-        className={`fixed inset-0 bg-black/25 dark:bg-black/40 backdrop-blur-[2px] z-40 transition-opacity duration-200 ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
-        aria-hidden
-      />
-      <div
-        className={`fixed top-0 right-0 bottom-0 w-full sm:max-w-[440px] md:max-w-[480px] md:top-6 md:right-6 md:bottom-6 flex flex-col z-50
-          bg-[var(--msg-bg-panel)] border-l border-[var(--msg-border)]
-          md:rounded-2xl md:shadow-[var(--msg-shadow-md)]
-          transition-transform duration-300 ease-out overflow-hidden
-          ${open ? "translate-x-0" : "translate-x-full"}`}
-      >
-        <div className="px-5 sm:px-6 py-4 border-b border-[var(--msg-border)] flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-[var(--msg-radius-sm)] bg-[var(--msg-accent)] flex items-center justify-center text-white shadow-sm">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-[var(--msg-text-primary)] m-0">{t('messagerie.newMessage')}</p>
-                <p className="text-[11px] text-[var(--msg-text-muted)] m-0">{t('messagerie.internalMessage')}</p>
-              </div>
+      <div onClick={onClose} className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity duration-200 ${open?"opacity-100":"opacity-0 pointer-events-none"}`}/>
+      <div className={`fixed top-0 right-0 bottom-0 w-full sm:max-w-[440px] flex flex-col z-50 bg-white dark:bg-gray-900 shadow-2xl transition-transform duration-300 ease-out ${open?"translate-x-0":"translate-x-full"}`}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[var(--msg-accent)] flex items-center justify-center text-white">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             </div>
-            <button type="button" onClick={onClose} className="p-2 rounded-[var(--msg-radius-sm)] text-[var(--msg-text-muted)] hover:bg-[var(--msg-bg-list-hover)] hover:text-[var(--msg-text-primary)] transition-colors" aria-label="Fermer">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('messagerie.newMessage')}</p>
+              <p className="text-[11px] text-gray-400">{t('messagerie.internalMessage')}</p>
+            </div>
           </div>
+          <button type="button" onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 transition-colors">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="px-5 sm:px-6 py-4 border-b border-[var(--msg-border-subtle)]">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--msg-text-muted)] mb-2">{t('messagerie.destinataireLabel')}</label>
-            {dest ? (
-              <div className="flex items-center gap-3 p-3 rounded-[var(--msg-radius-sm)] bg-[var(--msg-bg-list)] border border-[var(--msg-border)]">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">{t('messagerie.destinataireLabel')}</label>
+            {dest?(
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
                 <Av p={dest.prenom} n={dest.nom} size={36} online={dest.online}/>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[var(--msg-text-primary)] m-0">{dest.prenom} {dest.nom}</p>
-                  <p className="text-xs text-[var(--msg-text-muted)] m-0">{dest.role}</p>
-                </div>
-                {!replyTo && (
-                  <button type="button" onClick={() => setDestId("")} className="text-xs text-[var(--msg-text-muted)] hover:text-[var(--msg-accent)] hover:underline underline-offset-1 transition-colors">
-                    {t('messagerie.changeRecipient')}
-                  </button>
-                )}
+                <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{dest.prenom} {dest.nom}</p><p className="text-xs text-gray-400">{dest.role}</p></div>
+                {!replyTo&&<button type="button" onClick={()=>setDestId("")} className="text-xs text-gray-400 hover:text-[var(--msg-accent)] transition-colors">{t('messagerie.changeRecipient')}</button>}
               </div>
-            ) : (
-              <>
-                <select
-                  value={destId}
-                  onChange={(e) => setDestId(e.target.value)}
-                  disabled={usersLoading || USERS.length === 0}
-                  className="w-full px-4 py-3 rounded-[var(--msg-radius-sm)] border border-[var(--msg-border)] bg-[var(--msg-bg-panel)] text-[var(--msg-text-primary)] text-sm min-h-[44px] outline-none focus:ring-2 focus:ring-[var(--msg-accent)]/25 focus:border-[var(--msg-accent)]/50 transition-shadow"
-                >
-                  <option value="">
-                    {usersLoading ? t('messagerie.loadingUsers') : USERS.length === 0 ? t('messagerie.noUsersAvailable') : t('messagerie.chooseRecipient')}
-                  </option>
-                  {USERS.map((u) => (
-                    <option key={u.id} value={String(u.id)}>{u.prenom} {u.nom}{u.role ? ` · ${u.role}` : ""}</option>
-                  ))}
-                </select>
-                {!usersLoading && USERS.length === 0 && onRefreshUsers && (
-                  <button type="button" onClick={onRefreshUsers} className="mt-2 text-xs text-gray-500 dark:text-gray-400 hover:underline underline-offset-1">
-                    {t('messagerie.refreshUsers')}
-                  </button>
-                )}
-              </>
+            ):(
+              <select value={destId} onChange={e=>setDestId(e.target.value)} disabled={usersLoading||USERS.length===0}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm outline-none focus:ring-2 focus:ring-[var(--msg-accent)]/20 transition-shadow">
+                <option value="">{usersLoading?t('messagerie.loadingUsers'):USERS.length===0?t('messagerie.noUsersAvailable'):t('messagerie.chooseRecipient')}</option>
+                {USERS.map(u=><option key={u.id} value={String(u.id)}>{u.prenom} {u.nom}{u.role?` · ${u.role}`:""}</option>)}
+              </select>
             )}
           </div>
 
-          <div className="px-5 sm:px-6 py-3 border-b border-[var(--msg-border-subtle)]">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--msg-text-muted)] mb-1.5">{t('messagerie.sujet')}</label>
-            <input value={sujet} onChange={e=>setSujet(e.target.value)} placeholder={t('messagerie.optionalSubject')}
-              className="w-full border-none bg-transparent text-sm text-[var(--msg-text-primary)] outline-none placeholder:text-[var(--msg-text-muted)]"/>
+          <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">{t('messagerie.sujet')}</label>
+            <input value={sujet} onChange={e=>setSujet(e.target.value)} placeholder={t('messagerie.optionalSubject')} className="w-full border-none bg-transparent text-sm text-gray-800 dark:text-gray-200 outline-none placeholder:text-gray-400"/>
           </div>
 
-          <div className="px-5 sm:px-6 py-3 border-b border-[var(--msg-border-subtle)]">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--msg-text-muted)] mb-2">{t('messagerie.attachments')}</label>
-            <input ref={fileInputRef} type="file" multiple onChange={handleFileChange} className="hidden"/>
-            <button type="button" onClick={()=>fileInputRef.current?.click()}
-              className="inline-flex items-center gap-2 text-xs text-[var(--msg-text-secondary)] bg-[var(--msg-bg-list)] border border-dashed border-[var(--msg-border)] rounded-[var(--msg-radius-sm)] px-4 py-2.5 hover:bg-[var(--msg-bg-list-hover)] hover:border-[var(--msg-text-muted)]/40 transition-colors">
+          <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">{t('messagerie.attachments')}</label>
+            <input ref={fileRef} type="file" multiple onChange={e=>{const sel=e.target.files?Array.from(e.target.files):[];setFiles(p=>[...p,...sel]);e.target.value=""}} className="hidden"/>
+            <button type="button" onClick={()=>fileRef.current?.click()} className="inline-flex items-center gap-2 text-xs text-gray-500 bg-gray-50 dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2.5 hover:border-[var(--msg-accent)]/50 hover:text-[var(--msg-accent)] transition-colors">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               {t('messagerie.addAttachment')}
             </button>
-            {files.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {files.map((f, i) => (
-                  <span key={i} className="inline-flex items-center gap-1.5 text-xs text-[var(--msg-text-secondary)] bg-[var(--msg-bg-list)] rounded-[var(--msg-radius-sm)] px-2.5 py-1.5 border border-[var(--msg-border)]">
-                    <span className="max-w-[140px] truncate" title={f.name}>{f.name}</span>
-                    <button type="button" onClick={()=>removeFile(i)} className="p-0.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" aria-label={t('common:delete')}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                    </button>
+            {files.length>0&&(
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {files.map((f,i)=>(
+                  <span key={i} className="inline-flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-lg px-2.5 py-1.5">
+                    <span className="max-w-[120px] truncate">{f.name}</span>
+                    <button type="button" onClick={()=>setFiles(p=>p.filter((_,j)=>j!==i))} className="hover:text-red-500"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
                   </span>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="px-5 sm:px-6 py-4 relative">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--msg-text-muted)] mb-2">{t('messagerie.message')}</label>
-            <textarea ref={taRef} value={contenu} onChange={handleContenuChange} placeholder={t('messagerie.composeMessagePlaceholder')} rows={10}
-              onBlur={() => setTimeout(() => setMentionOpen(false), 180)}
-              className="w-full border-none bg-transparent text-sm text-[var(--msg-text-primary)] outline-none resize-none leading-relaxed placeholder:text-[var(--msg-text-muted)]"/>
-            {mentionOpen && mentionCandidates.length > 0 && (
-              <div className="absolute left-5 right-5 bottom-full mb-2 z-10 rounded-[var(--msg-radius)] border border-[var(--msg-border)] bg-[var(--msg-bg-panel)] shadow-[var(--msg-shadow-md)] overflow-hidden">
-                {mentionCandidates.map((u) => (
-                  <button key={u.id} type="button" onMouseDown={(e) => { e.preventDefault(); insertMention(u); }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm text-[var(--msg-text-primary)] hover:bg-[var(--msg-bg-list-hover)] transition-colors">
-                    <Av p={u.prenom} n={u.nom} size={28}/>
-                    <span className="flex-1 font-medium">{u.prenom} {u.nom}</span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">@</span>
+          <div className="px-5 py-4 relative">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">{t('messagerie.message')}</label>
+            <textarea ref={taRef} value={contenu} onChange={handleContenu} placeholder={t('messagerie.composeMessagePlaceholder')} rows={8}
+              onBlur={()=>setTimeout(()=>setMentionOpen(false),180)}
+              className="w-full border-none bg-transparent text-sm text-gray-800 dark:text-gray-200 outline-none resize-none leading-relaxed placeholder:text-gray-400"/>
+            {mentionOpen&&mentionCandidates.length>0&&(
+              <div className="absolute left-5 right-5 bottom-full mb-2 z-10 rounded-xl bg-white dark:bg-gray-800 shadow-xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden">
+                {mentionCandidates.map(u=>(
+                  <button key={u.id} type="button" onMouseDown={e=>{e.preventDefault();insertMention(u)}}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <Av p={u.prenom} n={u.nom} size={26}/><span className="font-medium">{u.prenom} {u.nom}</span>
                   </button>
                 ))}
               </div>
@@ -674,22 +595,15 @@ function Compose({ open, onClose, onSend, replyTo, users: USERS, usersLoading, o
           </div>
         </div>
 
-        <div className="px-5 sm:px-6 py-3.5 border-t border-[var(--msg-border)] flex-shrink-0 flex items-center justify-between bg-[var(--msg-bg-list)]">
-          <span className="text-[11px] text-[var(--msg-text-muted)] font-medium">
-            {contenu.length > 0 ? t('messagerie.charCount', { count: contenu.length }) : t('messagerie.emptyBody')}
-          </span>
+        <div className="px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
+          <span className="text-[11px] text-gray-400 tabular-nums">{contenu.length>0?`${contenu.length} car.`:""}</span>
           <div className="flex gap-2">
-            <button type="button" onClick={onClose}
-              className="px-4 py-2.5 rounded-[var(--msg-radius-sm)] border border-[var(--msg-border)] bg-[var(--msg-bg-panel)] text-[var(--msg-text-secondary)] text-sm font-medium hover:bg-[var(--msg-bg-list-hover)] transition-colors">
-              {t('messagerie.cancel')}
-            </button>
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-full border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">{t('messagerie.cancel')}</button>
             <button type="button" onClick={handleSend} disabled={!canSend||sending}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--msg-radius-sm)] text-sm font-semibold text-white transition-all ${canSend && !sending ? "bg-[var(--msg-accent)] hover:bg-[var(--msg-accent-hover)] cursor-pointer shadow-[var(--msg-shadow-sm)]" : "bg-[var(--msg-text-muted)]/40 cursor-not-allowed"} ${sending ? "opacity-80" : ""}`}>
-              {sending
-                ? <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              }
-              {sending ? t('messagerie.sending') : t('messagerie.send')}
+              className={`inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold text-white transition-all ${canSend&&!sending?"bg-[var(--msg-accent)] hover:brightness-110 shadow-lg shadow-[var(--msg-accent)]/25":"bg-gray-300 dark:bg-gray-600 cursor-not-allowed"}`}>
+              {sending?<svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                :<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>}
+              {sending?t('messagerie.sending'):t('messagerie.send')}
             </button>
           </div>
         </div>
@@ -698,461 +612,265 @@ function Compose({ open, onClose, onSend, replyTo, users: USERS, usersLoading, o
   );
 }
 
-// ── Toast (style professionnel) ───────────────────────────────────────────────
-function Toast({ msg, onClose }: { msg: string; onClose: () => void }) {
-  useEffect(() => { const id = setTimeout(onClose, 3500); return () => clearTimeout(id); }, [onClose]);
-  return (
-    <div
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-[var(--msg-radius)] bg-[var(--msg-text-primary)] dark:bg-slate-800 text-white text-sm font-medium shadow-[var(--msg-shadow-md)] border border-[var(--msg-border)] animate-[msg-fadeIn_0.25s_ease-out]"
-      role="status"
-      aria-live="polite"
-    >
-      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+// ── Toast ─────────────────────────────────────────────────────────────────
+function Toast({msg,onClose}:{msg:string;onClose:()=>void}){
+  useEffect(()=>{const id=setTimeout(onClose,3500);return()=>clearTimeout(id)},[onClose]);
+  return(
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2.5 px-5 py-3 rounded-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-medium shadow-xl animate-[msg-fadeIn_0.25s_ease-out]" role="status">
+      <span className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
       </span>
-      <span>{msg}</span>
+      {msg}
     </div>
   );
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
-function getRoleLabel(u: AppUser): string {
-  const role = u.roles?.[0];
-  if (!role) return "";
-  return role.nom ?? role.code ?? "";
-}
+// ══════════════════════════════════════════════════════════════════════════
+// ── MAIN ─────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+function getRoleLabel(u:AppUser):string{const r=u.roles?.[0];return r?(r.nom??r.code??""):""}
 
-export default function MessageriePage() {
-  const { t } = useTranslation("communication");
-  const dispatch = useAppDispatch();
-  const authUser = useAppSelector((s) => s.auth.user);
-  const { messagesRecus, messagesEnvoyes } = useAppSelector((s) => s.communication);
+export default function MessageriePage(){
+  const{t}=useTranslation("communication");
+  const dispatch=useAppDispatch();
+  const authUser=useAppSelector(s=>s.auth.user);
+  const{messagesRecus,messagesEnvoyes}=useAppSelector(s=>s.communication);
 
-  const [tab, setTab] = useState<"recus" | "envoyes" | "archives">("recus");
-  const [selectedPeerId, setSelectedPeerId] = useState<number | null>(null);
-  const [compose, setCompose] = useState(false);
-  const [replyTo, setReplyTo] = useState<User | null>(null);
-  const [q, setQ] = useState("");
-  const [toast, setToast] = useState<string | null>(null);
-  const [peersForMessaging, setPeersForMessaging] = useState<Awaited<ReturnType<typeof userApi.getPeersForMessaging>>>([]);
-  const [loadingPeers, setLoadingPeers] = useState(false);
-  const [archivedPeerIds, setArchivedPeerIds] = useState<number[]>([]);
-  const [mobileShowReader, setMobileShowReader] = useState(false);
-  const searchRef = useRef<HTMLInputElement | null>(null);
+  const[tab,setTab]=useState<"all"|"archives">("all");
+  const[selectedPeerId,setSelectedPeerId]=useState<number|null>(null);
+  const[compose,setCompose]=useState(false);
+  const[replyTo,setReplyTo]=useState<User|null>(null);
+  const[q,setQ]=useState("");
+  const[toast,setToast]=useState<string|null>(null);
+  const[peersForMessaging,setPeersForMessaging]=useState<Awaited<ReturnType<typeof userApi.getPeersForMessaging>>>([]);
+  const[loadingPeers,setLoadingPeers]=useState(false);
+  const[archivedPeerIds,setArchivedPeerIds]=useState<number[]>([]);
+  const[mobileShowReader,setMobileShowReader]=useState(false);
+  const[chatMessages,setChatMessages]=useState<Message[]>([]);
+  const[loadingChat,setLoadingChat]=useState(false);
+  const searchRef=useRef<HTMLInputElement|null>(null);
 
-  const loadArchivedPeerIds = useCallback(() => {
-    if (!authUser) return;
-    messageApi.getArchivedPeerIds(authUser.id).then(setArchivedPeerIds).catch(() => setArchivedPeerIds([]));
-  }, [authUser?.id]);
+  const loadArchived=useCallback(()=>{if(!authUser)return;messageApi.getArchivedPeerIds(authUser.id).then(setArchivedPeerIds).catch(()=>setArchivedPeerIds([]))},[authUser?.id]);
+  const loadPeers=useCallback(()=>{setLoadingPeers(true);userApi.getPeersForMessaging().then(setPeersForMessaging).catch(()=>setPeersForMessaging([])).finally(()=>setLoadingPeers(false))},[]);
 
-  const loadPeers = useCallback(() => {
-    setLoadingPeers(true);
-    userApi.getPeersForMessaging().then(setPeersForMessaging).catch(() => setPeersForMessaging([])).finally(() => setLoadingPeers(false));
-  }, []);
+  const ME=useMemo(():User|null=>authUser?{id:authUser.id,prenom:authUser.prenom,nom:authUser.nom,email:authUser.email,role:getRoleLabel(authUser)}:null,[authUser]);
+  const USERS=useMemo(():User[]=>peersForMessaging.map(p=>({id:p.id,prenom:p.prenom,nom:p.nom,email:p.email,role:p.roleLabel})),[peersForMessaging]);
 
-  const ME = useMemo((): User | null => {
-    if (!authUser) return null;
-    return {
-      id: authUser.id,
-      prenom: authUser.prenom,
-      nom: authUser.nom,
-      email: authUser.email,
-      role: getRoleLabel(authUser),
-    };
-  }, [authUser]);
+  const recus=useMemo(()=>messagesRecus.map(mapApiMessageToLocal),[messagesRecus]);
+  const envoyes=useMemo(()=>messagesEnvoyes.map(mapApiMessageToLocal),[messagesEnvoyes]);
 
-  const USERS = useMemo((): User[] => {
-    return peersForMessaging.map((p) => ({
-      id: p.id,
-      prenom: p.prenom,
-      nom: p.nom,
-      email: p.email,
-      role: p.roleLabel,
-    }));
-  }, [peersForMessaging]);
+  const archivedPeers=useMemo(()=>USERS.filter(u=>archivedPeerIds.includes(u.id)),[USERS,archivedPeerIds]);
+  const archivedFiltered=useMemo(()=>{if(!q.trim())return archivedPeers;const lq=q.toLowerCase();return archivedPeers.filter(u=>`${u.prenom} ${u.nom}`.toLowerCase().includes(lq))},[archivedPeers,q]);
 
-  const recus = useMemo(() => messagesRecus.map(mapApiMessageToLocal), [messagesRecus]);
-  const envoyes = useMemo(() => messagesEnvoyes.map(mapApiMessageToLocal), [messagesEnvoyes]);
-
-  const archivedPeers = useMemo(
-    () => USERS.filter((u) => archivedPeerIds.includes(u.id)),
-    [USERS, archivedPeerIds]
-  );
-  const archivedFiltered = useMemo(() => {
-    if (!q.trim()) return archivedPeers;
-    const lq = q.toLowerCase();
-    return archivedPeers.filter(
-      (u) =>
-        `${u.prenom} ${u.nom}`.toLowerCase().includes(lq) ||
-        (u.email && u.email.toLowerCase().includes(lq)) ||
-        (u.role && u.role.toLowerCase().includes(lq))
-    );
-  }, [archivedPeers, q]);
-
-  const msgs = tab === "recus" ? recus : envoyes;
-  const filtered = useMemo(() => {
-    if (tab === "archives") return [];
-    if (!q.trim()) return msgs;
-    const lq = q.toLowerCase();
-    return msgs.filter((m) => {
-      const p = tab === "recus" ? m.expediteur : m.destinataire;
-      return (
-        `${p.prenom} ${p.nom}`.toLowerCase().includes(lq) ||
-        m.sujet?.toLowerCase().includes(lq) ||
-        m.contenu.toLowerCase().includes(lq)
-      );
-    });
-  }, [msgs, q, tab]);
-
-  /** Conversations : un bloc par interlocuteur (peer), messages triés par date */
-  const conversations = useMemo(() => {
-    if (tab === "archives" || filtered.length === 0) return [];
-    const byPeer = new Map<number, { peer: User; messages: Message[] }>();
-    for (const m of filtered) {
-      const peer = tab === "recus" ? m.expediteur : m.destinataire;
-      const existing = byPeer.get(peer.id);
-      if (!existing) byPeer.set(peer.id, { peer, messages: [m] });
-      else existing.messages.push(m);
+  const conversations=useMemo(()=>{
+    if(tab==="archives"||!ME)return[];
+    const all=[...recus,...envoyes];
+    const map=new Map<number,{peer:User;messages:Message[]}>();
+    for(const m of all){
+      const pid=m.expediteur.id===ME.id?m.destinataire.id:m.expediteur.id;
+      const peer=m.expediteur.id===ME.id?m.destinataire:m.expediteur;
+      const ex=map.get(pid);
+      if(!ex)map.set(pid,{peer,messages:[m]});
+      else{if(!ex.messages.find(x=>x.id===m.id))ex.messages.push(m)}
     }
-    const list = Array.from(byPeer.entries()).map(([peerId, { peer, messages }]) => {
-      const sorted = [...messages].sort((a, b) => new Date(a.dateEnvoi).getTime() - new Date(b.dateEnvoi).getTime());
-      return { peerId, peer, messages: sorted };
+    const list=Array.from(map.entries()).map(([peerId,{peer,messages}])=>{
+      const sorted=[...messages].sort((a,b)=>new Date(a.dateEnvoi).getTime()-new Date(b.dateEnvoi).getTime());
+      return{peerId,peer,messages:sorted}as Conversation;
     });
-    list.sort((a, b) => new Date(b.messages[b.messages.length - 1].dateEnvoi).getTime() - new Date(a.messages[a.messages.length - 1].dateEnvoi).getTime());
-    return list;
-  }, [filtered, tab]);
+    list.sort((a,b)=>new Date(b.messages[b.messages.length-1].dateEnvoi).getTime()-new Date(a.messages[a.messages.length-1].dateEnvoi).getTime());
+    if(!q.trim())return list;
+    const lq=q.toLowerCase();
+    return list.filter(c=>`${c.peer.prenom} ${c.peer.nom}`.toLowerCase().includes(lq)||c.messages.some(m=>m.contenu.toLowerCase().includes(lq)));
+  },[recus,envoyes,q,tab,ME]);
 
-  const selectedConversation = useMemo(() => conversations.find((c) => c.peerId === selectedPeerId) ?? null, [conversations, selectedPeerId]);
-  const selected = selectedConversation ? selectedConversation.messages[selectedConversation.messages.length - 1] : null; // dernier message pour reply/archive
-  const unread = recus.filter((m) => !m.lu).length;
+  const selectedConversation=useMemo(()=>conversations.find(c=>c.peerId===selectedPeerId)??null,[conversations,selectedPeerId]);
+  const unread=recus.filter(m=>!m.lu).length;
 
-  useEffect(() => {
-    if (!authUser) return;
-    dispatch(fetchMessagesRecus({ userId: authUser.id }));
-    dispatch(fetchMessagesEnvoyes({ userId: authUser.id }));
-    dispatch(fetchMessagesNonLusCount(authUser.id));
-    loadPeers();
-    loadArchivedPeerIds();
-  }, [authUser?.id, dispatch, loadPeers, loadArchivedPeerIds]);
-
-  useEffect(() => {
-    if (compose && peersForMessaging.length === 0 && authUser) loadPeers();
-  }, [compose, peersForMessaging.length, authUser, loadPeers]);
-
-  useEffect(() => { setSelectedPeerId(null); setQ(""); setMobileShowReader(false); }, [tab]);
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); searchRef.current?.focus(); }
-      if ((e.metaKey || e.ctrlKey) && e.key === "n") { e.preventDefault(); setReplyTo(null); setCompose(true); }
-      if (e.key === "Escape") setCompose(false);
+  useEffect(()=>{if(!authUser)return;dispatch(fetchMessagesRecus({userId:authUser.id}));dispatch(fetchMessagesEnvoyes({userId:authUser.id}));dispatch(fetchMessagesNonLusCount(authUser.id));loadPeers();loadArchived()},[authUser?.id,dispatch,loadPeers,loadArchived]);
+  useEffect(()=>{if(compose&&peersForMessaging.length===0&&authUser)loadPeers()},[compose,peersForMessaging.length,authUser,loadPeers]);
+  useEffect(()=>{setSelectedPeerId(null);setQ("");setMobileShowReader(false);setChatMessages([])},[tab]);
+  useEffect(()=>{
+    const h=(e:KeyboardEvent)=>{
+      if((e.metaKey||e.ctrlKey)&&e.key==="k"){e.preventDefault();searchRef.current?.focus()}
+      if((e.metaKey||e.ctrlKey)&&e.key==="n"){e.preventDefault();setReplyTo(null);setCompose(true)}
+      if(e.key==="Escape")setCompose(false);
     };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, []);
+    window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);
+  },[]);
 
-  const handleSelectConversation = (peerId: number) => {
-    setSelectedPeerId(peerId);
-    setMobileShowReader(true);
-    const conv = conversations.find((c) => c.peerId === peerId);
-    if (tab === "recus" && authUser && conv) {
-      conv.messages.filter((m) => !m.lu).forEach((m) => dispatch(marquerMessageLu({ messageId: m.id, userId: authUser!.id })));
-    }
+  const loadFullConversation=useCallback(async(peerId:number)=>{
+    if(!authUser)return;setLoadingChat(true);
+    try{const resp=await messageApi.getConversation(authUser.id,peerId,0,200);setChatMessages((resp.content??[]).map(mapApiMessageToLocal))}
+    catch{setChatMessages([])}
+    setLoadingChat(false);
+  },[authUser?.id]);
+
+  const handleSelect=useCallback((peerId:number)=>{
+    setSelectedPeerId(peerId);setMobileShowReader(true);loadFullConversation(peerId);
+    const conv=conversations.find(c=>c.peerId===peerId);
+    if(authUser&&conv)conv.messages.filter(m=>!m.lu&&m.destinataire.id===authUser.id).forEach(m=>dispatch(marquerMessageLu({messageId:m.id,userId:authUser!.id})));
+  },[conversations,authUser,dispatch,loadFullConversation]);
+
+  const handleDlPJ=useCallback(async(pjId:number,name:string)=>{
+    if(!authUser)return;
+    try{const{blob}=await messageApi.downloadPieceJointe(pjId,authUser.id);const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}catch{}
+  },[authUser?.id]);
+
+  const handleArchive=useCallback(async(pid:number)=>{
+    if(!authUser)return;
+    try{await messageApi.archiveConversation(authUser.id,pid);loadArchived();dispatch(fetchMessagesRecus({userId:authUser.id}));dispatch(fetchMessagesEnvoyes({userId:authUser.id}));setSelectedPeerId(null);setChatMessages([]);setToast(t("messagerie.conversationArchived"))}
+    catch{setToast(t("messagerie.errorArchive"))}
+  },[authUser?.id,dispatch,loadArchived,t]);
+
+  const handleUnarchive=useCallback(async(pid:number)=>{
+    if(!authUser)return;
+    try{await messageApi.unarchiveConversation(authUser.id,pid);loadArchived();dispatch(fetchMessagesRecus({userId:authUser.id}));dispatch(fetchMessagesEnvoyes({userId:authUser.id}));setToast(t("messagerie.conversationUnarchived"))}
+    catch{setToast(t("messagerie.errorUnarchive"))}
+  },[authUser?.id,dispatch,loadArchived,t]);
+
+  const handleSuppressForMe=useCallback(async()=>{
+    if(!authUser||!selectedConversation)return;
+    const last=selectedConversation.messages[selectedConversation.messages.length-1];
+    try{await messageApi.suppressForMe(last.id,authUser.id);dispatch(fetchMessagesRecus({userId:authUser.id}));dispatch(fetchMessagesEnvoyes({userId:authUser.id}));setSelectedPeerId(null);setChatMessages([]);setToast(t("messagerie.messageHiddenForMe"))}
+    catch{setToast(t("messagerie.errorSuppressForMe"))}
+  },[authUser?.id,selectedConversation,dispatch,t]);
+
+  const handleChatSend=useCallback(async(contenu:string,files?:File[])=>{
+    if(!authUser||!selectedPeerId)return;
+    try{await dispatch(envoyerMessage({expediteurId:authUser.id,request:{destinataireId:selectedPeerId,contenu},files})).unwrap();loadFullConversation(selectedPeerId);dispatch(fetchMessagesRecus({userId:authUser.id}));dispatch(fetchMessagesEnvoyes({userId:authUser.id}))}catch{}
+  },[authUser?.id,selectedPeerId,dispatch,loadFullConversation]);
+
+  const handleComposeSend=({destId,sujet,contenu,files,mentionIds}:{destId:string;sujet:string;contenu:string;files?:File[];mentionIds?:number[]})=>{
+    const dest=USERS.find(u=>String(u.id)===destId);
+    if(!dest||!authUser)return;
+    dispatch(envoyerMessage({expediteurId:authUser.id,request:{destinataireId:Number(destId),sujet:sujet||undefined,contenu,mentionIds},files}))
+      .then(()=>{dispatch(fetchMessagesRecus({userId:authUser.id}));dispatch(fetchMessagesEnvoyes({userId:authUser.id}));setSelectedPeerId(dest.id);setMobileShowReader(true);loadFullConversation(dest.id)});
+    setCompose(false);setReplyTo(null);setToast(t("messagerie.sentTo",{name:`${dest.prenom} ${dest.nom}`}));
   };
 
-  const handleDownloadPieceJointe = useCallback(async (pieceJointeId: number, filename: string) => {
-    if (!authUser) return;
-    try {
-      const { blob } = await messageApi.downloadPieceJointe(pieceJointeId, authUser.id);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      // silent or toast
-    }
-  }, [authUser?.id]);
+  if(!authUser||!ME)return<div className="flex flex-1 items-center justify-center p-8"><p className="text-gray-400">{t("messagerie.loading")}</p></div>;
 
-  const handleArchiveConversation = useCallback(async (peerUserId: number) => {
-    if (!authUser) return;
-    try {
-      await messageApi.archiveConversation(authUser.id, peerUserId);
-      loadArchivedPeerIds();
-      dispatch(fetchMessagesRecus({ userId: authUser.id }));
-      dispatch(fetchMessagesEnvoyes({ userId: authUser.id }));
-      setSelectedPeerId(null);
-      setToast(t("messagerie.conversationArchived"));
-    } catch {
-      setToast(t("messagerie.errorArchive"));
-    }
-  }, [authUser?.id, dispatch, loadArchivedPeerIds, t]);
+  const showList=!selectedConversation||!mobileShowReader;
+  const showChat=selectedConversation&&mobileShowReader;
 
-  const handleUnarchiveConversation = useCallback(async (peerUserId: number) => {
-    if (!authUser) return;
-    try {
-      await messageApi.unarchiveConversation(authUser.id, peerUserId);
-      loadArchivedPeerIds();
-      dispatch(fetchMessagesRecus({ userId: authUser.id }));
-      dispatch(fetchMessagesEnvoyes({ userId: authUser.id }));
-      setToast(t("messagerie.conversationUnarchived"));
-    } catch {
-      setToast(t("messagerie.errorUnarchive"));
-    }
-  }, [authUser?.id, dispatch, loadArchivedPeerIds, t]);
+  return(
+    <div
+      className="flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-gray-900 ring-1 ring-gray-200/80 dark:ring-gray-700/60 shadow-sm"
+      style={{height:'calc(100vh - var(--layout-header-height, 4.5rem) - var(--layout-footer-height, 3.5rem) - 1.5rem)'}}
+    >
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* ─── Sidebar ─────────────────────────────────── */}
+        <div className={`flex flex-col w-full md:w-80 lg:w-[340px] xl:w-[380px] flex-shrink-0 min-h-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 ${showList?"flex":"hidden md:flex"}`}>
 
-  const handleSuppressForMe = useCallback(async () => {
-    if (!authUser || !selected) return;
-    try {
-      await messageApi.suppressForMe(selected.id, authUser.id);
-      dispatch(fetchMessagesRecus({ userId: authUser.id }));
-      dispatch(fetchMessagesEnvoyes({ userId: authUser.id }));
-      setSelectedPeerId(null);
-      setToast(t("messagerie.messageHiddenForMe"));
-    } catch {
-      setToast(t("messagerie.errorSuppressForMe"));
-    }
-  }, [authUser?.id, selected, dispatch, t]);
+          {/* Sidebar header */}
+          <div className="flex-shrink-0 px-4 pt-4 pb-2">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">{t("messagerie.title")}</h1>
+                {unread>0&&<span className="min-w-[22px] h-[22px] flex items-center justify-center bg-[var(--msg-accent)] text-white text-[11px] font-bold rounded-full px-1.5">{unread}</span>}
+              </div>
+              <button type="button" onClick={()=>{setReplyTo(null);setCompose(true)}}
+                className="w-9 h-9 rounded-full bg-[var(--msg-accent)] text-white flex items-center justify-center shadow-lg shadow-[var(--msg-accent)]/25 hover:brightness-110 hover:scale-105 active:scale-95 transition-all"
+                title={t("messagerie.newMessage")}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+            </div>
 
-  const handleSend = ({ destId, sujet, contenu, files, mentionIds }: { destId: string; sujet: string; contenu: string; files?: File[]; mentionIds?: number[] }) => {
-    const dest = USERS.find((u) => String(u.id) === destId);
-    if (!dest || !authUser) return;
-    dispatch(
-      envoyerMessage({
-        expediteurId: authUser.id,
-        request: { destinataireId: Number(destId), sujet: sujet || undefined, contenu, mentionIds },
-        files,
-      })
-    );
-    setCompose(false);
-    setReplyTo(null);
-    setToast(t("messagerie.sentTo", { name: `${dest.prenom} ${dest.nom}` }));
-  };
+            {/* Search */}
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input ref={searchRef} value={q} onChange={e=>setQ(e.target.value)} placeholder={t("messagerie.searchPlaceholder")}
+                className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-[var(--msg-accent)]/20 transition-all border-0"/>
+              {q&&<button type="button" onClick={()=>setQ("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-white hover:bg-gray-400 transition-colors">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>}
+            </div>
+          </div>
 
-  if (!authUser) {
-    return (
-      <div className="flex flex-1 items-center justify-center p-8">
-        <p className="text-slate-500">{t("messagerie.loading")}</p>
-      </div>
-    );
-  }
-
-  if (!ME) return null;
-
-  const showListOnMobile = !selected || !mobileShowReader;
-  const showReaderOnMobile = selected && mobileShowReader;
-
-  return (
-    <div className="flex flex-col min-h-0 flex-1 overflow-hidden bg-[var(--mika-bg-content)]">
-      <div className="flex-1 min-h-0 flex flex-col rounded-xl md:rounded-2xl border border-[var(--msg-border)] bg-[var(--msg-bg-panel)] shadow-[var(--msg-shadow-sm)] overflow-hidden">
-        <header className="flex-shrink-0 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-[var(--msg-border)] bg-[var(--msg-bg-panel)]">
-          <div className="flex items-center gap-3 min-w-0">
-            {selected && (
-              <button
-                type="button"
-                onClick={() => setMobileShowReader(false)}
-                className="md:hidden p-2.5 -ml-1 rounded-[var(--msg-radius-sm)] text-[var(--msg-text-secondary)] hover:bg-[var(--msg-bg-list-hover)]"
-                aria-label={t("messagerie.backToList")}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          {/* Tabs: conversations / archives */}
+          <div className="flex-shrink-0 px-4 py-2 flex items-center justify-between">
+            {tab==="archives"?(
+              <button type="button" onClick={()=>setTab("all")} className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--msg-accent)] hover:underline">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                {t("messagerie.backToList")}
+              </button>
+            ):(
+              <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
+                {conversations.length} conversation{conversations.length!==1?"s":""}
+              </p>
+            )}
+            {tab!=="archives"&&(
+              <button type="button" onClick={()=>setTab("archives")} className="inline-flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500 hover:text-[var(--msg-accent)] transition-colors">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/></svg>
+                {t("messagerie.tabArchives")}
+                {archivedPeerIds.length>0&&<span className="ml-1 text-[10px] bg-gray-200 dark:bg-gray-700 px-1 rounded">{archivedPeerIds.length}</span>}
               </button>
             )}
-            <h1 className="text-xl font-semibold text-[var(--msg-text-primary)] truncate tracking-tight">
-              {t("messagerie.title")}
-            </h1>
-            {unread > 0 && (
-              <span className="shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-md bg-[var(--msg-accent)] text-white">
-                {t("messagerie.unreadCount", { count: unread })}
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => { setReplyTo(null); setCompose(true); }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[var(--msg-radius-sm)] bg-[var(--msg-accent)] hover:bg-[var(--msg-accent-hover)] text-white text-sm font-semibold shadow-[var(--msg-shadow-sm)] transition-colors duration-150"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            {t("messagerie.newMessage")}
-          </button>
-        </header>
-
-        <div className="flex flex-1 min-h-0 overflow-hidden">
-          {/* Rail liste — scroll uniquement dans la zone des conversations ci‑dessous */}
-          <div className={`flex flex-col w-full md:w-[320px] lg:w-[360px] flex-shrink-0 min-h-0 overflow-hidden bg-[var(--msg-bg-list)] border-r border-[var(--msg-border)] ${showListOnMobile ? "flex" : "hidden md:flex"}`}>
-
-            <div className="flex-shrink-0 p-3 sm:p-4">
-              <div className="relative">
-                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--msg-text-muted)] pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                </svg>
-                <input
-                  ref={searchRef}
-                  value={q}
-                  onChange={e=>setQ(e.target.value)}
-                  placeholder={t("messagerie.searchPlaceholder")}
-                  className="w-full pl-10 pr-10 py-3 rounded-[var(--msg-radius-sm)] border border-[var(--msg-border)] bg-[var(--msg-bg-panel)] text-[var(--msg-text-primary)] text-sm outline-none focus:ring-2 focus:ring-[var(--msg-accent)]/20 focus:border-[var(--msg-accent)]/50 transition-shadow"
-                />
-                {q && (
-                  <button type="button" onClick={()=>setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded text-[var(--msg-text-muted)] hover:text-[var(--msg-text-primary)] hover:bg-[var(--msg-bg-list-hover)]">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Filtres principaux (Reçus / Envoyés) + lien discret Archivés */}
-            <div className="flex-shrink-0 px-3 pb-2">
-              {tab === "archives" ? (
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setTab("recus")}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--msg-radius-sm)] text-sm font-medium text-[var(--msg-text-primary)] bg-[var(--msg-bg-panel)] border border-[var(--msg-border)] hover:border-[var(--msg-accent)]/40 hover:bg-[var(--msg-accent-muted)]/50 hover:text-[var(--msg-accent)] transition-all duration-200"
-                    title={t("messagerie.backToList")}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                    {t("messagerie.backToList")}
-                  </button>
-                  <span className="text-xs text-[var(--msg-text-muted)] tabular-nums">
-                    {t("messagerie.tabArchives")} · {archivedPeerIds.length}
-                  </span>
-                </div>
-              ) : (
-                <>
-                  <div className="flex bg-[var(--msg-bg-panel)] rounded-[var(--msg-radius-sm)] p-0.5 border border-[var(--msg-border)]">
-                    {(["recus", "envoyes"] as const).map((tabKey) => {
-                      const active = tab === tabKey;
-                      const cnt = tabKey === "recus" ? recus.length : envoyes.length;
-                      return (
-                        <button
-                          key={tabKey}
-                          type="button"
-                          onClick={() => setTab(tabKey)}
-                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-all duration-200 ${active ? "bg-white dark:bg-[var(--msg-bg-list)] text-[var(--msg-accent)] shadow-sm border border-[var(--msg-border)]" : "text-[var(--msg-text-muted)] hover:text-[var(--msg-text-primary)]"}`}
-                        >
-                          {tabKey === "recus" ? (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
-                          ) : (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                          )}
-                          <span>{tabKey === "recus" ? t("messagerie.tabRecus") : t("messagerie.tabEnvoyes")}</span>
-                          <span className={`tabular-nums text-xs font-semibold px-1.5 py-0.5 rounded ${active ? "bg-[var(--msg-accent)]/10 text-[var(--msg-accent)]" : "text-[var(--msg-text-muted)]"}`}>{cnt}</span>
-                          {tabKey === "recus" && unread > 0 && (
-                            <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-[var(--msg-accent)] text-white text-[10px] font-bold rounded-full">{unread > 9 ? "9+" : unread}</span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="flex items-center justify-between gap-3 mt-2 px-2.5 py-1.5 rounded-[var(--msg-radius-sm)] bg-[var(--msg-bg-panel)]/60 border border-[var(--msg-border)]/50">
-                    <div className="flex-1 min-w-0">
-                      {(tab === "recus" || tab === "envoyes") && (
-                        <p className="text-xs text-[var(--msg-text-muted)] tabular-nums truncate font-medium">
-                          {q.trim() ? t("messagerie.resultsCount", { filtered: filtered.length, total: msgs.length }) : t("messagerie.messageCount", { count: msgs.length })}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setTab("archives")}
-                      className="flex items-center gap-1.5 text-xs text-[var(--msg-text-muted)] hover:text-[var(--msg-accent)] transition-colors shrink-0 py-1"
-                      title={t("messagerie.tabArchives")}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-                      <span>{t("messagerie.tabArchives")}</span>
-                      {archivedPeerIds.length > 0 && (
-                        <span className="tabular-nums text-[10px] font-medium px-1.5 py-0.5 rounded bg-[var(--msg-bg-list)] text-[var(--msg-text-muted)]">{archivedPeerIds.length}</span>
-                      )}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Barre d’info (archives uniquement) */}
-            {tab === "archives" && (
-              <div className="flex-shrink-0 px-3 pb-2">
-                <div className="px-2.5 py-1.5 rounded-[var(--msg-radius-sm)] bg-[var(--msg-bg-panel)]/60 border border-[var(--msg-border)]/50">
-                  <p className="text-xs text-[var(--msg-text-muted)] tabular-nums font-medium">
-                    {t("messagerie.archivesCount", { count: archivedFiltered.length })}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Zone scrollable : seul ce bloc défile (liste des conversations) */}
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-1 msg-scroll">
-              {tab === "archives" ? (
-                archivedFiltered.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 px-5 text-center">
-                    <div className="w-12 h-12 rounded-xl bg-[var(--msg-bg-list)] border border-[var(--msg-border)] flex items-center justify-center mb-3 text-[var(--msg-text-muted)]">
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg>
-                    </div>
-                    <p className="text-sm font-medium text-[var(--msg-text-primary)] mb-1">
-                      {t("messagerie.archivesEmpty")}
-                    </p>
-                    <p className="text-xs text-[var(--msg-text-muted)] max-w-[220px] leading-relaxed">
-                      {t("messagerie.archivesEmptyHint")}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {archivedFiltered.map((u) => (
-                      <div key={u.id} className="msg-fade">
-                        <ArchivedRow user={u} onUnarchive={() => handleUnarchiveConversation(u.id)} t={t} />
-                      </div>
-                    ))}
-                  </div>
-                )
-              ) : filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 px-5 text-center">
-                  <svg className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                  </svg>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    {q ? t("messagerie.noResult") : tab === "recus" ? t("messagerie.noMessagesReceived") : t("messagerie.noMessagesSent")}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 max-w-[200px] leading-relaxed">
-                    {q ? t("messagerie.tryOtherTerm") : t("messagerie.messagesWillAppear")}
-                  </p>
-                </div>
-              ) : conversations.map((conv) => (
-                <div key={conv.peerId} className="msg-fade">
-                  <ConvRow conv={conv} tab={tab} selected={selectedPeerId === conv.peerId} q={q} onClick={() => handleSelectConversation(conv.peerId)} users={USERS} />
-                </div>
-              ))}
-            </div>
           </div>
 
-          <div className={`flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden bg-[var(--msg-bg-panel)] ${showReaderOnMobile ? "flex" : "hidden md:flex"}`}>
-            {tab === "archives" ? (
-              <ArchivesPanel t={t} />
-            ) : selectedConversation ? (
-              <div className="msg-fade flex flex-col min-h-0 flex-1" style={{ minHeight: 0 }}>
-                <Reader
-                  conversation={selectedConversation}
-                  tab={tab}
-                  onReply={() => { setReplyTo(selectedConversation.peer); setCompose(true); }}
-                  users={USERS}
-                  onDownloadPieceJointe={handleDownloadPieceJointe}
-                  isArchived={archivedPeerIds.includes(selectedConversation.peerId)}
-                  onArchive={() => handleArchiveConversation(selectedConversation.peerId)}
-                  onUnarchive={() => handleUnarchiveConversation(selectedConversation.peerId)}
-                  onSuppressForMe={selected ? handleSuppressForMe : undefined}
-                  t={t}
-                />
+          {/* Conversation list (scrollable!) */}
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden msg-scroll">
+            {tab==="archives"?(
+              archivedFiltered.length===0?(
+                <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                  <svg className="w-10 h-10 text-gray-200 dark:text-gray-700 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/></svg>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{t("messagerie.archivesEmpty")}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{t("messagerie.archivesEmptyHint")}</p>
+                </div>
+              ):(
+                <div className="px-3 space-y-2 pb-3">
+                  {archivedFiltered.map(u=><div key={u.id} className="msg-fade"><ArchivedRow user={u} onUnarchive={()=>handleUnarchive(u.id)} t={t}/></div>)}
+                </div>
+              )
+            ):conversations.length===0?(
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <svg className="w-10 h-10 text-gray-200 dark:text-gray-700 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{q?t("messagerie.noResult"):t("messagerie.noMessagesReceived")}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{q?t("messagerie.tryOtherTerm"):t("messagerie.messagesWillAppear")}</p>
               </div>
-            ) : (
-              <EmptyReader onCompose={()=>{ setReplyTo(null); setCompose(true); }} t={t}/>
+            ):(
+              <div className="pb-2">
+                {conversations.map(conv=>(
+                  <div key={conv.peerId} className="msg-fade">
+                    <ConvRow conv={conv} selected={selectedPeerId===conv.peerId} q={q} onClick={()=>handleSelect(conv.peerId)} meId={ME.id}/>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
+
+        {/* ─── Chat zone ──────────────────────────────── */}
+        <div className={`flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden bg-[var(--msg-chat-bg)] ${showChat?"flex":"hidden md:flex"}`}>
+          {/* Mobile back button */}
+          {selectedConversation&&(
+            <div className="md:hidden flex-shrink-0 flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+              <button type="button" onClick={()=>{setMobileShowReader(false);setChatMessages([])}} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              </button>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("messagerie.backToList")}</span>
+            </div>
+          )}
+          {tab==="archives"?(
+            <ArchivesPanel t={t}/>
+          ):selectedConversation?(
+            <ChatView
+              conversation={selectedConversation} chatMessages={chatMessages} meId={ME.id}
+              onSend={handleChatSend} onDlPJ={handleDlPJ}
+              isArchived={archivedPeerIds.includes(selectedConversation.peerId)}
+              onArchive={()=>handleArchive(selectedConversation.peerId)}
+              onUnarchive={()=>handleUnarchive(selectedConversation.peerId)}
+              onSuppressForMe={handleSuppressForMe}
+              loadingChat={loadingChat} t={t}
+            />
+          ):(
+            <EmptyChat onCompose={()=>{setReplyTo(null);setCompose(true)}} t={t}/>
+          )}
+        </div>
       </div>
 
-      <Compose open={compose} onClose={()=>{setCompose(false);setReplyTo(null);}} onSend={handleSend} replyTo={replyTo} users={USERS} usersLoading={loadingPeers} onRefreshUsers={loadPeers} t={t}/>
-      {toast && <Toast msg={toast} onClose={()=>setToast(null)}/>}
+      <Compose open={compose} onClose={()=>{setCompose(false);setReplyTo(null)}} onSend={handleComposeSend} replyTo={replyTo} users={USERS} usersLoading={loadingPeers} onRefreshUsers={loadPeers} t={t}/>
+      {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
     </div>
   );
 }

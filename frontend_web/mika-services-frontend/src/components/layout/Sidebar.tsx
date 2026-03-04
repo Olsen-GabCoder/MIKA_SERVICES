@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '@/store/hooks'
-import { toggleSidebar, toggleTheme, setLocale } from '@/store/slices/uiSlice'
+import { toggleSidebar, toggleTheme, setLocale, closeMobileMenu } from '@/store/slices/uiSlice'
 import type { Locale } from '../../i18n'
 import { logoutUser } from '@/store/slices/authSlice'
 import { userApi } from '@/api/userApi'
@@ -54,7 +54,21 @@ export const Sidebar = () => {
   const dispatch = useAppDispatch()
   const { isAuthenticated, user } = useAppSelector((state) => state.auth)
   const { messagesNonLusCount, notificationsNonLuesCount } = useAppSelector((state) => state.communication)
-  const { sidebarCollapsed, theme, locale } = useAppSelector((state) => state.ui)
+  const { sidebarCollapsed, mobileMenuOpen, theme, locale } = useAppSelector((state) => state.ui)
+
+  const effectiveCollapsed = mobileMenuOpen ? false : sidebarCollapsed
+
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth >= 768) dispatch(closeMobileMenu())
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [dispatch])
+
+  const handleNavClick = () => {
+    if (mobileMenuOpen) dispatch(closeMobileMenu())
+  }
 
   const getRoleLabel = (u: User): string => {
     const role = u.roles?.[0]
@@ -110,7 +124,7 @@ export const Sidebar = () => {
   const linkClass = (path: string) => {
     const base = 'flex items-center rounded-lg text-base font-medium transition-colors w-full '
     const active = isActive(path) ? 'bg-white/15 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'
-    if (sidebarCollapsed) {
+    if (effectiveCollapsed) {
       return base + 'justify-center px-2 py-3 ' + active
     }
     return base + 'gap-3 px-3 py-3 ' + active
@@ -135,22 +149,39 @@ export const Sidebar = () => {
 
   return (
     <aside
-      className={`h-full min-h-0 flex flex-col bg-secondary-dark text-white shrink-0 transition-[width] duration-200 ease-out ${
-        sidebarCollapsed ? 'w-16' : 'w-64'
-      }`}
+      className={[
+        'flex flex-col bg-secondary-dark text-white shrink-0',
+        'fixed inset-y-0 left-0 z-40 w-64',
+        'transition-transform duration-200 ease-out',
+        mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full',
+        'md:relative md:z-auto md:translate-x-0 md:transition-[width] md:duration-200 md:shadow-none',
+        sidebarCollapsed ? 'md:w-16' : 'md:w-64',
+      ].join(' ')}
     >
       <header
         className={`sidebar-header flex items-center border-b border-white/10 bg-white/5 px-3 py-4 ${
-          sidebarCollapsed ? 'justify-center' : 'justify-between'
+          effectiveCollapsed ? 'justify-center' : 'justify-between'
         }`}
       >
-        {!sidebarCollapsed && (
+        {!effectiveCollapsed && (
           <span className="text-base font-semibold text-white/90 tracking-wide">{t('sidebar.navigation')}</span>
         )}
+        {/* Close button — mobile only */}
+        <button
+          type="button"
+          onClick={() => dispatch(closeMobileMenu())}
+          className="p-2 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors shrink-0 md:hidden"
+          aria-label={t('sidebar.collapseSidebar')}
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        {/* Collapse / expand toggle — desktop only */}
         <button
           type="button"
           onClick={() => dispatch(toggleSidebar())}
-          className="p-2 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors shrink-0"
+          className="p-2 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-colors shrink-0 hidden md:block"
           title={sidebarCollapsed ? t('sidebar.expandSidebar') : t('sidebar.collapseSidebar')}
           aria-label={sidebarCollapsed ? t('sidebar.expandSidebar') : t('sidebar.collapseSidebar')}
         >
@@ -172,17 +203,17 @@ export const Sidebar = () => {
             const badgeCount = item.badgeKey ? getBadgeCount(item.badgeKey) : 0
             return (
               <li key={item.to}>
-                <Link to={item.to} className={linkClass(item.to)} title={sidebarCollapsed ? t(item.label) : undefined}>
+                <Link to={item.to} className={linkClass(item.to)} title={effectiveCollapsed ? t(item.label) : undefined} onClick={handleNavClick}>
                   <span className="relative flex-shrink-0 [&>svg]:w-6 [&>svg]:h-6" aria-hidden>
                     {item.icon}
-                    {sidebarCollapsed && badgeCount > 0 && (
+                    {effectiveCollapsed && badgeCount > 0 && (
                       <span
                         className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-danger border border-secondary-dark"
                         aria-hidden
                       />
                     )}
                   </span>
-                  {!sidebarCollapsed && (
+                  {!effectiveCollapsed && (
                     <>
                       <span className="truncate">{t(item.label)}</span>
                       {badgeCount > 0 && (
@@ -202,8 +233,8 @@ export const Sidebar = () => {
         </ul>
 
         {/* Section Paramètres : lien Paramètres + mode sombre */}
-        <div className={`mt-6 pt-4 border-t border-white/10 ${sidebarCollapsed ? 'px-0' : 'px-2'}`}>
-          {!sidebarCollapsed && (
+        <div className={`mt-6 pt-4 border-t border-white/10 ${effectiveCollapsed ? 'px-0' : 'px-2'}`}>
+          {!effectiveCollapsed && (
             <p className="text-xs font-semibold text-white/60 uppercase tracking-wider px-3 mb-2">{t('sidebar.settingsSection')}</p>
           )}
           <ul className="space-y-0.5">
@@ -211,20 +242,22 @@ export const Sidebar = () => {
               <Link
                 to="/parametres"
                 className={linkClass('/parametres')}
-                title={sidebarCollapsed ? t('sidebar.parametres') : undefined}
+                title={effectiveCollapsed ? t('sidebar.parametres') : undefined}
+                onClick={handleNavClick}
               >
                 <SettingsIcon className="w-6 h-6 shrink-0" />
-                {!sidebarCollapsed && <span className="truncate">{t('sidebar.parametres')}</span>}
+                {!effectiveCollapsed && <span className="truncate">{t('sidebar.parametres')}</span>}
               </Link>
             </li>
             <li>
               <Link
                 to="/profile"
                 className={linkClass('/profile')}
-                title={sidebarCollapsed ? t('sidebar.monProfil') : undefined}
+                title={effectiveCollapsed ? t('sidebar.monProfil') : undefined}
+                onClick={handleNavClick}
               >
                 <UserIcon className="w-6 h-6 shrink-0" />
-                {!sidebarCollapsed && <span className="truncate">{t('sidebar.monProfil')}</span>}
+                {!effectiveCollapsed && <span className="truncate">{t('sidebar.monProfil')}</span>}
               </Link>
             </li>
             <li>
@@ -234,9 +267,9 @@ export const Sidebar = () => {
                 aria-checked={theme === 'dark'}
                 onClick={() => dispatch(toggleTheme())}
                 className={`flex items-center rounded-lg text-base font-medium transition-colors w-full ${
-                  sidebarCollapsed ? 'justify-center px-2 py-3' : 'gap-3 px-3 py-3'
+                  effectiveCollapsed ? 'justify-center px-2 py-3' : 'gap-3 px-3 py-3'
                 } text-white/90 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-secondary-dark`}
-                title={sidebarCollapsed ? (theme === 'dark' ? t('sidebar.modeSombre') : t('sidebar.modeClair')) : undefined}
+                title={effectiveCollapsed ? (theme === 'dark' ? t('sidebar.modeSombre') : t('sidebar.modeClair')) : undefined}
                 aria-label={theme === 'dark' ? t('sidebar.modeSombre') : t('sidebar.modeClair')}
               >
                 <span
@@ -251,7 +284,7 @@ export const Sidebar = () => {
                     aria-hidden
                   />
                 </span>
-                {!sidebarCollapsed && (
+                {!effectiveCollapsed && (
                   <span className="truncate text-left">{theme === 'dark' ? t('sidebar.modeSombre') : t('sidebar.modeClair')}</span>
                 )}
               </button>
@@ -259,7 +292,7 @@ export const Sidebar = () => {
             <li>
               <div
                 className={`flex items-center rounded-lg text-base font-medium w-full ${
-                  sidebarCollapsed ? 'justify-center gap-0 px-2 py-3' : 'gap-2 px-3 py-3'
+                  effectiveCollapsed ? 'justify-center gap-0 px-2 py-3' : 'gap-2 px-3 py-3'
                 }`}
                 role="group"
                 aria-label={t('sidebar.language')}
@@ -276,7 +309,7 @@ export const Sidebar = () => {
                       locale === loc
                         ? 'bg-white/20 border-white/50 text-white'
                         : 'border-transparent text-white/60 hover:bg-white/10 hover:text-white'
-                    } ${sidebarCollapsed ? 'w-9 h-9 text-base' : 'min-w-[2.25rem] h-9 px-2 text-base'}`}
+                    } ${effectiveCollapsed ? 'w-9 h-9 text-base' : 'min-w-[2.25rem] h-9 px-2 text-base'}`}
                   >
                     {loc === 'fr' ? (
                       <FlagImg loc="fr" baseUrl={import.meta.env.BASE_URL} />
@@ -285,7 +318,7 @@ export const Sidebar = () => {
                     )}
                   </button>
                 ))}
-                {!sidebarCollapsed && (
+                {!effectiveCollapsed && (
                   <span className="truncate text-left text-white/80 text-sm ml-0.5">{t('sidebar.language')}</span>
                 )}
               </div>
@@ -301,9 +334,9 @@ export const Sidebar = () => {
               type="button"
               onClick={() => setUserMenuOpen((o) => !o)}
               className={`flex items-center w-full rounded-lg transition-colors text-left ${
-                sidebarCollapsed ? 'justify-center p-2' : 'gap-3 p-3 hover:bg-white/10'
+                effectiveCollapsed ? 'justify-center p-2' : 'gap-3 p-3 hover:bg-white/10'
               }`}
-              title={sidebarCollapsed ? fullName : undefined}
+              title={effectiveCollapsed ? fullName : undefined}
               aria-expanded={userMenuOpen}
               aria-haspopup="true"
               aria-label={t('sidebar.userMenu')}
@@ -313,11 +346,11 @@ export const Sidebar = () => {
                   <img
                     src={avatarSrc}
                     alt=""
-                    className={`rounded-full object-cover border-2 border-white/20 ${sidebarCollapsed ? 'w-9 h-9' : 'w-10 h-10'}`}
+                    className={`rounded-full object-cover border-2 border-white/20 ${effectiveCollapsed ? 'w-9 h-9' : 'w-10 h-10'}`}
                   />
                 ) : (
                   <span
-                    className={`rounded-full bg-white/20 flex items-center justify-center text-white font-semibold border-2 border-white/20 ${sidebarCollapsed ? 'w-9 h-9 text-sm' : 'w-10 h-10 text-sm'}`}
+                    className={`rounded-full bg-white/20 flex items-center justify-center text-white font-semibold border-2 border-white/20 ${effectiveCollapsed ? 'w-9 h-9 text-sm' : 'w-10 h-10 text-sm'}`}
                     aria-hidden
                   >
                     {getInitials(user)}
@@ -329,7 +362,7 @@ export const Sidebar = () => {
                   aria-hidden
                 />
               </span>
-              {!sidebarCollapsed && (
+              {!effectiveCollapsed && (
                 <>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-white truncate">{fullName}</p>
@@ -352,12 +385,12 @@ export const Sidebar = () => {
               <div
                 role="menu"
                 className={`absolute left-0 py-1 rounded-lg bg-secondary-dark border border-white/10 shadow-xl z-50 min-w-[12rem] ${
-                  sidebarCollapsed ? 'bottom-full left-full mb-1 ml-1' : 'bottom-full mb-1 w-full'
+                  effectiveCollapsed ? 'bottom-full left-full mb-1 ml-1' : 'bottom-full mb-1 w-full'
                 }`}
               >
                 <Link
                   to="/profile"
-                  onClick={() => setUserMenuOpen(false)}
+                  onClick={() => { setUserMenuOpen(false); handleNavClick() }}
                   className="flex items-center gap-2 px-4 py-2.5 text-sm text-white/90 hover:bg-white/10 transition-colors"
                   role="menuitem"
                 >
@@ -369,7 +402,7 @@ export const Sidebar = () => {
                 {isAdmin && (
                   <Link
                     to="/users"
-                    onClick={() => setUserMenuOpen(false)}
+                    onClick={() => { setUserMenuOpen(false); handleNavClick() }}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm text-white/90 hover:bg-white/10 transition-colors"
                     role="menuitem"
                   >

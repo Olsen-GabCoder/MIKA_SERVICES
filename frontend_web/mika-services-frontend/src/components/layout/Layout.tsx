@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { fetchGlobalDashboard } from '@/store/slices/reportingSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { fetchEquipes } from '@/store/slices/equipeSlice'
+import { closeMobileMenu } from '@/store/slices/uiSlice'
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
 import { Footer } from './Footer'
@@ -27,6 +28,7 @@ export const Layout = ({ children }: LayoutProps) => {
   const location = useLocation()
   const dispatch = useAppDispatch()
   const sidebarCollapsed = useAppSelector((state) => state.ui.sidebarCollapsed)
+  const mobileMenuOpen = useAppSelector((state) => state.ui.mobileMenuOpen)
   const theme = useAppSelector((state) => state.ui.theme)
   const offlineModeEnabled = useAppSelector((state) => state.ui.offlineModeEnabled)
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true)
@@ -59,9 +61,17 @@ export const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={layoutVars}>
       <Header />
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
+        {/* Backdrop mobile */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-30 md:hidden"
+            onClick={() => dispatch(closeMobileMenu())}
+            aria-hidden
+          />
+        )}
         <Sidebar />
-        <main className="flex-1 mika-theme-bg dark:text-gray-100 min-w-0 p-4 sm:p-6 lg:p-8 relative overflow-auto" data-theme={theme}>
+        <main className="flex-1 mika-theme-bg dark:text-gray-100 min-w-0 p-3 sm:p-6 lg:p-8 relative overflow-auto" data-theme={theme}>
           {offlineModeEnabled && !isOnline && (
             <div className="mb-4 py-2.5 px-4 rounded-lg bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-sm font-medium flex items-center gap-2" role="status">
               <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

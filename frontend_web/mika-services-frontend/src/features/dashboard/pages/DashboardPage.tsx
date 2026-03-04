@@ -643,18 +643,47 @@ export default function DashboardPage() {
           <Card title={t('db.projects.title')}
             action={<button onClick={() => navigate('/projets')} className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline">{t('db.seeAll')} →</button>}>
             {activeProjects.length ? (
-              <div className="overflow-x-auto -mx-1">
-                <table className="w-full text-sm min-w-[480px]">
-                  <thead>
-                    <tr className="text-left border-b border-gray-100 dark:border-gray-700">
-                      {[t('db.projects.name'), t('db.projects.amount'), t('db.projects.progress'), t('db.projects.manager')].map((h, i) => (
-                        <th key={i} className={`pb-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 ${i === 1 ? 'text-right' : ''} ${i === 2 ? 'pl-4 w-36' : ''}`}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>{activeProjects.map(p => <ProjRow key={p.id} p={p} fmtS={fmtS} nav={navigate} />)}</tbody>
-                </table>
-              </div>
+              <>
+                {/* Mobile: stacked cards */}
+                <div className="sm:hidden space-y-2">
+                  {activeProjects.map(p => {
+                    const pct = p.avancementGlobal ?? 0
+                    const barColor = pct >= 75 ? C.green : pct >= 40 ? C.blue : C.gold
+                    return (
+                      <div key={p.id} onClick={() => navigate(`/projets/${p.id}`)}
+                        className="p-3 rounded-lg border border-gray-100 dark:border-gray-700/50 hover:bg-gray-50/70 dark:hover:bg-gray-700/20 cursor-pointer transition-colors">
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
+                          <div className="min-w-0">
+                            <span className="font-semibold text-gray-800 dark:text-gray-200 text-xs line-clamp-1">{p.nom}</span>
+                            {p.clientNom && <span className="block text-[10px] text-gray-400">{p.clientNom}</span>}
+                          </div>
+                          <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap shrink-0">{p.montantHT ? fmtS(p.montantHT) : '—'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${pct}%`, background: barColor }} />
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 w-8 text-right tabular-nums">{pct}%</span>
+                        </div>
+                        {p.responsableNom && <span className="text-[10px] text-gray-400 mt-1 block">{p.responsableNom}</span>}
+                      </div>
+                    )
+                  })}
+                </div>
+                {/* Desktop: table */}
+                <div className="overflow-x-auto -mx-1 hidden sm:block">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left border-b border-gray-100 dark:border-gray-700">
+                        {[t('db.projects.name'), t('db.projects.amount'), t('db.projects.progress'), t('db.projects.manager')].map((h, i) => (
+                          <th key={i} className={`pb-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 ${i === 1 ? 'text-right' : ''} ${i === 2 ? 'pl-4 w-36' : ''}`}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>{activeProjects.map(p => <ProjRow key={p.id} p={p} fmtS={fmtS} nav={navigate} />)}</tbody>
+                  </table>
+                </div>
+              </>
             ) : <p className="text-sm text-gray-400 text-center py-8">{t('db.projects.empty')}</p>}
           </Card>
         </div>
@@ -785,7 +814,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <MeteoWidget />
         <Card title={t('db.quickAccess')}>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {[
               { k: 'projets',    p: '/projets',    i: '📋' }, { k: 'planning',  p: '/planning',  i: '📅' },
               { k: 'budget',     p: '/budget',     i: '💰' }, { k: 'engins',    p: '/engins',    i: '🚜' },

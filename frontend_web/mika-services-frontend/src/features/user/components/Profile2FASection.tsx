@@ -200,7 +200,7 @@ export const Profile2FASection = () => {
           </p>
         </div>
       </div>
-      <div className={`${PROFILE_CARD_BODY_CLASS} max-w-[480px]`}>
+      <div className={`${PROFILE_CARD_BODY_CLASS} max-w-full sm:max-w-[480px]`}>
         {success && (
           <div className="flex items-start gap-2.5 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 text-sm font-medium" role="status">
             <CheckIcon /><span>{success}</span>
@@ -241,7 +241,7 @@ export const Profile2FASection = () => {
               <img
                 src={`data:image/png;base64,${setupData.qrImageBase64}`}
                 alt="QR code 2FA"
-                className="w-[168px] h-[168px] rounded-lg block"
+                className="w-[140px] h-[140px] sm:w-[168px] sm:h-[168px] rounded-lg block"
               />
             </div>
 

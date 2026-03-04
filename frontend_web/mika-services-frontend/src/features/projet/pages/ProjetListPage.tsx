@@ -405,8 +405,8 @@ export const ProjetListPage = () => {
         {/* Filtres par critères */}
         <div className="border-t border-gray-100 dark:border-gray-600 pt-4">
           <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">{t('list.filtersLabel')}</p>
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="min-w-[140px]">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-end gap-3">
+            <div className="min-w-0">
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{t('list.status')}</label>
               <select
                 value={filters.statut ?? ''}
@@ -419,7 +419,7 @@ export const ProjetListPage = () => {
                 ))}
               </select>
             </div>
-            <div className="min-w-[140px]">
+            <div className="min-w-0">
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{t('list.type')}</label>
               <select
                 value={filters.type ?? ''}
@@ -432,7 +432,7 @@ export const ProjetListPage = () => {
                 ))}
               </select>
             </div>
-            <div className="min-w-[180px]">
+            <div className="min-w-0">
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{t('list.client')}</label>
               <select
                 value={filters.clientId ?? ''}
@@ -445,7 +445,7 @@ export const ProjetListPage = () => {
                 ))}
               </select>
             </div>
-            <div className="min-w-[180px]">
+            <div className="min-w-0">
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{t('list.manager')}</label>
               <select
                 value={filters.responsableId ?? ''}

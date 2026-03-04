@@ -11,16 +11,9 @@ interface ModalProps {
   maxContentHeight?: string
 }
 
-/**
- * Overlay positionné strictement dans la zone de contenu (sans empiéter sur sidebar/header/footer).
- * Utilise les variables CSS définies par Layout ; sinon fallback sur toute la viewport.
- */
 const overlayStyle: React.CSSProperties = {
   position: 'fixed',
-  top: 'var(--layout-header-height, 0)',
-  left: 'var(--layout-sidebar-width, 0)',
-  right: 0,
-  bottom: 'var(--layout-footer-height, 0)',
+  inset: 0,
   zIndex: 50,
 }
 

@@ -6,7 +6,6 @@ import {
   fetchMessagesRecus,
   fetchMessagesEnvoyes,
   fetchMessagesNonLusCount,
-  fetchConversation,
   envoyerMessage,
   marquerMessageLu,
 } from "@/store/slices/communicationSlice";
@@ -470,7 +469,7 @@ interface ComposeProps {
   replyTo:User|null; users:User[]; usersLoading?:boolean; onRefreshUsers?:()=>void;
   t:(k:string,o?:Record<string,string|number>)=>string;
 }
-function Compose({open,onClose,onSend,replyTo,users:USERS,usersLoading,onRefreshUsers,t}:ComposeProps){
+function Compose({open,onClose,onSend,replyTo,users:USERS,usersLoading,onRefreshUsers:_onRefreshUsers,t}:ComposeProps){
   const[destId,setDestId]=useState("");
   const[sujet,setSujet]=useState("");
   const[contenu,setContenu]=useState("");

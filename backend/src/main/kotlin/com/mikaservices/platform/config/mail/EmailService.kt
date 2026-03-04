@@ -16,35 +16,15 @@ class EmailService(
     private val mailSender: JavaMailSender,
     private val restTemplate: RestTemplate,
     @Value("\${app.mail.from:noreply@mikaservices.com}") private val from: String,
-    @Value("\${app.mail.frontend-base-url:http://localhost:5173}") private val frontendBaseUrl: String,
     @Value("\${app.mail.brevo-api-key:}") private val brevoApiKey: String,
     @Value("\${app.mail.resend-api-key:}") private val resendApiKey: String
 ) {
     private val logger = LoggerFactory.getLogger(EmailService::class.java)
 
-    /**
-     * URL de base du frontend pour les liens dans les emails.
-     * En prod (Railway), si la config pointe vers localhost, on utilise FRONTEND_BASE_URL (env).
-     */
-    private val baseUrl: String = run {
-        val fromProp = frontendBaseUrl.trim()
-        val useEnv = fromProp.isBlank() || fromProp.lowercase().contains("localhost")
-        val effective = if (useEnv) {
-            System.getenv("FRONTEND_BASE_URL")?.trim()?.takeIf { it.isNotBlank() } ?: fromProp
-        } else fromProp
-        effective.removeSuffix("/").ifBlank { fromProp }
-    }
+    /** URL de l'application utilisée dans tous les liens des emails (boutons, logo). */
+    private val appBaseUrl: String = "https://mika-services.up.railway.app"
 
-    /** URL absolue pour les liens (Brevo exige un host). Si la config est un domaine sans schéma, on préfixe https://. */
-    private val baseUrlForLinks: String
-        get() = when {
-            baseUrl.isBlank() -> ""
-            baseUrl.startsWith("http://") || baseUrl.startsWith("https://") -> baseUrl
-            else -> "https://$baseUrl"
-        }
-
-    private fun linkOrPlaceholder(path: String, fallbackHref: String = "#"): String =
-        if (baseUrlForLinks.isNotBlank()) "$baseUrlForLinks$path" else fallbackHref
+    private fun link(path: String): String = "$appBaseUrl$path"
 
     private fun htmlEscape(s: String): String = s
         .replace("&", "&amp;")
@@ -54,13 +34,10 @@ class EmailService(
         .replace("'", "&#39;")
 
     private fun signatureHtml(): String {
-        val logoPart = if (baseUrlForLinks.isNotBlank()) {
-            val logoUrl = "$baseUrlForLinks/Logo_mika_services.png"
-            """<p style="margin-top: 0.5em;"><img src="$logoUrl" alt="MIKA Services" style="max-width: 200px; height: auto;" /></p>"""
-        } else ""
+        val logoUrl = "$appBaseUrl/Logo_mika_services.png"
         return """
             <p style="margin-top: 1.5em; color: #666; font-size: 0.95em;">—<br>L'équipe MIKA Services</p>
-            $logoPart
+            <p style="margin-top: 0.5em;"><img src="$logoUrl" alt="MIKA Services" style="max-width: 200px; height: auto;" /></p>
         """.trimIndent()
     }
 
@@ -69,8 +46,8 @@ class EmailService(
      * l'invite à le modifier à la première connexion et recommande l'activation de la 2FA.
      */
     fun sendWelcomeEmail(to: String, prenom: String, temporaryPassword: String) {
-        val loginLink = linkOrPlaceholder("/login")
-        val profileLink = linkOrPlaceholder("/profile")
+        val loginLink = link("/login")
+        val profileLink = link("/profile")
         val subject = "Bienvenue sur MIKA Services — Vos identifiants de connexion"
         val plainBody = """
             Bonjour $prenom,
@@ -109,7 +86,7 @@ class EmailService(
      * Contient un lien vers le frontend avec le token.
      */
     fun sendPasswordResetEmail(to: String, prenom: String, token: String) {
-        val resetLink = linkOrPlaceholder("/reset-password?token=$token")
+        val resetLink = link("/reset-password?token=$token")
         val subject = "MIKA Services — Réinitialisation de votre mot de passe"
         val plainBody = """
             Bonjour $prenom,
@@ -247,7 +224,7 @@ class EmailService(
      * N'échoue pas l'appelant : les erreurs sont loggées.
      */
     fun sendInAppNotificationEmail(to: String, prenom: String, titre: String, contenu: String?, lien: String?) {
-        val effectiveLink = lien?.takeIf { it.isNotBlank() } ?: linkOrPlaceholder("/notifications")
+        val effectiveLink = lien?.takeIf { it.isNotBlank() } ?: link("/notifications")
         val subject = "MIKA Services — Notification : ${titre.take(60)}${if (titre.length > 60) "…" else ""}"
         val plainBody = """
             Bonjour $prenom,
@@ -284,7 +261,7 @@ class EmailService(
      */
     fun sendNewMessageEmail(to: String, prenom: String, expediteurNom: String, sujet: String?, contenuExtrait: String? = null) {
         val sujetSafe = sujet.orEmpty()
-        val messagerieLink = linkOrPlaceholder("/messagerie")
+        val messagerieLink = link("/messagerie")
         val subject = "MIKA Services — Nouveau message : ${sujetSafe.take(50)}${if (sujetSafe.length > 50) "…" else ""}"
         val extract = contenuExtrait?.take(300)?.lines()?.joinToString(" ") ?: ""
         val plainBody = """
@@ -320,8 +297,8 @@ class EmailService(
      * N'échoue pas l'appelant : les erreurs sont loggées.
      */
     fun sendDailyDigestEmail(to: String, prenom: String, unreadNotificationsCount: Long, unreadMessagesCount: Long) {
-        val appLink = linkOrPlaceholder("/notifications")
-        val messagerieLink = linkOrPlaceholder("/messagerie")
+        val appLink = link("/notifications")
+        val messagerieLink = link("/messagerie")
         val subject = "MIKA Services — Résumé du jour"
         val plainBody = """
             Bonjour $prenom,
@@ -359,8 +336,8 @@ class EmailService(
      * N'échoue pas l'appelant : les erreurs sont loggées.
      */
     fun sendWeeklyDigestEmail(to: String, prenom: String, unreadNotificationsCount: Long, unreadMessagesCount: Long) {
-        val appLink = linkOrPlaceholder("/notifications")
-        val messagerieLink = linkOrPlaceholder("/messagerie")
+        val appLink = link("/notifications")
+        val messagerieLink = link("/messagerie")
         val subject = "MIKA Services — Résumé de la semaine"
         val plainBody = """
             Bonjour $prenom,

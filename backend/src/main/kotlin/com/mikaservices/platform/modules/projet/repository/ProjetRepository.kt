@@ -5,6 +5,7 @@ import com.mikaservices.platform.common.enums.TypeProjet
 import com.mikaservices.platform.modules.projet.entity.Projet
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor

@@ -7,7 +7,7 @@ import type {
   Client, ClientCreateRequest, ClientUpdateRequest
 } from '@/types/projet'
 import type { PageResponse } from '@/types/projet'
-import { getProjetsCache, getProjetsCacheIfValid, setProjetsCache, CACHE_DURATION_MS } from '@/utils/offlineCache'
+import { getProjetsCache, setProjetsCache, clearProjetsCache } from '@/utils/offlineCache'
 import { isNetworkError } from '@/utils/errorHandler'
 
 /** Normalise le champ types pour l’affichage liste (API peut renvoyer type et/ou types). */
@@ -55,28 +55,21 @@ export const fetchProjets = createAsyncThunk(
   ) => {
     const state = getState() as RootState
     const offlineMode = state.ui.offlineModeEnabled
-    const cacheEnabled = state.ui.cacheEnabled
-    const cacheDuration = state.ui.cacheDuration
     const offline = typeof navigator !== 'undefined' && !navigator.onLine
     if (offline && offlineMode) {
       const cached = getProjetsCache()
       if (cached) return cached as PageResponse<ProjetSummary>
       return rejectWithValue('offline_no_cache')
     }
-    if (!offline && cacheEnabled) {
-      const maxAgeMs = CACHE_DURATION_MS[cacheDuration as keyof typeof CACHE_DURATION_MS]
-      const cached = getProjetsCacheIfValid(maxAgeMs)
-      if (cached) return cached as PageResponse<ProjetSummary>
-    }
     const { page = 0, size = 20, sortBy, sortDir, ...filters } = arg
     const hasFilters = filters.statut != null || filters.type != null || filters.clientId != null || filters.responsableId != null
     const sort = sortBy && sortDir ? { sortBy, sortDir } : undefined
     try {
       const result = await projetApi.findAll(page, size, hasFilters ? filters : undefined, sort)
-      if (offlineMode || cacheEnabled) setProjetsCache(result)
+      if (offlineMode) setProjetsCache(result)
       return result
     } catch (e) {
-      if (offlineMode && isNetworkError(e)) {
+      if ((offlineMode || offline) && isNetworkError(e)) {
         const cached = getProjetsCache()
         if (cached) return cached as PageResponse<ProjetSummary>
       }
@@ -100,28 +93,21 @@ export const searchProjets = createAsyncThunk(
   ) => {
     const state = getState() as RootState
     const offlineMode = state.ui.offlineModeEnabled
-    const cacheEnabled = state.ui.cacheEnabled
-    const cacheDuration = state.ui.cacheDuration
     const offline = typeof navigator !== 'undefined' && !navigator.onLine
     if (offline && offlineMode) {
       const cached = getProjetsCache()
       if (cached) return cached as PageResponse<ProjetSummary>
       return rejectWithValue('offline_no_cache')
     }
-    if (!offline && cacheEnabled) {
-      const maxAgeMs = CACHE_DURATION_MS[cacheDuration as keyof typeof CACHE_DURATION_MS]
-      const cached = getProjetsCacheIfValid(maxAgeMs)
-      if (cached) return cached as PageResponse<ProjetSummary>
-    }
     const { q, page = 0, size = 20, sortBy, sortDir, ...filters } = arg
     const hasFilters = filters.statut != null || filters.type != null || filters.clientId != null || filters.responsableId != null
     const sort = sortBy && sortDir ? { sortBy, sortDir } : undefined
     try {
       const result = await projetApi.search(q, page, size, hasFilters ? filters : undefined, sort)
-      if (offlineMode || cacheEnabled) setProjetsCache(result)
+      if (offlineMode) setProjetsCache(result)
       return result
     } catch (e) {
-      if (offlineMode && isNetworkError(e)) {
+      if ((offlineMode || offline) && isNetworkError(e)) {
         const cached = getProjetsCache()
         if (cached) return cached as PageResponse<ProjetSummary>
       }
@@ -133,14 +119,18 @@ export const searchProjets = createAsyncThunk(
 export const createProjet = createAsyncThunk(
   'projet/create',
   async (data: ProjetCreateRequest) => {
-    return await projetApi.create(data)
+    const result = await projetApi.create(data)
+    clearProjetsCache()
+    return result
   }
 )
 
 export const updateProjet = createAsyncThunk(
   'projet/update',
   async ({ id, data }: { id: number; data: ProjetUpdateRequest }) => {
-    return await projetApi.update(id, data)
+    const result = await projetApi.update(id, data)
+    clearProjetsCache()
+    return result
   }
 )
 
@@ -148,6 +138,7 @@ export const deleteProjet = createAsyncThunk(
   'projet/delete',
   async (id: number) => {
     await projetApi.delete(id)
+    clearProjetsCache()
     return id
   }
 )

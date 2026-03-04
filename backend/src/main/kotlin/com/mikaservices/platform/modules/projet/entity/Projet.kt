@@ -37,10 +37,11 @@ class Projet(
     var type: TypeProjet,
 
     /** Types multiples (ex. voirie + ouvrage d'art). Le champ type ci‑dessus garde le premier pour index/filtre. */
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "projet_types", joinColumns = [JoinColumn(name = "projet_id")])
     @Enumerated(EnumType.STRING)
     @Column(name = "type_value", length = 30)
+    @org.hibernate.annotations.BatchSize(size = 50)
     var types: MutableSet<TypeProjet> = mutableSetOf(),
 
     @Column(name = "type_personnalise", length = 150)

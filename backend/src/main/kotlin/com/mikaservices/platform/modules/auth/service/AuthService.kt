@@ -106,16 +106,12 @@ class AuthService(
         
         val response = createSessionAndAuthResponse(user, httpRequest, request.rememberMe)
         if (notifyOnLogin && user.alertNewLoginEnabled) {
-            try {
-                emailService.sendLoginNotification(
-                    user.email,
-                    user.prenom,
-                    httpRequest.remoteAddr,
-                    httpRequest.getHeader("User-Agent")
-                )
-            } catch (e: Exception) {
-                logger.warn("Envoi notification nouvelle connexion échoué: ${e.message}")
-            }
+            emailService.sendLoginNotificationAsync(
+                user.email,
+                user.prenom,
+                httpRequest.remoteAddr,
+                httpRequest.getHeader("User-Agent")
+            )
         }
         return LoginResult.Success(response)
     }
@@ -134,26 +130,23 @@ class AuthService(
         logger.info("2FA validé pour: ${user.email}")
         val response = createSessionAndAuthResponse(user, httpRequest, request.rememberMe)
         if (notifyOnLogin && user.alertNewLoginEnabled) {
-            try {
-                emailService.sendLoginNotification(
-                    user.email,
-                    user.prenom,
-                    httpRequest.remoteAddr,
-                    httpRequest.getHeader("User-Agent")
-                )
-            } catch (e: Exception) {
-                logger.warn("Envoi notification nouvelle connexion échoué: ${e.message}")
-            }
+            emailService.sendLoginNotificationAsync(
+                user.email,
+                user.prenom,
+                httpRequest.remoteAddr,
+                httpRequest.getHeader("User-Agent")
+            )
         }
         return response
     }
 
     private fun createSessionAndAuthResponse(user: User, httpRequest: HttpServletRequest, rememberMe: Boolean = false): AuthResponse {
         val roles = user.roles.map { it.code }
-        val sessionDurationMs = when (user.defaultSessionDuration) {
-            "LONG" -> SecurityConstants.LONG_SESSION_MS
-            "SHORT" -> SecurityConstants.SHORT_SESSION_MS
-            else -> if (rememberMe) SecurityConstants.LONG_SESSION_MS else SecurityConstants.SHORT_SESSION_MS
+        val sessionDurationMs = when {
+            rememberMe -> SecurityConstants.LONG_SESSION_MS
+            user.defaultSessionDuration == "LONG" -> SecurityConstants.LONG_SESSION_MS
+            user.defaultSessionDuration == "SHORT" -> SecurityConstants.SHORT_SESSION_MS
+            else -> SecurityConstants.SHORT_SESSION_MS
         }
         val accessToken = jwtTokenProvider.generateToken(user.email, roles, SecurityConstants.DEFAULT_JWT_EXPIRATION_MS)
         val refreshToken = jwtTokenProvider.generateRefreshToken(user.email, sessionDurationMs)

@@ -481,4 +481,13 @@ class EmailService(
             logger.error("Échec envoi email de bienvenue (async) à $to: ${e.javaClass.simpleName} - ${e.message}", e)
         }
     }
+
+    @Async
+    fun sendLoginNotificationAsync(to: String, prenom: String, ip: String?, userAgent: String?) {
+        try {
+            sendLoginNotification(to, prenom, ip, userAgent)
+        } catch (e: Exception) {
+            logger.warn("Envoi notification login (async) échoué vers $to: ${e.message}")
+        }
+    }
 }

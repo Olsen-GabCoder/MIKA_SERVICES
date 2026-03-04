@@ -80,7 +80,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     dispatch(fetchGlobalDashboard())
-    dispatch(fetchProjets({ page: 0, size: 100 }))
+    dispatch(fetchProjets({ page: 0, size: 10 }))
     if (user?.id) {
       dispatch(fetchNotificationsNonLuesCount(user.id))
       dispatch(fetchMessagesNonLusCount(user.id))

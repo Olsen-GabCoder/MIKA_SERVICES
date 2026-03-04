@@ -119,6 +119,22 @@ export function getUsersCacheIfValid(maxAgeMs: number): CachedPage<unknown> | nu
   }
 }
 
+/** Invalide le cache projets (à appeler après create / update / delete). */
+export function clearProjetsCache(): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.removeItem(PROJETS_CACHE_KEY)
+  } catch { /* ignore */ }
+}
+
+/** Invalide le cache users (à appeler après create / update / delete). */
+export function clearUsersCache(): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.removeItem(USERS_CACHE_KEY)
+  } catch { /* ignore */ }
+}
+
 /** Durées en ms pour le cache « Réseau » (5 min, 30 min, 1 h). */
 export const CACHE_DURATION_MS = {
   short: 5 * 60 * 1000,

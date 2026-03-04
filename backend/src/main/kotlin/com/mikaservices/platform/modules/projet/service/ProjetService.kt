@@ -212,6 +212,16 @@ class ProjetService(
     ): Specification<Projet> {
         return Specification { root, query, cb ->
             query.distinct(true)
+
+            val isCountQuery = query.resultType == Long::class.java
+                    || query.resultType == Long::class.javaObjectType
+                    || query.resultType == java.lang.Long::class.java
+
+            if (!isCountQuery) {
+                root.fetch<Projet, Any>("client", JoinType.LEFT)
+                root.fetch<Projet, Any>("responsableProjet", JoinType.LEFT)
+            }
+
             val predicates = mutableListOf(cb.equal(root.get<Boolean>("actif"), true))
             if (!search.isNullOrBlank()) {
                 val pattern = "%${search.lowercase()}%"

@@ -145,8 +145,8 @@ export const ProfileHeader = ({ user }: ProfileHeaderProps) => {
             )}
           </div>
 
-          <dl className="mt-4 flex flex-wrap border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
-            <div className="flex flex-col gap-0.5 px-4 py-2.5 flex-1 min-w-[100px] border-r border-gray-200 dark:border-gray-600 last:border-r-0">
+          <dl className="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+            <div className="flex flex-col gap-0.5 px-3 sm:px-4 py-2.5 flex-1 min-w-0 border-r border-b sm:border-b-0 border-gray-200 dark:border-gray-600 last:border-r-0">
               <dt className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 {t('profile.matriculeLabel')}
               </dt>
@@ -155,7 +155,7 @@ export const ProfileHeader = ({ user }: ProfileHeaderProps) => {
               </dd>
             </div>
             {yearDebut != null && (
-              <div className="flex flex-col gap-0.5 px-4 py-2.5 flex-1 min-w-[100px] border-r border-gray-200 dark:border-gray-600 last:border-r-0">
+              <div className="flex flex-col gap-0.5 px-3 sm:px-4 py-2.5 flex-1 min-w-0 border-r border-b sm:border-b-0 border-gray-200 dark:border-gray-600 last:border-r-0">
                 <dt className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   {t('profile.yearDebutLabel')}
                 </dt>

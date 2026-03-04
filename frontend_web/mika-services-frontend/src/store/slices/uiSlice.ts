@@ -120,6 +120,7 @@ export type DefaultHomePath = '/' | '/projets' | '/planning' | '/messagerie' | '
 
 interface UiState {
   sidebarCollapsed: boolean
+  mobileMenuOpen: boolean
   theme: Theme
   /** Page d'accueil après connexion (quand on arrive depuis /login sans deep link). */
   defaultHomePath: string
@@ -157,6 +158,7 @@ interface UiState {
 
 const initialState: UiState = {
   sidebarCollapsed: getStoredSidebarCollapsed(),
+  mobileMenuOpen: false,
   theme: getStoredTheme(),
   defaultHomePath: getStoredDefaultHomePath(),
   itemsPerPage: getStoredItemsPerPage(),
@@ -202,6 +204,12 @@ const uiSlice = createSlice({
       if (typeof window !== 'undefined') {
         localStorage.setItem(SIDEBAR_KEY, String(state.sidebarCollapsed))
       }
+    },
+    toggleMobileMenu(state) {
+      state.mobileMenuOpen = !state.mobileMenuOpen
+    },
+    closeMobileMenu(state) {
+      state.mobileMenuOpen = false
     },
     toggleTheme(state) {
       state.theme = state.theme === 'light' ? 'dark' : 'light'
@@ -353,5 +361,5 @@ const uiSlice = createSlice({
   },
 })
 
-export const { setSidebarCollapsed, setTheme, toggleSidebar, toggleTheme, setDefaultHomePath, setItemsPerPage, setAutoRefreshListsEnabled, setOfflineModeEnabled, setHighContrastText, setHighContrastCards, setCacheEnabled, setCacheDuration, setPreloadDataEnabled, setOfflineQueueEnabled, setConnectionQuality, setLocale, setFontSize, setFontFamily, setDensity, setDateFormat, setTimeFormat, setNumberFormat, setTimezone, setCardSize, setAnimationPreference } = uiSlice.actions
+export const { setSidebarCollapsed, setTheme, toggleSidebar, toggleTheme, toggleMobileMenu, closeMobileMenu, setDefaultHomePath, setItemsPerPage, setAutoRefreshListsEnabled, setOfflineModeEnabled, setHighContrastText, setHighContrastCards, setCacheEnabled, setCacheDuration, setPreloadDataEnabled, setOfflineQueueEnabled, setConnectionQuality, setLocale, setFontSize, setFontFamily, setDensity, setDateFormat, setTimeFormat, setNumberFormat, setTimezone, setCardSize, setAnimationPreference } = uiSlice.actions
 export default uiSlice.reducer

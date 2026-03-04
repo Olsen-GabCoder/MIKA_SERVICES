@@ -64,7 +64,7 @@ export const OtpInput = ({ length = 6, value, onChange, disabled = false, autoFo
   }, [length, onChange, focusInput])
 
   return (
-    <div className="flex items-center justify-center gap-2.5" onPaste={handlePaste}>
+    <div className="flex items-center justify-center gap-1.5 sm:gap-2.5" onPaste={handlePaste}>
       {Array.from({ length }).map((_, idx) => (
         <input
           key={idx}
@@ -80,7 +80,7 @@ export const OtpInput = ({ length = 6, value, onChange, disabled = false, autoFo
           onFocus={() => setFocused(idx)}
           onBlur={() => setFocused(-1)}
           className={`
-            w-12 h-14 text-center text-xl font-bold rounded-xl border-2 outline-none
+            w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold rounded-lg sm:rounded-xl border-2 outline-none
             transition-all duration-150
             ${disabled ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'}
             ${error

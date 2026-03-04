@@ -136,7 +136,7 @@ export const EquipeDetailPage = () => {
 
             {showAddMembre && (
               <form onSubmit={handleAddMembre} className="mb-4 p-4 bg-gray-50 rounded-lg flex flex-wrap items-end gap-3">
-                <div className="min-w-[200px]">
+                <div className="min-w-0 w-full sm:min-w-[200px] sm:w-auto">
                   <label className="block text-xs font-medium text-gray-600 mb-1">{t('detail.user')}</label>
                   <select
                     value={addUserId}
@@ -152,7 +152,7 @@ export const EquipeDetailPage = () => {
                     ))}
                   </select>
                 </div>
-                <div className="min-w-[160px]">
+                <div className="min-w-0 w-full sm:min-w-[160px] sm:w-auto">
                   <label className="block text-xs font-medium text-gray-600 mb-1">{t('detail.role')}</label>
                   <select
                     value={addRole}

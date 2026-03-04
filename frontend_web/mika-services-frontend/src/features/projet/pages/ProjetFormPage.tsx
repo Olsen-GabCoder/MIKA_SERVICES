@@ -921,7 +921,7 @@ export const ProjetFormPage = () => {
                 onChange={handleClientSelect}
                 disabled={readOnly}
                 required
-                className="w-full min-w-[200px] px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 dark:disabled:bg-gray-600 cursor-pointer dark:text-gray-100"
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 dark:disabled:bg-gray-600 cursor-pointer dark:text-gray-100"
               >
                 <option value="">{t('form.selectClient')}</option>
                 {clients.map((c) => (
@@ -1362,7 +1362,7 @@ export const ProjetFormPage = () => {
             <p className="text-sm text-gray-500 mb-4">{t('form.pointsBloquantsHint')}</p>
             <div className="space-y-4">
               <div className="flex flex-wrap gap-3 items-end">
-                <div className="flex-1 min-w-[200px]">
+                <div className="flex-1 min-w-0 sm:min-w-[200px]">
                   <label className="block text-xs font-medium text-gray-500 mb-1">{t('form.titre')}</label>
                   <select
                     id="pb-titre-select"
@@ -1569,7 +1569,7 @@ export const ProjetFormPage = () => {
                     ))}
                   </select>
                 </div>
-                <div className="flex-1 min-w-[200px]">
+                <div className="flex-1 min-w-0 sm:min-w-[200px]">
                   <label htmlFor={prevSelectId} className="block text-xs font-medium text-gray-500 mb-1">{t('form.tacheARealiser')}</label>
                   <div className="flex gap-2">
                     <select id={prevSelectId} className="flex-1 px-3 py-2 border rounded-lg text-sm">

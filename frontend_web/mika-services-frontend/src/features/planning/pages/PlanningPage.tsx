@@ -202,7 +202,7 @@ export default function PlanningPage() {
                 <select
                   value={selectedProjetId ?? ''}
                   onChange={(e) => setSelectedProjetId(e.target.value ? Number(e.target.value) : null)}
-                  className="min-w-[280px] px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-primary transition"
+                  className="w-full sm:min-w-[280px] px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-primary transition"
                 >
                   <option value="">{t('chooseProject')}</option>
                   {mesProjets.map((p) => (
@@ -374,7 +374,7 @@ export default function PlanningPage() {
                             <select
                               value={tache.statut}
                               onChange={(e) => handleStatusChange(tache, e.target.value as StatutTache)}
-                              className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-primary min-w-[140px]"
+                              className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-primary w-full sm:min-w-[140px]"
                             >
                               {Object.values(StatutTache).map((s) => (
                                 <option key={s} value={s}>{t(`statut.${s}`)}</option>

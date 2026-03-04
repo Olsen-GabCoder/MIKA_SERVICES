@@ -714,76 +714,54 @@ export const ProjetListPage = () => {
             {t('list.avancementHint')}
           </p>
 
-          {/* Pagination améliorée */}
-          {totalPages > 0 && (
-            <div className="flex flex-col md:flex-row items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-600 gap-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">{paginationRange}</span>
-                  {totalPages > 1 && (
-                    <> · {t('list.pageInfo', { current: currentPage + 1, total: totalPages })}</>
-                  )}
-                </p>
-                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <span>{t('list.pagination.show')}</span>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => {
-                      const newSize = Number(e.target.value)
-                      dispatch(setItemsPerPage(newSize))
-                      const params = { page: 0, size: newSize, ...filterParams(), ...sortParams() }
-                      if (searchQuery.trim()) dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
-                      else dispatch(fetchProjets(params))
-                    }}
-                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-                  >
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                  </select>
-                  <span>{t('list.pagination.perPage')}</span>
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePageChange(0)}
-                  disabled={currentPage === 0}
-                  className="px-3 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors dark:bg-gray-700 dark:text-gray-100"
-                  title={t('list.pagination.firstPage')}
+          {/* Pagination */}
+          <div className="flex flex-wrap items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-600 gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                {paginationRange}
+              </span>
+              <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <span>{t('list.pagination.show')}</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    const newSize = Number(e.target.value)
+                    dispatch(setItemsPerPage(newSize))
+                    const params = { page: 0, size: newSize, ...filterParams(), ...sortParams() }
+                    if (searchQuery.trim()) dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
+                    else dispatch(fetchProjets(params))
+                  }}
+                  className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 0}
-                  className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors dark:bg-gray-700 dark:text-gray-100"
-                >
-                  {t('list.pagination.prev')}
-                </button>
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage >= totalPages - 1}
-                  className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors dark:bg-gray-700 dark:text-gray-100"
-                >
-                  {t('list.pagination.next')}
-                </button>
-                <button
-                  onClick={() => handlePageChange(totalPages - 1)}
-                  disabled={currentPage >= totalPages - 1}
-                  className="px-3 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors dark:bg-gray-700 dark:text-gray-100"
-                  title={t('list.pagination.lastPage')}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span>{t('list.pagination.perPage')}</span>
+              </label>
             </div>
-          )}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 0}
+                className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors dark:bg-gray-700 dark:text-gray-100"
+              >
+                {t('list.pagination.prev')}
+              </button>
+              <span className="text-sm text-gray-700 dark:text-gray-300 px-2">
+                {t('list.pageInfo', { current: currentPage + 1, total: totalPages || 1 })}
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= (totalPages || 1) - 1}
+                className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors dark:bg-gray-700 dark:text-gray-100"
+              >
+                {t('list.pagination.next')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
       </div>

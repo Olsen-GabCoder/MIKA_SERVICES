@@ -30,6 +30,18 @@ apiClient.interceptors.request.use(
   }
 )
 
+// Intercepteur pour normaliser les réponses paginées Spring Data (VIA_DTO)
+// VIA_DTO sérialise { content: [...], page: { size, number, totalElements, totalPages } }
+// Le frontend attend le format plat { content: [...], size, number, totalElements, totalPages }
+apiClient.interceptors.response.use((response) => {
+  const data = response.data
+  if (data && Array.isArray(data.content) && data.page && typeof data.page === 'object') {
+    const { page, ...rest } = data
+    response.data = { ...rest, ...page }
+  }
+  return response
+})
+
 // Intercepteur pour gérer les erreurs globales et le refresh token
 apiClient.interceptors.response.use(
   (response) => response,

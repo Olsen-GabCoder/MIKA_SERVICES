@@ -58,7 +58,7 @@ app:
     api-key: ${METEO_API_KEY:}
     default-city: ${METEO_DEFAULT_CITY:Douala}
   mail:
-    frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+    frontend-base-url: ${FRONTEND_BASE_URL:https://mika-services.up.railway.app}
     from: ${MAIL_FROM:noreply@mikaservices.com}
     # Priorité : Brevo > Resend > SMTP (toutes API en HTTPS, pas de blocage Railway)
     brevo-api-key: ${BREVO_API_KEY:}

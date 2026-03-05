@@ -12,7 +12,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
   RadialBarChart, RadialBar,
-  ComposedChart, Line, Area,
+  ComposedChart, Area,
 } from 'recharts'
 import type { ProjetSummary } from '@/types/projet'
 import type { ProjetReport, WeekSummary } from '@/types/reporting'

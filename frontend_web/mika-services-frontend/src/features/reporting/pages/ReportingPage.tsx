@@ -120,7 +120,7 @@ function ChartCard({
 
 export default function ReportingPage() {
   const { t } = useTranslation('reporting')
-  const { formatMontant, formatShort } = useFormatNumber()
+  const { formatMontant } = useFormatNumber()
   const dispatch = useAppDispatch()
   const { dashboard, projetReport, loading, error } = useAppSelector((state) => state.reporting)
   const projets = useAppSelector((state) => state.projet.projets)

@@ -2,6 +2,8 @@ import apiClient from './axios'
 import type { AuthResponse, Login2FAPendingResponse } from '@/types'
 import { API_ENDPOINTS } from '@/constants/api'
 import { setTokenStorageMode, setAccessToken, getAccessToken, removeAccessToken } from '@/utils/tokenStorage'
+import { storeOfflineCredentials, verifyOfflineCredentials, getOfflineToken, clearOfflineCredentials } from '@/utils/offlineAuth'
+import { isNetworkError } from '@/utils/errorHandler'
 
 export interface LoginRequest {
   email: string
@@ -39,14 +41,33 @@ export interface Disable2FARequest {
 
 export const authApi = {
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, credentials)
-    const data = response.data
-    // Si succès direct (sans 2FA), appliquer le mode de stockage (logout on close) puis stocker le token
-    if (!isLogin2FAPending(data) && data.accessToken) {
-      setTokenStorageMode(data.user?.logoutOnBrowserClose ?? false)
-      setAccessToken(data.accessToken)
+    try {
+      const response = await apiClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, credentials)
+      const data = response.data
+      if (!isLogin2FAPending(data) && data.accessToken) {
+        setTokenStorageMode(data.user?.logoutOnBrowserClose ?? false)
+        setAccessToken(data.accessToken)
+        await storeOfflineCredentials(credentials.email, credentials.password, data.user)
+      }
+      return data
+    } catch (err) {
+      if (isNetworkError(err)) {
+        const cachedUser = await verifyOfflineCredentials(credentials.email, credentials.password)
+        if (cachedUser) {
+          const offlineToken = getOfflineToken()
+          setAccessToken(offlineToken)
+          return {
+            accessToken: offlineToken,
+            refreshToken: offlineToken,
+            tokenType: 'Bearer',
+            expiresIn: 86400,
+            sessionExpiresIn: 86400,
+            user: cachedUser,
+          } as AuthResponse
+        }
+      }
+      throw err
     }
-    return data
   },
 
   verify2FA: async (tempToken: string, code: string, rememberMe: boolean = false): Promise<AuthResponse> => {
@@ -74,6 +95,20 @@ export const authApi = {
   },
 
   refreshToken: async (): Promise<AuthResponse> => {
+    if (getAccessToken() === getOfflineToken()) {
+      const raw = localStorage.getItem('mika-offline-auth')
+      if (raw) {
+        const stored = JSON.parse(raw)
+        return {
+          accessToken: getOfflineToken(),
+          refreshToken: getOfflineToken(),
+          tokenType: 'Bearer',
+          expiresIn: 86400,
+          sessionExpiresIn: 86400,
+          user: stored.user,
+        } as AuthResponse
+      }
+    }
     const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.REFRESH, {})
     if (response.data.accessToken) {
       setTokenStorageMode(response.data.user?.logoutOnBrowserClose ?? false)
@@ -84,16 +119,12 @@ export const authApi = {
 
   logout: async (): Promise<void> => {
     const token = getAccessToken()
-    if (token) {
+    if (token && token !== getOfflineToken()) {
       try {
         await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT, {}, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         })
-      } catch (error) {
-        console.error('Erreur lors de la déconnexion:', error)
-      }
+      } catch { /* ignore en hors ligne */ }
     }
     removeAccessToken()
   },

@@ -33,7 +33,7 @@ function App() {
 
   usePageTracking(isAuthenticated && !!user)
 
-  // Au chargement : si on a un token mais pas l'objet user, restaurer l'utilisateur via /users/me
+  // Au chargement : si on a un token mais pas l'objet user, restaurer via /users/me ou cache hors ligne
   useEffect(() => {
     if (location.pathname === '/login' || location.pathname.startsWith('/forgot-password') || location.pathname.startsWith('/reset-password')) return
     if (!isAuthenticated || user) return
@@ -45,7 +45,10 @@ function App() {
         setTokenStorageMode(result.payload.logoutOnBrowserClose ?? false)
       }
       if (fetchUserFromToken.rejected.match(result)) {
-        navigate('/login', { replace: true })
+        const offline = typeof navigator !== 'undefined' && !navigator.onLine
+        if (!offline) {
+          navigate('/login', { replace: true })
+        }
       }
     })
   }, [dispatch, isAuthenticated, user, location.pathname, navigate])

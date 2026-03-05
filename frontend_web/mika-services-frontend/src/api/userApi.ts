@@ -5,11 +5,43 @@ import type { User } from '@/types'
 export interface AuditLogEntry {
   id: number
   userId: number | null
+  userName: string | null
   action: string
   module: string
   details: string | null
   ipAddress: string | null
   createdAt: string
+}
+
+export interface UserActivitySummary {
+  userId: number
+  userName: string
+  firstLogin: string | null
+  lastLogin: string | null
+  lastPasswordChange: string | null
+  totalLogins: number
+  totalPageViews: number
+  totalActions: number
+  actionBreakdown: Record<string, number>
+}
+
+export interface AuditFilterOptions {
+  modules: string[]
+  actions: string[]
+}
+
+export interface GlobalAuditStats {
+  eventsToday: number
+  eventsYesterday: number
+  loginsToday: number
+  logoutsToday: number
+  uniqueUsersToday: number
+  pageViewsToday: number
+  securityEventsToday: number
+  actionBreakdown: Record<string, number>
+  topPages: { label: string; count: number }[]
+  topUsers: { userId: number; userName: string; count: number }[]
+  recentOnlineUsers: { userId: number; userName: string; lastSeen: string }[]
 }
 
 export interface UserAffectation {
@@ -269,6 +301,44 @@ export const userApi = {
 
   revokeSession: async (sessionId: number): Promise<void> => {
     await apiClient.delete(`/users/me/sessions/${sessionId}`)
+  },
+}
+
+export const auditApi = {
+  trackPageView: async (page: string): Promise<void> => {
+    try {
+      await apiClient.post(API_ENDPOINTS.AUDIT.PAGE_VIEW, { page })
+    } catch {
+      // silently ignore tracking errors
+    }
+  },
+
+  getGlobalLogs: async (params: {
+    userId?: number
+    module?: string
+    action?: string
+    startDate?: string
+    endDate?: string
+    page?: number
+    size?: number
+  } = {}): Promise<PaginatedResponse<AuditLogEntry>> => {
+    const response = await apiClient.get<PaginatedResponse<AuditLogEntry>>(API_ENDPOINTS.AUDIT.GLOBAL, { params })
+    return response.data
+  },
+
+  getUserSummary: async (userId: number): Promise<UserActivitySummary> => {
+    const response = await apiClient.get<UserActivitySummary>(API_ENDPOINTS.AUDIT.USER_SUMMARY(userId))
+    return response.data
+  },
+
+  getFilterOptions: async (): Promise<AuditFilterOptions> => {
+    const response = await apiClient.get<AuditFilterOptions>(API_ENDPOINTS.AUDIT.FILTERS)
+    return response.data
+  },
+
+  getGlobalStats: async (): Promise<GlobalAuditStats> => {
+    const response = await apiClient.get<GlobalAuditStats>(API_ENDPOINTS.AUDIT.STATS)
+    return response.data
   },
 }
 

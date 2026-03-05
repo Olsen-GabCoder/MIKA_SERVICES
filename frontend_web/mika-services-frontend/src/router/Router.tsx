@@ -31,6 +31,7 @@ const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPag
 const ReunionHebdoListPage = lazy(() => import('@/features/reunionhebdo/pages/ReunionHebdoListPage').then(m => ({ default: m.ReunionHebdoListPage })))
 const ReunionHebdoFormPage = lazy(() => import('@/features/reunionhebdo/pages/ReunionHebdoFormPage').then(m => ({ default: m.ReunionHebdoFormPage })))
 const ReunionHebdoPVPage = lazy(() => import('@/features/reunionhebdo/pages/ReunionHebdoPVPage').then(m => ({ default: m.ReunionHebdoPVPage })))
+const ActivityTrackingPage = lazy(() => import('@/features/user/pages/ActivityTrackingPage').then(m => ({ default: m.ActivityTrackingPage })))
 const NotFoundPage = lazy(() => import('@/features/errors/pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })))
 const ReportingPage = lazy(() => import('@/features/reporting/pages/ReportingPage'))
 
@@ -188,6 +189,10 @@ const router = createBrowserRouter([
       {
         path: 'fournisseurs',
         element: <ProtectedRoute><L><FournisseurPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'suivi-activite',
+        element: <ProtectedRoute requireAdmin><L><ActivityTrackingPage /></L></ProtectedRoute>,
       },
       {
         path: '*',

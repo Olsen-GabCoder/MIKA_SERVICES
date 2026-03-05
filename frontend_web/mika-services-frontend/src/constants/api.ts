@@ -134,6 +134,13 @@ export const API_ENDPOINTS = {
     POINTS_PROJET: (reunionId: number) => `/reunions-hebdo/${reunionId}/points-projet`,
     POINT_PROJET: (reunionId: number, pointId: number) => `/reunions-hebdo/${reunionId}/points-projet/${pointId}`,
   },
+  AUDIT: {
+    PAGE_VIEW: '/audit/page-view',
+    GLOBAL: '/audit/global',
+    STATS: '/audit/stats',
+    USER_SUMMARY: (userId: number) => `/audit/user/${userId}/summary`,
+    FILTERS: '/audit/filters',
+  },
   QUALITE: {
     CONTROLES: '/qualite/controles',
     CONTROLE_BY_ID: (id: number) => `/qualite/controles/${id}`,

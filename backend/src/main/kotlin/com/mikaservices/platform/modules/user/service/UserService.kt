@@ -270,6 +270,7 @@ class UserService(
         val user = userRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Utilisateur introuvable avec l'ID: $id") }
         val currentUser = getCurrentUserEntityOrNull()
+        val wasActive = user.actif
         
         // Protection : un utilisateur ne peut pas se désactiver lui-même
         if (currentUser != null && currentUser.id == user.id && request.actif == false) {
@@ -334,6 +335,11 @@ class UserService(
         user.updatedBy = currentUsername
         
         val savedUser = userRepository.save(user)
+
+        if (request.actif != null && request.actif != wasActive) {
+            val action = if (request.actif == true) "ACTIVATE" else "DEACTIVATE"
+            auditLogService.log(savedUser, "USER", action, "Compte ${if (request.actif == true) "activé" else "désactivé"}: ${savedUser.email}")
+        }
         auditLogService.log(savedUser, "USER", "UPDATE", "Utilisateur mis à jour: ${savedUser.email}")
         logger.info("Utilisateur mis à jour avec succès: ${savedUser.email}")
 
@@ -556,6 +562,7 @@ class UserService(
             AuditLogResponse(
                 id = log.id!!,
                 userId = log.user?.id,
+                userName = log.user?.let { "${it.prenom} ${it.nom}" },
                 action = log.action,
                 module = log.module,
                 details = log.details,

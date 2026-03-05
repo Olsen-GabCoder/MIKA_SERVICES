@@ -199,7 +199,12 @@ class AuthService(
         sessionRepository.save(session)
         user.lastLogin = now
         userRepository.save(user)
+        val loginCount = sessionRepository.countByUser_Id(user.id!!)
+        val isFirstLogin = loginCount <= 1L
         auditLogService.log(user, "AUTH", "LOGIN", deviceName.ifBlank { null }, ip, actorOverride = user.email)
+        if (isFirstLogin) {
+            auditLogService.log(user, "AUTH", "FIRST_LOGIN", "Première connexion", ip, actorOverride = user.email)
+        }
         if (isNewDevice) {
             logger.info("Nouvel appareil détecté pour ${user.email}: $deviceName (IP: $ip)")
         }
@@ -287,6 +292,7 @@ class AuthService(
         }
         user.totpEnabled = true
         userRepository.saveAndFlush(user)
+        auditLogService.log(user, "AUTH", "2FA_ENABLE", null, null, actorOverride = user.email)
         logger.info("2FA activé avec succès pour: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
@@ -371,6 +377,7 @@ class AuthService(
             it.active = false
             sessionRepository.save(it)
             jwtAuthenticationFilter.evictSession(token)
+            auditLogService.log(it.user, "AUTH", "LOGOUT", it.deviceName, it.ipAddress, actorOverride = it.user.email)
             logger.info("Session désactivée pour l'utilisateur: ${it.user.email}")
         }
     }

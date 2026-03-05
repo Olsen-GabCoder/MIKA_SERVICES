@@ -195,16 +195,64 @@
     "affectations": "Affectations",
     "noAffectations": "Aucune affectation.",
     "project": "Projet",
+    "activitySummary": "Résumé d'activité",
+    "noActivity": "Aucune donnée d'activité disponible.",
+    "summary": {
+      "logins": "Connexions",
+      "pageViews": "Pages visitées",
+      "totalActions": "Total actions",
+      "firstLogin": "1re connexion",
+      "lastPasswordChange": "Dernier changement de mot de passe",
+      "breakdown": "Répartition des actions"
+    },
     "auditTitle": "Historique d'activité",
     "noAudit": "Aucune activité enregistrée.",
     "columns": {
       "date": "Date",
       "module": "Module",
       "action": "Action",
-      "details": "Détails"
+      "ip": "Adresse IP",
+      "details": "Détails",
+      "user": "Utilisateur"
     },
     "prev": "Précédent",
     "next": "Suivant",
     "pageInfo": "Page {{current}} / {{total}}"
+  },
+  "activity": {
+    "title": "Suivi d'activité",
+    "subtitle": "Vision temps réel de toutes les interactions sur la plateforme",
+    "noLogs": "Aucune activité enregistrée pour ces critères.",
+    "refresh": "Actualiser",
+    "results": "résultats",
+    "kpi": {
+      "eventsToday": "Événements aujourd'hui",
+      "loginsToday": "Connexions",
+      "logoutsToday": "Déconnexions",
+      "uniqueUsers": "Utilisateurs actifs",
+      "pageViews": "Pages consultées",
+      "securityEvents": "Événements sécurité"
+    },
+    "filters": {
+      "allUsers": "Tous les utilisateurs",
+      "allActions": "Toutes les actions",
+      "reset": "Réinitialiser"
+    },
+    "detail": {
+      "date": "Date & heure",
+      "user": "Utilisateur",
+      "ip": "Adresse IP",
+      "module": "Module",
+      "rawDetails": "Détails bruts"
+    },
+    "sidebar": {
+      "onlineUsers": "Utilisateurs récents",
+      "topPages": "Pages les plus visitées",
+      "topUsers": "Utilisateurs les plus actifs",
+      "todayBreakdown": "Répartition du jour"
+    },
+    "pagination": {
+      "showing": "{{count}} résultats sur {{total}}"
+    }
   }
 }

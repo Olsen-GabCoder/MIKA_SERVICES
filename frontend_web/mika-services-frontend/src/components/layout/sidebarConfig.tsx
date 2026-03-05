@@ -29,6 +29,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
 
   { to: '/documents', label: 'sidebar.documents', icon: <DocumentIcon className={iconClass} /> },
   { to: '/fournisseurs', label: 'sidebar.fournisseurs', icon: <TruckIcon className={iconClass} /> },
+  { to: '/suivi-activite', label: 'sidebar.suiviActivite', icon: <ActivityIcon className={iconClass} />, adminOnly: true },
 ]
 
 function DashboardIcon({ className }: { className?: string }) {
@@ -127,6 +128,13 @@ function TruckIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+    </svg>
+  )
+}
+function ActivityIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
     </svg>
   )
 }

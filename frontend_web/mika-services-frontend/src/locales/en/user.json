@@ -195,16 +195,64 @@
     "affectations": "Assignments",
     "noAffectations": "No assignments.",
     "project": "Project",
+    "activitySummary": "Activity summary",
+    "noActivity": "No activity data available.",
+    "summary": {
+      "logins": "Logins",
+      "pageViews": "Pages visited",
+      "totalActions": "Total actions",
+      "firstLogin": "1st login",
+      "lastPasswordChange": "Last password change",
+      "breakdown": "Action breakdown"
+    },
     "auditTitle": "Activity history",
     "noAudit": "No activity recorded.",
     "columns": {
       "date": "Date",
       "module": "Module",
       "action": "Action",
-      "details": "Details"
+      "ip": "IP Address",
+      "details": "Details",
+      "user": "User"
     },
     "prev": "Previous",
     "next": "Next",
     "pageInfo": "Page {{current}} / {{total}}"
+  },
+  "activity": {
+    "title": "Activity Tracking",
+    "subtitle": "Real-time view of all interactions on the platform",
+    "noLogs": "No activity recorded for these criteria.",
+    "refresh": "Refresh",
+    "results": "results",
+    "kpi": {
+      "eventsToday": "Events today",
+      "loginsToday": "Logins",
+      "logoutsToday": "Logouts",
+      "uniqueUsers": "Active users",
+      "pageViews": "Pages viewed",
+      "securityEvents": "Security events"
+    },
+    "filters": {
+      "allUsers": "All users",
+      "allActions": "All actions",
+      "reset": "Reset"
+    },
+    "detail": {
+      "date": "Date & time",
+      "user": "User",
+      "ip": "IP address",
+      "module": "Module",
+      "rawDetails": "Raw details"
+    },
+    "sidebar": {
+      "onlineUsers": "Recent users",
+      "topPages": "Most visited pages",
+      "topUsers": "Most active users",
+      "todayBreakdown": "Today's breakdown"
+    },
+    "pagination": {
+      "showing": "{{count}} results of {{total}}"
+    }
   }
 }

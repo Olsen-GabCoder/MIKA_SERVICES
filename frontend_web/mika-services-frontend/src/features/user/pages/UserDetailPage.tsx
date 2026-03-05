@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { fetchUserById, updateUser, deleteUser, fetchUsers } from '@/store/slices/userSlice'
-import { userApi, equipeApi } from '@/api/userApi'
+import { userApi, equipeApi, auditApi } from '@/api/userApi'
+import type { AuditLogEntry, UserActivitySummary, UserAffectation } from '@/api/userApi'
 import { clearError } from '@/store/slices/userSlice'
-import type { AuditLogEntry, UserAffectation } from '@/api/userApi'
 import { fullName, getInitials } from '@/utils/userDisplay'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
@@ -16,6 +16,21 @@ import { UserEditForm } from '../components/UserEditForm'
 import type { UserUpdateRequest } from '@/api/userApi'
 import { validatePassword } from '@/utils/passwordValidation'
 import { useFormatDate } from '@/hooks/useFormatDate'
+
+function getActionBadgeClass(action: string): string {
+  switch (action) {
+    case 'LOGIN': case 'FIRST_LOGIN': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+    case 'LOGOUT': return 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200'
+    case 'CREATE': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+    case 'UPDATE': return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+    case 'DELETE': case 'DEACTIVATE': return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+    case 'ACTIVATE': return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+    case 'PASSWORD_CHANGE': case 'PASSWORD_RESET': return 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+    case '2FA_ENABLE': case '2FA_DISABLE': return 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+    case 'PAGE_VIEW': return 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+    default: return 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+  }
+}
 
 const SECTION_CLASS = 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 overflow-hidden min-h-[200px] flex flex-col'
 const SECTION_HEADER_CLASS = 'text-lg font-semibold text-gray-900 dark:text-gray-100 px-6 py-4 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 shrink-0'
@@ -51,6 +66,7 @@ export const UserDetailPage = () => {
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([])
   const [auditPage, setAuditPage] = useState(0)
   const [auditTotalPages, setAuditTotalPages] = useState(0)
+  const [activitySummary, setActivitySummary] = useState<UserActivitySummary | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [confirmToggleActif, setConfirmToggleActif] = useState(false)
   const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false)
@@ -98,6 +114,11 @@ export const UserDetailPage = () => {
       setAuditTotalPages(res.totalPages)
     }).catch(() => setAuditLogs([]))
   }, [user?.id, auditPage])
+
+  useEffect(() => {
+    if (!user?.id) return
+    auditApi.getUserSummary(user.id).then(setActivitySummary).catch(() => setActivitySummary(null))
+  }, [user?.id])
 
   const formatDate = useFormatDate()
 
@@ -312,6 +333,57 @@ export const UserDetailPage = () => {
           </div>
         </section>
 
+        {/* Résumé d'activité */}
+        <section className={SECTION_CLASS}>
+          <h2 className={SECTION_HEADER_CLASS}>{t('detail.activitySummary')}</h2>
+          <div className={SECTION_BODY_CLASS}>
+            {activitySummary ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{activitySummary.totalLogins}</p>
+                    <p className="text-xs text-blue-600/70 dark:text-blue-400/70">{t('detail.summary.logins')}</p>
+                  </div>
+                  <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{activitySummary.totalPageViews}</p>
+                    <p className="text-xs text-purple-600/70 dark:text-purple-400/70">{t('detail.summary.pageViews')}</p>
+                  </div>
+                  <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{activitySummary.totalActions}</p>
+                    <p className="text-xs text-amber-600/70 dark:text-amber-400/70">{t('detail.summary.totalActions')}</p>
+                  </div>
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+                    <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                      {activitySummary.firstLogin ? formatDate(activitySummary.firstLogin, { includeTime: false }) : '—'}
+                    </p>
+                    <p className="text-xs text-green-600/70 dark:text-green-400/70">{t('detail.summary.firstLogin')}</p>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <p>{t('detail.summary.lastPasswordChange')}: <span className="font-medium text-gray-900 dark:text-gray-100">{activitySummary.lastPasswordChange ? formatDate(activitySummary.lastPasswordChange, { includeTime: true }) : '—'}</span></p>
+                </div>
+                {Object.keys(activitySummary.actionBreakdown).length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t('detail.summary.breakdown')}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(activitySummary.actionBreakdown)
+                        .sort(([, a], [, b]) => b - a)
+                        .slice(0, 8)
+                        .map(([action, count]) => (
+                          <span key={action} className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full ${getActionBadgeClass(action)}`}>
+                            {action} <span className="font-bold">{count}</span>
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.noActivity')}</p>
+            )}
+          </div>
+        </section>
+
         {/* Infos générales */}
         <section className={SECTION_CLASS}>
           <h2 className={SECTION_HEADER_CLASS}>{t('detail.generalInfo')}</h2>
@@ -384,16 +456,26 @@ export const UserDetailPage = () => {
                         <th className="py-2 pr-4">{t('detail.columns.date')}</th>
                         <th className="py-2 pr-4">{t('detail.columns.module')}</th>
                         <th className="py-2 pr-4">{t('detail.columns.action')}</th>
+                        <th className="py-2 pr-4">{t('detail.columns.ip')}</th>
                         <th className="py-2">{t('detail.columns.details')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {auditLogs.map((log) => (
-                        <tr key={log.id} className="border-b border-gray-100 dark:border-gray-600">
-                          <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">{formatDate(log.createdAt, { includeTime: true })}</td>
-                          <td className="py-2 pr-4 font-medium text-gray-900 dark:text-gray-100">{log.module}</td>
-                          <td className="py-2 pr-4 text-gray-900 dark:text-gray-100">{log.action}</td>
-                          <td className="py-2 text-gray-500 dark:text-gray-400 truncate max-w-[200px]">{log.details || '—'}</td>
+                        <tr key={log.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                          <td className="py-2.5 pr-4 text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatDate(log.createdAt, { includeTime: true })}</td>
+                          <td className="py-2.5 pr-4">
+                            <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                              {log.module}
+                            </span>
+                          </td>
+                          <td className="py-2.5 pr-4">
+                            <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getActionBadgeClass(log.action)}`}>
+                              {log.action}
+                            </span>
+                          </td>
+                          <td className="py-2.5 pr-4 text-xs text-gray-500 dark:text-gray-400 font-mono">{log.ipAddress || '—'}</td>
+                          <td className="py-2.5 text-gray-500 dark:text-gray-400 truncate max-w-[250px]" title={log.details || undefined}>{log.details || '—'}</td>
                         </tr>
                       ))}
                     </tbody>

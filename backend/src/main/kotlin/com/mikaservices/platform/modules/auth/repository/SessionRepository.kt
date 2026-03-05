@@ -24,6 +24,9 @@ interface SessionRepository : JpaRepository<Session, Long> {
     @Query("SELECT COUNT(s) FROM Session s WHERE s.user.id = :userId AND s.active = true")
     fun countActiveByUserId(userId: Long): Long
 
+    @Query("SELECT COUNT(s) FROM Session s WHERE s.user.id = :userId")
+    fun countByUser_Id(userId: Long): Long
+
     @Query("SELECT s FROM Session s WHERE s.user.id = :userId AND s.active = true ORDER BY s.lastActivity ASC")
     fun findActiveSessionsByUserIdOrderByLastActivityAsc(userId: Long): List<Session>
     

@@ -11,6 +11,7 @@ import { applyFontSizeToDocument, applyFontFamilyToDocument } from './utils/font
 import { applyDensityToDocument } from './utils/densityPreferences'
 import { applyCardSizeToDocument } from './utils/cardSizePreferences'
 import { applyHighContrastToDocument } from './utils/highContrastPreferences'
+import { usePageTracking } from './hooks/usePageTracking'
 
 /** Période de refresh proactif : avant expiration du JWT (15 min) pour maintenir la session sans attendre un 401. */
 const PROACTIVE_REFRESH_INTERVAL_MS = 14 * 60 * 1000
@@ -29,6 +30,8 @@ function App() {
   applyFontFamilyToDocument(fontFamily)
   applyDensityToDocument(density)
   applyCardSizeToDocument(cardSize)
+
+  usePageTracking(isAuthenticated && !!user)
 
   // Au chargement : si on a un token mais pas l'objet user, restaurer l'utilisateur via /users/me
   useEffect(() => {

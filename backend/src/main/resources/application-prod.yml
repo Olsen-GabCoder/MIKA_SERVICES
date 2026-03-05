@@ -1,7 +1,7 @@
 # Configuration Production
 app:
   mail:
-    frontend-base-url: ${FRONTEND_BASE_URL:}
+    frontend-base-url: ${FRONTEND_BASE_URL:https://mika-services.up.railway.app}
   auth:
     refresh-cookie:
       secure: true

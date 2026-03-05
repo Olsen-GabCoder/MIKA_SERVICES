@@ -20,11 +20,19 @@ class EmailService(
     @Value("\${app.mail.from:noreply@mikaservices.com}") private val from: String,
     @Value("\${app.mail.brevo-api-key:}") private val brevoApiKey: String,
     @Value("\${app.mail.resend-api-key:}") private val resendApiKey: String,
-    @Value("\${app.mail.frontend-base-url:http://localhost:5173}") private val frontendBaseUrl: String
+    @Value("\${app.mail.frontend-base-url:https://mika-services.up.railway.app}") private val frontendBaseUrl: String
 ) {
     private val logger = LoggerFactory.getLogger(EmailService::class.java)
 
-    private val appBaseUrl: String get() = frontendBaseUrl.trimEnd('/')
+    companion object {
+        private const val PROD_URL = "https://mika-services.up.railway.app"
+        private const val LOGO_URL = "$PROD_URL/Logo_mika_services.png"
+    }
+
+    private val appBaseUrl: String get() {
+        val url = frontendBaseUrl.trimEnd('/')
+        return if (url.isBlank()) PROD_URL else url
+    }
 
     private fun link(path: String): String = "$appBaseUrl$path"
 
@@ -60,7 +68,6 @@ class EmailService(
     """.trimIndent()
 
     private fun wrapHtml(content: String): String {
-        val logoUrl = "$appBaseUrl/Logo_mika_services.png"
         return """
             <!DOCTYPE html>
             <html lang="fr">
@@ -73,7 +80,7 @@ class EmailService(
                 $content
               </td></tr>
               <tr><td style="padding:20px 32px;border-top:1px solid #eee;text-align:center;">
-                <img src="$logoUrl" alt="MIKA Services" style="max-width:120px;height:auto;margin-bottom:8px;" />
+                <img src="$LOGO_URL" alt="MIKA Services" style="max-width:120px;height:auto;margin-bottom:8px;" />
                 <p style="margin:0;color:#999;font-size:11px;">L'&eacute;quipe MIKA Services &mdash; <a href="$appBaseUrl" style="color:#FF6B35;text-decoration:none;">Acc&eacute;der &agrave; la plateforme</a></p>
               </td></tr>
             </table>

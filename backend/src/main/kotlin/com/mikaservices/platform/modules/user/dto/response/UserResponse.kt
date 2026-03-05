@@ -1,6 +1,7 @@
 package com.mikaservices.platform.modules.user.dto.response
 
 import com.mikaservices.platform.common.enums.NiveauExperience
+import com.mikaservices.platform.common.enums.Sexe
 import com.mikaservices.platform.common.enums.TypeContrat
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -26,6 +27,7 @@ data class UserResponse(
     val salaireMensuel: BigDecimal?,
     val typeContrat: TypeContrat?,
     val niveauExperience: NiveauExperience?,
+    val sexe: Sexe?,
     val actif: Boolean,
     val totpEnabled: Boolean,
     val mustChangePassword: Boolean,

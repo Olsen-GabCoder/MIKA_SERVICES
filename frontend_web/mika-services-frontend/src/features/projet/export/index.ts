@@ -1,12 +1,8 @@
 /**
  * Export du document projet — Word, Excel ou PDF.
- * Contient l'ensemble des informations de la page détail (sans omission).
+ * Tous les modules lourds (xlsx, docx, @react-pdf) sont chargés dynamiquement
+ * pour ne pas alourdir le bundle initial.
  */
-import { pdf } from '@react-pdf/renderer'
-import React from 'react'
-import { ProjetDocumentPdf } from './pdfDocument'
-import { buildProjetWord } from './wordDocument'
-import { buildProjetExcel } from './excelDocument'
 import type { ProjetDocumentPayload, DocumentExportFormat } from './types'
 
 export type { ProjetDocumentPayload, DocumentExportFormat } from './types'
@@ -35,19 +31,26 @@ export async function generateProjetDocument(
 
   switch (format) {
     case 'word': {
+      const { buildProjetWord } = await import('./wordDocument')
       const blob = await buildProjetWord(payload)
       downloadBlob(blob, filename)
       return
     }
     case 'excel': {
-      const blob = buildProjetExcel(payload)
+      const { buildProjetExcel } = await import('./excelDocument')
+      const blob = await buildProjetExcel(payload)
       downloadBlob(blob, filename)
       return
     }
     case 'pdf': {
+      const [{ pdf }, React, { ProjetDocumentPdf }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('react'),
+        import('./pdfDocument'),
+      ])
       const doc = React.createElement(ProjetDocumentPdf, { payload })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const blob = await pdf(doc as any).toBlob()
+      const blob = await pdf(doc as any).toBlob()
       downloadBlob(blob, filename)
       return
     }

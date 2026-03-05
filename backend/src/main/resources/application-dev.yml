@@ -8,8 +8,9 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update  # Crée/met à jour les tables automatiquement
-    show-sql: true      # Affiche les requêtes SQL dans les logs
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
     properties:
       hibernate:
         format_sql: true

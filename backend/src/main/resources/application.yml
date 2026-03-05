@@ -93,14 +93,16 @@ springdoc:
     operationsSorter: method
     tagsSorter: alpha
 
-# Logs
+# Logs — niveaux de base raisonnables (DEBUG uniquement en dev si besoin)
 logging:
   level:
     root: INFO
-    com.mikaservices.platform: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
-    org.springframework.mail: DEBUG
+    com.mikaservices.platform: INFO
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    org.springframework.mail: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

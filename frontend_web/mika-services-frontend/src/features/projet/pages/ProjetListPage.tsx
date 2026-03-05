@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useConfirm } from '@/contexts/ConfirmContext'
-import * as XLSX from 'xlsx'
+import type * as XLSXType from 'xlsx'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { setItemsPerPage } from '@/store/slices/uiSlice'
@@ -274,7 +274,8 @@ export const ProjetListPage = () => {
     [openProjetDetail]
   )
 
-  const exportListToExcel = useCallback(() => {
+  const exportListToExcel = useCallback(async () => {
+    const XLSX: typeof XLSXType = await import('xlsx')
     const headers = [
       t('list.export.headers.nom'),
       t('list.export.headers.type'),

@@ -1,5 +1,6 @@
 package com.mikaservices.platform.config.mail
 
+import com.mikaservices.platform.common.enums.Sexe
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
@@ -29,8 +30,8 @@ class EmailService(
 
     // ─── Cooldown anti-spam ───────────────────────────────────────
     private val emailCooldowns = ConcurrentHashMap<String, Long>()
-    private val COOLDOWN_LOGIN_MS = 10 * 60 * 1000L  // 10 min entre 2 notifs login
-    private val COOLDOWN_DEFAULT_MS = 2 * 60 * 1000L  // 2 min par défaut
+    private val COOLDOWN_LOGIN_MS = 10 * 60 * 1000L
+    private val COOLDOWN_DEFAULT_MS = 2 * 60 * 1000L
 
     private fun isInCooldown(to: String, type: String): Boolean {
         val key = "$to:$type"
@@ -53,21 +54,9 @@ class EmailService(
         .replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;")
 
     private fun buttonHtml(text: String, url: String): String = """
-        <div style="text-align:center;margin:28px 0;">
-          <a href="$url" style="display:inline-block;background:#FF6B35;color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700;font-size:15px;letter-spacing:0.3px;box-shadow:0 2px 8px rgba(255,107,53,0.3);">$text</a>
-        </div>
-    """.trimIndent()
-
-    private fun infoBox(content: String): String = """
-        <div style="background:#f8f9fa;border-left:4px solid #FF6B35;border-radius:6px;padding:16px 20px;margin:20px 0;font-size:14px;color:#333;">
-          $content
-        </div>
-    """.trimIndent()
-
-    private fun warningBox(content: String): String = """
-        <div style="background:#fff8f0;border-left:4px solid #F0C15A;border-radius:6px;padding:16px 20px;margin:20px 0;font-size:13px;color:#8B6914;">
-          ⚠️ $content
-        </div>
+        <p style="margin:24px 0;text-align:center;">
+          <a href="$url" style="background:#FF6B35;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-weight:600;font-size:14px;">$text</a>
+        </p>
     """.trimIndent()
 
     private fun wrapHtml(content: String): String {
@@ -75,27 +64,19 @@ class EmailService(
         return """
             <!DOCTYPE html>
             <html lang="fr">
-            <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-            <body style="margin:0;padding:0;background:#f0f2f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f2f5;padding:32px 16px;">
+            <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+            <body style="margin:0;padding:0;background:#f4f5f7;font-family:'Segoe UI',Roboto,Arial,sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:24px 0;">
             <tr><td align="center">
-            <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-              <tr><td style="background:linear-gradient(135deg,#2E5266 0%,#1a3a4d 100%);padding:32px 40px;text-align:center;">
-                <img src="$logoUrl" alt="MIKA Services" style="max-width:180px;height:auto;" />
-              </td></tr>
-              <tr><td style="padding:36px 40px 28px;color:#333;font-size:15px;line-height:1.75;">
+            <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;">
+              <tr><td style="padding:28px 32px;color:#333;font-size:14px;line-height:1.7;">
                 $content
               </td></tr>
-              <tr><td style="background:#f8f9fa;padding:24px 40px;text-align:center;border-top:1px solid #e9ecef;">
-                <p style="margin:0 0 4px;color:#2E5266;font-weight:700;font-size:13px;">L'équipe MIKA Services</p>
-                <p style="margin:0;color:#999;font-size:11px;">
-                  <a href="$appBaseUrl" style="color:#FF6B35;text-decoration:none;">Accéder à la plateforme</a>
-                </p>
+              <tr><td style="padding:20px 32px;border-top:1px solid #eee;text-align:center;">
+                <img src="$logoUrl" alt="MIKA Services" style="max-width:120px;height:auto;margin-bottom:8px;" />
+                <p style="margin:0;color:#999;font-size:11px;">L'&eacute;quipe MIKA Services &mdash; <a href="$appBaseUrl" style="color:#FF6B35;text-decoration:none;">Acc&eacute;der &agrave; la plateforme</a></p>
               </td></tr>
             </table>
-            <p style="text-align:center;color:#999;font-size:10px;margin-top:16px;">
-              Cet email a été envoyé automatiquement par MIKA Services. Merci de ne pas y répondre.
-            </p>
             </td></tr>
             </table>
             </body>
@@ -103,16 +84,23 @@ class EmailService(
         """.trimIndent()
     }
 
+    private fun salut(sexe: Sexe?, name: String): String = when (sexe) {
+        Sexe.HOMME -> "Bonjour Monsieur $name"
+        Sexe.FEMME -> "Bonjour Madame $name"
+        null       -> "Bonjour $name"
+    }
+
     // ─── Emails ───────────────────────────────────────────────────
 
-    fun sendWelcomeEmail(to: String, prenom: String, temporaryPassword: String) {
+    fun sendWelcomeEmail(to: String, prenom: String, temporaryPassword: String, sexe: Sexe? = null) {
         val loginLink = link("/login")
         val profileLink = link("/profile")
-        val subject = "Bienvenue sur MIKA Services, $prenom — Vos identifiants"
+        val greeting = salut(sexe, prenom)
+        val subject = "Bienvenue sur MIKA Services, $prenom"
         val plainBody = """
-            Bonjour $prenom,
+            $greeting,
 
-            Votre compte MIKA Services a été créé avec succès.
+            Votre compte MIKA Services a été créé.
 
             Email : $to
             Mot de passe temporaire : $temporaryPassword
@@ -120,37 +108,37 @@ class EmailService(
             Connexion : $loginLink
 
             Vous devrez modifier ce mot de passe lors de votre première connexion.
-            Nous recommandons d'activer l'authentification à deux facteurs (2FA) depuis votre profil : $profileLink
+            Nous recommandons d'activer la 2FA depuis votre profil : $profileLink
 
-            Si vous n'êtes pas à l'origine de cette création de compte, contactez immédiatement votre administrateur.
+            Si vous n'êtes pas à l'origine de cette création de compte, contactez votre administrateur.
 
             — L'équipe MIKA Services
         """.trimIndent()
 
         val htmlBody = wrapHtml("""
-            <h2 style="color:#2E5266;margin:0 0 8px;font-size:22px;">Bienvenue, ${htmlEscape(prenom)} 👋</h2>
-            <p style="color:#666;margin:0 0 24px;">Votre compte MIKA Services a été créé avec succès. Voici vos identifiants de connexion :</p>
-            ${infoBox("""
-                <strong style="color:#2E5266;">Email :</strong> ${htmlEscape(to)}<br>
-                <strong style="color:#2E5266;">Mot de passe temporaire :</strong> <code style="background:#e8f4f8;padding:2px 8px;border-radius:4px;font-size:14px;">${htmlEscape(temporaryPassword)}</code>
-            """)}
+            <p>${htmlEscape(greeting)},</p>
+            <p>Votre compte MIKA Services a &eacute;t&eacute; cr&eacute;&eacute; avec succ&egrave;s. Voici vos identifiants :</p>
+            <table cellpadding="0" cellspacing="0" style="background:#f8f9fa;border-left:3px solid #FF6B35;padding:12px 16px;margin:16px 0;width:100%;">
+              <tr><td style="padding:8px 16px;font-size:14px;">
+                <strong>Email :</strong> ${htmlEscape(to)}<br>
+                <strong>Mot de passe :</strong> <code style="background:#eef2f5;padding:2px 6px;border-radius:3px;">${htmlEscape(temporaryPassword)}</code>
+              </td></tr>
+            </table>
             ${buttonHtml("Se connecter", loginLink)}
-            ${warningBox("Pour des raisons de sécurité, vous devrez <strong>modifier ce mot de passe</strong> lors de votre première connexion.")}
-            <p style="font-size:13px;color:#666;">
-              Nous vous recommandons d'<strong>activer l'authentification à deux facteurs (2FA)</strong> depuis votre
-              <a href="$profileLink" style="color:#FF6B35;">profil</a> après connexion.
-            </p>
+            <p style="font-size:13px;color:#666;">Pour des raisons de s&eacute;curit&eacute;, vous devrez <strong>modifier ce mot de passe</strong> lors de votre premi&egrave;re connexion.</p>
+            <p style="font-size:13px;color:#666;">Nous recommandons d'activer l'authentification &agrave; deux facteurs (2FA) depuis votre <a href="$profileLink" style="color:#FF6B35;">profil</a>.</p>
         """.trimIndent())
         sendGenericNotification(to, subject, plainBody, htmlBody, "bienvenue")
     }
 
-    fun sendPasswordResetEmail(to: String, prenom: String, token: String) {
+    fun sendPasswordResetEmail(to: String, prenom: String, token: String, sexe: Sexe? = null) {
         val resetLink = link("/reset-password?token=$token")
-        val subject = "MIKA Services — Réinitialisation de votre mot de passe"
+        val greeting = salut(sexe, prenom)
+        val subject = "MIKA Services — R\u00e9initialisation de mot de passe"
         val plainBody = """
-            Bonjour $prenom,
+            $greeting,
 
-            Vous avez demandé une réinitialisation de votre mot de passe MIKA Services.
+            Vous avez demandé la réinitialisation de votre mot de passe.
 
             Lien : $resetLink (valide 1 heure)
 
@@ -160,17 +148,16 @@ class EmailService(
         """.trimIndent()
 
         val htmlBody = wrapHtml("""
-            <h2 style="color:#2E5266;margin:0 0 8px;font-size:22px;">Réinitialisation du mot de passe</h2>
-            <p>Bonjour <strong>${htmlEscape(prenom)}</strong>,</p>
-            <p>Vous avez demandé la réinitialisation de votre mot de passe. Cliquez ci-dessous pour en définir un nouveau :</p>
-            ${buttonHtml("Nouveau mot de passe", resetLink)}
-            ${warningBox("Ce lien est valide pendant <strong>1 heure</strong>. Passé ce délai, vous devrez refaire une demande.")}
-            <p style="font-size:13px;color:#999;">Si vous n'êtes pas à l'origine de cette demande, ignorez simplement cet email.</p>
+            <p>${htmlEscape(greeting)},</p>
+            <p>Vous avez demand&eacute; la r&eacute;initialisation de votre mot de passe MIKA Services.</p>
+            ${buttonHtml("D\u00e9finir un nouveau mot de passe", resetLink)}
+            <p style="font-size:13px;color:#666;">Ce lien est valide pendant <strong>1 heure</strong>. Pass&eacute; ce d&eacute;lai, vous devrez refaire une demande.</p>
+            <p style="font-size:13px;color:#999;">Si vous n'&ecirc;tes pas &agrave; l'origine de cette demande, ignorez simplement cet email.</p>
         """.trimIndent())
         sendGenericNotification(to, subject, plainBody, htmlBody, "reset mot de passe")
     }
 
-    fun sendLoginNotification(to: String, fullName: String, ip: String?, userAgent: String?) {
+    fun sendLoginNotification(to: String, fullName: String, ip: String?, userAgent: String?, sexe: Sexe? = null) {
         if (isInCooldown(to, "login")) {
             logger.debug("Notification login en cooldown pour $to, ignorée")
             return
@@ -180,30 +167,32 @@ class EmailService(
         val uaInfo = userAgent?.takeIf { it.isNotBlank() }?.take(200) ?: "non disponible"
         val deviceName = parseUserAgentShort(uaInfo)
 
+        val greeting = salut(sexe, fullName)
         val plainBody = """
-            Bonjour $fullName,
+            $greeting,
 
             Une connexion à votre compte a été détectée depuis un nouvel appareil.
 
             Appareil : $deviceName
             Adresse IP : $ipInfo
 
-            Si vous êtes à l'origine de cette connexion, aucune action n'est requise.
+            Si c'est vous, aucune action requise.
             Sinon, changez immédiatement votre mot de passe et contactez votre administrateur.
 
             — L'équipe MIKA Services
         """.trimIndent()
 
         val htmlBody = wrapHtml("""
-            <h2 style="color:#2E5266;margin:0 0 8px;font-size:22px;">Nouvel appareil détecté 🔐</h2>
-            <p>Bonjour <strong>${htmlEscape(fullName)}</strong>,</p>
-            <p>Une connexion à votre compte a été enregistrée depuis un appareil que nous n'avons pas reconnu :</p>
-            ${infoBox("""
-                <strong>📱 Appareil :</strong> ${htmlEscape(deviceName)}<br>
-                <strong>🌐 Adresse IP :</strong> ${htmlEscape(ipInfo)}
-            """)}
-            <p style="font-size:14px;color:#333;">✅ <strong>C'est vous ?</strong> Aucune action requise.</p>
-            <p style="font-size:14px;color:#E63946;">❌ <strong>Ce n'est pas vous ?</strong> Changez immédiatement votre mot de passe :</p>
+            <p>${htmlEscape(greeting)},</p>
+            <p>Une connexion &agrave; votre compte a &eacute;t&eacute; d&eacute;tect&eacute;e depuis un appareil non reconnu :</p>
+            <table cellpadding="0" cellspacing="0" style="background:#f8f9fa;border-left:3px solid #2E5266;padding:12px 16px;margin:16px 0;width:100%;">
+              <tr><td style="padding:8px 16px;font-size:14px;">
+                <strong>Appareil :</strong> ${htmlEscape(deviceName)}<br>
+                <strong>Adresse IP :</strong> ${htmlEscape(ipInfo)}
+              </td></tr>
+            </table>
+            <p style="font-size:14px;color:#333;"><strong>C'est vous ?</strong> Aucune action requise.</p>
+            <p style="font-size:14px;color:#c0392b;"><strong>Ce n'est pas vous ?</strong> Changez imm&eacute;diatement votre mot de passe :</p>
             ${buttonHtml("Modifier mon mot de passe", link("/profile"))}
         """.trimIndent())
 
@@ -211,11 +200,12 @@ class EmailService(
         markSent(to, "login")
     }
 
-    fun sendPasswordChangedNotification(to: String, fullName: String) {
+    fun sendPasswordChangedNotification(to: String, fullName: String, sexe: Sexe? = null) {
         if (isInCooldown(to, "password-changed")) return
-        val subject = "MIKA Services — Votre mot de passe a été modifié"
+        val greeting = salut(sexe, fullName)
+        val subject = "MIKA Services — Mot de passe modifi\u00e9"
         val plainBody = """
-            Bonjour $fullName,
+            $greeting,
 
             Le mot de passe de votre compte MIKA Services a été modifié avec succès.
 
@@ -225,20 +215,20 @@ class EmailService(
         """.trimIndent()
 
         val htmlBody = wrapHtml("""
-            <h2 style="color:#2E5266;margin:0 0 8px;font-size:22px;">Mot de passe modifié ✓</h2>
-            <p>Bonjour <strong>${htmlEscape(fullName)}</strong>,</p>
-            <p>Le mot de passe de votre compte a été modifié avec succès.</p>
-            ${warningBox("Si vous n'êtes pas à l'origine de cette modification, contactez immédiatement votre administrateur.")}
+            <p>${htmlEscape(greeting)},</p>
+            <p>Le mot de passe de votre compte MIKA Services a &eacute;t&eacute; modifi&eacute; avec succ&egrave;s.</p>
+            <p style="font-size:13px;color:#c0392b;">Si vous n'&ecirc;tes pas &agrave; l'origine de cette modification, contactez imm&eacute;diatement votre administrateur.</p>
         """.trimIndent())
 
         sendGenericNotification(to, subject, plainBody, htmlBody, "password changed")
         markSent(to, "password-changed")
     }
 
-    fun send2FAEnabledNotification(to: String, fullName: String) {
-        val subject = "MIKA Services — Authentification 2FA activée"
+    fun send2FAEnabledNotification(to: String, fullName: String, sexe: Sexe? = null) {
+        val greeting = salut(sexe, fullName)
+        val subject = "MIKA Services — 2FA activ\u00e9e"
         val plainBody = """
-            Bonjour $fullName,
+            $greeting,
 
             L'authentification à deux facteurs (2FA) a été activée sur votre compte.
             Un code à usage unique sera demandé à chaque connexion.
@@ -249,19 +239,19 @@ class EmailService(
         """.trimIndent()
 
         val htmlBody = wrapHtml("""
-            <h2 style="color:#2E5266;margin:0 0 8px;font-size:22px;">2FA activée 🛡️</h2>
-            <p>Bonjour <strong>${htmlEscape(fullName)}</strong>,</p>
-            <p>L'authentification à deux facteurs a été <strong>activée</strong> sur votre compte MIKA Services.</p>
-            ${infoBox("Un code à usage unique sera désormais demandé à chaque connexion pour renforcer la sécurité de votre compte.")}
-            <p style="font-size:13px;color:#999;">Si vous n'avez pas effectué cette modification, contactez immédiatement votre administrateur.</p>
+            <p>${htmlEscape(greeting)},</p>
+            <p>L'authentification &agrave; deux facteurs (2FA) a &eacute;t&eacute; <strong>activ&eacute;e</strong> sur votre compte MIKA Services.</p>
+            <p style="font-size:13px;color:#666;">Un code &agrave; usage unique sera d&eacute;sormais demand&eacute; &agrave; chaque connexion.</p>
+            <p style="font-size:13px;color:#999;">Si vous n'avez pas effectu&eacute; cette modification, contactez votre administrateur.</p>
         """.trimIndent())
         sendGenericNotification(to, subject, plainBody, htmlBody, "2FA enabled")
     }
 
-    fun send2FADisabledNotification(to: String, fullName: String) {
-        val subject = "MIKA Services — Authentification 2FA désactivée"
+    fun send2FADisabledNotification(to: String, fullName: String, sexe: Sexe? = null) {
+        val greeting = salut(sexe, fullName)
+        val subject = "MIKA Services — 2FA d\u00e9sactiv\u00e9e"
         val plainBody = """
-            Bonjour $fullName,
+            $greeting,
 
             L'authentification à deux facteurs (2FA) a été désactivée sur votre compte.
 
@@ -271,11 +261,10 @@ class EmailService(
         """.trimIndent()
 
         val htmlBody = wrapHtml("""
-            <h2 style="color:#2E5266;margin:0 0 8px;font-size:22px;">2FA désactivée ⚠️</h2>
-            <p>Bonjour <strong>${htmlEscape(fullName)}</strong>,</p>
-            <p>L'authentification à deux facteurs a été <strong>désactivée</strong> sur votre compte MIKA Services.</p>
-            ${warningBox("Votre compte est maintenant moins protégé. Si vous n'avez pas effectué cette modification, contactez immédiatement votre administrateur et réactivez la 2FA.")}
-            ${buttonHtml("Accéder à mon profil", link("/profile"))}
+            <p>${htmlEscape(greeting)},</p>
+            <p>L'authentification &agrave; deux facteurs (2FA) a &eacute;t&eacute; <strong>d&eacute;sactiv&eacute;e</strong> sur votre compte MIKA Services.</p>
+            <p style="font-size:13px;color:#c0392b;">Si vous n'avez pas effectu&eacute; cette modification, contactez votre administrateur et r&eacute;activez la 2FA.</p>
+            ${buttonHtml("Acc\u00e9der \u00e0 mon profil", link("/profile"))}
         """.trimIndent())
         sendGenericNotification(to, subject, plainBody, htmlBody, "2FA disabled")
     }
@@ -286,7 +275,7 @@ class EmailService(
             return
         }
         val effectiveLink = lien?.takeIf { it.isNotBlank() } ?: link("/notifications")
-        val subject = "MIKA Services — ${titre.take(60)}${if (titre.length > 60) "…" else ""}"
+        val subject = "MIKA Services — ${titre.take(60)}${if (titre.length > 60) "\u2026" else ""}"
         val plainBody = """
             Bonjour $prenom,
 
@@ -301,7 +290,10 @@ class EmailService(
         val htmlBody = wrapHtml("""
             <p>Bonjour <strong>${htmlEscape(prenom)}</strong>,</p>
             <p>Vous avez une nouvelle notification :</p>
-            ${infoBox("<strong>${htmlEscape(titre.take(200))}</strong>${if (contenu?.isNotBlank() == true) "<br><span style=\"color:#666;\">${htmlEscape(contenu.take(300))}</span>" else ""}")}
+            <p style="background:#f8f9fa;border-left:3px solid #FF6B35;padding:12px 16px;margin:16px 0;font-size:14px;">
+              <strong>${htmlEscape(titre.take(200))}</strong>
+              ${if (contenu?.isNotBlank() == true) "<br><span style=\"color:#666;\">${htmlEscape(contenu.take(300))}</span>" else ""}
+            </p>
             ${buttonHtml("Voir la notification", effectiveLink)}
         """.trimIndent())
         try {
@@ -323,7 +315,7 @@ class EmailService(
         val plainBody = """
             Bonjour $prenom,
 
-            Nouveau message de $expediteurNom :
+            Nouveau message de $expediteurNom.
             Sujet : $sujetSafe
             ${contenuExtrait?.take(200) ?: ""}
 
@@ -334,11 +326,11 @@ class EmailService(
 
         val htmlBody = wrapHtml("""
             <p>Bonjour <strong>${htmlEscape(prenom)}</strong>,</p>
-            <p>Vous avez reçu un nouveau message de <strong>${htmlEscape(expediteurNom)}</strong> :</p>
-            ${infoBox("""
-                <strong>Sujet :</strong> ${htmlEscape(sujetSafe.take(200))}
-                ${if (contenuExtrait?.isNotBlank() == true) "<br><br><span style=\"color:#666;font-style:italic;\">\"${htmlEscape(contenuExtrait.take(200))}${if (contenuExtrait.length > 200) "…" else ""}\"</span>" else ""}
-            """)}
+            <p>Vous avez re&ccedil;u un nouveau message de <strong>${htmlEscape(expediteurNom)}</strong> :</p>
+            <p style="background:#f8f9fa;border-left:3px solid #2E5266;padding:12px 16px;margin:16px 0;font-size:14px;">
+              <strong>Sujet :</strong> ${htmlEscape(sujetSafe.take(200))}
+              ${if (contenuExtrait?.isNotBlank() == true) "<br><br><em style=\"color:#666;\">&laquo; ${htmlEscape(contenuExtrait.take(200))}${if (contenuExtrait.length > 200) "\u2026" else ""} &raquo;</em>" else ""}
+            </p>
             ${buttonHtml("Ouvrir la messagerie", messagerieLink)}
         """.trimIndent())
         try {
@@ -353,7 +345,7 @@ class EmailService(
         if (unreadNotificationsCount == 0L && unreadMessagesCount == 0L) return
         val appLink = link("/notifications")
         val messagerieLink = link("/messagerie")
-        val subject = "MIKA Services — Résumé du jour"
+        val subject = "MIKA Services — R\u00e9sum\u00e9 du jour"
         val plainBody = """
             Bonjour $prenom,
 
@@ -365,16 +357,16 @@ class EmailService(
         """.trimIndent()
 
         val htmlBody = wrapHtml("""
-            <h2 style="color:#2E5266;margin:0 0 8px;font-size:22px;">Votre résumé du jour 📊</h2>
             <p>Bonjour <strong>${htmlEscape(prenom)}</strong>,</p>
-            ${infoBox("""
-                📬 <strong>$unreadNotificationsCount</strong> notification(s) non lue(s)<br>
-                💬 <strong>$unreadMessagesCount</strong> message(s) non lu(s)
-            """)}
-            <div style="text-align:center;margin:24px 0;">
-              <a href="$appLink" style="display:inline-block;background:#2E5266;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;margin:0 6px;">Notifications</a>
-              <a href="$messagerieLink" style="display:inline-block;background:#FF6B35;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;margin:0 6px;">Messagerie</a>
-            </div>
+            <p>Voici votre r&eacute;sum&eacute; MIKA Services pour aujourd'hui :</p>
+            <ul style="padding-left:20px;color:#333;">
+              <li><strong>$unreadNotificationsCount</strong> notification(s) non lue(s)</li>
+              <li><strong>$unreadMessagesCount</strong> message(s) non lu(s)</li>
+            </ul>
+            <p style="text-align:center;margin:20px 0;">
+              <a href="$appLink" style="color:#2E5266;font-weight:600;text-decoration:none;margin-right:16px;">Notifications</a>
+              <a href="$messagerieLink" style="color:#FF6B35;font-weight:600;text-decoration:none;">Messagerie</a>
+            </p>
         """.trimIndent())
         try {
             sendGenericNotification(to, subject, plainBody, htmlBody, "digest quotidien")
@@ -387,7 +379,7 @@ class EmailService(
         if (unreadNotificationsCount == 0L && unreadMessagesCount == 0L) return
         val appLink = link("/notifications")
         val messagerieLink = link("/messagerie")
-        val subject = "MIKA Services — Résumé de la semaine"
+        val subject = "MIKA Services — R\u00e9sum\u00e9 de la semaine"
         val plainBody = """
             Bonjour $prenom,
 
@@ -399,16 +391,16 @@ class EmailService(
         """.trimIndent()
 
         val htmlBody = wrapHtml("""
-            <h2 style="color:#2E5266;margin:0 0 8px;font-size:22px;">Votre résumé de la semaine 📊</h2>
             <p>Bonjour <strong>${htmlEscape(prenom)}</strong>,</p>
-            ${infoBox("""
-                📬 <strong>$unreadNotificationsCount</strong> notification(s) non lue(s)<br>
-                💬 <strong>$unreadMessagesCount</strong> message(s) non lu(s)
-            """)}
-            <div style="text-align:center;margin:24px 0;">
-              <a href="$appLink" style="display:inline-block;background:#2E5266;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;margin:0 6px;">Notifications</a>
-              <a href="$messagerieLink" style="display:inline-block;background:#FF6B35;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;margin:0 6px;">Messagerie</a>
-            </div>
+            <p>Voici votre r&eacute;sum&eacute; hebdomadaire MIKA Services :</p>
+            <ul style="padding-left:20px;color:#333;">
+              <li><strong>$unreadNotificationsCount</strong> notification(s) non lue(s)</li>
+              <li><strong>$unreadMessagesCount</strong> message(s) non lu(s)</li>
+            </ul>
+            <p style="text-align:center;margin:20px 0;">
+              <a href="$appLink" style="color:#2E5266;font-weight:600;text-decoration:none;margin-right:16px;">Notifications</a>
+              <a href="$messagerieLink" style="color:#FF6B35;font-weight:600;text-decoration:none;">Messagerie</a>
+            </p>
         """.trimIndent())
         try {
             sendGenericNotification(to, subject, plainBody, htmlBody, "digest hebdo")
@@ -527,15 +519,15 @@ class EmailService(
     }
 
     @Async
-    fun sendWelcomeEmailAsync(to: String, prenom: String, temporaryPassword: String) {
-        try { sendWelcomeEmail(to, prenom, temporaryPassword) } catch (e: Exception) {
+    fun sendWelcomeEmailAsync(to: String, prenom: String, temporaryPassword: String, sexe: Sexe? = null) {
+        try { sendWelcomeEmail(to, prenom, temporaryPassword, sexe) } catch (e: Exception) {
             logger.error("Échec envoi email bienvenue (async) à $to: ${e.message}", e)
         }
     }
 
     @Async
-    fun sendLoginNotificationAsync(to: String, fullName: String, ip: String?, userAgent: String?) {
-        try { sendLoginNotification(to, fullName, ip, userAgent) } catch (e: Exception) {
+    fun sendLoginNotificationAsync(to: String, fullName: String, ip: String?, userAgent: String?, sexe: Sexe? = null) {
+        try { sendLoginNotification(to, fullName, ip, userAgent, sexe) } catch (e: Exception) {
             logger.warn("Envoi notification login (async) échoué vers $to: ${e.message}")
         }
     }

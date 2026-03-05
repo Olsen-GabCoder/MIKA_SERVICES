@@ -31,6 +31,7 @@ object UserMapper {
             salaireMensuel = user.salaireMensuel,
             typeContrat = user.typeContrat,
             niveauExperience = user.niveauExperience,
+            sexe = user.sexe,
             actif = user.actif,
             totpEnabled = user.totpEnabled == true,
             mustChangePassword = user.mustChangePassword,
@@ -80,14 +81,15 @@ object UserMapper {
         return users.map { toResponse(it) }
     }
     
-    fun fromCreateRequest(request: UserCreateRequest, plainPassword: String, passwordEncoder: PasswordEncoder, mustChangePassword: Boolean = true): User {
+    fun fromCreateRequest(request: UserCreateRequest, matricule: String, plainPassword: String, passwordEncoder: PasswordEncoder, mustChangePassword: Boolean = true): User {
         val encodedPassword = passwordEncoder.encode(plainPassword)!!
         return User(
-            matricule = request.matricule,
+            matricule = matricule,
             nom = request.nom,
             prenom = request.prenom,
             email = request.email,
             motDePasse = encodedPassword,
+            sexe = request.sexe,
             telephone = request.telephone,
             dateNaissance = request.dateNaissance,
             adresse = request.adresse,
@@ -124,6 +126,7 @@ object UserMapper {
         request.salaireMensuel?.let { user.salaireMensuel = it }
         request.typeContrat?.let { user.typeContrat = it }
         request.niveauExperience?.let { user.niveauExperience = it }
+        request.sexe?.let { user.sexe = it }
         request.actif?.let { user.actif = it }
     }
 }

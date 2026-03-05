@@ -1,23 +1,13 @@
-import html2canvas from 'html2canvas'
-import { jsPDF } from 'jspdf'
-
 export interface PdfExportOptions {
-  /** Nom du fichier sans extension */
   filename?: string
-  /** Qualité / échelle du rendu (défaut: 2) */
   scale?: number
-  /** Marge en mm (défaut: 10) */
   margin?: number
-  /** Format de page (défaut: 'a4') */
   format?: 'a4' | 'a3'
 }
 
 const A4_WIDTH_MM = 210
 const A4_HEIGHT_MM = 297
 
-/**
- * Capture un élément DOM et le télécharge en PDF (multi-pages si contenu long).
- */
 export async function exportElementToPdf(
   element: HTMLElement,
   options: PdfExportOptions = {}
@@ -28,6 +18,11 @@ export async function exportElementToPdf(
   const pageWidth = format === 'a4' ? A4_WIDTH_MM : 297
   const contentHeight = pageHeight - 2 * margin
   const contentWidth = pageWidth - 2 * margin
+
+  const [html2canvas, { jsPDF }] = await Promise.all([
+    import('html2canvas').then(m => m.default),
+    import('jspdf'),
+  ])
 
   const canvas = await html2canvas(element, {
     scale,

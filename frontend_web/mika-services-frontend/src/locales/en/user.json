@@ -12,7 +12,9 @@
     "professional": "Professional",
     "hierarchy": "Hierarchy",
     "roles": "Roles",
-    "matricule": "Employee ID *",
+    "matricule": "Employee ID",
+    "autoMatricule": "Auto-generate employee ID",
+    "sexe": "Gender",
     "email": "Email *",
     "nom": "Last name *",
     "prenom": "First name *",
@@ -54,6 +56,10 @@
     "SOUS_TRAITANT": "Subcontractor",
     "STAGE": "Internship",
     "INTERIM": "Temporary"
+  },
+  "sexe": {
+    "HOMME": "Male",
+    "FEMME": "Female"
   },
   "experienceLevel": {
     "DEBUTANT": "Junior",

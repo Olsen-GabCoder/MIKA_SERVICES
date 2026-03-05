@@ -12,7 +12,9 @@
     "professional": "Professionnel",
     "hierarchy": "Hiérarchie",
     "roles": "Rôles",
-    "matricule": "Matricule *",
+    "matricule": "Matricule",
+    "autoMatricule": "Générer automatiquement le matricule",
+    "sexe": "Sexe",
     "email": "Email *",
     "nom": "Nom *",
     "prenom": "Prénom *",
@@ -54,6 +56,10 @@
     "SOUS_TRAITANT": "Sous-traitant",
     "STAGE": "Stage",
     "INTERIM": "Intérim"
+  },
+  "sexe": {
+    "HOMME": "Homme",
+    "FEMME": "Femme"
   },
   "experienceLevel": {
     "DEBUTANT": "Débutant",

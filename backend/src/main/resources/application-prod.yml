@@ -1,28 +1,41 @@
 # Configuration Production
 app:
   mail:
-    # En prod, pas de défaut localhost : uniquement FRONTEND_BASE_URL (à définir sur Railway).
     frontend-base-url: ${FRONTEND_BASE_URL:}
   auth:
     refresh-cookie:
-      secure: true   # Cookie envoyé uniquement en HTTPS
-      same-site: Strict  # Protection CSRF (ou Lax si redirects cross-site login)
+      secure: true
+      same-site: Strict
 
 spring:
   datasource:
-    url: ${DATABASE_URL}  # Lue depuis variable d'environnement
+    url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: ${HIKARI_MAX_POOL:15}
+      minimum-idle: ${HIKARI_MIN_IDLE:5}
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
 
   jpa:
     hibernate:
-      ddl-auto: none      # Ne modifie JAMAIS le schéma en prod
+      ddl-auto: none
     show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+        jdbc.batch_size: 25
+        order_inserts: true
+        order_updates: true
+        query.fail_on_pagination_over_collection_fetch: true
 
 logging:
   level:
+    root: WARN
     com.mikaservices.platform: WARN
+    org.springframework: WARN
+    org.hibernate: WARN

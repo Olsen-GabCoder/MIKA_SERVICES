@@ -2,12 +2,14 @@
  * Génération d'un classeur Excel (.xlsx) complet — toutes les sections de la page détail projet.
  * Une feuille par thème : Résumé, Informations contractuelles, Suivi mensuel, Études, Points bloquants, Prévisions, Synthèse, Indicateurs.
  */
-import * as XLSX from 'xlsx'
+import type * as XLSXType from 'xlsx'
 import type { ProjetDocumentPayload } from './types'
 import { getAvancementEtudesWithLabels } from './types'
 import { getTypeProjetDisplay, getProjetTypes } from '@/types/projet'
 
-function sheetFromAoa(data: (string | number)[][]): XLSX.WorkSheet {
+type XLSX = typeof XLSXType
+
+function sheetFromAoa(XLSX: XLSX, data: (string | number)[][]): XLSXType.WorkSheet {
   const ws = XLSX.utils.aoa_to_sheet(data)
   const range = XLSX.utils.decode_range(ws['!ref'] ?? 'A1')
   for (let c = range.s.c; c <= range.e.c; c++) {
@@ -20,12 +22,13 @@ function sheetFromAoa(data: (string | number)[][]): XLSX.WorkSheet {
       }
     }
     ws['!cols'] = ws['!cols'] ?? []
-    ;(ws['!cols'] as XLSX.ColInfo[])[c] = { wch: maxWidth }
+    ;(ws['!cols'] as XLSXType.ColInfo[])[c] = { wch: maxWidth }
   }
   return ws
 }
 
-export function buildProjetExcel(payload: ProjetDocumentPayload): Blob {
+export async function buildProjetExcel(payload: ProjetDocumentPayload): Promise<Blob> {
+  const XLSX: XLSX = await import('xlsx')
   const {
     projet,
     rapport,
@@ -42,6 +45,7 @@ export function buildProjetExcel(payload: ProjetDocumentPayload): Blob {
   } = payload
   const etudes = getAvancementEtudesWithLabels(projet.avancementEtudes)
 
+  const s = (data: (string | number)[][]) => sheetFromAoa(XLSX, data)
   const wb = XLSX.utils.book_new()
 
   // Feuille 1 : Résumé
@@ -66,7 +70,7 @@ export function buildProjetExcel(payload: ProjetDocumentPayload): Blob {
     [],
     ['Document généré le', new Date().toLocaleDateString('fr-FR')],
   ]
-  XLSX.utils.book_append_sheet(wb, sheetFromAoa(resume), 'Résumé')
+  XLSX.utils.book_append_sheet(wb, s(resume), 'Résumé')
 
   // Feuille 2 : Informations contractuelles
   const infoContractuelles = [
@@ -77,19 +81,19 @@ export function buildProjetExcel(payload: ProjetDocumentPayload): Blob {
     ['Date début', formatDate(projet.dateDebut)],
     ['Date de fin', formatDate(projet.dateFin)],
   ]
-  XLSX.utils.book_append_sheet(wb, sheetFromAoa(infoContractuelles), 'Infos contractuelles')
+  XLSX.utils.book_append_sheet(wb, s(infoContractuelles), 'Infos contractuelles')
 
   // Feuille 3 : Suivi mensuel
   const suiviHeader = ['Mois', 'CA prévisionnel', 'CA réalisé', 'Écart', 'Avancement cumulé %']
   const suiviRows = lignesCA.length > 0 ? lignesCA.map((l) => [l.label, l.caPrevisionnel, l.caRealise, l.ecart, l.avancementCumule != null ? l.avancementCumule : '—']) : []
   const suivi = [['TABLEAU DE SUIVI MENSUEL'], [], suiviHeader, ...suiviRows, [], ['Budget total prévu', budgetPrevu], ['Dépenses réalisées', depensesTotales]]
-  XLSX.utils.book_append_sheet(wb, sheetFromAoa(suivi), 'Suivi mensuel')
+  XLSX.utils.book_append_sheet(wb, s(suivi), 'Suivi mensuel')
 
   // Feuille 4 : Avancement des études
   const etudesHeader = ['Type', 'Avancement %', 'Dépôt à l\'administration', 'État de validation']
   const etudesRows = etudes.map((e) => [e.phase, e.avancementPct ?? '—', e.dateDepot, e.etatValidation])
   const etudesSheet = [['ÉTAT D\'AVANCEMENT DES ÉTUDES'], [], etudesHeader, ...etudesRows]
-  XLSX.utils.book_append_sheet(wb, sheetFromAoa(etudesSheet), 'Avancement études')
+  XLSX.utils.book_append_sheet(wb, s(etudesSheet), 'Avancement études')
 
   // Feuille 5 : Réalisé — Semaine en cours
   const tachesRealiseSemaine = previsions.filter((p) => p.semaine === semaineCalendaire && p.annee === anneeCalendaire)
@@ -108,7 +112,7 @@ export function buildProjetExcel(payload: ProjetDocumentPayload): Blob {
     realiseHeader,
     ...realiseRows,
   ]
-  XLSX.utils.book_append_sheet(wb, sheetFromAoa(realiseSheet), 'Réalisé semaine')
+  XLSX.utils.book_append_sheet(wb, s(realiseSheet), 'Réalisé semaine')
 
   // Feuille 6 : Prévisions — Semaine suivante
   const prevSuivHeader = ['Tâche']
@@ -119,13 +123,13 @@ export function buildProjetExcel(payload: ProjetDocumentPayload): Blob {
     prevSuivHeader,
     ...prevSuivRows,
   ]
-  XLSX.utils.book_append_sheet(wb, sheetFromAoa(prevSuivSheet), 'Prévisions semaine')
+  XLSX.utils.book_append_sheet(wb, s(prevSuivSheet), 'Prévisions semaine')
 
   // Feuille 7 : Points bloquants
   const pbHeader = ['Titre', 'Description', 'Priorité', 'Statut']
   const pbRows = pointsBloquants.map((pb) => [pb.titre, pb.description ?? '', pb.priorite, pb.statut])
   const pbSheet = [['POINTS BLOQUANTS'], [], pbHeader, ...pbRows]
-  XLSX.utils.book_append_sheet(wb, sheetFromAoa(pbSheet), 'Points bloquants')
+  XLSX.utils.book_append_sheet(wb, s(pbSheet), 'Points bloquants')
 
   // Feuille 7 : Synthèse et indicateurs
   const synthèse = [
@@ -154,7 +158,7 @@ export function buildProjetExcel(payload: ProjetDocumentPayload): Blob {
     ['Risques critiques', rapport?.securite?.risquesCritiques ?? 0],
     ['Tâches en retard', rapport?.planning?.tachesEnRetard ?? 0],
   ]
-  XLSX.utils.book_append_sheet(wb, sheetFromAoa(synthèse), 'Synthèse')
+  XLSX.utils.book_append_sheet(wb, s(synthèse), 'Synthèse')
 
   // Feuille 8 : Description, observations, propositions
   const desc = [
@@ -170,7 +174,7 @@ export function buildProjetExcel(payload: ProjetDocumentPayload): Blob {
     [],
     ['Besoins humains', projet.besoinsHumain || '—'],
   ]
-  XLSX.utils.book_append_sheet(wb, sheetFromAoa(desc), 'Description et observations')
+  XLSX.utils.book_append_sheet(wb, s(desc), 'Description et observations')
 
   const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
   return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })

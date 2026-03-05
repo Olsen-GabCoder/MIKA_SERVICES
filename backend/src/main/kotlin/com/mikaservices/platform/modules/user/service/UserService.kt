@@ -72,19 +72,21 @@ class UserService(
     fun create(request: UserCreateRequest): UserResponse {
         logger.debug("Création d'un nouvel utilisateur: ${request.email}")
         
-        // Vérification unicité email
         if (userRepository.existsByEmail(request.email)) {
             throw ConflictException("Un utilisateur avec cet email existe déjà")
         }
-        
-        // Vérification unicité matricule
-        if (userRepository.existsByMatricule(request.matricule)) {
-            throw ConflictException("Un utilisateur avec ce matricule existe déjà")
+
+        val matricule = if (request.matricule.isNullOrBlank()) {
+            generateMatricule()
+        } else {
+            if (userRepository.existsByMatricule(request.matricule)) {
+                throw ConflictException("Un utilisateur avec ce matricule existe déjà")
+            }
+            request.matricule
         }
         
-        // Mot de passe généré automatiquement ; envoyé par email de bienvenue
         val plainPassword = request.password?.takeIf { it.isNotBlank() } ?: PasswordGenerator.generate()
-        val user = UserMapper.fromCreateRequest(request, plainPassword, passwordEncoder, mustChangePassword = true)
+        val user = UserMapper.fromCreateRequest(request, matricule, plainPassword, passwordEncoder, mustChangePassword = true)
         
         // Récupération du nom d'utilisateur actuel pour audit
         val currentUsername = SecurityContextHolder.getContext().authentication?.name
@@ -129,7 +131,7 @@ class UserService(
         var welcomeEmailSent = false
         try {
             logger.info("Envoi de l'email de bienvenue à ${savedUser.email}...")
-            emailService.sendWelcomeEmail(savedUser.email, savedUser.prenom, plainPassword)
+            emailService.sendWelcomeEmail(savedUser.email, savedUser.prenom, plainPassword, savedUser.sexe)
             welcomeEmailSent = true
             logger.info("Email de bienvenue envoyé à ${savedUser.email}")
         } catch (e: Exception) {
@@ -137,7 +139,7 @@ class UserService(
             logger.error("Vérifiez MAIL_* dans .env. Voir la chaîne des causes ci-dessus (cause: ...). Relance async dans 2s.")
             // Retry asynchrone hors contexte HTTP/transaction (parfois l'envoi réussit dans un autre thread)
             try {
-                emailService.sendWelcomeEmailAsync(savedUser.email, savedUser.prenom, plainPassword)
+                emailService.sendWelcomeEmailAsync(savedUser.email, savedUser.prenom, plainPassword, savedUser.sexe)
             } catch (e2: Exception) {
                 logger.warn("Relance async email bienvenue échouée: ${e2.message}")
             }
@@ -146,6 +148,18 @@ class UserService(
         return UserMapper.toResponse(savedUser).copy(welcomeEmailSent = welcomeEmailSent)
     }
     
+    private fun generateMatricule(): String {
+        val year = java.time.Year.now().value
+        val prefix = "MK-$year-"
+        val maxMatricule = userRepository.findMaxMatriculeByPrefix("$prefix%")
+        val nextNumber = if (maxMatricule != null) {
+            maxMatricule.substringAfterLast("-").toIntOrNull()?.plus(1) ?: 1
+        } else {
+            1
+        }
+        return "$prefix${nextNumber.toString().padStart(4, '0')}"
+    }
+
     fun findAll(search: String?, actif: Boolean?, roleId: Long?, pageable: Pageable): Page<UserResponse> {
         val spec = buildUserSpecification(search, actif, roleId)
         return userRepository.findAll(spec, pageable).map { UserMapper.toResponse(it) }
@@ -352,7 +366,7 @@ class UserService(
         logger.info("Mot de passe changé avec succès pour l'utilisateur: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}")
+                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}", user.sexe)
             } catch (e: Exception) {
                 logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
             }
@@ -381,7 +395,7 @@ class UserService(
         logger.info("Mot de passe changé avec succès pour l'utilisateur: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}")
+                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}", user.sexe)
             } catch (e: Exception) {
                 logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
             }
@@ -403,7 +417,7 @@ class UserService(
         logger.info("Mot de passe réinitialisé par admin pour l'utilisateur: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}")
+                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}", user.sexe)
             } catch (e: Exception) {
                 logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
             }
@@ -423,7 +437,7 @@ class UserService(
         logger.info("2FA désactivé par admin pour l'utilisateur: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.send2FADisabledNotification(user.email, "${user.prenom} ${user.nom}")
+                emailService.send2FADisabledNotification(user.email, "${user.prenom} ${user.nom}", user.sexe)
             } catch (e: Exception) {
                 logger.warn("Envoi notification 2FA désactivée échoué: ${e.message}")
             }

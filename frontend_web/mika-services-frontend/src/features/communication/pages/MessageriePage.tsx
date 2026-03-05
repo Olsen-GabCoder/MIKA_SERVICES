@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from "react";
-import * as ReactDOM from "react-dom";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import {
@@ -342,7 +342,7 @@ function ChatView({conversation,chatMessages,meId,onSend,onDlPJ,isArchived,onArc
             className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
           </button>
-          {actionsOpen&&menuPos&&typeof document!=="undefined"&&ReactDOM.createPortal(
+          {actionsOpen&&menuPos&&typeof document!=="undefined"&&createPortal(
             <>
               <div className="fixed inset-0 z-[9998]" onClick={closeMenu}/>
               <div className="fixed z-[9999] w-56 rounded-xl bg-white dark:bg-gray-800 shadow-xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden" style={{top:menuPos.top,bottom:menuPos.bottom,right:menuPos.right,maxHeight:menuPos.maxHeight}} role="menu">

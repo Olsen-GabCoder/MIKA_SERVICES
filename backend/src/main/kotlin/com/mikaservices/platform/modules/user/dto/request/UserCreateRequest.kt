@@ -1,6 +1,7 @@
 package com.mikaservices.platform.modules.user.dto.request
 
 import com.mikaservices.platform.common.enums.NiveauExperience
+import com.mikaservices.platform.common.enums.Sexe
 import com.mikaservices.platform.common.enums.TypeContrat
 import com.mikaservices.platform.common.validation.PasswordPolicy
 import jakarta.validation.constraints.DecimalMin
@@ -12,9 +13,8 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 data class UserCreateRequest(
-    @field:NotBlank(message = "Le matricule est obligatoire")
     @field:Size(max = 50, message = "Le matricule ne doit pas dépasser 50 caractères")
-    val matricule: String,
+    val matricule: String? = null,
     
     @field:NotBlank(message = "Le nom est obligatoire")
     @field:Size(max = 100, message = "Le nom ne doit pas dépasser 100 caractères")
@@ -70,6 +70,8 @@ data class UserCreateRequest(
     val typeContrat: TypeContrat? = null,
     
     val niveauExperience: NiveauExperience? = null,
+
+    val sexe: Sexe? = null,
     
     val roleIds: List<Long> = emptyList(),
     

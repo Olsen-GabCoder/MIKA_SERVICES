@@ -26,10 +26,11 @@ export interface UserAffectation {
 }
 
 export interface UserCreateRequest {
-  matricule: string
+  matricule?: string
   nom: string
   prenom: string
   email: string
+  sexe?: 'HOMME' | 'FEMME'
   /** Non envoyé : le mot de passe est généré côté serveur et envoyé par email de bienvenue. */
   password?: string
   telephone?: string
@@ -55,6 +56,7 @@ export interface UserUpdateRequest {
   nom: string
   prenom: string
   email: string
+  sexe?: 'HOMME' | 'FEMME' | null
   telephone?: string
   dateNaissance?: string
   adresse?: string

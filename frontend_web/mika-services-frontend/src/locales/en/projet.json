@@ -110,6 +110,7 @@
     "semaine": "Week (1–53)",
     "tacheARealiser": "Task to complete",
     "choisirTache": "— Choose a task —",
+    "previsionCustomPlaceholder": "Or enter a custom task...",
     "ajouterPour": "Add for W{{semaine}} {{annee}}",
     "previsionsParSemaine": "Forecasts by week",
     "weekLabelShort": "Week {{semaine}} ({{annee}})",

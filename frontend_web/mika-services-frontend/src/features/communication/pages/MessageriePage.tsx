@@ -133,7 +133,7 @@ function ConvRow({conv,selected,q,onClick,meId}:{conv:Conversation;selected:bool
             <Hi text={`${peer.prenom} ${peer.nom}`} q={q}/>
           </span>
           <span className={`text-[11px] tabular-nums flex-shrink-0 ${unread>0?"text-[var(--msg-accent)] font-semibold":"text-gray-400 dark:text-gray-500"}`}>
-            {relTime(last.dateEnvoi)}
+              {relTime(last.dateEnvoi)}
           </span>
         </div>
         <p className={`text-[12.5px] leading-snug truncate m-0 ${unread>0?"text-gray-600 dark:text-gray-300":"text-gray-400 dark:text-gray-500"}`}>
@@ -225,7 +225,7 @@ function Bubble({msg,isMine,isFirst,isLast,onDlPJ}:{msg:Message;isMine:boolean;i
                   <span className="max-w-[100px] truncate">{pj.nomOriginal}</span>
                 </button>
               ))}
-            </div>
+              </div>
           )}
 
           <div className="flex items-center gap-0.5 mt-1 justify-end">
@@ -233,9 +233,9 @@ function Bubble({msg,isMine,isFirst,isLast,onDlPJ}:{msg:Message;isMine:boolean;i
               {clockTime(msg.dateEnvoi)}
             </span>
             {isMine&&<Receipt lu={msg.lu}/>}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
     </div>
   );
 }
@@ -337,11 +337,11 @@ function ChatView({conversation,chatMessages,meId,onSend,onDlPJ,isArchived,onArc
           <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{peer.role||peer.email}</p>
         </div>
         <span className="hidden sm:flex text-[11px] text-gray-400 dark:text-gray-500 tabular-nums">{messages.length} msg</span>
-        <div className="relative">
+            <div className="relative">
           <button ref={btnRef} type="button" onClick={()=>setActionsOpen(o=>!o)}
             className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-          </button>
+              </button>
           {actionsOpen&&menuPos&&typeof document!=="undefined"&&createPortal(
             <>
               <div className="fixed inset-0 z-[9998]" onClick={closeMenu}/>
@@ -351,26 +351,26 @@ function ChatView({conversation,chatMessages,meId,onSend,onDlPJ,isArchived,onArc
                     <button type="button" role="menuitem" onClick={()=>{onUnarchive();closeMenu()}} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                       {t("messagerie.unarchive")}
-                    </button>
+                        </button>
                   ):(
                     <button type="button" role="menuitem" onClick={()=>{onArchive();closeMenu()}} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
                       {t("messagerie.archive")}
-                    </button>
-                  )}
+                        </button>
+                      )}
                   {onSuppressForMe&&(
                     <>
                       <div className="border-t border-gray-100 dark:border-gray-700"/>
                       <button type="button" role="menuitem" onClick={()=>{onSuppressForMe();closeMenu()}} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                         {t("messagerie.deleteForMe")}
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
             </>,document.body
-          )}
+              )}
         </div>
       </header>
 
@@ -379,16 +379,16 @@ function ChatView({conversation,chatMessages,meId,onSend,onDlPJ,isArchived,onArc
         {loadingChat?(
           <div className="flex items-center justify-center h-full">
             <svg className="animate-spin w-6 h-6 text-[var(--msg-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-          </div>
+                  </div>
         ):(
           <div>
             {messages.length>0&&(
               <div className="flex justify-center mb-4">
                 <span className="text-[10px] text-gray-400 dark:text-gray-500 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm px-3 py-1 rounded-full">
                   {t("messagerie.messageCount",{count:messages.length})}
-                </span>
-              </div>
-            )}
+                    </span>
+                    </div>
+                  )}
             {messages.map((msg,idx)=>{
               const mine=msg.expediteur.id===meId;
               const prev=idx>0?messages[idx-1]:null;
@@ -401,9 +401,9 @@ function ChatView({conversation,chatMessages,meId,onSend,onDlPJ,isArchived,onArc
                   {showDate&&<DateSep date={msg.dateEnvoi}/>}
                   <Bubble msg={msg} isMine={mine} isFirst={isFirst} isLast={isLast} onDlPJ={onDlPJ}/>
                 </React.Fragment>
-              );
-            })}
-          </div>
+            );
+          })}
+        </div>
         )}
       </div>
 
@@ -520,18 +520,18 @@ function Compose({open,onClose,onSend,replyTo,users:USERS,usersLoading,onRefresh
       <div onClick={onClose} className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity duration-200 ${open?"opacity-100":"opacity-0 pointer-events-none"}`}/>
       <div className={`fixed top-0 right-0 bottom-0 w-full sm:max-w-[440px] flex flex-col z-50 bg-white dark:bg-gray-900 shadow-2xl transition-transform duration-300 ease-out ${open?"translate-x-0":"translate-x-full"}`}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[var(--msg-accent)] flex items-center justify-center text-white">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            </div>
-            <div>
+              </div>
+              <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('messagerie.newMessage')}</p>
               <p className="text-[11px] text-gray-400">{t('messagerie.internalMessage')}</p>
+              </div>
             </div>
-          </div>
           <button type="button" onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 transition-colors">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          </button>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -542,13 +542,13 @@ function Compose({open,onClose,onSend,replyTo,users:USERS,usersLoading,onRefresh
                 <Av p={dest.prenom} n={dest.nom} size={36} online={dest.online}/>
                 <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{dest.prenom} {dest.nom}</p><p className="text-xs text-gray-400">{dest.role}</p></div>
                 {!replyTo&&<button type="button" onClick={()=>setDestId("")} className="text-xs text-gray-400 hover:text-[var(--msg-accent)] transition-colors">{t('messagerie.changeRecipient')}</button>}
-              </div>
+                </div>
             ):(
               <select value={destId} onChange={e=>setDestId(e.target.value)} disabled={usersLoading||USERS.length===0}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm outline-none focus:ring-2 focus:ring-[var(--msg-accent)]/20 transition-shadow">
                 <option value="">{usersLoading?t('messagerie.loadingUsers'):USERS.length===0?t('messagerie.noUsersAvailable'):t('messagerie.chooseRecipient')}</option>
                 {USERS.map(u=><option key={u.id} value={String(u.id)}>{u.prenom} {u.nom}{u.role?` · ${u.role}`:""}</option>)}
-              </select>
+                </select>
             )}
           </div>
 
@@ -767,45 +767,45 @@ export default function MessageriePage(){
               <div className="flex items-center gap-2.5">
                 <h1 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">{t("messagerie.title")}</h1>
                 {unread>0&&<span className="min-w-[22px] h-[22px] flex items-center justify-center bg-[var(--msg-accent)] text-white text-[11px] font-bold rounded-full px-1.5">{unread}</span>}
-              </div>
+          </div>
               <button type="button" onClick={()=>{setReplyTo(null);setCompose(true)}}
                 className="w-9 h-9 rounded-full bg-[var(--msg-accent)] text-white flex items-center justify-center shadow-lg shadow-[var(--msg-accent)]/25 hover:brightness-110 hover:scale-105 active:scale-95 transition-all"
                 title={t("messagerie.newMessage")}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-              </button>
+          </button>
             </div>
 
             {/* Search */}
-            <div className="relative">
+              <div className="relative">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
               <input ref={searchRef} value={q} onChange={e=>setQ(e.target.value)} placeholder={t("messagerie.searchPlaceholder")}
                 className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-[var(--msg-accent)]/20 transition-all border-0"/>
               {q&&<button type="button" onClick={()=>setQ("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-white hover:bg-gray-400 transition-colors">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>}
+              </div>
             </div>
-          </div>
 
           {/* Tabs: conversations / archives */}
           <div className="flex-shrink-0 px-4 py-2 flex items-center justify-between">
             {tab==="archives"?(
               <button type="button" onClick={()=>setTab("all")} className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--msg-accent)] hover:underline">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                {t("messagerie.backToList")}
-              </button>
+                    {t("messagerie.backToList")}
+                  </button>
             ):(
               <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                 {conversations.length} conversation{conversations.length!==1?"s":""}
-              </p>
-            )}
+                        </p>
+                      )}
             {tab!=="archives"&&(
               <button type="button" onClick={()=>setTab("archives")} className="inline-flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500 hover:text-[var(--msg-accent)] transition-colors">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/></svg>
                 {t("messagerie.tabArchives")}
                 {archivedPeerIds.length>0&&<span className="ml-1 text-[10px] bg-gray-200 dark:bg-gray-700 px-1 rounded">{archivedPeerIds.length}</span>}
-              </button>
-            )}
-          </div>
+                    </button>
+              )}
+            </div>
 
           {/* Conversation list (scrollable!) */}
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden msg-scroll">
@@ -819,25 +819,25 @@ export default function MessageriePage(){
               ):(
                 <div className="px-3 space-y-2 pb-3">
                   {archivedFiltered.map(u=><div key={u.id} className="msg-fade"><ArchivedRow user={u} onUnarchive={()=>handleUnarchive(u.id)} t={t}/></div>)}
-                </div>
-              )
+                  </div>
+                )
             ):conversations.length===0?(
               <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                 <svg className="w-10 h-10 text-gray-200 dark:text-gray-700 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{q?t("messagerie.noResult"):t("messagerie.noMessagesReceived")}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500">{q?t("messagerie.tryOtherTerm"):t("messagerie.messagesWillAppear")}</p>
-              </div>
+                </div>
             ):(
               <div className="pb-2">
                 {conversations.map(conv=>(
-                  <div key={conv.peerId} className="msg-fade">
+                <div key={conv.peerId} className="msg-fade">
                     <ConvRow conv={conv} selected={selectedPeerId===conv.peerId} q={q} onClick={()=>handleSelect(conv.peerId)} meId={ME.id}/>
-                  </div>
-                ))}
+                </div>
+              ))}
               </div>
             )}
+            </div>
           </div>
-        </div>
 
         {/* ─── Chat zone ──────────────────────────────── */}
         <div className={`flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden bg-[var(--msg-chat-bg)] ${showChat?"flex":"hidden md:flex"}`}>
@@ -856,7 +856,7 @@ export default function MessageriePage(){
             <ChatView
               conversation={selectedConversation} chatMessages={chatMessages} meId={ME.id}
               onSend={handleChatSend} onDlPJ={handleDlPJ}
-              isArchived={archivedPeerIds.includes(selectedConversation.peerId)}
+                  isArchived={archivedPeerIds.includes(selectedConversation.peerId)}
               onArchive={()=>handleArchive(selectedConversation.peerId)}
               onUnarchive={()=>handleUnarchive(selectedConversation.peerId)}
               onSuppressForMe={handleSuppressForMe}

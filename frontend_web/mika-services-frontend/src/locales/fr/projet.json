@@ -110,6 +110,7 @@
     "semaine": "Semaine (1–53)",
     "tacheARealiser": "Tâche à réaliser",
     "choisirTache": "— Choisir une tâche —",
+    "previsionCustomPlaceholder": "Ou saisir une tâche personnalisée...",
     "ajouterPour": "Ajouter pour S{{semaine}} {{annee}}",
     "previsionsParSemaine": "Prévisions par semaine",
     "weekLabelShort": "Semaine {{semaine}} ({{annee}})",

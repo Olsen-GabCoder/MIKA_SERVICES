@@ -88,9 +88,9 @@ export const UserForm = ({ onSuccess, onCancel }: UserFormProps) => {
       numeroCNI: data.numeroCNI || undefined,
       numeroPasseport: data.numeroPasseport || undefined,
       dateEmbauche: data.dateEmbauche || undefined,
-      salaireMensuel: data.salaireMensuel,
-      typeContrat: data.typeContrat,
-      niveauExperience: data.niveauExperience,
+      salaireMensuel: data.salaireMensuel != null && !isNaN(data.salaireMensuel) ? data.salaireMensuel : undefined,
+      typeContrat: data.typeContrat || undefined,
+      niveauExperience: data.niveauExperience || undefined,
       roleIds: selectedRoleIds.length > 0 ? selectedRoleIds : undefined,
       superieurHierarchiqueId: superieurId ? Number(superieurId) : undefined,
     }
@@ -158,12 +158,13 @@ export const UserForm = ({ onSuccess, onCancel }: UserFormProps) => {
               <Input label={t('form.email')} type="email" error={errors.email?.message} {...register('email', { required: t('form.validation.emailRequired'), pattern: { value: /^[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}$/, message: t('form.validation.emailInvalid') } })} />
               <div>
                 <label className={labelClass}>{t('form.sexe')}</label>
-                <select {...register('sexe')} className={inputClass}>
+                <select {...register('sexe', { required: t('form.validation.sexeRequired') })} className={inputClass}>
                   <option value="">—</option>
                   {SEXE_VALUES.map((v) => (
                     <option key={v} value={v}>{t(`sexe.${v}`)}</option>
                   ))}
                 </select>
+                {errors.sexe && <p className="text-xs text-red-500 mt-1">{errors.sexe.message}</p>}
               </div>
               <Input label={t('form.nom')} error={errors.nom?.message} {...register('nom', { required: t('form.validation.nomRequired') })} />
               <Input label={t('form.prenom')} error={errors.prenom?.message} {...register('prenom', { required: t('form.validation.prenomRequired') })} />

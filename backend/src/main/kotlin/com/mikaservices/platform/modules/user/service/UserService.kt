@@ -352,7 +352,7 @@ class UserService(
         logger.info("Mot de passe changé avec succès pour l'utilisateur: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.sendPasswordChangedNotification(user.email, user.prenom)
+                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}")
             } catch (e: Exception) {
                 logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
             }
@@ -381,7 +381,7 @@ class UserService(
         logger.info("Mot de passe changé avec succès pour l'utilisateur: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.sendPasswordChangedNotification(user.email, user.prenom)
+                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}")
             } catch (e: Exception) {
                 logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
             }
@@ -403,7 +403,7 @@ class UserService(
         logger.info("Mot de passe réinitialisé par admin pour l'utilisateur: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.sendPasswordChangedNotification(user.email, user.prenom)
+                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}")
             } catch (e: Exception) {
                 logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
             }
@@ -423,7 +423,7 @@ class UserService(
         logger.info("2FA désactivé par admin pour l'utilisateur: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.send2FADisabledNotification(user.email, user.prenom)
+                emailService.send2FADisabledNotification(user.email, "${user.prenom} ${user.nom}")
             } catch (e: Exception) {
                 logger.warn("Envoi notification 2FA désactivée échoué: ${e.message}")
             }

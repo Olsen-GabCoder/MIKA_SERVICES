@@ -6,6 +6,7 @@ import com.mikaservices.platform.modules.budget.repository.DepenseRepository
 import com.mikaservices.platform.modules.materiel.repository.EnginRepository
 import com.mikaservices.platform.modules.materiel.repository.MateriauRepository
 import com.mikaservices.platform.modules.planning.repository.TacheRepository
+import com.mikaservices.platform.modules.projet.repository.PrevisionRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
 import com.mikaservices.platform.modules.projet.repository.SousProjetRepository
 import com.mikaservices.platform.modules.qualite.repository.ControleQualiteRepository
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
+import java.time.temporal.IsoFields
 import kotlin.math.round
 
 @Service
@@ -26,6 +28,7 @@ class ReportingService(
     private val projetRepository: ProjetRepository,
     private val depenseRepository: DepenseRepository,
     private val tacheRepository: TacheRepository,
+    private val previsionRepository: PrevisionRepository,
     private val controleQualiteRepository: ControleQualiteRepository,
     private val nonConformiteRepository: NonConformiteRepository,
     private val incidentRepository: IncidentRepository,
@@ -43,7 +46,8 @@ class ReportingService(
             planning = getGlobalPlanningStats(),
             qualite = getGlobalQualiteStats(),
             securite = getGlobalSecuriteStats(),
-            materiel = getMaterielStats()
+            materiel = getMaterielStats(),
+            weeklyProgress = getWeeklyProgressStats()
         )
     }
 
@@ -103,17 +107,38 @@ class ReportingService(
 
     // ==================== Stats privées ====================
 
+    @Suppress("SENSELESS_COMPARISON")
     private fun getProjetStats(): ProjetStats {
-        val all = projetRepository.findAll()
+        val all = projetRepository.findAll().filter { it.actif }
         val today = LocalDate.now()
         val enRetard = all.count { p ->
             p.statut == StatutProjet.EN_COURS && p.dateFin != null && p.dateFin!!.isBefore(today)
         }.toLong()
+
+        val montantTotal = all.fold(BigDecimal.ZERO) { acc, p ->
+            val ht = try { p.montantHT } catch (_: Exception) { null }
+            acc.add(ht ?: BigDecimal.ZERO)
+        }
+
+        val avancementMoyen = if (all.isNotEmpty()) {
+            val values = all.map { p ->
+                val av = try { p.avancementGlobal } catch (_: Exception) { null }
+                (av ?: BigDecimal.ZERO).toDouble()
+            }
+            round(values.average() * 100.0) / 100.0
+        } else 0.0
+
+        val parStatut = all.groupBy { it.statut.name }
+            .mapValues { (_, v) -> v.size.toLong() }
+
         return ProjetStats(
             total = all.size.toLong(),
             enCours = all.count { it.statut == StatutProjet.EN_COURS }.toLong(),
             termines = all.count { it.statut == StatutProjet.TERMINE }.toLong(),
-            enRetard = enRetard
+            enRetard = enRetard,
+            montantTotal = montantTotal,
+            avancementMoyen = avancementMoyen,
+            parStatut = parStatut
         )
     }
 
@@ -171,5 +196,62 @@ class ReportingService(
         val disponibles = engins.count { it.statut == StatutEngin.DISPONIBLE }.toLong()
         val materiauxStockBas = materiauRepository.findStockBas().size.toLong()
         return MaterielStats(engins.size.toLong(), disponibles, materiauxStockBas)
+    }
+
+    private fun getWeeklyProgressStats(): WeeklyProgressStats {
+        val today = LocalDate.now()
+        val currentWeek = today.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)
+        val currentYear = today.get(IsoFields.WEEK_BASED_YEAR)
+
+        val weekSlots = mutableListOf<Pair<Int, Int>>()
+        var w = currentWeek
+        var y = currentYear
+        for (i in 0 until 5) {
+            w--
+            if (w < 1) { y--; w = LocalDate.of(y, 12, 28).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR) }
+            weekSlots.add(0, Pair(w, y))
+        }
+        weekSlots.add(Pair(currentWeek, currentYear))
+        val nextWeek = if (currentWeek < 52) currentWeek + 1 else 1
+        val nextYear = if (currentWeek < 52) currentYear else currentYear + 1
+        weekSlots.add(Pair(nextWeek, nextYear))
+
+        val startPair = weekSlots.first()
+        val endPair = weekSlots.last()
+        val allPrevisions = previsionRepository.findByWeekRange(
+            startPair.second, startPair.first,
+            endPair.second, endPair.first
+        )
+
+        val grouped = allPrevisions.groupBy { Pair(it.semaine ?: 0, it.annee) }
+
+        val weeks = weekSlots.map { (sem, an) ->
+            val items = grouped[Pair(sem, an)] ?: emptyList()
+            val total = items.size.toLong()
+            val terminees = items.count { (it.avancementPct ?: 0) >= 100 }.toLong()
+            val enCours = items.count { val pct = it.avancementPct ?: 0; pct in 1..99 }.toLong()
+            val nonCommencees = items.count { (it.avancementPct ?: 0) == 0 }.toLong()
+            val avancementMoyen = if (items.isNotEmpty()) {
+                round(items.map { (it.avancementPct ?: 0).toDouble() }.average() * 100.0) / 100.0
+            } else 0.0
+
+            WeekSummary(
+                semaine = sem,
+                annee = an,
+                label = "S$sem",
+                total = total,
+                terminees = terminees,
+                enCours = enCours,
+                nonCommencees = nonCommencees,
+                avancementMoyen = avancementMoyen,
+                isCurrent = sem == currentWeek && an == currentYear
+            )
+        }
+
+        return WeeklyProgressStats(
+            semaineActuelle = currentWeek,
+            anneeActuelle = currentYear,
+            weeks = weeks
+        )
     }
 }

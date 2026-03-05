@@ -9,14 +9,18 @@ data class GlobalDashboardResponse(
     val planning: PlanningStats,
     val qualite: QualiteStats,
     val securite: SecuriteStats,
-    val materiel: MaterielStats
+    val materiel: MaterielStats,
+    val weeklyProgress: WeeklyProgressStats
 )
 
 data class ProjetStats(
     val total: Long,
     val enCours: Long,
     val termines: Long,
-    val enRetard: Long
+    val enRetard: Long,
+    val montantTotal: BigDecimal,
+    val avancementMoyen: Double,
+    val parStatut: Map<String, Long>
 )
 
 data class ChantierStats(
@@ -76,4 +80,22 @@ data class EvolutionMensuelle(
     val depenses: BigDecimal,
     val incidents: Long,
     val tachesTerminees: Long
+)
+
+data class WeeklyProgressStats(
+    val semaineActuelle: Int,
+    val anneeActuelle: Int,
+    val weeks: List<WeekSummary>
+)
+
+data class WeekSummary(
+    val semaine: Int,
+    val annee: Int,
+    val label: String,
+    val total: Long,
+    val terminees: Long,
+    val enCours: Long,
+    val nonCommencees: Long,
+    val avancementMoyen: Double,
+    val isCurrent: Boolean
 )

@@ -104,11 +104,11 @@ class AuthService(
             )
         }
         
-        val response = createSessionAndAuthResponse(user, httpRequest, request.rememberMe)
-        if (notifyOnLogin && user.alertNewLoginEnabled) {
+        val (response, isNewDevice) = createSessionAndAuthResponse(user, httpRequest, request.rememberMe)
+        if (notifyOnLogin && user.alertNewLoginEnabled && isNewDevice) {
             emailService.sendLoginNotificationAsync(
                 user.email,
-                user.prenom,
+                "${user.prenom} ${user.nom}",
                 httpRequest.remoteAddr,
                 httpRequest.getHeader("User-Agent")
             )
@@ -128,11 +128,11 @@ class AuthService(
             throw UnauthorizedException("Code 2FA incorrect")
         }
         logger.info("2FA validé pour: ${user.email}")
-        val response = createSessionAndAuthResponse(user, httpRequest, request.rememberMe)
-        if (notifyOnLogin && user.alertNewLoginEnabled) {
+        val (response, isNewDevice) = createSessionAndAuthResponse(user, httpRequest, request.rememberMe)
+        if (notifyOnLogin && user.alertNewLoginEnabled && isNewDevice) {
             emailService.sendLoginNotificationAsync(
                 user.email,
-                user.prenom,
+                "${user.prenom} ${user.nom}",
                 httpRequest.remoteAddr,
                 httpRequest.getHeader("User-Agent")
             )
@@ -140,7 +140,9 @@ class AuthService(
         return response
     }
 
-    private fun createSessionAndAuthResponse(user: User, httpRequest: HttpServletRequest, rememberMe: Boolean = false): AuthResponse {
+    private data class SessionResult(val response: AuthResponse, val isNewDevice: Boolean)
+
+    private fun createSessionAndAuthResponse(user: User, httpRequest: HttpServletRequest, rememberMe: Boolean = false): SessionResult {
         val roles = user.roles.map { it.code }
         val sessionDurationMs = when {
             rememberMe -> SecurityConstants.LONG_SESSION_MS
@@ -161,6 +163,8 @@ class AuthService(
         } else emptyList()
 
         val existingSession = matchingSessions.firstOrNull()
+        val isNewDevice = existingSession == null
+
         if (matchingSessions.size > 1) {
             val duplicates = matchingSessions.drop(1)
             duplicates.forEach { it.active = false }
@@ -192,12 +196,18 @@ class AuthService(
         user.lastLogin = now
         userRepository.save(user)
         auditLogService.log(user, "AUTH", "LOGIN", deviceName.ifBlank { null }, ip, actorOverride = user.email)
-        return AuthResponse(
-            accessToken = accessToken,
-            refreshToken = refreshToken,
-            expiresIn = SecurityConstants.DEFAULT_JWT_EXPIRATION_MS / 1000,
-            sessionExpiresIn = sessionDurationMs / 1000,
-            user = UserMapper.toResponse(user)
+        if (isNewDevice) {
+            logger.info("Nouvel appareil détecté pour ${user.email}: $deviceName (IP: $ip)")
+        }
+        return SessionResult(
+            response = AuthResponse(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                expiresIn = SecurityConstants.DEFAULT_JWT_EXPIRATION_MS / 1000,
+                sessionExpiresIn = sessionDurationMs / 1000,
+                user = UserMapper.toResponse(user)
+            ),
+            isNewDevice = isNewDevice
         )
     }
 
@@ -276,7 +286,7 @@ class AuthService(
         logger.info("2FA activé avec succès pour: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.send2FAEnabledNotification(user.email, user.prenom)
+                emailService.send2FAEnabledNotification(user.email, "${user.prenom} ${user.nom}")
             } catch (e: Exception) {
                 logger.warn("Envoi notification 2FA activée échoué: ${e.message}")
             }
@@ -298,7 +308,7 @@ class AuthService(
         logger.info("2FA désactivé pour: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.send2FADisabledNotification(user.email, user.prenom)
+                emailService.send2FADisabledNotification(user.email, "${user.prenom} ${user.nom}")
             } catch (e: Exception) {
                 logger.warn("Envoi notification 2FA désactivée échoué: ${e.message}")
             }
@@ -453,7 +463,7 @@ class AuthService(
         logger.info("Mot de passe réinitialisé pour: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.sendPasswordChangedNotification(user.email, user.prenom)
+                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}")
             } catch (e: Exception) {
                 logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
             }

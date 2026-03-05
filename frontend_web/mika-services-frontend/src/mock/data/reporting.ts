@@ -8,6 +8,7 @@ export const mockGlobalDashboard: GlobalDashboard = {
     enRetard: 1,
     montantTotal: 420_000_000,
     avancementMoyen: 58.4,
+    parStatut: { EN_COURS: 3, TERMINE: 2 },
   },
   chantiers: {
     total: 12,
@@ -42,6 +43,11 @@ export const mockGlobalDashboard: GlobalDashboard = {
     enginsTotal: 18,
     enginsDisponibles: 12,
     materiauxStockBas: 3,
+  },
+  weeklyProgress: {
+    semaineActuelle: 10,
+    anneeActuelle: 2026,
+    weeks: [],
   },
 }
 

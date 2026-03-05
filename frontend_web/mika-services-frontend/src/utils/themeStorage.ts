@@ -4,10 +4,10 @@ const HTML_DARK_CLASS = 'dark'
 export type Theme = 'light' | 'dark'
 
 export function getStoredTheme(): Theme {
-  if (typeof window === 'undefined') return 'light'
+  if (typeof window === 'undefined') return 'dark'
   const stored = localStorage.getItem(THEME_KEY)
   if (stored === 'dark' || stored === 'light') return stored
-  return 'light'
+  return 'dark'
 }
 
 export function setStoredTheme(theme: Theme): void {

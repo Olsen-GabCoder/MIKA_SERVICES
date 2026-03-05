@@ -2,6 +2,7 @@ package com.mikaservices.platform.modules.user.entity
 
 import com.mikaservices.platform.common.entity.BaseEntity
 import com.mikaservices.platform.common.enums.NiveauExperience
+import com.mikaservices.platform.common.enums.Sexe
 import com.mikaservices.platform.common.enums.TypeContrat
 import jakarta.persistence.*
 import org.hibernate.annotations.BatchSize
@@ -26,6 +27,10 @@ class User(
     
     @Column(name = "email", nullable = false, unique = true, length = 100)
     var email: String,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sexe", length = 10)
+    var sexe: Sexe? = null,
     
     @Column(name = "mot_de_passe", nullable = false, length = 255)
     var motDePasse: String,

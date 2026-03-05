@@ -12,9 +12,10 @@ import type { UserCreateRequest } from '@/api/userApi'
 
 const TYPE_CONTRAT_VALUES = ['CDI', 'CDD', 'PRESTATAIRE', 'SOUS_TRAITANT', 'STAGE', 'INTERIM'] as const
 const NIVEAU_EXPERIENCE_VALUES = ['DEBUTANT', 'CONFIRME', 'EXPERT', 'SENIOR'] as const
+const SEXE_VALUES = ['HOMME', 'FEMME'] as const
 
 interface UserFormData extends Omit<UserCreateRequest, 'password'> {
-  /** Non utilisé : le mot de passe est généré côté serveur et envoyé par email. */
+  autoMatricule?: boolean
 }
 
 interface UserFormProps {
@@ -31,6 +32,7 @@ export const UserForm = ({ onSuccess, onCancel }: UserFormProps) => {
   const [roles, setRoles] = useState<Role[]>([])
   const [users, setUsers] = useState<{ id: number; prenom: string; nom: string }[]>([])
   const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>([])
+  const [autoMatricule, setAutoMatricule] = useState(true)
 
   useEffect(() => {
     roleApi.getActive().then(setRoles).catch(() => setRoles([]))
@@ -50,6 +52,7 @@ export const UserForm = ({ onSuccess, onCancel }: UserFormProps) => {
       nom: '',
       prenom: '',
       email: '',
+      sexe: undefined,
       telephone: '',
       adresse: '',
       ville: '',
@@ -71,10 +74,11 @@ export const UserForm = ({ onSuccess, onCancel }: UserFormProps) => {
     setIsLoading(true)
     setErrorMessage(null)
     const payload: UserCreateRequest = {
-      matricule: data.matricule,
+      matricule: autoMatricule ? undefined : (data.matricule || undefined),
       nom: data.nom,
       prenom: data.prenom,
       email: data.email,
+      sexe: data.sexe || undefined,
       telephone: data.telephone || undefined,
       dateNaissance: data.dateNaissance || undefined,
       adresse: data.adresse || undefined,
@@ -137,8 +141,30 @@ export const UserForm = ({ onSuccess, onCancel }: UserFormProps) => {
           <div className="bg-gray-50/60 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-600">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 pb-2 border-b border-gray-200 dark:border-gray-600">{t('form.identity')}</h3>
             <div className="grid grid-cols-2 gap-3">
-              <Input label={t('form.matricule')} error={errors.matricule?.message} {...register('matricule', { required: t('form.validation.matriculeRequired') })} />
+              <div className="col-span-2">
+                <label className="flex items-center gap-2 cursor-pointer mb-2">
+                  <input
+                    type="checkbox"
+                    checked={autoMatricule}
+                    onChange={(e) => setAutoMatricule(e.target.checked)}
+                    className="rounded border-gray-300 dark:border-gray-500 text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{t('form.autoMatricule')}</span>
+                </label>
+                {!autoMatricule && (
+                  <Input label={t('form.matricule')} error={errors.matricule?.message} {...register('matricule', { required: !autoMatricule ? t('form.validation.matriculeRequired') : false })} />
+                )}
+              </div>
               <Input label={t('form.email')} type="email" error={errors.email?.message} {...register('email', { required: t('form.validation.emailRequired'), pattern: { value: /^[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}$/, message: t('form.validation.emailInvalid') } })} />
+              <div>
+                <label className={labelClass}>{t('form.sexe')}</label>
+                <select {...register('sexe')} className={inputClass}>
+                  <option value="">—</option>
+                  {SEXE_VALUES.map((v) => (
+                    <option key={v} value={v}>{t(`sexe.${v}`)}</option>
+                  ))}
+                </select>
+              </div>
               <Input label={t('form.nom')} error={errors.nom?.message} {...register('nom', { required: t('form.validation.nomRequired') })} />
               <Input label={t('form.prenom')} error={errors.prenom?.message} {...register('prenom', { required: t('form.validation.prenomRequired') })} />
               <div className="col-span-2">

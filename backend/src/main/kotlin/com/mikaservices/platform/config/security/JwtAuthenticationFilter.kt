@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.ConcurrentHashMap
 
 @Component
 class JwtAuthenticationFilter(
@@ -23,15 +24,16 @@ class JwtAuthenticationFilter(
 
     private val log = LoggerFactory.getLogger(JwtAuthenticationFilter::class.java)
 
+    private data class SessionCacheEntry(val active: Boolean, val cachedAt: Long)
+
+    private val sessionCache = ConcurrentHashMap<String, SessionCacheEntry>()
+
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val path = request.requestURI
-        val method = request.method
-        
-        if (method == "OPTIONS") return true
-        
+        if (request.method == "OPTIONS") return true
         return SecurityConstants.PUBLIC_PATHS.any { path.startsWith(it) }
     }
-    
+
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -39,55 +41,65 @@ class JwtAuthenticationFilter(
     ) {
         try {
             val authHeader = request.getHeader(SecurityConstants.JWT_HEADER)
-            
-            log.debug("JWT Filter - URI: ${request.requestURI}, Method: ${request.method}, Auth header present: ${authHeader != null}")
-            
+
             if (authHeader != null && authHeader.startsWith(SecurityConstants.JWT_PREFIX)) {
                 val token = authHeader.substring(SecurityConstants.JWT_PREFIX.length)
-                
+
                 if (jwtTokenProvider.validateToken(token)) {
-                    val session = sessionRepository.findByToken(token).orElse(null)
-                    if (session == null || !session.active) {
-                        log.warn("Session inactive ou absente pour le token: ${request.requestURI}")
+                    val cached = sessionCache[token]
+                    val now = System.currentTimeMillis()
+
+                    val isActive = if (cached != null && (now - cached.cachedAt) < SESSION_CACHE_TTL_MS) {
+                        cached.active
+                    } else {
+                        val session = sessionRepository.findByToken(token).orElse(null)
+                        val active = session?.active == true
+                        sessionCache[token] = SessionCacheEntry(active, now)
+
+                        if (active) {
+                            val lastActivity = session!!.lastActivity
+                            val localNow = LocalDateTime.now()
+                            if (lastActivity == null || ChronoUnit.MINUTES.between(lastActivity, localNow) >= ACTIVITY_THROTTLE_MINUTES) {
+                                session.lastActivity = localNow
+                                sessionRepository.save(session)
+                            }
+                        }
+                        active
+                    }
+
+                    if (!isActive) {
                         filterChain.doFilter(request, response)
                         return
                     }
 
                     val username = jwtTokenProvider.getUsernameFromToken(token)
                     val roles = jwtTokenProvider.getRolesFromToken(token)
-                    
                     val authorities = roles.map { SimpleGrantedAuthority("ROLE_$it") }
-                    
-                    val authentication = UsernamePasswordAuthenticationToken(
-                        username,
-                        null,
-                        authorities
-                    )
-                    authentication.details = WebAuthenticationDetailsSource().buildDetails(request)
-                    
-                    SecurityContextHolder.getContext().authentication = authentication
-                    log.debug("Utilisateur authentifié: $username avec rôles: $roles")
 
-                    val now = LocalDateTime.now()
-                    val lastActivity = session.lastActivity
-                    if (lastActivity == null || ChronoUnit.MINUTES.between(lastActivity, now) >= ACTIVITY_THROTTLE_MINUTES) {
-                        session.lastActivity = now
-                        sessionRepository.save(session)
-                    }
+                    val authentication = UsernamePasswordAuthenticationToken(username, null, authorities)
+                    authentication.details = WebAuthenticationDetailsSource().buildDetails(request)
+                    SecurityContextHolder.getContext().authentication = authentication
                 } else {
-                    log.warn("Token JWT invalide pour la requête: ${request.requestURI}")
+                    log.warn("Token JWT invalide: ${request.requestURI}")
                 }
-            } else {
-                log.debug("Pas de header Authorization pour: ${request.method} ${request.requestURI}")
             }
         } catch (e: Exception) {
-            log.error("Erreur lors de l'authentification JWT: ${e.message}", e)
+            log.error("Erreur JWT: ${e.message}", e)
         }
-        
+
         filterChain.doFilter(request, response)
+    }
+
+    fun evictSession(token: String) {
+        sessionCache.remove(token)
+    }
+
+    fun evictAllSessions() {
+        sessionCache.clear()
     }
 
     companion object {
         private const val ACTIVITY_THROTTLE_MINUTES = 5L
+        private const val SESSION_CACHE_TTL_MS = 60_000L
     }
 }

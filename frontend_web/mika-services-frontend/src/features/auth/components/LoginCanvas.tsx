@@ -17,6 +17,7 @@ export const LoginCanvas = () => {
     let animationId = 0
     let t = 0
     let isVisible = true
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     const resize = () => {
       W = canvas.width = window.innerWidth
@@ -52,7 +53,7 @@ export const LoginCanvas = () => {
           type: 'l',
         })
       }
-      particles = Array.from({ length: 60 }, () => ({
+      particles = Array.from({ length: prefersReducedMotion ? 15 : 40 }, () => ({
         x: Math.random() * W,
         y: Math.random() * H,
         r: Math.random() * 1.5 + 0.3,
@@ -135,7 +136,9 @@ export const LoginCanvas = () => {
         ctx.fillRect(b.x - 1, yc - 120, 2, 240)
       })
 
-      animationId = requestAnimationFrame(draw)
+      if (!prefersReducedMotion) {
+        animationId = requestAnimationFrame(draw)
+      }
     }
 
     const onVisibilityChange = () => {

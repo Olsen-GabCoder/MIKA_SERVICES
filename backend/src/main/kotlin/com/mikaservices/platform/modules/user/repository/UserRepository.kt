@@ -26,4 +26,7 @@ interface UserRepository : JpaRepository<User, Long>, JpaSpecificationExecutor<U
 
     @Query("SELECT u FROM User u WHERE u.superieurHierarchique.id = :superieurId")
     fun findAllBySuperieurHierarchiqueId(superieurId: Long): List<User>
+
+    @Query("SELECT MAX(u.matricule) FROM User u WHERE u.matricule LIKE :prefix")
+    fun findMaxMatriculeByPrefix(prefix: String): String?
 }

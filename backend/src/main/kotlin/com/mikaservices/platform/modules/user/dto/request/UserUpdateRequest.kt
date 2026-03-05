@@ -1,6 +1,7 @@
 package com.mikaservices.platform.modules.user.dto.request
 
 import com.mikaservices.platform.common.enums.NiveauExperience
+import com.mikaservices.platform.common.enums.Sexe
 import com.mikaservices.platform.common.enums.TypeContrat
 import jakarta.validation.constraints.*
 import java.math.BigDecimal
@@ -59,6 +60,8 @@ data class UserUpdateRequest(
     val niveauExperience: NiveauExperience? = null,
     
     val actif: Boolean? = null,
+
+    val sexe: Sexe? = null,
     
     val roleIds: List<Long>? = null,
     

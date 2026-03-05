@@ -6,6 +6,7 @@ import com.mikaservices.platform.common.exception.BadRequestException
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
 import com.mikaservices.platform.common.exception.UnauthorizedException
 import com.mikaservices.platform.config.mail.EmailService
+import com.mikaservices.platform.config.security.JwtAuthenticationFilter
 import com.mikaservices.platform.config.security.JwtTokenProvider
 import com.mikaservices.platform.modules.auth.dto.request.Disable2FARequest
 import com.mikaservices.platform.modules.auth.dto.request.Verify2FARequest
@@ -50,6 +51,7 @@ class AuthService(
     private val emailService: EmailService,
     private val twoFactorService: TwoFactorService,
     private val auditLogService: AuditLogService,
+    private val jwtAuthenticationFilter: JwtAuthenticationFilter,
     @Value("\${app.mail.notify-on-login:false}") private val notifyOnLogin: Boolean,
     @Value("\${app.auth.lockout-max-attempts:5}") private val lockoutMaxAttempts: Int,
     @Value("\${app.auth.lockout-duration-minutes:15}") private val lockoutDurationMinutes: Int
@@ -110,7 +112,8 @@ class AuthService(
                 user.email,
                 "${user.prenom} ${user.nom}",
                 httpRequest.remoteAddr,
-                httpRequest.getHeader("User-Agent")
+                httpRequest.getHeader("User-Agent"),
+                user.sexe
             )
         }
         return LoginResult.Success(response)
@@ -134,7 +137,8 @@ class AuthService(
                 user.email,
                 "${user.prenom} ${user.nom}",
                 httpRequest.remoteAddr,
-                httpRequest.getHeader("User-Agent")
+                httpRequest.getHeader("User-Agent"),
+                user.sexe
             )
         }
         return response
@@ -286,7 +290,7 @@ class AuthService(
         logger.info("2FA activé avec succès pour: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.send2FAEnabledNotification(user.email, "${user.prenom} ${user.nom}")
+                emailService.send2FAEnabledNotification(user.email, "${user.prenom} ${user.nom}", user.sexe)
             } catch (e: Exception) {
                 logger.warn("Envoi notification 2FA activée échoué: ${e.message}")
             }
@@ -308,7 +312,7 @@ class AuthService(
         logger.info("2FA désactivé pour: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.send2FADisabledNotification(user.email, "${user.prenom} ${user.nom}")
+                emailService.send2FADisabledNotification(user.email, "${user.prenom} ${user.nom}", user.sexe)
             } catch (e: Exception) {
                 logger.warn("Envoi notification 2FA désactivée échoué: ${e.message}")
             }
@@ -362,21 +366,18 @@ class AuthService(
     }
     
     fun logout(token: String) {
-        logger.debug("Déconnexion")
-        
-        val session = sessionRepository.findByToken(token)
-            .orElse(null)
-        
+        val session = sessionRepository.findByToken(token).orElse(null)
         session?.let {
             it.active = false
             sessionRepository.save(it)
+            jwtAuthenticationFilter.evictSession(token)
             logger.info("Session désactivée pour l'utilisateur: ${it.user.email}")
         }
     }
-    
+
     fun logoutAll(userId: Long) {
-        logger.debug("Déconnexion de toutes les sessions pour l'utilisateur: $userId")
         sessionRepository.deactivateAllUserSessions(userId)
+        jwtAuthenticationFilter.evictAllSessions()
     }
 
     fun getMySessions(userId: Long, currentToken: String? = null): List<SessionResponse> {
@@ -429,7 +430,7 @@ class AuthService(
         val resetToken = PasswordResetToken(user = user, token = token, dateExpiration = expiry)
         passwordResetTokenRepository.save(resetToken)
         try {
-            emailService.sendPasswordResetEmail(user.email, user.prenom, token)
+            emailService.sendPasswordResetEmail(user.email, user.prenom, token, user.sexe)
         } catch (e: Exception) {
             logger.warn("Envoi email réinitialisation mot de passe échoué pour ${user.email}: ${e.message}", e)
         }
@@ -463,7 +464,7 @@ class AuthService(
         logger.info("Mot de passe réinitialisé pour: ${user.email}")
         if (user.emailNotificationsEnabled) {
             try {
-                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}")
+                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}", user.sexe)
             } catch (e: Exception) {
                 logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
             }

@@ -46,15 +46,19 @@ const MIKA_HIGH_CONTRAST_CARDS_KEY = 'mika-high-contrast-cards'
 const ITEMS_PER_PAGE_OPTIONS = [10, 20, 25, 50, 100] as const
 
 function getStoredOfflineMode(): boolean {
-  if (typeof window === 'undefined') return false
-  return localStorage.getItem(MIKA_OFFLINE_MODE_KEY) === 'true'
+  if (typeof window === 'undefined') return true
+  const stored = localStorage.getItem(MIKA_OFFLINE_MODE_KEY)
+  if (stored === null) return true
+  return stored === 'true'
 }
 
 export type CacheDuration = 'short' | 'medium' | 'long'
 
 function getStoredCacheEnabled(): boolean {
-  if (typeof window === 'undefined') return false
-  return localStorage.getItem(MIKA_CACHE_ENABLED_KEY) === 'true'
+  if (typeof window === 'undefined') return true
+  const stored = localStorage.getItem(MIKA_CACHE_ENABLED_KEY)
+  if (stored === null) return true
+  return stored === 'true'
 }
 
 function getStoredCacheDuration(): CacheDuration {
@@ -65,13 +69,17 @@ function getStoredCacheDuration(): CacheDuration {
 }
 
 function getStoredPreloadData(): boolean {
-  if (typeof window === 'undefined') return false
-  return localStorage.getItem(MIKA_PRELOAD_DATA_KEY) === 'true'
+  if (typeof window === 'undefined') return true
+  const stored = localStorage.getItem(MIKA_PRELOAD_DATA_KEY)
+  if (stored === null) return true
+  return stored === 'true'
 }
 
 function getStoredOfflineQueueEnabled(): boolean {
-  if (typeof window === 'undefined') return false
-  return localStorage.getItem(MIKA_OFFLINE_QUEUE_KEY) === 'true'
+  if (typeof window === 'undefined') return true
+  const stored = localStorage.getItem(MIKA_OFFLINE_QUEUE_KEY)
+  if (stored === null) return true
+  return stored === 'true'
 }
 
 export type ConnectionQuality = 'auto' | 'normal' | 'slow'

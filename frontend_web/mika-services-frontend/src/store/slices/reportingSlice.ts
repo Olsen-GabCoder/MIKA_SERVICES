@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { reportingApi } from '../../api/reportingApi'
 import type { GlobalDashboard, ProjetReport } from '../../types/reporting'
+import { setDashboardCache, getDashboardCache } from '../../utils/offlineCache'
+import { isNetworkError } from '../../utils/errorHandler'
 
 interface ReportingState {
   dashboard: GlobalDashboard | null
@@ -19,7 +21,17 @@ const initialState: ReportingState = {
 export const fetchGlobalDashboard = createAsyncThunk(
   'reporting/fetchDashboard',
   async () => {
-    return await reportingApi.getGlobalDashboard()
+    try {
+      const data = await reportingApi.getGlobalDashboard()
+      setDashboardCache(data)
+      return data
+    } catch (e) {
+      if (isNetworkError(e)) {
+        const cached = getDashboardCache() as GlobalDashboard | null
+        if (cached) return cached
+      }
+      throw e
+    }
   }
 )
 

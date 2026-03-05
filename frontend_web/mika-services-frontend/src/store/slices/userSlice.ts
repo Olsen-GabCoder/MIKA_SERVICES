@@ -6,7 +6,7 @@ import { userApi } from '@/api/userApi'
 import type { UserCreateRequest, UserUpdateRequest, UserGetAllParams } from '@/api/userApi'
 import type { PaginatedResponse } from '@/api/userApi'
 import { handleApiError, isNetworkError } from '@/utils/errorHandler'
-import { getUsersCache, getUsersCacheIfValid, setUsersCache, CACHE_DURATION_MS } from '@/utils/offlineCache'
+import { getUsersCache, getUsersCacheIfValid, setUsersCache, clearUsersCache, CACHE_DURATION_MS } from '@/utils/offlineCache'
 import { logoutUser } from './authSlice'
 
 interface UserState {
@@ -47,7 +47,6 @@ export interface FetchUsersParams extends Partial<UserGetAllParams> {
   size?: number
 }
 
-/** Requête "liste complète" (sans filtre) : préchargement, messagerie, sélecteurs. On ne lit pas le cache pour éviter d’afficher une liste vide mise en cache par une requête filtrée (ex. Gestion utilisateurs). */
 function isUnfilteredListRequest(params: FetchUsersParams): boolean {
   return (
     params.search === undefined &&
@@ -60,31 +59,26 @@ export const fetchUsers = createAsyncThunk(
   'user/fetchUsers',
   async (params: FetchUsersParams = {}, { getState, rejectWithValue }) => {
     const state = getState() as RootState
-    const offlineMode = state.ui.offlineModeEnabled
-    const cacheEnabled = state.ui.cacheEnabled
     const cacheDuration = state.ui.cacheDuration
     const offline = typeof navigator !== 'undefined' && !navigator.onLine
     const unfiltered = isUnfilteredListRequest(params)
 
-    if (offline && offlineMode) {
+    if (offline) {
       const cached = getUsersCache()
       if (cached) return cached as PaginatedResponse<User>
       return rejectWithValue('offline_no_cache')
     }
-    // En ligne : pour les requêtes filtrées (ex. Gestion utilisateurs), réutiliser le cache si valide.
-    // Pour la liste complète (messagerie, préchargement), ne jamais lire le cache pour éviter d’afficher
-    // une liste vide mise en cache par un filtre qui ne renvoie aucun résultat.
-    if (!offline && cacheEnabled && !unfiltered) {
+    if (!unfiltered) {
       const maxAgeMs = CACHE_DURATION_MS[cacheDuration as keyof typeof CACHE_DURATION_MS]
       const cached = getUsersCacheIfValid(maxAgeMs)
       if (cached) return cached as PaginatedResponse<User>
     }
     try {
       const response = await userApi.getAll(params)
-      if (offlineMode || cacheEnabled) setUsersCache(response)
+      setUsersCache(response)
       return response
     } catch (e) {
-      if (offlineMode && isNetworkError(e)) {
+      if (isNetworkError(e)) {
         const cached = getUsersCache()
         if (cached) return cached as PaginatedResponse<User>
       }
@@ -114,6 +108,7 @@ export const createUser = createAsyncThunk(
   async (data: UserCreateRequest, { rejectWithValue }) => {
     try {
       const user = await userApi.create(data)
+      clearUsersCache()
       return user
     } catch (err) {
       return rejectWithValue(handleApiError(err))
@@ -126,6 +121,7 @@ export const updateUser = createAsyncThunk(
   async ({ id, data }: { id: number; data: UserUpdateRequest }, { rejectWithValue }) => {
     try {
       const user = await userApi.update(id, data)
+      clearUsersCache()
       return user
     } catch (err) {
       return rejectWithValue(handleApiError(err))
@@ -138,6 +134,7 @@ export const deleteUser = createAsyncThunk(
   async (id: number, { rejectWithValue }) => {
     try {
       await userApi.delete(id)
+      clearUsersCache()
       return id
     } catch (err) {
       return rejectWithValue(handleApiError(err))
@@ -274,7 +271,7 @@ const userSlice = createSlice({
       state.error = (action.payload as string) || action.error.message || 'Erreur lors de la suppression de l\'utilisateur'
     })
 
-    // Reset currentUser on logout to prevent stale data across sessions
+    // Reset currentUser on logout
     builder.addCase(logoutUser.fulfilled, (state) => {
       state.currentUser = null
       state.selectedUser = null

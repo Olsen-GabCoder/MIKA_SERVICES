@@ -348,12 +348,21 @@ class AuthService(
             throw UnauthorizedException("Compte utilisateur désactivé")
         }
         
-        // Génération de nouveaux tokens — conserver la même date d'expiration de session
         val roles = user.roles.map { it.code }
         val now = LocalDateTime.now()
         val remainingSeconds = java.time.Duration.between(now, session.dateExpiration).seconds.coerceAtLeast(60)
+
+        // Sliding window : si c'est une session longue (rememberMe), prolonger de 30 jours à chaque refresh
+        val effectiveSeconds = if (remainingSeconds > SecurityConstants.SHORT_SESSION_MS / 1000) {
+            val extended = SecurityConstants.LONG_SESSION_MS / 1000
+            session.dateExpiration = now.plusSeconds(extended)
+            extended
+        } else {
+            remainingSeconds
+        }
+
         val newAccessToken = jwtTokenProvider.generateToken(user.email, roles, SecurityConstants.DEFAULT_JWT_EXPIRATION_MS)
-        val newRefreshToken = jwtTokenProvider.generateRefreshToken(user.email, remainingSeconds * 1000)
+        val newRefreshToken = jwtTokenProvider.generateRefreshToken(user.email, effectiveSeconds * 1000)
         
         session.token = newAccessToken
         session.refreshToken = newRefreshToken
@@ -366,7 +375,7 @@ class AuthService(
             accessToken = newAccessToken,
             refreshToken = newRefreshToken,
             expiresIn = SecurityConstants.DEFAULT_JWT_EXPIRATION_MS / 1000,
-            sessionExpiresIn = remainingSeconds,
+            sessionExpiresIn = effectiveSeconds,
             user = UserMapper.toResponse(user)
         )
     }

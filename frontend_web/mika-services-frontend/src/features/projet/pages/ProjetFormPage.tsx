@@ -1602,6 +1602,35 @@ export const ProjetFormPage = () => {
                       {t('form.ajouterPour', { semaine: selectedSemainePrevision, annee: selectedAnneePrevision })}
                     </button>
                   </div>
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      id="prev-custom-desc"
+                      type="text"
+                      placeholder={t('form.previsionCustomPlaceholder')}
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
+                      onKeyDown={(e) => {
+                        if (e.key !== 'Enter') return
+                        e.preventDefault()
+                        const v = e.currentTarget.value.trim()
+                        if (!v) return
+                        addPrevision(selectedSemainePrevision, selectedAnneePrevision, v)
+                        e.currentTarget.value = ''
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const input = document.getElementById('prev-custom-desc') as HTMLInputElement
+                        const v = input?.value?.trim()
+                        if (!v) return
+                        addPrevision(selectedSemainePrevision, selectedAnneePrevision, v)
+                        if (input) input.value = ''
+                      }}
+                      className="px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark shrink-0 whitespace-nowrap"
+                    >
+                      {t('form.ajouterPour', { semaine: selectedSemainePrevision, annee: selectedAnneePrevision })}
+                    </button>
+                  </div>
                 </div>
               </div>
               {weekKeys.length > 0 ? (

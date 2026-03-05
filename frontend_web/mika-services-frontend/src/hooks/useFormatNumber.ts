@@ -31,24 +31,24 @@ export function useFormatNumber() {
     [numberFormat]
   )
 
-  /** Format court pour grands nombres : 1,5 M / 1.5M, 2 K / 2K (séparateur décimal selon préférence). */
+  /** Format court pour grands nombres : 1,5 Mds / 120 M / 2 500 K (séparateur décimal selon préférence). */
   const formatShort = useCallback(
     (value: number): string => {
       const locale = getNumberFormatLocale(numberFormat)
       if (value >= 1e9) {
         const v = value / 1e9
         const s = new Intl.NumberFormat(locale, { maximumFractionDigits: 1, minimumFractionDigits: 0 }).format(v)
-        return `${s}G`
+        return `${s} Mds`
       }
       if (value >= 1e6) {
         const v = value / 1e6
         const s = new Intl.NumberFormat(locale, { maximumFractionDigits: 1, minimumFractionDigits: 0 }).format(v)
-        return `${s}M`
+        return `${s} M`
       }
       if (value >= 1e3) {
         const v = value / 1e3
         const s = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(v)
-        return `${s}K`
+        return `${s} K`
       }
       return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value)
     },

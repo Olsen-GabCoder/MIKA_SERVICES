@@ -11,7 +11,6 @@ import { getProjetTypes } from '@/types/projet'
 import type { ProjetListFilters, ProjetSortKey, SortDirection } from '@/api/projetApi'
 import type { ProjetSummary, StatutProjet, TypeProjet } from '@/types/projet'
 import { userApi } from '@/api/userApi'
-import { roleApi } from '@/api/roleApi'
 import type { User } from '@/types'
 import { useFormatNumber } from '@/hooks/useFormatNumber'
 import { getEffectiveConnectionQuality, AUTO_REFRESH_INTERVAL_MS } from '@/utils/connectionQualityPreferences'
@@ -193,21 +192,11 @@ export const ProjetListPage = () => {
     if (fromListState) return
     dispatch(fetchProjets({ page: 0, size: pageSize }))
     dispatch(fetchClients({ page: 0, size: 200 }))
-    // Charger les utilisateurs pour le filtre (seulement si admin, sinon menu vide)
     if (isAdmin) {
-      roleApi.getByCode('CHEF_PROJET')
-        .then((chefRole) => {
-          return userApi.getAll({ page: 0, size: 300, roleId: chefRole.id })
-        })
+      userApi.getAll({ page: 0, size: 300, actif: true })
         .then((r) => setUsers(r.content ?? []))
-        .catch(() => {
-          // Si le rôle n'existe pas ou erreur, charger tous les utilisateurs
-          userApi.getAll({ page: 0, size: 300 })
-            .then((r) => setUsers(r.content ?? []))
-            .catch(() => setUsers([]))
-        })
+        .catch(() => setUsers([]))
     } else {
-      // Non-admin : menu vide (pas de droit pour charger les utilisateurs)
       setUsers([])
     }
   }, [dispatch, isAdmin])

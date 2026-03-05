@@ -7,17 +7,15 @@ import { fetchGlobalDashboard, fetchProjetReport, clearProjetReport } from '@/st
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { fetchNotificationsNonLuesCount, fetchMessagesNonLusCount } from '@/store/slices/communicationSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { mockEvolutionMensuelle } from '@/mock/data/reporting'
 import MeteoWidget from '../components/MeteoWidget'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
-  Area, Line,
   RadialBarChart, RadialBar,
-  ComposedChart,
+  ComposedChart, Line, Area,
 } from 'recharts'
 import type { ProjetSummary } from '@/types/projet'
-import type { ProjetReport } from '@/types/reporting'
+import type { ProjetReport, WeekSummary } from '@/types/reporting'
 
 /* ── Design tokens ── */
 const C = {
@@ -59,6 +57,34 @@ const CustomTooltip = ({ active, payload, label, formatter }: any) => {
   )
 }
 
+/* ── Weekly tooltip ── */
+const WeeklyTooltip = ({ active, payload, label, t }: any) => {
+  if (!active || !payload?.length) return null
+  const data = payload[0]?.payload as WeekSummary | undefined
+  return (
+    <div className="rounded-xl border border-gray-100 dark:border-gray-600 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-4 py-3 shadow-xl text-xs min-w-[160px]">
+      <p className="font-semibold text-gray-700 dark:text-gray-200 mb-2 border-b border-gray-100 dark:border-gray-600 pb-1.5">
+        {data?.isCurrent ? `${label} — ${t('db.weekly.currentWeek')}` : label}
+      </p>
+      {payload.map((p: any, i: number) => (
+        <div key={i} className="flex items-center gap-2 py-0.5">
+          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: p.color || p.fill }} />
+          <span className="text-gray-500 dark:text-gray-400">{p.name}</span>
+          <span className="ml-auto font-bold text-gray-800 dark:text-gray-100">
+            {p.dataKey === 'avancementMoyen' ? `${p.value}%` : p.value}
+          </span>
+        </div>
+      ))}
+      {data && (
+        <div className="mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-600 flex justify-between font-semibold">
+          <span className="text-gray-500 dark:text-gray-400">Total</span>
+          <span className="text-gray-800 dark:text-gray-100">{data.total}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── Thin progress bar ── */
 const MiniBar = ({ value, color, bg = '#e2e8f0' }: { value: number; color: string; bg?: string }) => (
   <div className="relative h-1.5 rounded-full overflow-hidden" style={{ background: bg }}>
@@ -80,7 +106,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     dispatch(fetchGlobalDashboard())
-    dispatch(fetchProjets({ page: 0, size: 10 }))
+    dispatch(fetchProjets({ page: 0, size: 200 }))
     if (user?.id) {
       dispatch(fetchNotificationsNonLuesCount(user.id))
       dispatch(fetchMessagesNonLusCount(user.id))
@@ -92,26 +118,28 @@ export default function DashboardPage() {
     else dispatch(clearProjetReport())
   }, [dispatch, selectedProjetId])
 
-  const evolutionData = useMemo(() =>
-    mockEvolutionMensuelle.map(p => ({ ...p, depM: Math.round(p.depenses / 1e6) })), [])
+  const topProjets = useMemo(() =>
+    [...projets].filter(p => (p.montantHT ?? 0) > 0)
+      .sort((a, b) => (b.montantHT ?? 0) - (a.montantHT ?? 0))
+      .slice(0, 8)
+      .map(p => ({ name: p.nom.length > 25 ? p.nom.slice(0, 22) + '…' : p.nom, montant: p.montantHT ?? 0, pct: p.avancementGlobal ?? 0 })),
+  [projets])
 
   const pieData = useMemo(() => {
-    if (!projets.length && !dashboard) return []
-    if (projets.length) {
-      const c: Record<string, number> = {}
-      projets.forEach(p => { c[p.statut] = (c[p.statut] || 0) + 1 })
-      return Object.entries(c)
+    if (!dashboard) return []
+    const parStatut = dashboard.projets.parStatut
+    if (parStatut && Object.keys(parStatut).length > 0) {
+      return Object.entries(parStatut)
         .map(([s, v], i) => ({ name: STATUT_MAP[s]?.label || s, value: v, color: STATUT_MAP[s]?.color || PALETTE[i % PALETTE.length] }))
+        .filter(i => i.value > 0)
         .sort((a, b) => b.value - a.value)
     }
-    if (!dashboard) return []
-    const dp = dashboard.projets
     return [
-      { name: t('db.pie.inProgress'), value: dp.enCours,   color: C.secondary },
-      { name: t('db.pie.completed'),  value: dp.termines,  color: C.teal      },
-      { name: t('db.pie.delayed'),    value: dp.enRetard,  color: C.accent    },
+      { name: t('db.pie.inProgress'), value: dashboard.projets.enCours,   color: C.secondary },
+      { name: t('db.pie.completed'),  value: dashboard.projets.termines,  color: C.teal      },
+      { name: t('db.pie.delayed'),    value: dashboard.projets.enRetard,  color: C.accent    },
     ].filter(i => i.value > 0)
-  }, [projets, dashboard, t])
+  }, [dashboard, t])
 
   const activeProjects = useMemo(() =>
     [...projets].filter(p => p.statut === 'EN_COURS')
@@ -159,10 +187,8 @@ export default function DashboardPage() {
 
   const d = dashboard
   const totalProj = d.projets.total
-  const montantTotalProjets = d.projets.montantTotal ?? projets.reduce((s, p) => s + (p.montantHT ?? 0), 0)
-  const avancementMoyenProjets = d.projets.avancementMoyen ?? (projets.length > 0
-    ? Math.round((projets.reduce((a, p) => a + (p.avancementGlobal ?? 0), 0) / projets.length) * 100) / 100
-    : 0)
+  const montantTotalProjets = d.projets.montantTotal
+  const avancementMoyenProjets = d.projets.avancementMoyen
 
   /* ── Computed chart datasets ── */
   const projectsChartData = (() => {
@@ -178,11 +204,10 @@ export default function DashboardPage() {
     { name: t('db.charts.consumed'),  value: d.budget.depensesTotales, color: C.accent },
     { name: t('db.charts.remaining'), value: Math.max(0, Number(d.budget.budgetTotalPrevu) - Number(d.budget.depensesTotales)), color: '#E2E8F0' },
   ]
-  const tasksBars = [
-    { name: t('db.planning.completed'), count: d.planning.tachesTerminees, fill: C.green },
-    { name: t('db.planning.inProgress'),count: d.planning.tachesEnCours,   fill: C.blue  },
-    { name: t('db.planning.overdue'),   count: d.planning.tachesEnRetard,  fill: C.red   },
-  ]
+  const weeklyChartData: (WeekSummary & { displayLabel: string })[] = (d.weeklyProgress?.weeks ?? []).map(w => ({
+    ...w,
+    displayLabel: w.isCurrent ? `${w.label} ★` : w.label,
+  }))
   const qualityDonut = [
     { name: t('db.charts.compliant'),    value: Math.round((d.qualite.controlesTotal * d.qualite.tauxConformite)        / 100), color: C.green },
     { name: t('db.charts.nonCompliant'), value: Math.round((d.qualite.controlesTotal * (100 - d.qualite.tauxConformite))/ 100), color: C.red   },
@@ -410,42 +435,29 @@ export default function DashboardPage() {
       </div>
 
       {/* ════════════════════════════════════════════════════════════
-          ROW 2 — EVOLUTION CHART + RADIAL GAUGE
+          ROW 2 — TOP PROJETS + RADIAL GAUGE
       ════════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
-        <Card className="lg:col-span-2" title={t('db.evolution.title')} subtitle={t('db.evolution.subtitle')}>
-          <ResponsiveContainer width="100%" height={320}>
-            <ComposedChart data={evolutionData} margin={{ top: 10, right: 14, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="gDepArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor={C.accent} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={C.accent} stopOpacity={0}   />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" strokeOpacity={0.7} />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis yAxisId="l" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false}
-                label={{ value: 'M FCFA', angle: -90, position: 'insideLeft', offset: 12, style: { fontSize: 10, fill: '#94a3b8' } }} />
-              <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend iconType="circle" iconSize={8}
-                formatter={(v) => <span style={{ fontSize: 11, color: '#64748b' }}>{v}</span>} />
-              <Area yAxisId="l" type="monotone" dataKey="depM" name={t('db.evolution.expenses')}
-                stroke={C.accent} strokeWidth={2.5} fill="url(#gDepArea)"
-                dot={{ r: 3.5, fill: C.accent, strokeWidth: 0 }}
-                activeDot={{ r: 5, fill: C.accent, stroke: '#fff', strokeWidth: 2 }} />
-              <Line yAxisId="r" type="monotone" dataKey="tachesTerminees" name={t('db.evolution.tasksDone')}
-                stroke={C.secondary} strokeWidth={2.5}
-                dot={{ r: 3, fill: C.secondary, strokeWidth: 0 }}
-                activeDot={{ r: 5, fill: C.secondary, stroke: '#fff', strokeWidth: 2 }} />
-              <Line yAxisId="r" type="monotone" dataKey="controlesRealises" name={t('db.evolution.controls')}
-                stroke={C.teal} strokeWidth={2.5}
-                dot={{ r: 3, fill: C.teal, strokeWidth: 0 }}
-                activeDot={{ r: 5, fill: C.teal, stroke: '#fff', strokeWidth: 2 }} />
-              <Bar yAxisId="r" dataKey="incidents" name={t('db.evolution.incidents')}
-                fill={C.rose} radius={[4, 4, 0, 0]} barSize={14} opacity={0.85} />
-            </ComposedChart>
-          </ResponsiveContainer>
+        <Card className="lg:col-span-2" title={t('db.topProjets.title')} subtitle={t('db.topProjets.subtitle')}>
+          {topProjets.length > 0 ? (
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={topProjets} layout="vertical" margin={{ top: 4, right: 40, left: 10, bottom: 4 }}>
+                <defs>
+                  <linearGradient id="gTopProj" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"   stopColor={C.secondary} stopOpacity={0.8} />
+                    <stop offset="100%" stopColor={C.accent}    stopOpacity={1}   />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                <XAxis type="number" tickFormatter={v => fmtS(v)} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip formatter={fmt} />} />
+                <Bar dataKey="montant" name={t('db.topProjets.amount')} fill="url(#gTopProj)" radius={[0, 6, 6, 0]} barSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[320px] flex items-center justify-center text-sm text-gray-400">{t('db.projects.empty')}</div>
+          )}
         </Card>
 
         <Card title={t('db.radial.title')} subtitle={t('db.radial.subtitle')}>
@@ -513,27 +525,49 @@ export default function DashboardPage() {
           </p>
         </Card>
 
-        {/* Tasks bar */}
-        <Card title={t('db.charts.tasksTitle')} subtitle={`${d.planning.tauxAvancement}% ${t('db.charts.advancement')}`}>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={tasksBars} margin={{ top: 8, right: 8, left: -12, bottom: 4 }}>
-              <defs>
-                {tasksBars.map((e, i) => (
-                  <linearGradient key={i} id={`gTask-${i}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor={e.fill} stopOpacity={1}   />
-                    <stop offset="100%" stopColor={e.fill} stopOpacity={0.7} />
+        {/* Weekly progress — Réalisé / Prévisions */}
+        <Card title={t('db.weekly.title')} subtitle={t('db.weekly.subtitle', { week: d.weeklyProgress?.semaineActuelle ?? '' })}>
+          {weeklyChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <ComposedChart data={weeklyChartData} margin={{ top: 8, right: 8, left: -12, bottom: 4 }}>
+                <defs>
+                  <linearGradient id="gWkDone" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={C.green} stopOpacity={1} />
+                    <stop offset="100%" stopColor={C.green} stopOpacity={0.7} />
                   </linearGradient>
-                ))}
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={24} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                {tasksBars.map((_, i) => <Cell key={i} fill={`url(#gTask-${i})`} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+                  <linearGradient id="gWkProg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={C.blue} stopOpacity={1} />
+                    <stop offset="100%" stopColor={C.blue} stopOpacity={0.7} />
+                  </linearGradient>
+                  <linearGradient id="gWkTodo" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={C.gold} stopOpacity={0.9} />
+                    <stop offset="100%" stopColor={C.gold} stopOpacity={0.5} />
+                  </linearGradient>
+                  <linearGradient id="gWkLine" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={C.accent} stopOpacity={0.25} />
+                    <stop offset="100%" stopColor={C.accent} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                <XAxis dataKey="displayLabel" tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="left" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={24} />
+                <YAxis yAxisId="right" orientation="right" domain={[0, 100]} tick={{ fontSize: 9, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={28}
+                  tickFormatter={v => `${v}%`} />
+                <Tooltip content={<WeeklyTooltip t={t} />} />
+                <Legend iconType="circle" iconSize={7}
+                  formatter={(v: string) => <span style={{ fontSize: 9, color: '#64748b' }}>{v}</span>} />
+                <Bar yAxisId="left" dataKey="terminees" name={t('db.weekly.done')} stackId="stack" fill="url(#gWkDone)" radius={[0, 0, 0, 0]} barSize={16} />
+                <Bar yAxisId="left" dataKey="enCours" name={t('db.weekly.inProgress')} stackId="stack" fill="url(#gWkProg)" radius={[0, 0, 0, 0]} barSize={16} />
+                <Bar yAxisId="left" dataKey="nonCommencees" name={t('db.weekly.notStarted')} stackId="stack" fill="url(#gWkTodo)" radius={[4, 4, 0, 0]} barSize={16} />
+                <Area yAxisId="right" type="monotone" dataKey="avancementMoyen" name={t('db.weekly.avgProgress')}
+                  stroke={C.accent} strokeWidth={2.5} fill="url(#gWkLine)"
+                  dot={{ r: 3, fill: C.accent, strokeWidth: 0 }}
+                  activeDot={{ r: 5, fill: C.accent, stroke: '#fff', strokeWidth: 2 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[180px] flex items-center justify-center text-xs text-gray-400">{t('db.weekly.empty')}</div>
+          )}
         </Card>
 
         {/* Quality donut */}

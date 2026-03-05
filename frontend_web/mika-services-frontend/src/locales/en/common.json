@@ -123,13 +123,10 @@
       "title": "Overview — Projects",
       "subtitle": "Distribution by status · Total amount and average progress"
     },
-    "evolution": {
-      "title": "Monthly Evolution",
-      "subtitle": "Expenses, tasks and indicators over 6 months",
-      "expenses": "Expenses (M)",
-      "tasksDone": "Tasks completed",
-      "controls": "Controls",
-      "incidents": "Incidents"
+    "topProjets": {
+      "title": "Top projects by amount",
+      "subtitle": "Projects ranked by excl. tax amount",
+      "amount": "Amount (excl. tax)"
     },
     "radial": {
       "title": "Key Indicators",
@@ -161,6 +158,16 @@
       "completed": "Completed",
       "overdue": "Overdue",
       "progressLabel": "Overall progress"
+    },
+    "weekly": {
+      "title": "Weekly progress",
+      "subtitle": "Current week: W{{week}}",
+      "done": "Completed",
+      "inProgress": "In progress",
+      "notStarted": "Not started",
+      "avgProgress": "Progress %",
+      "currentWeek": "Current week",
+      "empty": "No forecast data available"
     },
     "safety": {
       "title": "Safety",

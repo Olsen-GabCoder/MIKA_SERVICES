@@ -203,6 +203,7 @@ class ProjetService(
         return projetRepository.findAll(spec, pageable).map { ProjetMapper.toSummaryResponse(it) }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun buildFilterSpec(
         statut: StatutProjet?,
         type: TypeProjet?,
@@ -217,12 +218,31 @@ class ProjetService(
                     || query.resultType == Long::class.javaObjectType
                     || query.resultType == java.lang.Long::class.java
 
+            val predicates = mutableListOf(cb.equal(root.get<Boolean>("actif"), true))
+
             if (!isCountQuery) {
-                root.fetch<Projet, Any>("client", JoinType.LEFT)
-                root.fetch<Projet, Any>("responsableProjet", JoinType.LEFT)
+                val clientFetch = root.fetch<Projet, Any>("client", JoinType.LEFT)
+                val respFetch = root.fetch<Projet, Any>("responsableProjet", JoinType.LEFT)
+
+                clientId?.let { id ->
+                    val j = clientFetch as jakarta.persistence.criteria.Join<*, *>
+                    predicates.add(cb.equal(j.get<Long>("id"), id))
+                }
+                responsableId?.let { id ->
+                    val j = respFetch as jakarta.persistence.criteria.Join<*, *>
+                    predicates.add(cb.equal(j.get<Long>("id"), id))
+                }
+            } else {
+                clientId?.let { id ->
+                    val j = root.join<Projet, Client>("client", JoinType.LEFT)
+                    predicates.add(cb.equal(j.get<Long>("id"), id))
+                }
+                responsableId?.let { id ->
+                    val j = root.join<Projet, User>("responsableProjet", JoinType.LEFT)
+                    predicates.add(cb.equal(j.get<Long>("id"), id))
+                }
             }
 
-            val predicates = mutableListOf(cb.equal(root.get<Boolean>("actif"), true))
             if (!search.isNullOrBlank()) {
                 val pattern = "%${search.lowercase()}%"
                 predicates.add(
@@ -236,14 +256,6 @@ class ProjetService(
             type?.let { t ->
                 val typesJoin = root.join<Projet, TypeProjet>("types", JoinType.LEFT)
                 predicates.add(cb.or(cb.equal(root.get<TypeProjet>("type"), t), cb.equal(typesJoin, t)))
-            }
-            clientId?.let {
-                val clientJoin = root.join<Projet, Client>("client", JoinType.LEFT)
-                predicates.add(cb.equal(clientJoin.get<Long>("id"), it))
-            }
-            responsableId?.let {
-                val respJoin = root.join<Projet, User>("responsableProjet", JoinType.LEFT)
-                predicates.add(cb.equal(respJoin.get<Long>("id"), it))
             }
             cb.and(*predicates.toTypedArray())
         }

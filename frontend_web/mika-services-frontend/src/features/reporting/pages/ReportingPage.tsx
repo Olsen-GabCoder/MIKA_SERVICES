@@ -12,9 +12,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  Line,
-  AreaChart,
-  Area,
   RadialBarChart,
   RadialBar,
 } from 'recharts'
@@ -22,7 +19,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { fetchGlobalDashboard, fetchProjetReport, clearProjetReport } from '@/store/slices/reportingSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
-import type { GlobalDashboard, ProjetReport, EvolutionPoint } from '@/types/reporting'
+import type { GlobalDashboard, ProjetReport } from '@/types/reporting'
 import { useFormatNumber } from '@/hooks/useFormatNumber'
 
 const CHART_COLORS = {
@@ -35,6 +32,17 @@ const CHART_COLORS = {
   blue: '#3B82F6',
   purple: '#8B5CF6',
   gray: '#94A3B8',
+}
+
+const STATUT_COLORS: Record<string, string> = {
+  EN_COURS: CHART_COLORS.blue,
+  TERMINE: CHART_COLORS.success,
+  EN_ATTENTE: CHART_COLORS.warning,
+  PLANIFIE: CHART_COLORS.purple,
+  SUSPENDU: '#E85D75',
+  ABANDONNE: CHART_COLORS.gray,
+  RECEPTION_PROVISOIRE: '#06B6D4',
+  RECEPTION_DEFINITIVE: '#10B981',
 }
 
 /** Carte KPI avec valeur principale et détail */
@@ -137,8 +145,6 @@ export default function ReportingPage() {
   }
 
   const d = dashboard as GlobalDashboard | null
-  // Évolution mensuelle : à brancher sur un endpoint backend si disponible (ex. GET /reporting/evolution-mensuelle)
-  const evolutionData: EvolutionPoint[] = (d as { evolutionMensuelle?: EvolutionPoint[] })?.evolutionMensuelle ?? []
 
   return (
     <PageContainer size="wide" className="space-y-10 pb-12">
@@ -318,57 +324,39 @@ export default function ReportingPage() {
             </ChartCard>
           </section>
 
-          {/* Évolution mensuelle (courbe) + indicateurs radiaux */}
+          {/* Répartition détaillée par statut + indicateurs radiaux */}
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <ChartCard
-              title={t('monthlyEvolution')}
-              subtitle={t('monthlyEvolutionSubtitle')}
+              title={t('statusBreakdown')}
+              subtitle={t('statusBreakdownSubtitle')}
               className="lg:col-span-2"
             >
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={evolutionData} margin={{ top: 16, right: 24, left: 8, bottom: 8 }}>
-                    <defs>
-                      <linearGradient id="colorDepenses" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.4} />
-                        <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorTaches" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={CHART_COLORS.secondary} stopOpacity={0.4} />
-                        <stop offset="95%" stopColor={CHART_COLORS.secondary} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                    <YAxis yAxisId="left" tickFormatter={(v) => formatShort(v)} tick={{ fontSize: 11 }} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
-                    <Tooltip
-                      formatter={(value: number | undefined, name?: string) =>
-                        name === 'depenses' ? [formatMontant(value ?? 0), t('expenses')] : [value ?? 0, t('tasksCompleted')]
-                      }
-                      labelFormatter={(label) => `${t('month')}: ${label}`}
-                    />
-                    <Legend />
-                    <Area
-                      yAxisId="left"
-                      type="monotone"
-                      dataKey="depenses"
-                      name={t('expenses')}
-                      stroke={CHART_COLORS.primary}
-                      fill="url(#colorDepenses)"
-                      strokeWidth={2}
-                    />
-                    <Line
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey="tachesTerminees"
-                      name={t('tasksCompleted')}
-                      stroke={CHART_COLORS.secondary}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                {d.projets.parStatut && Object.keys(d.projets.parStatut).length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={Object.entries(d.projets.parStatut).map(([statut, count]) => ({
+                        name: statut.replace(/_/g, ' '),
+                        count,
+                        fill: STATUT_COLORS[statut] ?? CHART_COLORS.gray,
+                      }))}
+                      layout="vertical"
+                      margin={{ top: 8, right: 24, left: 120, bottom: 8 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                      <XAxis type="number" tick={{ fontSize: 11 }} />
+                      <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11 }} />
+                      <Tooltip formatter={(value: number | undefined) => [value ?? 0, t('projects')]} />
+                      <Bar dataKey="count" name={t('projects')} radius={[0, 6, 6, 0]}>
+                        {Object.entries(d.projets.parStatut).map(([statut], i) => (
+                          <Cell key={i} fill={STATUT_COLORS[statut] ?? CHART_COLORS.gray} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-gray-400 text-sm">{t('noData')}</div>
+                )}
               </div>
             </ChartCard>
 

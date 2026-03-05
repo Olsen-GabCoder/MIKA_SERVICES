@@ -130,13 +130,10 @@
       "title": "Vue d'ensemble — Projets",
       "subtitle": "Répartition par statut · Montant total et avancement moyen"
     },
-    "evolution": {
-      "title": "Évolution mensuelle",
-      "subtitle": "Dépenses, tâches et indicateurs sur 6 mois",
-      "expenses": "Dépenses (M)",
-      "tasksDone": "Tâches terminées",
-      "controls": "Contrôles",
-      "incidents": "Incidents"
+    "topProjets": {
+      "title": "Top projets par montant",
+      "subtitle": "Classement des projets par montant HT",
+      "amount": "Montant HT"
     },
     "radial": {
       "title": "Indicateurs clés",
@@ -168,6 +165,16 @@
       "completed": "Terminées",
       "overdue": "En retard",
       "progressLabel": "Avancement global"
+    },
+    "weekly": {
+      "title": "Avancement hebdomadaire",
+      "subtitle": "Semaine en cours : S{{week}}",
+      "done": "Réalisées",
+      "inProgress": "En cours",
+      "notStarted": "Non démarrées",
+      "avgProgress": "Avancement %",
+      "currentWeek": "Semaine en cours",
+      "empty": "Aucune donnée de prévision disponible"
     },
     "safety": {
       "title": "Sécurité",

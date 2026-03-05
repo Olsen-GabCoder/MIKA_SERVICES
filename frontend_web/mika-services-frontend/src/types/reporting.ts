@@ -3,10 +3,9 @@ export interface ProjetStats {
   enCours: number
   termines: number
   enRetard: number
-  /** Montant total HT du portefeuille (optionnel, peut être calculé côté front si absent) */
-  montantTotal?: number
-  /** Avancement physique moyen en % (optionnel) */
-  avancementMoyen?: number
+  montantTotal: number
+  avancementMoyen: number
+  parStatut: Record<string, number>
 }
 
 export interface ChantierStats {
@@ -57,6 +56,25 @@ export interface GlobalDashboard {
   qualite: QualiteStats
   securite: SecuriteStats
   materiel: MaterielStats
+  weeklyProgress: WeeklyProgressStats
+}
+
+export interface WeeklyProgressStats {
+  semaineActuelle: number
+  anneeActuelle: number
+  weeks: WeekSummary[]
+}
+
+export interface WeekSummary {
+  semaine: number
+  annee: number
+  label: string
+  total: number
+  terminees: number
+  enCours: number
+  nonCommencees: number
+  avancementMoyen: number
+  isCurrent: boolean
 }
 
 export interface ProjetReport {

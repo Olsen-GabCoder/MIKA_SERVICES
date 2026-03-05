@@ -2,7 +2,7 @@ import apiClient from './axios'
 import type { AuthResponse, Login2FAPendingResponse } from '@/types'
 import { API_ENDPOINTS } from '@/constants/api'
 import { setTokenStorageMode, setAccessToken, getAccessToken, removeAccessToken } from '@/utils/tokenStorage'
-import { storeOfflineCredentials, verifyOfflineCredentials, getOfflineToken, clearOfflineCredentials } from '@/utils/offlineAuth'
+import { storeOfflineCredentials, verifyOfflineCredentials, getOfflineToken } from '@/utils/offlineAuth'
 import { isNetworkError } from '@/utils/errorHandler'
 
 export interface LoginRequest {
@@ -62,7 +62,7 @@ export const authApi = {
             tokenType: 'Bearer',
             expiresIn: 86400,
             sessionExpiresIn: 86400,
-            user: cachedUser,
+            user: cachedUser as AuthResponse['user'],
           } as AuthResponse
         }
       }

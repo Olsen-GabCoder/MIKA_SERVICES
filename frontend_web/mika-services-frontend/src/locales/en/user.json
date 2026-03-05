@@ -46,7 +46,8 @@
       "nomRequired": "Last name is required",
       "prenomRequired": "First name is required",
       "passwordRequired": "Password is required",
-      "passwordMinLength": "At least 8 characters"
+      "passwordMinLength": "At least 8 characters",
+      "sexeRequired": "Gender is required"
     }
   },
   "contractType": {

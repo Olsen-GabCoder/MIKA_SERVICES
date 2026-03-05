@@ -1,10 +1,15 @@
 import { AxiosError } from 'axios'
 import { i18n } from '@/i18n'
 
-/** Indique si l'erreur est due à l'absence de réseau (pour fallback cache mode hors ligne). */
+/** Indique si l'erreur est due à l'absence de réseau, un timeout, ou un serveur injoignable. */
 export function isNetworkError(error: unknown): boolean {
   if (error instanceof AxiosError) {
-    return !error.response && (error.code === 'ERR_NETWORK' || error.message === 'Network Error')
+    if (!error.response) {
+      const code = error.code ?? ''
+      return ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT', 'ECONNREFUSED'].includes(code) ||
+        /network error/i.test(error.message)
+    }
+    return error.response.status >= 502 && error.response.status <= 504
   }
   return false
 }

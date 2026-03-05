@@ -4,6 +4,8 @@ import type { User } from '@/types'
 import { authApi, isLogin2FAPending } from '@/api/authApi'
 import type { LoginRequest } from '@/api/authApi'
 import { getAccessToken, setAccessToken, removeAccessToken } from '@/utils/tokenStorage'
+import { setCurrentUserCache, getCurrentUserCache, clearCurrentUserCache } from '@/utils/offlineCache'
+import { isNetworkError } from '@/utils/errorHandler'
 
 /** État intermédiaire après login quand 2FA est requis */
 export interface TwoFactorPending {
@@ -38,8 +40,13 @@ export const fetchUserFromToken = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const user = await authApi.getMe()
+      setCurrentUserCache(user)
       return user
     } catch (error) {
+      if (isNetworkError(error)) {
+        const cached = getCurrentUserCache() as User | null
+        if (cached) return cached
+      }
       return rejectWithValue(error)
     }
   }
@@ -140,6 +147,7 @@ const authSlice = createSlice({
         state.accessToken = action.payload.accessToken
         state.refreshToken = null
         state.isAuthenticated = true
+        setCurrentUserCache(action.payload.user)
       }
     })
     builder.addCase(login.rejected, (state, action) => {
@@ -167,6 +175,7 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken
       state.refreshToken = null
       state.isAuthenticated = true
+      setCurrentUserCache(action.payload.user)
     })
     builder.addCase(verify2FA.rejected, (state, action) => {
       state.isLoading = false
@@ -178,6 +187,7 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken
       state.refreshToken = null
       state.user = action.payload.user
+      setCurrentUserCache(action.payload.user)
     })
 
     // Restaurer l'utilisateur au rechargement (token présent mais user null)
@@ -205,6 +215,7 @@ const authSlice = createSlice({
       state.refreshToken = null
       state.isAuthenticated = false
       state.twoFactorPending = null
+      clearCurrentUserCache()
     })
   },
 })

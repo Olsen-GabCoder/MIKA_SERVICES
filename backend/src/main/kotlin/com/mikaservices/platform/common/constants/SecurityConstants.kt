@@ -10,8 +10,8 @@ object SecurityConstants {
     const val DEFAULT_JWT_EXPIRATION_MS = 900000L // 15 minutes
     const val DEFAULT_REFRESH_TOKEN_EXPIRATION_MS = 604800000L // 7 jours
 
-    const val SHORT_SESSION_MS = 3_600_000L    // 1 heure
-    const val LONG_SESSION_MS  = 18_000_000L   // 5 heures
+    const val SHORT_SESSION_MS = 3_600_000L        // 1 heure
+    const val LONG_SESSION_MS  = 2_592_000_000L   // 30 jours
     
     // Endpoints publics (avec context-path /api : request.requestURI = "/api/...")
     val PUBLIC_PATHS = listOf(

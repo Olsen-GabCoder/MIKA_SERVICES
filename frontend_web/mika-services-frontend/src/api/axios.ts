@@ -3,16 +3,27 @@ import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axio
 import { i18n } from '@/i18n'
 import { getAccessToken, setAccessToken, removeAccessToken } from '@/utils/tokenStorage'
 
+const MAX_RETRIES = 3
+const RETRY_BASE_DELAY_MS = 1000
+
+function isRetryable(error: AxiosError): boolean {
+  if (error.response) return false
+  const code = error.code ?? ''
+  return ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT'].includes(code) ||
+    /network error/i.test(error.message)
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms))
+}
+
 const apiClient: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
   timeout: 30000,
-  withCredentials: true, // Envoie les cookies (ex. refresh token httpOnly)
+  withCredentials: true,
 })
 
-// Intercepteur pour ajouter le token JWT et la locale
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = getAccessToken()
@@ -25,14 +36,9 @@ apiClient.interceptors.request.use(
     }
     return config
   },
-  (error: AxiosError) => {
-    return Promise.reject(error)
-  }
+  (error: AxiosError) => Promise.reject(error)
 )
 
-// Intercepteur pour normaliser les réponses paginées Spring Data (VIA_DTO)
-// VIA_DTO sérialise { content: [...], page: { size, number, totalElements, totalPages } }
-// Le frontend attend le format plat { content: [...], size, number, totalElements, totalPages }
 apiClient.interceptors.response.use((response) => {
   const data = response.data
   if (data && Array.isArray(data.content) && data.page && typeof data.page === 'object') {
@@ -42,22 +48,34 @@ apiClient.interceptors.response.use((response) => {
   return response
 })
 
-// Intercepteur pour gérer les erreurs globales et le refresh token
+// Retry automatique sur erreurs réseau (serveur injoignable, timeout)
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const config = error.config as InternalAxiosRequestConfig & { _retryCount?: number }
+    if (!config || !isRetryable(error)) return Promise.reject(error)
+
+    config._retryCount = config._retryCount ?? 0
+    if (config._retryCount >= MAX_RETRIES) return Promise.reject(error)
+
+    config._retryCount += 1
+    const waitMs = RETRY_BASE_DELAY_MS * Math.pow(2, config._retryCount - 1)
+    await delay(waitMs)
+    return apiClient(config)
+  }
+)
+
+// Refresh token sur 401
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
     const status = error.response?.status
 
-    // 403 = authentifié mais non autorisé : ne pas déconnecter, laisser l'app afficher l'erreur
-    if (status === 403) {
-      return Promise.reject(error)
-    }
+    if (status === 403) return Promise.reject(error)
 
-    // 401 = token invalide ou expiré : tenter le refresh (cookie httpOnly) puis rediriger vers login si échec
     if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
-
       try {
         const response = await apiClient.post('/auth/refresh', {})
         const { accessToken } = response.data
@@ -69,7 +87,7 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest)
         }
       } catch {
-        // Refresh échoué : déconnecter et rediriger
+        // Refresh échoué
       }
       removeAccessToken()
       window.location.href = '/login'

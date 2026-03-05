@@ -1,5 +1,4 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import type { RootState } from '@/store/store'
 import { projetApi, clientApi } from '@/api/projetApi'
 import type { ProjetListFilters, ProjetSortKey, SortDirection } from '@/api/projetApi'
 import type {
@@ -51,12 +50,10 @@ export const fetchProjets = createAsyncThunk(
   'projet/fetchAll',
   async (
     arg: { page?: number; size?: number; sortBy?: ProjetSortKey; sortDir?: SortDirection } & ProjetListFilters = {},
-    { getState, rejectWithValue }
+    { rejectWithValue }
   ) => {
-    const state = getState() as RootState
-    const offlineMode = state.ui.offlineModeEnabled
     const offline = typeof navigator !== 'undefined' && !navigator.onLine
-    if (offline && offlineMode) {
+    if (offline) {
       const cached = getProjetsCache()
       if (cached) return cached as PageResponse<ProjetSummary>
       return rejectWithValue('offline_no_cache')
@@ -66,10 +63,10 @@ export const fetchProjets = createAsyncThunk(
     const sort = sortBy && sortDir ? { sortBy, sortDir } : undefined
     try {
       const result = await projetApi.findAll(page, size, hasFilters ? filters : undefined, sort)
-      if (offlineMode) setProjetsCache(result)
+      setProjetsCache(result)
       return result
     } catch (e) {
-      if ((offlineMode || offline) && isNetworkError(e)) {
+      if (isNetworkError(e)) {
         const cached = getProjetsCache()
         if (cached) return cached as PageResponse<ProjetSummary>
       }
@@ -89,12 +86,10 @@ export const searchProjets = createAsyncThunk(
   'projet/search',
   async (
     arg: { q: string; page?: number; size?: number; sortBy?: ProjetSortKey; sortDir?: SortDirection } & ProjetListFilters,
-    { getState, rejectWithValue }
+    { rejectWithValue }
   ) => {
-    const state = getState() as RootState
-    const offlineMode = state.ui.offlineModeEnabled
     const offline = typeof navigator !== 'undefined' && !navigator.onLine
-    if (offline && offlineMode) {
+    if (offline) {
       const cached = getProjetsCache()
       if (cached) return cached as PageResponse<ProjetSummary>
       return rejectWithValue('offline_no_cache')
@@ -104,10 +99,10 @@ export const searchProjets = createAsyncThunk(
     const sort = sortBy && sortDir ? { sortBy, sortDir } : undefined
     try {
       const result = await projetApi.search(q, page, size, hasFilters ? filters : undefined, sort)
-      if (offlineMode) setProjetsCache(result)
+      setProjetsCache(result)
       return result
     } catch (e) {
-      if ((offlineMode || offline) && isNetworkError(e)) {
+      if (isNetworkError(e)) {
         const cached = getProjetsCache()
         if (cached) return cached as PageResponse<ProjetSummary>
       }

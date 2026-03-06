@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from './store/hooks'
 import { fetchUserFromToken, refreshToken } from './store/slices/authSlice'
 import { fetchProjets } from './store/slices/projetSlice'
 import { fetchUsers } from './store/slices/userSlice'
-import { getAccessToken, setTokenStorageMode } from './utils/tokenStorage'
+import { getAccessToken } from './utils/tokenStorage'
 import { Layout } from './components/layout/Layout'
 import { applyThemeToDocument } from './utils/themeStorage'
 import { applyFontSizeToDocument, applyFontFamilyToDocument } from './utils/fontPreferences'
@@ -15,8 +15,8 @@ import { usePageTracking } from './hooks/usePageTracking'
 
 /** Période de refresh proactif : avant expiration du JWT (15 min). */
 const PROACTIVE_REFRESH_INTERVAL_MS = 14 * 60 * 1000
-/** Premier refresh après 1 min pour valider tôt que le refresh token fonctionne. */
-const FIRST_REFRESH_DELAY_MS = 60 * 1000
+/** Premier refresh après 30 s pour valider tôt le refresh token (surtout en prod cross-origin). */
+const FIRST_REFRESH_DELAY_MS = 30 * 1000
 
 function App() {
   const location = useLocation()
@@ -43,9 +43,6 @@ function App() {
     if (!token) return
 
     dispatch(fetchUserFromToken()).then((result: unknown) => {
-      if (fetchUserFromToken.fulfilled.match(result)) {
-        setTokenStorageMode(result.payload.logoutOnBrowserClose ?? false)
-      }
       if (fetchUserFromToken.rejected.match(result)) {
         const offline = typeof navigator !== 'undefined' && !navigator.onLine
         if (!offline) {

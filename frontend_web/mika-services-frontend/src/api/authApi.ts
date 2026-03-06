@@ -1,7 +1,7 @@
 import apiClient from './axios'
 import type { AuthResponse, Login2FAPendingResponse } from '@/types'
 import { API_ENDPOINTS } from '@/constants/api'
-import { setTokenStorageMode, setAccessToken, getAccessToken, removeAccessToken } from '@/utils/tokenStorage'
+import { setTokenStorageMode, setAccessToken, getAccessToken, removeAllTokens, setRefreshToken, getRefreshToken } from '@/utils/tokenStorage'
 import { storeOfflineCredentials, verifyOfflineCredentials, getOfflineToken } from '@/utils/offlineAuth'
 import { isNetworkError } from '@/utils/errorHandler'
 
@@ -45,8 +45,11 @@ export const authApi = {
       const response = await apiClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, credentials)
       const data = response.data
       if (!isLogin2FAPending(data) && data.accessToken) {
-        setTokenStorageMode(data.user?.logoutOnBrowserClose ?? false)
+        // Priorité au choix "rester connecté" du formulaire sur le profil utilisateur
+        const logoutOnClose = credentials.rememberMe ? false : (data.user?.logoutOnBrowserClose ?? false)
+        setTokenStorageMode(logoutOnClose)
         setAccessToken(data.accessToken)
+        if (data.refreshToken) setRefreshToken(data.refreshToken)
         await storeOfflineCredentials(credentials.email, credentials.password, data.user)
       }
       return data
@@ -73,8 +76,10 @@ export const authApi = {
   verify2FA: async (tempToken: string, code: string, rememberMe: boolean = false): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.VERIFY_2FA, { tempToken, code, rememberMe })
     if (response.data.accessToken) {
-      setTokenStorageMode(response.data.user?.logoutOnBrowserClose ?? false)
+      const logoutOnClose = rememberMe ? false : (response.data.user?.logoutOnBrowserClose ?? false)
+      setTokenStorageMode(logoutOnClose)
       setAccessToken(response.data.accessToken)
+      if (response.data.refreshToken) setRefreshToken(response.data.refreshToken)
     }
     return response.data
   },
@@ -109,10 +114,14 @@ export const authApi = {
         } as AuthResponse
       }
     }
-    const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.REFRESH, {})
+    const storedRefresh = getRefreshToken()
+    const response = await apiClient.post<AuthResponse>(
+      API_ENDPOINTS.AUTH.REFRESH,
+      storedRefresh ? { refreshToken: storedRefresh } : {}
+    )
     if (response.data.accessToken) {
-      setTokenStorageMode(response.data.user?.logoutOnBrowserClose ?? false)
       setAccessToken(response.data.accessToken)
+      if (response.data.refreshToken) setRefreshToken(response.data.refreshToken)
     }
     return response.data
   },
@@ -126,7 +135,7 @@ export const authApi = {
         })
       } catch { /* ignore en hors ligne */ }
     }
-    removeAccessToken()
+    removeAllTokens()
   },
 
   getMe: async (): Promise<AuthResponse['user']> => {

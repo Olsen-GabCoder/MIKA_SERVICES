@@ -1,7 +1,7 @@
 import axios from 'axios'
 import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { i18n } from '@/i18n'
-import { getAccessToken, setAccessToken, removeAccessToken } from '@/utils/tokenStorage'
+import { getAccessToken, setAccessToken, removeAllTokens, getRefreshToken, setRefreshToken } from '@/utils/tokenStorage'
 import { cacheResponse, getCachedResponse } from '@/utils/responseCache'
 
 const MAX_RETRIES = 2
@@ -113,7 +113,7 @@ apiClient.interceptors.response.use(
   }
 )
 
-// Refresh token sur 401 — ne JAMAIS déconnecter si le serveur est simplement injoignable
+// Refresh token sur 401 — envoyer le refresh token dans le body (cookie cross-origin non fiable)
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -122,31 +122,35 @@ apiClient.interceptors.response.use(
 
     if (status === 403) return Promise.reject(error)
 
-    // Pas de réponse du tout (serveur down, timeout, réseau coupé) → ne pas toucher à la session
     if (!error.response && isNetworkOrServerDown(error)) {
       return Promise.reject(error)
     }
 
     if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
+      const storedRefresh = getRefreshToken()
+      if (!storedRefresh) {
+        removeAllTokens()
+        window.location.href = '/login'
+        return Promise.reject(error)
+      }
       try {
-        const response = await apiClient.post('/auth/refresh', {})
-        const { accessToken } = response.data
+        const response = await apiClient.post('/auth/refresh', { refreshToken: storedRefresh })
+        const { accessToken, refreshToken: newRefresh } = response.data
         if (accessToken) {
           setAccessToken(accessToken)
+          if (newRefresh) setRefreshToken(newRefresh)
           if (originalRequest.headers) {
             originalRequest.headers.Authorization = `Bearer ${accessToken}`
           }
           return apiClient(originalRequest)
         }
       } catch (refreshErr) {
-        // Si le refresh a échoué parce que le serveur est injoignable → garder la session
         if (isNetworkOrServerDown(refreshErr as AxiosError)) {
           return Promise.reject(error)
         }
       }
-      // Seul cas de déconnexion : le serveur a RÉPONDU que le token est invalide
-      removeAccessToken()
+      removeAllTokens()
       window.location.href = '/login'
       return Promise.reject(error)
     }

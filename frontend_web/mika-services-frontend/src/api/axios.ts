@@ -113,7 +113,7 @@ apiClient.interceptors.response.use(
   }
 )
 
-// Refresh token sur 401
+// Refresh token sur 401 — ne JAMAIS déconnecter si le serveur est simplement injoignable
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -121,6 +121,11 @@ apiClient.interceptors.response.use(
     const status = error.response?.status
 
     if (status === 403) return Promise.reject(error)
+
+    // Pas de réponse du tout (serveur down, timeout, réseau coupé) → ne pas toucher à la session
+    if (!error.response && isNetworkOrServerDown(error)) {
+      return Promise.reject(error)
+    }
 
     if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
@@ -134,12 +139,13 @@ apiClient.interceptors.response.use(
           }
           return apiClient(originalRequest)
         }
-      } catch {
-        // Refresh échoué — ne pas rediriger vers login si on est hors ligne
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      } catch (refreshErr) {
+        // Si le refresh a échoué parce que le serveur est injoignable → garder la session
+        if (isNetworkOrServerDown(refreshErr as AxiosError)) {
           return Promise.reject(error)
         }
       }
+      // Seul cas de déconnexion : le serveur a RÉPONDU que le token est invalide
       removeAccessToken()
       window.location.href = '/login'
       return Promise.reject(error)

@@ -1,9 +1,10 @@
 /**
- * Gestion du stockage du token d'accès : localStorage (persistant) ou sessionStorage
- * (effacé à la fermeture de l'onglet), selon la préférence "Déconnexion à la fermeture du navigateur".
+ * Gestion des tokens (accès + refresh) : localStorage ou sessionStorage
+ * selon la préférence "Déconnexion à la fermeture du navigateur".
  */
 
 const TOKEN_KEY = 'accessToken'
+const REFRESH_TOKEN_KEY = 'refreshToken'
 const STORAGE_MODE_KEY = 'mika_token_storage'
 
 export type TokenStorageMode = 'local' | 'session'
@@ -18,43 +19,55 @@ function getStorage(): Storage {
   return getMode() === 'session' ? sessionStorage : localStorage
 }
 
-/** Retourne le token d'accès (depuis le stockage actif selon la préférence). */
 export function getAccessToken(): string | null {
   return getStorage().getItem(TOKEN_KEY)
 }
 
-/** Enregistre le token dans le stockage actif. */
 export function setAccessToken(token: string): void {
   getStorage().setItem(TOKEN_KEY, token)
 }
 
-/** Supprime le token des deux stockages (déconnexion). */
 export function removeAccessToken(): void {
   localStorage.removeItem(TOKEN_KEY)
   sessionStorage.removeItem(TOKEN_KEY)
 }
 
-/**
- * Définit le mode de stockage (session = déconnexion à la fermeture de l'onglet)
- * et migre le token éventuel vers le bon stockage.
- */
+export function getRefreshToken(): string | null {
+  return getStorage().getItem(REFRESH_TOKEN_KEY)
+}
+
+export function setRefreshToken(token: string): void {
+  getStorage().setItem(REFRESH_TOKEN_KEY, token)
+}
+
+export function removeRefreshToken(): void {
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+}
+
+export function removeAllTokens(): void {
+  removeAccessToken()
+  removeRefreshToken()
+}
+
 export function setTokenStorageMode(logoutOnBrowserClose: boolean): void {
   const newMode: TokenStorageMode = logoutOnBrowserClose ? 'session' : 'local'
-  getMode()
   localStorage.setItem(STORAGE_MODE_KEY, newMode)
 
-  const tokenFromLocal = localStorage.getItem(TOKEN_KEY)
-  const tokenFromSession = sessionStorage.getItem(TOKEN_KEY)
-  const currentToken = tokenFromLocal ?? tokenFromSession
+  const accessFromLocal = localStorage.getItem(TOKEN_KEY)
+  const accessFromSession = sessionStorage.getItem(TOKEN_KEY)
+  const currentAccess = accessFromLocal ?? accessFromSession
+
+  const refreshFromLocal = localStorage.getItem(REFRESH_TOKEN_KEY)
+  const refreshFromSession = sessionStorage.getItem(REFRESH_TOKEN_KEY)
+  const currentRefresh = refreshFromLocal ?? refreshFromSession
 
   localStorage.removeItem(TOKEN_KEY)
   sessionStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  sessionStorage.removeItem(REFRESH_TOKEN_KEY)
 
-  if (currentToken) {
-    if (newMode === 'session') {
-      sessionStorage.setItem(TOKEN_KEY, currentToken)
-    } else {
-      localStorage.setItem(TOKEN_KEY, currentToken)
-    }
-  }
+  const target = newMode === 'session' ? sessionStorage : localStorage
+  if (currentAccess) target.setItem(TOKEN_KEY, currentAccess)
+  if (currentRefresh) target.setItem(REFRESH_TOKEN_KEY, currentRefresh)
 }

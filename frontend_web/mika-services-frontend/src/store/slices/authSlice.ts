@@ -3,7 +3,7 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 import type { User } from '@/types'
 import { authApi, isLogin2FAPending } from '@/api/authApi'
 import type { LoginRequest } from '@/api/authApi'
-import { getAccessToken, setAccessToken, removeAccessToken } from '@/utils/tokenStorage'
+import { getAccessToken, setAccessToken, setRefreshToken, removeAllTokens } from '@/utils/tokenStorage'
 import { setCurrentUserCache, getCurrentUserCache, clearCurrentUserCache } from '@/utils/offlineCache'
 import { isNetworkError } from '@/utils/errorHandler'
 
@@ -105,6 +105,7 @@ const authSlice = createSlice({
       state.isAuthenticated = true
       state.error = null
       setAccessToken(action.payload.accessToken)
+      if (action.payload.refreshToken) setRefreshToken(action.payload.refreshToken)
     },
     logout: (state) => {
       state.user = null
@@ -113,7 +114,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false
       state.error = null
       state.twoFactorPending = null
-      removeAccessToken()
+      removeAllTokens()
     },
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload
@@ -145,7 +146,7 @@ const authSlice = createSlice({
         state.twoFactorPending = null
         state.user = action.payload.user
         state.accessToken = action.payload.accessToken
-        state.refreshToken = null
+        state.refreshToken = action.payload.refreshToken ?? null
         state.isAuthenticated = true
         setCurrentUserCache(action.payload.user)
       }
@@ -173,7 +174,7 @@ const authSlice = createSlice({
       state.twoFactorPending = null
       state.user = action.payload.user
       state.accessToken = action.payload.accessToken
-      state.refreshToken = null
+      state.refreshToken = action.payload.refreshToken ?? null
       state.isAuthenticated = true
       setCurrentUserCache(action.payload.user)
     })
@@ -185,7 +186,7 @@ const authSlice = createSlice({
     // Refresh token
     builder.addCase(refreshToken.fulfilled, (state, action) => {
       state.accessToken = action.payload.accessToken
-      state.refreshToken = null
+      state.refreshToken = action.payload.refreshToken ?? null
       state.user = action.payload.user
       setCurrentUserCache(action.payload.user)
     })
@@ -211,7 +212,7 @@ const authSlice = createSlice({
       state.accessToken = null
       state.refreshToken = null
       state.isAuthenticated = false
-      removeAccessToken()
+      removeAllTokens()
     })
 
     // Refresh token — ne jamais casser la session si le serveur est injoignable

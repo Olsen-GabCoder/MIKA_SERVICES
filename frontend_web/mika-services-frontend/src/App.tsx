@@ -13,8 +13,10 @@ import { applyCardSizeToDocument } from './utils/cardSizePreferences'
 import { applyHighContrastToDocument } from './utils/highContrastPreferences'
 import { usePageTracking } from './hooks/usePageTracking'
 
-/** Période de refresh proactif : avant expiration du JWT (15 min) pour maintenir la session sans attendre un 401. */
+/** Période de refresh proactif : avant expiration du JWT (15 min). */
 const PROACTIVE_REFRESH_INTERVAL_MS = 14 * 60 * 1000
+/** Premier refresh après 1 min pour valider tôt que le refresh token fonctionne. */
+const FIRST_REFRESH_DELAY_MS = 60 * 1000
 
 function App() {
   const location = useLocation()
@@ -53,8 +55,9 @@ function App() {
     })
   }, [dispatch, isAuthenticated, user, location.pathname, navigate])
 
-  // Refresh proactif du token avec retry rapide en cas d'échec
+  // Refresh proactif : premier run après 1 min puis toutes les 14 min (valide le refresh token tôt)
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const refreshFirstRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const refreshRetryRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const RETRY_DELAY_MS = 30_000
 
@@ -78,8 +81,13 @@ function App() {
           }
         })
     }
+    refreshFirstRef.current = setTimeout(runRefresh, FIRST_REFRESH_DELAY_MS)
     refreshIntervalRef.current = setInterval(runRefresh, PROACTIVE_REFRESH_INTERVAL_MS)
     return () => {
+      if (refreshFirstRef.current) {
+        clearTimeout(refreshFirstRef.current)
+        refreshFirstRef.current = null
+      }
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current)
         refreshIntervalRef.current = null

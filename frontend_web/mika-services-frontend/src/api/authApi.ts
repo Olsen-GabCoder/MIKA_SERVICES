@@ -1,7 +1,7 @@
 import apiClient, { performRefreshFromStorage } from './axios'
 import type { AuthResponse, Login2FAPendingResponse } from '@/types'
 import { API_ENDPOINTS } from '@/constants/api'
-import { setTokenStorageMode, setAccessToken, getAccessToken, removeAllTokens, setRefreshToken, getRefreshToken } from '@/utils/tokenStorage'
+import { setTokenStorageMode, setAccessToken, getAccessToken, removeAllTokens, setRefreshToken } from '@/utils/tokenStorage'
 import { storeOfflineCredentials, verifyOfflineCredentials, getOfflineToken } from '@/utils/offlineAuth'
 import { isNetworkError } from '@/utils/errorHandler'
 
@@ -116,7 +116,7 @@ export const authApi = {
     }
     const data = await performRefreshFromStorage()
     if (data) {
-      return data as AuthResponse
+      return data
     }
     throw new Error('Refresh token manquant ou expiré')
   },

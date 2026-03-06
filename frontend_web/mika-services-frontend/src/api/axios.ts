@@ -3,6 +3,7 @@ import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConf
 import { i18n } from '@/i18n'
 import { getAccessToken, setAccessToken, removeAllTokens, getRefreshToken, setRefreshToken } from '@/utils/tokenStorage'
 import { cacheResponse, getCachedResponse } from '@/utils/responseCache'
+import type { AuthResponse } from '@/types'
 
 const MAX_RETRIES = 2
 const RETRY_BASE_DELAY_MS = 800
@@ -115,19 +116,12 @@ apiClient.interceptors.response.use(
 
 // Mutex pour éviter plusieurs refresh concurrents (le backend invalide le token à chaque utilisation)
 // Exporté pour authApi.refreshToken (refresh proactif) qui doit utiliser le même mutex
-export interface RefreshResult {
-  accessToken: string
-  refreshToken?: string
-  user?: unknown
-  [key: string]: unknown
-}
+let refreshPromise: Promise<AuthResponse | null> | null = null
 
-let refreshPromise: Promise<RefreshResult | null> | null = null
-
-async function doRefresh(): Promise<RefreshResult | null> {
+async function doRefresh(): Promise<AuthResponse | null> {
   const storedRefresh = getRefreshToken()
   if (!storedRefresh) return null
-  const response = await apiClient.post<RefreshResult>('/auth/refresh', { refreshToken: storedRefresh })
+  const response = await apiClient.post<AuthResponse>('/auth/refresh', { refreshToken: storedRefresh })
   const data = response.data
   if (data?.accessToken) {
     setAccessToken(data.accessToken)
@@ -138,7 +132,7 @@ async function doRefresh(): Promise<RefreshResult | null> {
 }
 
 /** Effectue un refresh en utilisant le mutex (partagé avec l'intercepteur 401). */
-export async function performRefreshFromStorage(): Promise<RefreshResult | null> {
+export async function performRefreshFromStorage(): Promise<AuthResponse | null> {
   if (!getRefreshToken()) return null
   if (!refreshPromise) {
     refreshPromise = doRefresh().finally(() => { refreshPromise = null })

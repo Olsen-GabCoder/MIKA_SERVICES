@@ -215,8 +215,8 @@ const authSlice = createSlice({
     })
 
     // Refresh token — ne jamais casser la session si le serveur est injoignable
-    builder.addCase(refreshToken.rejected, (state) => {
-      // Garder l'état intact : le prochain refresh ou la reconnexion résoudra
+    builder.addCase(refreshToken.rejected, () => {
+      // no-op : garder l'état intact, le prochain refresh résoudra
     })
 
     // Logout

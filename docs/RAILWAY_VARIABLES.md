@@ -119,6 +119,8 @@ Dans le dashboard Railway : **Variables** du service frontend.
 
 **Réseau (onglet Networking)** : Port **80** (déjà configuré).
 
+**Important pour « Rester connecté »** : `VITE_API_BASE_URL` est injectée au **build**. Si le frontend et le backend sont sur des services Railway distincts, cette URL doit être l’URL publique exacte du backend (ex. `https://votre-backend.up.railway.app/api`). En cas d’erreur (URL manquante, mauvaise URL), le refresh token échoue et l’utilisateur est déconnecté après ~15 min.
+
 ---
 
 ## 3. Résumé à copier-coller (Backend)
@@ -164,3 +166,5 @@ MAIL_NOTIFY_ON_LOGIN=true
 - **E-mails** : créer un utilisateur (admin) ou « Mot de passe oublié » → vérifier réception (et dossier spam).
 
 Pour plus de détails sur chaque variable, voir [VARIABLES_ENVIRONNEMENT.md](./VARIABLES_ENVIRONNEMENT.md).
+
+En cas de déconnexions après quelques minutes en production, suivre le guide [DIAGNOSTIC_AUTH.md](./DIAGNOSTIC_AUTH.md).

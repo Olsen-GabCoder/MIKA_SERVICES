@@ -113,6 +113,39 @@ apiClient.interceptors.response.use(
   }
 )
 
+// Mutex pour éviter plusieurs refresh concurrents (le backend invalide le token à chaque utilisation)
+// Exporté pour authApi.refreshToken (refresh proactif) qui doit utiliser le même mutex
+export interface RefreshResult {
+  accessToken: string
+  refreshToken?: string
+  user?: unknown
+  [key: string]: unknown
+}
+
+let refreshPromise: Promise<RefreshResult | null> | null = null
+
+async function doRefresh(): Promise<RefreshResult | null> {
+  const storedRefresh = getRefreshToken()
+  if (!storedRefresh) return null
+  const response = await apiClient.post<RefreshResult>('/auth/refresh', { refreshToken: storedRefresh })
+  const data = response.data
+  if (data?.accessToken) {
+    setAccessToken(data.accessToken)
+    if (data.refreshToken) setRefreshToken(data.refreshToken)
+    return data
+  }
+  return null
+}
+
+/** Effectue un refresh en utilisant le mutex (partagé avec l'intercepteur 401). */
+export async function performRefreshFromStorage(): Promise<RefreshResult | null> {
+  if (!getRefreshToken()) return null
+  if (!refreshPromise) {
+    refreshPromise = doRefresh().finally(() => { refreshPromise = null })
+  }
+  return refreshPromise
+}
+
 // Refresh token sur 401 — envoyer le refresh token dans le body (cookie cross-origin non fiable)
 apiClient.interceptors.response.use(
   (response) => response,
@@ -126,29 +159,25 @@ apiClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    if (status === 401 && !originalRequest._retry) {
+    const isRefreshRequest = originalRequest.url?.includes('/auth/refresh')
+    if (status === 401 && !originalRequest._retry && !isRefreshRequest) {
       originalRequest._retry = true
-      const storedRefresh = getRefreshToken()
-      if (!storedRefresh) {
+      if (!getRefreshToken()) {
         removeAllTokens()
         window.location.href = '/login'
         return Promise.reject(error)
       }
       try {
-        const response = await apiClient.post('/auth/refresh', { refreshToken: storedRefresh })
-        const { accessToken, refreshToken: newRefresh } = response.data
-        if (accessToken) {
-          setAccessToken(accessToken)
-          if (newRefresh) setRefreshToken(newRefresh)
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`
-          }
+        const tokens = await performRefreshFromStorage()
+        if (tokens?.accessToken && originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`
           return apiClient(originalRequest)
         }
       } catch (refreshErr) {
         if (isNetworkOrServerDown(refreshErr as AxiosError)) {
           return Promise.reject(error)
         }
+        refreshPromise = null
       }
       removeAllTokens()
       window.location.href = '/login'

@@ -1,4 +1,4 @@
-import apiClient from './axios'
+import apiClient, { performRefreshFromStorage } from './axios'
 import type { AuthResponse, Login2FAPendingResponse } from '@/types'
 import { API_ENDPOINTS } from '@/constants/api'
 import { setTokenStorageMode, setAccessToken, getAccessToken, removeAllTokens, setRefreshToken, getRefreshToken } from '@/utils/tokenStorage'
@@ -114,16 +114,11 @@ export const authApi = {
         } as AuthResponse
       }
     }
-    const storedRefresh = getRefreshToken()
-    const response = await apiClient.post<AuthResponse>(
-      API_ENDPOINTS.AUTH.REFRESH,
-      storedRefresh ? { refreshToken: storedRefresh } : {}
-    )
-    if (response.data.accessToken) {
-      setAccessToken(response.data.accessToken)
-      if (response.data.refreshToken) setRefreshToken(response.data.refreshToken)
+    const data = await performRefreshFromStorage()
+    if (data) {
+      return data as AuthResponse
     }
-    return response.data
+    throw new Error('Refresh token manquant ou expiré')
   },
 
   logout: async (): Promise<void> => {

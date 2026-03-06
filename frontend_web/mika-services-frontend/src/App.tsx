@@ -53,20 +53,40 @@ function App() {
     })
   }, [dispatch, isAuthenticated, user, location.pathname, navigate])
 
-  // Refresh proactif du token : toutes les 14 min tant que l'utilisateur est connecté (cookie httpOnly renvoyé)
+  // Refresh proactif du token avec retry rapide en cas d'échec
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const refreshRetryRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const RETRY_DELAY_MS = 30_000
+
   useEffect(() => {
     if (!isAuthenticated || location.pathname === '/login') return
     const runRefresh = () => {
-      dispatch(refreshToken()).catch(() => {
-        // En échec (ex. cookie absent), l'intercepteur 401 ou le prochain fetchUserFromToken gèrera la déconnexion
-      })
+      dispatch(refreshToken())
+        .unwrap()
+        .then(() => {
+          if (refreshRetryRef.current) {
+            clearTimeout(refreshRetryRef.current)
+            refreshRetryRef.current = null
+          }
+        })
+        .catch(() => {
+          if (!refreshRetryRef.current) {
+            refreshRetryRef.current = setTimeout(() => {
+              refreshRetryRef.current = null
+              runRefresh()
+            }, RETRY_DELAY_MS)
+          }
+        })
     }
     refreshIntervalRef.current = setInterval(runRefresh, PROACTIVE_REFRESH_INTERVAL_MS)
     return () => {
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current)
         refreshIntervalRef.current = null
+      }
+      if (refreshRetryRef.current) {
+        clearTimeout(refreshRetryRef.current)
+        refreshRetryRef.current = null
       }
     }
   }, [isAuthenticated, location.pathname, dispatch])

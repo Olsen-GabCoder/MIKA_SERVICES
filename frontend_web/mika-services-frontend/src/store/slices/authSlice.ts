@@ -199,13 +199,24 @@ const authSlice = createSlice({
       state.isLoading = false
       state.user = action.payload
     })
-    builder.addCase(fetchUserFromToken.rejected, (state) => {
+    builder.addCase(fetchUserFromToken.rejected, (state, action) => {
       state.isLoading = false
+      // Si le serveur est juste injoignable, garder la session intacte
+      const err = action.payload as { code?: string; response?: { status?: number } } | undefined
+      const isNetwork = !err?.response?.status
+      if (isNetwork && state.accessToken) {
+        return
+      }
       state.user = null
       state.accessToken = null
       state.refreshToken = null
       state.isAuthenticated = false
       removeAccessToken()
+    })
+
+    // Refresh token — ne jamais casser la session si le serveur est injoignable
+    builder.addCase(refreshToken.rejected, (state) => {
+      // Garder l'état intact : le prochain refresh ou la reconnexion résoudra
     })
 
     // Logout

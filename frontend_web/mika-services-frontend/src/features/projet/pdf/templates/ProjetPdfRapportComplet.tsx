@@ -118,7 +118,7 @@ export function ProjetPdfRapportComplet({ data }: { data: ProjetPdfData }) {
           return (
             <View style={s.section}>
               <Text style={s.sectionTitle}>Avancement des travaux — S{semaineCalendaire} ({anneeCalendaire})</Text>
-              {globalPct != null && <Text style={s.paragraph}>Avancement global semaine : <Text style={{ fontWeight: 'bold' }}>{globalPct} %</Text></Text>}
+              {globalPct != null && <Text style={s.paragraph}>Taux d'avancement : <Text style={{ fontWeight: 'bold' }}>{globalPct} %</Text></Text>}
               <Text style={[s.paragraph, { fontWeight: 'bold', marginTop: 6 }]}>Réalisé — S{semaineCalendaire}</Text>
               {tachesRealiseSemaine.length > 0 ? tachesRealiseSemaine.map((p) => (
                 <View key={p.id} style={s.row}>

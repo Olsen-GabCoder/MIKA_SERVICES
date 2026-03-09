@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { meteoApi } from '../../../api/meteoApi'
 import type { Meteo, Previsions } from '../../../types/meteo'
@@ -54,21 +54,27 @@ export default function MeteoWidget() {
   const [meteo, setMeteo] = useState<Meteo | null>(null)
   const [previsions, setPrevisions] = useState<Previsions | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setError(null)
+    setLoading(true)
+    try {
+      const [m, p] = await Promise.all([meteoApi.getActuelle(), meteoApi.getPrevisions()])
+      setMeteo(m)
+      setPrevisions(p)
+    } catch {
+      setError(t('meteo.unavailable'))
+      setMeteo(null)
+      setPrevisions(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [t])
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [m, p] = await Promise.all([meteoApi.getActuelle(), meteoApi.getPrevisions()])
-        setMeteo(m)
-        setPrevisions(p)
-      } catch {
-        /* non-critique */
-      } finally {
-        setLoading(false)
-      }
-    }
     load()
-  }, [])
+  }, [load])
 
   /* ── Skeleton ── */
   if (loading) {
@@ -82,6 +88,22 @@ export default function MeteoWidget() {
             ))}
           </div>
         </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5 flex flex-col items-center justify-center gap-3 min-h-[180px]">
+        <span className="text-3xl opacity-60">🌤️</span>
+        <p className="text-sm text-gray-600 dark:text-gray-400 text-center">{error}</p>
+        <button
+          type="button"
+          onClick={load}
+          className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+        >
+          {t('meteo.retry')}
+        </button>
       </div>
     )
   }

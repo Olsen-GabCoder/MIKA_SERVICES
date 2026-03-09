@@ -71,7 +71,7 @@ object ProjetMapper {
         dateFin = entity.dateFin,
         dateDebutReel = entity.dateDebutReel,
         dateFinReelle = entity.dateFinReelle,
-        avancementGlobal = entity.avancementGlobal,
+        avancementGlobal = entity.avancementGlobal ?: BigDecimal.ZERO,
         avancementPhysiquePct = entity.avancementPhysiquePct,
         avancementFinancierPct = entity.avancementFinancierPct,
         delaiConsommePct = entity.delaiConsommePct,

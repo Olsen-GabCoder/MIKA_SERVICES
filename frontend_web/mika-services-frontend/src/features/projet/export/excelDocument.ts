@@ -1,6 +1,6 @@
 /**
  * Génération d'un classeur Excel (.xlsx) complet — toutes les sections de la page détail projet.
- * Une feuille par thème : Résumé, Informations contractuelles, Suivi mensuel, Études, Points bloquants, Prévisions, Synthèse, Indicateurs.
+ * Une feuille par thème : Résumé, Informations contractuelles, Suivi mensuel, Études, Points bloquants, Prévisions, Description et observations.
  */
 import type * as XLSXType from 'xlsx'
 import type { ProjetDocumentPayload } from './types'
@@ -59,7 +59,7 @@ export async function buildProjetExcel(payload: ProjetDocumentPayload): Promise<
     ['Chef de projet', projet.responsableProjet ? `${projet.responsableProjet.prenom} ${projet.responsableProjet.nom}` : '—'],
     ['Semaine en cours', `${semaineCalendaire} (${anneeCalendaire})`],
     [],
-    ['Avancement global', `${projet.avancementGlobal} %`],
+    ['Taux d\'avancement', `${projet.avancementGlobal} %`],
     ['Montant marché', formatMontant(projet.montantHT)],
     ['Budget prévu', formatMontant(budgetPrevu)],
     ['Dépenses réalisées', formatMontant(depensesTotales)],
@@ -107,7 +107,7 @@ export async function buildProjetExcel(payload: ProjetDocumentPayload): Promise<
   const realiseRows = tachesRealiseSemaine.map((p) => [p.description ?? p.type ?? '', p.avancementPct ?? ''])
   const realiseSheet = [
     [`RÉALISÉ — SEMAINE ${semaineCalendaire} (${anneeCalendaire})`],
-    ...(globalPctExcel != null ? [[], [`Avancement global semaine : ${globalPctExcel} %`]] : []),
+    ...(globalPctExcel != null ? [[], [`Taux d'avancement : ${globalPctExcel} %`]] : []),
     [],
     realiseHeader,
     ...realiseRows,
@@ -131,36 +131,7 @@ export async function buildProjetExcel(payload: ProjetDocumentPayload): Promise<
   const pbSheet = [['POINTS BLOQUANTS'], [], pbHeader, ...pbRows]
   XLSX.utils.book_append_sheet(wb, s(pbSheet), 'Points bloquants')
 
-  // Feuille 7 : Synthèse et indicateurs
-  const synthèse = [
-    ['SYNTHÈSE PROJET'],
-    [],
-    ['Type', getTypeProjetDisplay(getProjetTypes(projet), projet.typePersonnalise)],
-    ['Sous-projets', projet.nombreSousProjets],
-    ['Points bloquants ouverts', projet.nombrePointsBloquantsOuverts],
-    ['Délai consommé', projet.delaiConsommePct != null ? `${projet.delaiConsommePct} %` : '—'],
-    ['Source financement', projet.sourceFinancement?.replace(/_/g, ' ') ?? '—'],
-    ['Partenaire principal', projet.partenairePrincipal ?? '—'],
-    ['Localisation', [projet.province, projet.ville, projet.quartier].filter(Boolean).join(' · ') || '—'],
-    [],
-    ['Client', projet.client?.nom ?? '—'],
-    ['Type client', projet.client?.type?.replace(/_/g, ' ') ?? '—'],
-    [],
-    ['Chef de projet', projet.responsableProjet ? `${projet.responsableProjet.prenom} ${projet.responsableProjet.nom}` : '—'],
-    ['Email', projet.responsableProjet?.email ?? '—'],
-    [],
-    ['VUE STRATÉGIQUE — INDICATEURS'],
-    [],
-    ['Avancement physique', projet.avancementPhysiquePct ?? projet.avancementGlobal],
-    ['Avancement financier (%)', rapport?.budget?.tauxConsommation ?? 0],
-    ['Qualité (taux conformité %)', rapport?.qualite?.tauxConformite ?? 0],
-    ['Incidents total', rapport?.securite?.incidentsTotal ?? 0],
-    ['Risques critiques', rapport?.securite?.risquesCritiques ?? 0],
-    ['Tâches en retard', rapport?.planning?.tachesEnRetard ?? 0],
-  ]
-  XLSX.utils.book_append_sheet(wb, s(synthèse), 'Synthèse')
-
-  // Feuille 8 : Description, observations, propositions
+  // Feuille 7 : Description, observations, propositions
   const desc = [
     ['DESCRIPTION, OBSERVATIONS ET PROPOSITIONS'],
     [],

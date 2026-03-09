@@ -57,7 +57,7 @@
       "completed": "completed"
     },
     "progress": {
-      "global": "Overall progress",
+      "global": "Advancement rate",
       "budgetConsumption": "Budget consumption",
       "completed": "completed",
       "total": "total",
@@ -109,7 +109,7 @@
       "totalProjects": "Projects",
       "active": "active",
       "delayed": "delayed",
-      "globalProgress": "Overall Progress",
+      "globalProgress": "Advancement rate",
       "tasks": "tasks",
       "budgetConsumed": "Budget Consumed",
       "qualityRate": "Conformity",
@@ -157,7 +157,7 @@
       "inProgress": "In progress",
       "completed": "Completed",
       "overdue": "Overdue",
-      "progressLabel": "Overall progress"
+      "progressLabel": "Advancement rate"
     },
     "weekly": {
       "title": "Weekly progress",
@@ -246,6 +246,8 @@
     "feelsLike": "Feels like",
     "humidity": "Humidity",
     "wind": "Wind",
-    "forecast5Days": "5-day forecast"
+    "forecast5Days": "5-day forecast",
+    "unavailable": "Unable to load weather.",
+    "retry": "Retry"
   }
 }

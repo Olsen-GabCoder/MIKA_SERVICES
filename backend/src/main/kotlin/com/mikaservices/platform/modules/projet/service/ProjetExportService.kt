@@ -170,7 +170,7 @@ class ProjetExportService(
         val globalPct = if (avancementsRealise.isNotEmpty()) Math.round(avancementsRealise.sum().toDouble() / avancementsRealise.size * 100.0) / 100.0 else null
 
         addSectionTitle(doc, "4. Avancement des travaux — Semaine $semaineCalendaire ($anneeCalendaire)")
-        if (globalPct != null) addParagraph(doc, "Avancement global semaine : $globalPct %", bold = true)
+        if (globalPct != null) addParagraph(doc, "Taux d'avancement : $globalPct %", bold = true)
 
         addSubtitle(doc, "4.1 Réalisé — Semaine $semaineCalendaire ($anneeCalendaire)")
         if (tachesRealiseSemaine.isEmpty()) addParagraph(doc, "Aucune tâche enregistrée pour la semaine en cours.")
@@ -305,7 +305,7 @@ class ProjetExportService(
             "Délai (mois)" to (projet.delaiMois?.toString() ?: "—"),
             "Date début" to fmtDate(projet.dateDebut),
             "Date fin" to fmtDate(projet.dateFin),
-            "Avancement global %" to projet.avancementGlobal.toString(),
+            "Taux d'avancement %" to projet.avancementGlobal.toString(),
             "Source financement" to fmt(projet.sourceFinancement?.name?.replace("_", " ")),
             "Partenaire principal" to fmt(projet.partenairePrincipal),
             "Client" to (projet.client?.nom ?: "—"),

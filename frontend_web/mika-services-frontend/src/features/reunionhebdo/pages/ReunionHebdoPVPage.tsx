@@ -6,11 +6,13 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Alert } from '@/components/ui/Alert'
 import { reunionHebdoApi } from '@/api/reunionHebdoApi'
-import { projetApi } from '@/api/projetApi'
+import { projetApi, pointBloquantApi } from '@/api/projetApi'
 import type { ReunionHebdo, PointProjetPV, PointProjetPVRequest } from '@/types/reunionHebdo'
-import type { ProjetSummary } from '@/types/projet'
 import { useFormatDate } from '@/hooks/useFormatDate'
+import { getWeekYearFromDateString } from '@/utils/weekFromDate'
+import { generatePVDocument } from '@/features/reunionhebdo/export'
 
 const formatTime = (timeStr?: string) => (timeStr ? timeStr.slice(0, 5).replace(':', 'h') : '-')
 
@@ -21,16 +23,14 @@ export const ReunionHebdoPVPage = () => {
   const navigate = useNavigate()
   const confirm = useConfirm()
   const [pv, setPv] = useState<ReunionHebdo | null>(null)
-  const [projets, setProjets] = useState<ProjetSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [editingPoint, setEditingPoint] = useState<number | null>(null)
-  const [addingPoint, setAddingPoint] = useState(false)
-  const [newPointProjetId, setNewPointProjetId] = useState<number | ''>('')
+  const [exportingPV, setExportingPV] = useState(false)
+  const [downloadError, setDownloadError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
     reunionHebdoApi.findById(Number(id)).then(setPv).catch(() => setPv(null)).finally(() => setLoading(false))
-    projetApi.findAll(0, 200).then((res) => setProjets(res.content)).catch(() => setProjets([]))
   }, [id])
 
   const refreshPv = () => {
@@ -44,18 +44,6 @@ export const ReunionHebdoPVPage = () => {
     setEditingPoint(null)
   }
 
-  const handleAddPoint = async () => {
-    if (!id || !newPointProjetId) return
-    const existing = pv?.pointsProjet ?? []
-    await reunionHebdoApi.savePointProjet(Number(id), {
-      projetId: newPointProjetId,
-      ordreAffichage: existing.length,
-    })
-    refreshPv()
-    setNewPointProjetId('')
-    setAddingPoint(false)
-  }
-
   const handleDeletePoint = async (pointId: number) => {
     if (!id || !(await confirm({ messageKey: 'confirm.removeProjectFromPV' }))) return
     await reunionHebdoApi.deletePointProjet(Number(id), pointId)
@@ -63,25 +51,69 @@ export const ReunionHebdoPVPage = () => {
     setEditingPoint(null)
   }
 
+  const handleDownloadPV = async () => {
+    if (!pv) return
+    setDownloadError(null)
+    setExportingPV(true)
+    try {
+      const { week, year } = getWeekYearFromDateString(pv.dateReunion)
+      const listRes = await projetApi.findAll(0, 500)
+      const results = await Promise.allSettled(
+        listRes.content.map((p) =>
+          Promise.all([
+            projetApi.findById(p.id),
+            projetApi.getPrevisions(p.id),
+            pointBloquantApi.findByProjet(p.id, 0, 100),
+          ]).then(([projet, previsions, pointsBloquantsRes]) => ({
+            projet,
+            previsions: previsions ?? [],
+            pointsBloquants: pointsBloquantsRes?.content ?? [],
+          }))
+        )
+      )
+      const projetsData = results
+        .filter((r): r is PromiseFulfilledResult<{ projet: Awaited<ReturnType<typeof projetApi.findById>>; previsions: Awaited<ReturnType<typeof projetApi.getPrevisions>>; pointsBloquants: Awaited<ReturnType<typeof pointBloquantApi.findByProjet>>['content'] }> => r.status === 'fulfilled')
+        .map((r) => r.value)
+      projetsData.sort((a, b) => a.projet.nom.localeCompare(b.projet.nom, 'fr'))
+      await generatePVDocument({
+        reunion: pv,
+        semaineReunion: week,
+        anneeReunion: year,
+        projetsData,
+        formatDate: (d) => formatDate(d),
+        formatTime: () => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('form.errorGeneric')
+      setDownloadError(message)
+      console.error('Erreur téléchargement PV:', err)
+    } finally {
+      setExportingPV(false)
+    }
+  }
+
   if (loading || !pv) {
     return (
-      <PageContainer>
+      <PageContainer size="full" className="bg-gray-50/80 dark:bg-gray-900/80">
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">{loading ? t('pv.loading') : t('pv.notFound')}</div>
       </PageContainer>
     )
   }
 
-  const alreadyInPv = pv.pointsProjet.map((pp) => pp.projetId)
-  const availableProjets = projets.filter((p) => !alreadyInPv.includes(p.id))
-
   return (
-    <PageContainer size="wide">
+    <PageContainer size="full" className="space-y-6 bg-gray-50/80 dark:bg-gray-900/80">
+      {downloadError && (
+        <Alert type="error" onClose={() => setDownloadError(null)}>{downloadError}</Alert>
+      )}
       <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('pv.title')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{formatDate(pv.dateReunion, { weekday: 'long', monthStyle: 'long' })} — {pv.lieu || t('pv.lieuNonPrecise')}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button type="button" variant="primary" size="sm" onClick={handleDownloadPV} disabled={exportingPV} isLoading={exportingPV}>
+            {t('pv.downloadPV')}
+          </Button>
           <Button variant="outline" size="sm" onClick={() => navigate('/reunions-hebdo/' + id + '/edit')}>
             {t('pv.editMeeting')}
           </Button>
@@ -118,24 +150,7 @@ export const ReunionHebdoPVPage = () => {
           </table>
         </Card>
 
-        <Card
-          title={t('pv.pointsParProjet')}
-          headerActions={
-            availableProjets.length > 0 &&
-            (addingPoint ? (
-              <div className="flex gap-2 items-center">
-                <select value={newPointProjetId} onChange={(e) => setNewPointProjetId(e.target.value ? Number(e.target.value) : '')} className="border border-medium dark:border-gray-600 rounded-lg px-2 py-1 text-small dark:bg-gray-700 dark:text-gray-100">
-                  <option value="">{t('pv.chooseProject')}</option>
-                  {availableProjets.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
-                </select>
-                <Button size="sm" variant="primary" onClick={handleAddPoint} disabled={!newPointProjetId}>{t('pv.add')}</Button>
-                <Button size="sm" variant="outline" onClick={() => { setAddingPoint(false); setNewPointProjetId('') }}>{t('pv.form.cancel')}</Button>
-              </div>
-            ) : (
-              <Button size="sm" variant="primary" onClick={() => setAddingPoint(true)}>{t('pv.addProject')}</Button>
-            ))
-          }
-        >
+        <Card title={t('pv.pointsParProjet')}>
           {pv.pointsProjet.length === 0 ? (
             <p className="text-medium dark:text-gray-400 text-small">{t('pv.noPointsProjet')}</p>
           ) : (

@@ -29,7 +29,7 @@ export function ProjetPdfSynthese({ data }: { data: ProjetPdfData }) {
           <View style={s.kpiRow}>
             <View style={s.kpiBox}>
               <Text style={s.kpiValue}>{projet.avancementGlobal} %</Text>
-              <Text style={s.kpiLabel}>Avancement global</Text>
+              <Text style={s.kpiLabel}>Taux d'avancement</Text>
             </View>
             <View style={s.kpiBox}>
               <Text style={s.kpiValue}>{formatMontant(budgetPrevu)}</Text>

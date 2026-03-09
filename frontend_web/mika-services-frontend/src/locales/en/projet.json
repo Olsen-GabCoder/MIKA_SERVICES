@@ -509,7 +509,7 @@
     "section2": "2. Monthly follow-up table",
     "section3": "3. Study progress",
     "section4": "4. Works progress",
-    "section4GlobalProgress": "Weekly overall progress: {{pct}} %",
+    "section4GlobalProgress": "Advancement rate: {{pct}} %",
     "section4Realise": "Completed — Current week",
     "section4Previsions": "Forecast — Next week",
     "section4NoRealise": "No tasks recorded for the current week.",

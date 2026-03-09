@@ -17,8 +17,8 @@ class MeteoService {
     @Value("\${app.meteo.api-key:}")
     private var apiKey: String = ""
 
-    @Value("\${app.meteo.default-city:Douala}")
-    private var defaultCity: String = "Douala"
+    @Value("\${app.meteo.default-city:Libreville}")
+    private var defaultCity: String = "Libreville"
 
     fun getMeteoActuelle(ville: String?): MeteoResponse {
         val city = ville ?: defaultCity
@@ -65,7 +65,8 @@ class MeteoService {
 
         val temp = (main["temp"] as? Number)?.toDouble() ?: 0.0
         val humidity = (main["humidity"] as? Number)?.toInt() ?: 0
-        val windSpeed = (wind["speed"] as? Number)?.toDouble() ?: 0.0
+        val windSpeedMs = (wind["speed"] as? Number)?.toDouble() ?: 0.0
+        val windSpeedKmh = windSpeedMs * 3.6
         val description = weather["description"] as? String ?: ""
 
         return MeteoResponse(
@@ -75,12 +76,12 @@ class MeteoService {
             humidite = humidity,
             description = description,
             icone = weather["icon"] as? String ?: "01d",
-            vitesseVent = windSpeed,
+            vitesseVent = windSpeedKmh,
             directionVent = (wind["deg"] as? Number)?.toInt() ?: 0,
             pression = (main["pressure"] as? Number)?.toInt() ?: 0,
             visibilite = (data["visibility"] as? Number)?.toInt() ?: 10000,
             nuages = (clouds["all"] as? Number)?.toInt() ?: 0,
-            conditionTravail = evaluerConditionTravail(temp, windSpeed, humidity, description)
+            conditionTravail = evaluerConditionTravail(temp, windSpeedKmh, humidity, description)
         )
     }
 
@@ -94,6 +95,7 @@ class MeteoService {
             val main = first["main"] as? Map<String, Any> ?: emptyMap()
             val weather = (first["weather"] as? List<Map<String, Any>>)?.firstOrNull() ?: emptyMap()
             val wind = first["wind"] as? Map<String, Any> ?: emptyMap()
+            val windMs = (wind["speed"] as? Number)?.toDouble() ?: 0.0
 
             val temps = dayItems.mapNotNull { (it["main"] as? Map<String, Any>)?.get("temp") as? Number }.map { it.toDouble() }
             PrevisionJour(
@@ -103,22 +105,22 @@ class MeteoService {
                 description = weather["description"] as? String ?: "",
                 icone = weather["icon"] as? String ?: "01d",
                 probPluie = (first["pop"] as? Number)?.toDouble() ?: 0.0,
-                vitesseVent = (wind["speed"] as? Number)?.toDouble() ?: 0.0
+                vitesseVent = windMs * 3.6
             )
         }
 
         return PrevisionResponse(ville = ville, previsions = previsions)
     }
 
-    private fun evaluerConditionTravail(temp: Double, vent: Double, humidite: Int, description: String): ConditionTravail {
+    private fun evaluerConditionTravail(temp: Double, ventKmh: Double, humidite: Int, description: String): ConditionTravail {
         val alertes = mutableListOf<String>()
         var favorable = true
 
         if (temp > 40) { alertes.add("Température extrême (${temp}°C) — risque insolation"); favorable = false }
         else if (temp > 35) alertes.add("Forte chaleur — hydratation obligatoire")
 
-        if (vent > 60) { alertes.add("Vents violents (${vent} km/h) — travaux en hauteur interdits"); favorable = false }
-        else if (vent > 40) alertes.add("Vent fort — vigilance travaux en hauteur")
+        if (ventKmh > 60) { alertes.add("Vents violents (${ventKmh.toInt()} km/h) — travaux en hauteur interdits"); favorable = false }
+        else if (ventKmh > 40) alertes.add("Vent fort — vigilance travaux en hauteur")
 
         val descLower = description.lowercase()
         if (descLower.contains("orage") || descLower.contains("tempête")) { alertes.add("Orage/tempête — arrêt des travaux extérieurs"); favorable = false }

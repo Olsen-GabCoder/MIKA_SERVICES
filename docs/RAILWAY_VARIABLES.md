@@ -99,7 +99,7 @@ Aucune autre variable SMTP n’est nécessaire lorsque `RESEND_API_KEY` est déf
 | `JWT_REFRESH_EXPIRATION_MS` | `604800000` (7 jours) | Durée de vie du refresh token (ms) |
 | `UPLOAD_DIR` | `uploads` | Répertoire des uploads (éphémère sur Railway, prévoir stockage externe plus tard si besoin) |
 | `METEO_API_KEY` | *(vide)* | Clé API météo (widget dashboard) |
-| `METEO_DEFAULT_CITY` | `Douala` | Ville par défaut météo |
+| `METEO_DEFAULT_CITY` | `Libreville` | Ville par défaut météo |
 | `AUTH_LOCKOUT_MAX_ATTEMPTS` | `5` | Verrouillage compte après N échecs de connexion |
 | `AUTH_LOCKOUT_DURATION_MINUTES` | `15` | Durée du verrouillage (minutes) |
 | `LOGIN_RATE_LIMIT_MAX` | `5` | Rate limit global connexion |

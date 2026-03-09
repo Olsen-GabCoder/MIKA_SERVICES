@@ -64,7 +64,7 @@
       "completed": "terminées"
     },
     "progress": {
-      "global": "Avancement global",
+      "global": "Taux d'avancement",
       "budgetConsumption": "Consommation budget",
       "completed": "terminées",
       "total": "total",
@@ -116,7 +116,7 @@
       "totalProjects": "Projets",
       "active": "actifs",
       "delayed": "en retard",
-      "globalProgress": "Avancement global",
+      "globalProgress": "Taux d'avancement",
       "tasks": "tâches",
       "budgetConsumed": "Budget consommé",
       "qualityRate": "Conformité",
@@ -164,7 +164,7 @@
       "inProgress": "En cours",
       "completed": "Terminées",
       "overdue": "En retard",
-      "progressLabel": "Avancement global"
+      "progressLabel": "Taux d'avancement"
     },
     "weekly": {
       "title": "Avancement hebdomadaire",
@@ -253,6 +253,8 @@
     "feelsLike": "Ressenti",
     "humidity": "Humidité",
     "wind": "Vent",
-    "forecast5Days": "Prévisions 5 jours"
+    "forecast5Days": "Prévisions 5 jours",
+    "unavailable": "Impossible de charger la météo.",
+    "retry": "Réessayer"
   }
 }

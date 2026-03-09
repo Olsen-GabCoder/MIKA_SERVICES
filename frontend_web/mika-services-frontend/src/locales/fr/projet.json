@@ -509,7 +509,7 @@
     "section2": "2. Tableau de suivi mensuel",
     "section3": "3. État d'avancement des Études",
     "section4": "4. Avancement des travaux",
-    "section4GlobalProgress": "Avancement global semaine : {{pct}} %",
+    "section4GlobalProgress": "Taux d'avancement : {{pct}} %",
     "section4Realise": "Réalisé — Semaine en cours",
     "section4Previsions": "Prévisions — Semaine suivante",
     "section4NoRealise": "Aucune tâche enregistrée pour la semaine en cours.",

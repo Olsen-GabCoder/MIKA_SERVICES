@@ -56,7 +56,7 @@ app:
     dir: ${UPLOAD_DIR:uploads}
   meteo:
     api-key: ${METEO_API_KEY:}
-    default-city: ${METEO_DEFAULT_CITY:Douala}
+    default-city: ${METEO_DEFAULT_CITY:Libreville}
   mail:
     frontend-base-url: ${FRONTEND_BASE_URL:https://mika-services.up.railway.app}
     from: ${MAIL_FROM:noreply@mikaservices.com}

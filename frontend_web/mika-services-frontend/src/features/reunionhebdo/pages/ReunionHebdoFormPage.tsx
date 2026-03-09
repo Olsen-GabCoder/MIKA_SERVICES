@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
@@ -17,6 +18,36 @@ import type { User } from '@/types'
 
 const STATUT_REUNION_VALUES: StatutReunion[] = ['BROUILLON', 'VALIDE']
 
+/** Clés des options prédéfinies d'ordre du jour (form.ordreDuJourOptions.xxx) */
+const ORDRE_DU_JOUR_OPTION_KEYS = [
+  'avancementEtudes',
+  'avancementTravaux',
+  'caHebdo',
+  'previsions',
+  'pointsBloquants',
+  'besoinsMaterielHumain',
+  'securite',
+  'qualite',
+  'planning',
+  'comptesRendus',
+  'suiviMarches',
+  'alertes',
+  'divers',
+] as const
+
+function parseOrdreDuJourText(text: string | null | undefined): string[] {
+  if (!text || !text.trim()) return []
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*\d+\)\s*/, '').trim())
+    .filter(Boolean)
+}
+
+function serializeOrdreDuJourItems(items: string[]): string {
+  if (items.length === 0) return ''
+  return items.map((item, i) => `${i + 1}) ${item}`).join('\n')
+}
+
 export const ReunionHebdoFormPage = () => {
   const { t } = useTranslation('reunionHebdo')
   const { id } = useParams<{ id: string }>()
@@ -30,7 +61,9 @@ export const ReunionHebdoFormPage = () => {
   const [lieu, setLieu] = useState('')
   const [heureDebut, setHeureDebut] = useState('')
   const [heureFin, setHeureFin] = useState('')
-  const [ordreDuJour, setOrdreDuJour] = useState('')
+  const [ordreDuJourItems, setOrdreDuJourItems] = useState<string[]>([])
+  const [ordreDuJourSelect, setOrdreDuJourSelect] = useState('')
+  const [ordreDuJourCustomInput, setOrdreDuJourCustomInput] = useState('')
   const [statut, setStatut] = useState<StatutReunion>('BROUILLON')
   const [divers, setDivers] = useState('')
   const [redacteurId, setRedacteurId] = useState<number | ''>('')
@@ -41,7 +74,9 @@ export const ReunionHebdoFormPage = () => {
   }, [])
 
   useEffect(() => {
-    if (!isEdit && !ordreDuJour) setOrdreDuJour(t('form.ordreDuJourDefault'))
+    if (!isEdit && ordreDuJourItems.length === 0) {
+      setOrdreDuJourItems(parseOrdreDuJourText(t('form.ordreDuJourDefault')))
+    }
   }, [isEdit, t])
 
   useEffect(() => {
@@ -53,7 +88,7 @@ export const ReunionHebdoFormPage = () => {
           setLieu(r.lieu || '')
           setHeureDebut(r.heureDebut ? r.heureDebut.slice(0, 5) : '')
           setHeureFin(r.heureFin ? r.heureFin.slice(0, 5) : '')
-          setOrdreDuJour(r.ordreDuJour || t('form.ordreDuJourDefault'))
+          setOrdreDuJourItems(parseOrdreDuJourText(r.ordreDuJour) || parseOrdreDuJourText(t('form.ordreDuJourDefault')))
           setStatut(r.statut)
           setDivers(r.divers || '')
           setRedacteurId(r.redacteur?.id ?? '')
@@ -76,7 +111,7 @@ export const ReunionHebdoFormPage = () => {
           lieu: lieu || undefined,
           heureDebut: heureDebut ? heureDebut + ':00' : undefined,
           heureFin: heureFin ? heureFin + ':00' : undefined,
-          ordreDuJour: ordreDuJour || undefined,
+          ordreDuJour: serializeOrdreDuJourItems(ordreDuJourItems) || undefined,
           statut,
           divers: divers || undefined,
           redacteurId: redacteurId || undefined,
@@ -89,7 +124,7 @@ export const ReunionHebdoFormPage = () => {
           lieu: lieu || undefined,
           heureDebut: heureDebut ? heureDebut + ':00' : undefined,
           heureFin: heureFin ? heureFin + ':00' : undefined,
-          ordreDuJour: ordreDuJour || undefined,
+          ordreDuJour: serializeOrdreDuJourItems(ordreDuJourItems) || undefined,
           statut,
           divers: divers || undefined,
           redacteurId: redacteurId || undefined,
@@ -109,19 +144,38 @@ export const ReunionHebdoFormPage = () => {
     setParticipantIds((prev) => (prev.includes(userId) ? prev.filter((i) => i !== userId) : [...prev, userId]))
   }
 
-  if (loading) return <PageContainer><div className="text-center py-12 text-gray-500 dark:text-gray-400">{t('form.loading')}</div></PageContainer>
+  const addOrdreDuJourFromList = () => {
+    if (!ordreDuJourSelect) return
+    const label = t(`form.ordreDuJourOptions.${ordreDuJourSelect}`)
+    if (label && !ordreDuJourItems.includes(label)) {
+      setOrdreDuJourItems((prev) => [...prev, label])
+      setOrdreDuJourSelect('')
+    }
+  }
+
+  const addOrdreDuJourCustom = () => {
+    const value = ordreDuJourCustomInput.trim()
+    if (value && !ordreDuJourItems.includes(value)) {
+      setOrdreDuJourItems((prev) => [...prev, value])
+      setOrdreDuJourCustomInput('')
+    }
+  }
+
+  const removeOrdreDuJourItem = (index: number) => {
+    setOrdreDuJourItems((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  if (loading) return <PageContainer size="full" className="bg-gray-50/80 dark:bg-gray-900/80"><div className="text-center py-12 text-gray-500 dark:text-gray-400">{t('form.loading')}</div></PageContainer>
 
   return (
-    <PageContainer>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{isEdit ? t('form.titleEdit') : t('form.titleNew')}</h1>
-      </div>
-      {error && (
-        <div className="mb-4">
-          <Alert type="error" onClose={() => setError(null)}>{error}</Alert>
-        </div>
-      )}
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+    <PageContainer size="full" className="space-y-6 bg-gray-50/80 dark:bg-gray-900/80">
+      <Card title={isEdit ? t('form.titleEdit') : t('form.titleNew')} className="max-w-4xl">
+        {error && (
+          <div className="mb-4">
+            <Alert type="error" onClose={() => setError(null)}>{error}</Alert>
+          </div>
+        )}
+        <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input label={t('form.date')} type="date" required value={dateReunion} onChange={(e) => setDateReunion(e.target.value)} />
           <Input label={t('form.lieu')} type="text" value={lieu} onChange={(e) => setLieu(e.target.value)} />
@@ -139,7 +193,63 @@ export const ReunionHebdoFormPage = () => {
         </div>
         <div>
           <label className="block text-small font-medium text-dark dark:text-gray-200 mb-xs">{t('form.ordreDuJour')}</label>
-          <textarea value={ordreDuJour} onChange={(e) => setOrdreDuJour(e.target.value)} rows={5} className="w-full px-md py-sm border border-medium dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-800 dark:text-gray-100" />
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2 items-center">
+              <select
+                value={ordreDuJourSelect}
+                onChange={(e) => setOrdreDuJourSelect(e.target.value)}
+                className="flex-1 min-w-[200px] px-md py-sm border border-medium dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-800 dark:text-gray-100"
+              >
+                <option value="">{t('form.ordreDuJourAddFromList')}</option>
+                {ORDRE_DU_JOUR_OPTION_KEYS.map((key) => {
+                  const label = t(`form.ordreDuJourOptions.${key}`)
+                  if (ordreDuJourItems.includes(label)) return null
+                  return (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  )
+                })}
+              </select>
+              <Button type="button" variant="outline" size="sm" onClick={addOrdreDuJourFromList} disabled={!ordreDuJourSelect}>
+                {t('form.ordreDuJourAddFromList')}
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2 items-center">
+              <input
+                type="text"
+                value={ordreDuJourCustomInput}
+                onChange={(e) => setOrdreDuJourCustomInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addOrdreDuJourCustom())}
+                placeholder={t('form.ordreDuJourCustomPlaceholder')}
+                className="flex-1 min-w-[200px] px-md py-sm border border-medium dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-800 dark:text-gray-100"
+              />
+              <Button type="button" variant="outline" size="sm" onClick={addOrdreDuJourCustom} disabled={!ordreDuJourCustomInput.trim()}>
+                {t('form.ordreDuJourAddCustom')}
+              </Button>
+            </div>
+            {ordreDuJourItems.length === 0 ? (
+              <p className="text-small text-medium dark:text-gray-400 py-2">{t('form.ordreDuJourEmpty')}</p>
+            ) : (
+              <ul className="space-y-1.5 border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50/50 dark:bg-gray-800/30">
+                {ordreDuJourItems.map((item, index) => (
+                  <li key={`${index}-${item}`} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="text-dark dark:text-gray-200">
+                      <span className="font-medium text-gray-500 dark:text-gray-400 mr-2">{index + 1}.</span>
+                      {item}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeOrdreDuJourItem(index)}
+                      className="text-danger hover:text-red-700 dark:text-red-400 text-xs font-medium shrink-0"
+                    >
+                      {t('form.ordreDuJourRemove')}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
         <div>
           <label className="block text-small font-medium text-dark dark:text-gray-200 mb-xs">{t('form.statut')}</label>
@@ -176,6 +286,7 @@ export const ReunionHebdoFormPage = () => {
           )}
         </div>
       </form>
+      </Card>
     </PageContainer>
   )
 }

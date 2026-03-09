@@ -219,7 +219,7 @@ export async function buildProjetWord(payload: ProjetDocumentPayload): Promise<B
     ['Client', projet.client?.nom ?? '—'],
     ['Période', `${formatDate(projet.dateDebut)} — ${formatDate(projet.dateFin)}`],
     ['Semaine en cours', `Semaine ${semaineCalendaire} (${anneeCalendaire})`],
-    ['Avancement global', `${projet.avancementGlobal} %`],
+    ['Taux d\'avancement', `${projet.avancementGlobal} %`],
   ]
   coverChildren.push(kvTable(coverMetaRows))
   coverChildren.push(
@@ -258,7 +258,7 @@ export async function buildProjetWord(payload: ProjetDocumentPayload): Promise<B
   content.push(secHeading(`${secNums.dashboard}. Tableau de bord synthétique`))
 
   const kpiData: [string, string][] = [
-    ['Avancement global', `${projet.avancementGlobal} %`],
+    ['Taux d\'avancement', `${projet.avancementGlobal} %`],
     ['Avancement physique', `${projet.avancementPhysiquePct ?? projet.avancementGlobal} %`],
     ['Budget consommé', `${rapport?.budget?.tauxConsommation ?? 0} %`],
     ['Budget prévu / Dépenses', `${formatMontant(budgetPrevu)} / ${formatMontant(depensesTotales)}`],
@@ -341,7 +341,7 @@ export async function buildProjetWord(payload: ProjetDocumentPayload): Promise<B
 
   if (globalPct != null) {
     content.push(new Paragraph({
-      children: [new TextRun({ text: `Avancement global semaine : ${globalPct} %`, bold: true, size: SZ.h2, color: A })],
+      children: [new TextRun({ text: `Taux d'avancement : ${globalPct} %`, bold: true, size: SZ.h2, color: A })],
       spacing: { after: 200 },
     }))
   }
@@ -484,21 +484,6 @@ export async function buildProjetWord(payload: ProjetDocumentPayload): Promise<B
     if (rapport && rapport.securite.risquesCritiques > 0) alertRows.push(['Risques critiques', `${rapport.securite.risquesCritiques} risque(s) critique(s) identifié(s)`])
     content.push(kvTable(alertRows))
   }
-
-  /* ── Synthèse ── */
-  content.push(secHeading('Synthèse du projet'))
-  content.push(kvTable([
-    ['Projet', projet.nom],
-    ['Référence', ref],
-    ['Sous-projets', String(projet.nombreSousProjets)],
-    ['Points bloquants ouverts', String(projet.nombrePointsBloquantsOuverts)],
-    ['Délai consommé', projet.delaiConsommePct != null ? `${projet.delaiConsommePct} %` : '—'],
-    ['Avancement global', `${projet.avancementGlobal} %`],
-    ['Source de financement', projet.sourceFinancement?.replace(/_/g, ' ') ?? '—'],
-    ['Partenaire principal', projet.partenairePrincipal ?? '—'],
-    ...(projet.createdAt ? [['Date de création', formatDate(projet.createdAt)] as [string, string]] : []),
-    ...(projet.updatedAt ? [['Dernière mise à jour', formatDate(projet.updatedAt)] as [string, string]] : []),
-  ]))
 
   /* ── Closing ── */
   content.push(

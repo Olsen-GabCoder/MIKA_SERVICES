@@ -107,19 +107,28 @@ En cas de verrouillage, l’API renvoie **423 Locked**. Le déverrouillage est a
 
 ---
 
-## 7. Autres
+## 7. Météo (dashboard)
+
+Le widget météo sur le tableau de bord appelle l’API backend `/meteo/actuelle` et `/meteo/previsions`. Sans clé API, le backend renvoie des **données simulées** (ville par défaut).
+
+| Variable | Description | Défaut |
+|----------|-------------|--------|
+| `METEO_API_KEY` | Clé API **OpenWeatherMap** pour la météo réelle. Créer une clé sur [openweathermap.org/api](https://openweathermap.org/api). | *(vide)* → données simulées |
+| `METEO_DEFAULT_CITY` | Ville utilisée pour la météo (actuelle et prévisions). | `Libreville` |
+
+---
+
+## 8. Autres
 
 | Variable | Description | Défaut |
 |----------|-------------|--------|
 | `UPLOAD_DIR` | Répertoire des uploads. | `uploads` |
-| `METEO_API_KEY` | Clé API météo (optionnel). | *(vide)* |
-| `METEO_DEFAULT_CITY` | Ville par défaut. | `Douala` |
 
 ---
 
 ## Résumé minimal pour la production
 
 - **Obligatoire** : `JWT_SECRET`, `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`
-- **Recommandé** : `CORS_ALLOWED_ORIGINS`, `FRONTEND_BASE_URL`, `MAIL_*` (si envoi d’emails)
+- **Recommandé** : `CORS_ALLOWED_ORIGINS`, `FRONTEND_BASE_URL`, `MAIL_*` (si envoi d’emails), `METEO_API_KEY` (pour la météo réelle sur le dashboard)
 - Le cookie refresh est durci automatiquement en profil **prod** (`secure`, `same-site`).
 - **Sur Railway** : utiliser `SPRING_PROFILES_ACTIVE=prod` et renseigner toutes les variables (dont SMTP). Liste complète et exemples : **[docs/RAILWAY_VARIABLES.md](RAILWAY_VARIABLES.md)**.

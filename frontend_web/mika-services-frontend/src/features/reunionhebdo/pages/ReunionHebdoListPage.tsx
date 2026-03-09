@@ -75,7 +75,7 @@ export const ReunionHebdoListPage = () => {
   }
 
   return (
-    <PageContainer size="wide">
+    <PageContainer size="full" className="space-y-6 bg-gray-50/80 dark:bg-gray-900/80">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('list.title')}</h1>

@@ -174,7 +174,7 @@ export function ProjetDocumentPdf({ payload }: { payload: ProjetDocumentPayload 
   const secNums = (() => { let n = 0; return { contract: ++n, dashboard: ++n, suivi: ++n, etudes: ++n, travaux: ++n, history: hasHistory ? ++n : 0, desc: ++n, actors: ++n, alerts: hasAlertes ? ++n : 0 } })()
 
   const kpis: { label: string; value: string; sub: string; color: string }[] = [
-    { label: 'Avancement global', value: `${projet.avancementGlobal} %`, sub: `Physique : ${projet.avancementPhysiquePct ?? projet.avancementGlobal} %`, color: C.accent },
+    { label: 'Taux d\'avancement', value: `${projet.avancementGlobal} %`, sub: `Physique : ${projet.avancementPhysiquePct ?? projet.avancementGlobal} %`, color: C.accent },
     { label: 'Budget consommé', value: `${rapport?.budget?.tauxConsommation ?? 0} %`, sub: `${formatMontant(depensesTotales)} / ${formatMontant(budgetPrevu)}`, color: C.primary },
     { label: 'Conformité qualité', value: `${rapport?.qualite?.tauxConformite ?? 0} %`, sub: `NC ouvertes : ${rapport?.qualite?.ncOuvertes ?? 0}`, color: C.success },
     { label: 'Incidents sécurité', value: String(rapport?.securite?.incidentsTotal ?? 0), sub: `Risques critiques : ${rapport?.securite?.risquesCritiques ?? 0}`, color: rapport && rapport.securite.incidentsTotal > 0 ? C.danger : C.success },
@@ -188,7 +188,7 @@ export function ProjetDocumentPdf({ payload }: { payload: ProjetDocumentPayload 
     ['Client', projet.client?.nom ?? '—'],
     ['Période', `${formatDate(projet.dateDebut)} — ${formatDate(projet.dateFin)}`],
     ['Semaine en cours', `Semaine ${semaineCalendaire} (${anneeCalendaire})`],
-    ['Avancement global', `${projet.avancementGlobal} %`],
+    ['Taux d\'avancement', `${projet.avancementGlobal} %`],
   ]
 
   const contractRows: [string, string][] = [
@@ -219,19 +219,6 @@ export function ProjetDocumentPdf({ payload }: { payload: ProjetDocumentPayload 
     ['Risques critiques', String(rapport?.securite?.risquesCritiques ?? 0)],
     ['Tâches terminées / en cours / en retard', `${rapport?.planning?.tachesTerminees ?? 0} / ${rapport?.planning?.tachesEnCours ?? 0} / ${rapport?.planning?.tachesEnRetard ?? 0}`],
     ['Taux d\'avancement planning', `${rapport?.planning?.tauxAvancement ?? 0} %`],
-  ]
-
-  const syntheseRows: [string, string][] = [
-    ['Projet', projet.nom],
-    ['Référence', ref],
-    ['Sous-projets', String(projet.nombreSousProjets)],
-    ['Points bloquants ouverts', String(projet.nombrePointsBloquantsOuverts)],
-    ['Délai consommé', projet.delaiConsommePct != null ? `${projet.delaiConsommePct} %` : '—'],
-    ['Avancement global', `${projet.avancementGlobal} %`],
-    ['Source de financement', projet.sourceFinancement?.replace(/_/g, ' ') ?? '—'],
-    ['Partenaire principal', projet.partenairePrincipal ?? '—'],
-    ...(projet.createdAt ? [['Date de création', formatDate(projet.createdAt)] as [string, string]] : []),
-    ...(projet.updatedAt ? [['Dernière mise à jour', formatDate(projet.updatedAt)] as [string, string]] : []),
   ]
 
   const totPrev = lignesCA.reduce((acc, l) => acc + l.caPrevisionnel, 0)
@@ -407,7 +394,7 @@ export function ProjetDocumentPdf({ payload }: { payload: ProjetDocumentPayload 
         {globalPct != null && (
           <View wrap={false} style={{ flexDirection: 'row', marginBottom: 10 }}>
             <View style={{ backgroundColor: C.accent, borderRadius: 2, paddingVertical: 3, paddingHorizontal: 10 }}>
-              <Text style={{ fontSize: 10, fontWeight: 'bold', color: C.white }}>Avancement global : {globalPct} %</Text>
+              <Text style={{ fontSize: 10, fontWeight: 'bold', color: C.white }}>Taux d&apos;avancement : {globalPct} %</Text>
             </View>
           </View>
         )}
@@ -596,22 +583,6 @@ export function ProjetDocumentPdf({ payload }: { payload: ProjetDocumentPayload 
             )}
           </>
         )}
-
-        {/* ══════════════════════════════════════════════════════
-            SYNTHÈSE EXÉCUTIVE
-           ══════════════════════════════════════════════════════ */}
-        <View style={s.divider} />
-        <View wrap={false} style={{ marginTop: 6 }}>
-          <Text style={[s.secTitle, { marginTop: 0 }]}>Synthèse du projet</Text>
-          <View style={s.tbl}>
-            {syntheseRows.map(([l, v], i) => (
-              <View key={i} style={i % 2 === 1 ? s.kvRowAlt : s.kvRow}>
-                <Text style={s.kvLabel}>{l}</Text>
-                <Text style={s.kvVal}>{v}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
 
         {/* ── Closing ── */}
         <View style={{ marginTop: 16, alignItems: 'center' }}>

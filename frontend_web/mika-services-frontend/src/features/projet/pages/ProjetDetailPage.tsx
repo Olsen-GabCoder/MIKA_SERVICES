@@ -431,12 +431,11 @@ export const ProjetDetailPage = () => {
             const isIncomplete = p.avancementPct == null || p.avancementPct < 100
             return isPast && isIncomplete
           })
-          const tachesPrevuesSemaineSuivante = [...tachesPrevuesExplicites, ...tachesReportees]
-          const avancementsRealise = tachesRealiseSemaine
-            .map((t) => t.avancementPct)
+          const avancementsGlobaux = [...tachesRealiseSemaine, ...tachesReportees]
+            .map((p) => p.avancementPct)
             .filter((v): v is number => v != null)
-          const globalPct = avancementsRealise.length > 0
-            ? Math.round((avancementsRealise.reduce((a, b) => a + b, 0) / avancementsRealise.length) * 100) / 100
+          const globalPct = avancementsGlobaux.length > 0
+            ? Math.round((avancementsGlobaux.reduce((a, b) => a + b, 0) / avancementsGlobaux.length) * 100) / 100
             : null
 
           return (
@@ -456,7 +455,7 @@ export const ProjetDetailPage = () => {
               </div>
               <div className={CARD_BODY}>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Réalisé — Semaine en cours */}
+                  {/* Colonne gauche : Réalisé semaine en cours + Reportées à faire cette semaine */}
                   <div>
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                       {t('detail.section4Realise')}
@@ -489,37 +488,24 @@ export const ProjetDetailPage = () => {
                     ) : (
                       <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.section4NoRealise')}</p>
                     )}
-                  </div>
 
-                  {/* Prévisions — Semaine suivante (explicites + reportées) */}
-                  <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
-                      {t('detail.section4Previsions')}
-                      <span className="ml-2 font-normal normal-case text-primary">
-                        — {t('detail.weekLabel', { week: semaineProchaine, year: anneeProchaine })}
-                      </span>
-                    </h3>
+                    {/* Reportées à faire cette semaine */}
                     {tachesReportees.length > 0 && (
-                      <p className="text-[11px] text-amber-700 dark:text-amber-400 mb-2">{t('detail.section4CarryOverNote')}</p>
-                    )}
-                    {tachesPrevuesSemaineSuivante.length > 0 ? (
-                      <ul className="space-y-2">
-                        {tachesPrevuesSemaineSuivante.map((p) => {
-                          const isReportee = tachesReportees.some((r) => r.id === p.id)
-                          return (
+                      <div className="mt-5">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-3">
+                          {t('detail.section4ReporteesCetteSemaine')}
+                        </h3>
+                        <ul className="space-y-2">
+                          {tachesReportees.map((p) => (
                             <li
                               key={p.id}
-                              className={`flex items-start gap-3 p-2.5 rounded-lg border ${
-                                isReportee
-                                  ? 'bg-amber-50/60 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40'
-                                  : 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/30'
-                              }`}
+                              className="flex items-start gap-3 p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40"
                             >
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                   {p.description || p.type.replace(/_/g, ' ')}
                                 </p>
-                                {isReportee && (p.semaine != null && p.annee != null) && (
+                                {p.semaine != null && p.annee != null && (
                                   <span className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5 block">
                                     {t('detail.section4Reportee', { week: p.semaine, year: p.annee })}
                                   </span>
@@ -527,7 +513,7 @@ export const ProjetDetailPage = () => {
                               </div>
                               {p.avancementPct != null && (
                                 <div className="flex-shrink-0 flex items-center gap-1.5">
-                                  <div className="w-14 h-2 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
+                                  <div className="w-16 h-2 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
                                     <div
                                       className={`h-full rounded-full ${p.avancementPct >= 100 ? 'bg-green-500' : p.avancementPct >= 50 ? 'bg-primary' : 'bg-amber-500'}`}
                                       style={{ width: `${Math.min(100, p.avancementPct)}%` }}
@@ -539,8 +525,50 @@ export const ProjetDetailPage = () => {
                                 </div>
                               )}
                             </li>
-                          )
-                        })}
+                          ))}
+                        </ul>
+                        <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400">
+                          {t('detail.section4CarryOverNote')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Colonne droite : Prévisions semaine suivante (explicites uniquement) */}
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                      {t('detail.section4Previsions')}
+                      <span className="ml-2 font-normal normal-case text-primary">
+                        — {t('detail.weekLabel', { week: semaineProchaine, year: anneeProchaine })}
+                      </span>
+                    </h3>
+                    {tachesPrevuesExplicites.length > 0 ? (
+                      <ul className="space-y-2">
+                        {tachesPrevuesExplicites.map((p) => (
+                          <li
+                            key={p.id}
+                            className="flex items-start gap-3 p-2.5 rounded-lg border bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/30"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {p.description || p.type.replace(/_/g, ' ')}
+                              </p>
+                            </div>
+                            {p.avancementPct != null && (
+                              <div className="flex-shrink-0 flex items-center gap-1.5">
+                                <div className="w-14 h-2 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${p.avancementPct >= 100 ? 'bg-green-500' : p.avancementPct >= 50 ? 'bg-primary' : 'bg-amber-500'}`}
+                                    style={{ width: `${Math.min(100, p.avancementPct)}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                  {p.avancementPct} %
+                                </span>
+                              </div>
+                            )}
+                          </li>
+                        ))}
                       </ul>
                     ) : (
                       <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.section4NoPrevisions')}</p>

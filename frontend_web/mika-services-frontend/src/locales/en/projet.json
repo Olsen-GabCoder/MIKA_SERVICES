@@ -516,6 +516,7 @@
     "section4NoPrevisions": "No tasks planned for next week.",
     "section4Reportee": "Carried over from W{{week}} ({{year}})",
     "section4CarryOverNote": "Uncompleted tasks are automatically carried over.",
+    "section4ReporteesCetteSemaine": "Carried over — to do this week",
     "section4Avancement": "{{pct}} %",
     "section4PastWeeks": "Past weeks",
     "section4PastWeeksExpand": "View past weeks",

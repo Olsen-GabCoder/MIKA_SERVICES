@@ -516,6 +516,7 @@
     "section4NoPrevisions": "Aucune tâche planifiée pour la semaine prochaine.",
     "section4Reportee": "Reportée depuis S{{week}} ({{year}})",
     "section4CarryOverNote": "Les tâches non achevées sont automatiquement reportées.",
+    "section4ReporteesCetteSemaine": "Reportées à faire cette semaine",
     "section4Avancement": "{{pct}} %",
     "section4PastWeeks": "Semaines passées",
     "section4PastWeeksExpand": "Voir les semaines passées",

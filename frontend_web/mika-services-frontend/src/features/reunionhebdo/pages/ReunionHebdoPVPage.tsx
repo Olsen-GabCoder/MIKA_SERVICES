@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 import { reunionHebdoApi } from '@/api/reunionHebdoApi'
 import { projetApi } from '@/api/projetApi'
 import type { ReunionHebdo, PointProjetPV, PointProjetPVRequest } from '@/types/reunionHebdo'
@@ -79,82 +82,81 @@ export const ReunionHebdoPVPage = () => {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{formatDate(pv.dateReunion, { weekday: 'long', monthStyle: 'long' })} — {pv.lieu || t('pv.lieuNonPrecise')}</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => navigate('/reunions-hebdo/' + id + '/edit')} className="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 px-4 py-2 rounded-lg font-medium">
+          <Button variant="outline" size="sm" onClick={() => navigate('/reunions-hebdo/' + id + '/edit')}>
             {t('pv.editMeeting')}
-          </button>
-          <button onClick={() => navigate('/reunions-hebdo')} className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">{t('pv.backToList')}</button>
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/reunions-hebdo')}>
+            {t('pv.backToList')}
+          </Button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 overflow-hidden divide-y divide-gray-100 dark:divide-gray-600">
-        <section className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('pv.header')}</h2>
-          <div className="grid grid-cols-2 gap-4 text-sm text-gray-900 dark:text-gray-200">
-            <div><span className="text-gray-500 dark:text-gray-400">{t('pv.date')}</span> {formatDate(pv.dateReunion, { weekday: 'long', monthStyle: 'long' })}</div>
-            <div><span className="text-gray-500 dark:text-gray-400">{t('pv.lieu')}</span> {pv.lieu || '-'}</div>
-            <div><span className="text-gray-500 dark:text-gray-400">{t('pv.heure')}</span> {formatTime(pv.heureDebut)} - {formatTime(pv.heureFin)}</div>
-            <div><span className="text-gray-500 dark:text-gray-400">{t('pv.redacteur')}</span> {pv.redacteur ? `${pv.redacteur.prenom} ${pv.redacteur.nom}` : '-'}</div>
+      <div className="space-y-6">
+        <Card title={t('pv.header')}>
+          <div className="grid grid-cols-2 gap-4 text-sm text-dark dark:text-gray-200">
+            <div><span className="text-medium dark:text-gray-400">{t('pv.date')}</span> {formatDate(pv.dateReunion, { weekday: 'long', monthStyle: 'long' })}</div>
+            <div><span className="text-medium dark:text-gray-400">{t('pv.lieu')}</span> {pv.lieu || '-'}</div>
+            <div><span className="text-medium dark:text-gray-400">{t('pv.heure')}</span> {formatTime(pv.heureDebut)} - {formatTime(pv.heureFin)}</div>
+            <div><span className="text-medium dark:text-gray-400">{t('pv.redacteur')}</span> {pv.redacteur ? `${pv.redacteur.prenom} ${pv.redacteur.nom}` : '-'}</div>
           </div>
           {pv.ordreDuJour && (
             <div className="mt-4">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('pv.ordreDuJour')}</h3>
-              <pre className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-sans">{pv.ordreDuJour}</pre>
+              <h3 className="text-small font-medium text-dark dark:text-gray-300 mb-xs">{t('pv.ordreDuJour')}</h3>
+              <pre className="text-small text-medium dark:text-gray-400 whitespace-pre-wrap font-sans">{pv.ordreDuJour}</pre>
             </div>
           )}
-        </section>
+        </Card>
 
-        <section className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('pv.participants')}</h2>
-          <table className="w-full text-sm">
-            <thead><tr><th className="text-left py-2 text-gray-600 dark:text-gray-400">{t('pv.colNom')}</th><th className="text-left py-2 text-gray-600 dark:text-gray-400">{t('pv.colInitiales')}</th><th className="text-left py-2 text-gray-600 dark:text-gray-400">{t('pv.colTelephone')}</th></tr></thead>
+        <Card title={t('pv.participants')}>
+          <table className="w-full text-small">
+            <thead><tr><th className="text-left py-2 text-medium dark:text-gray-400">{t('pv.colNom')}</th><th className="text-left py-2 text-medium dark:text-gray-400">{t('pv.colInitiales')}</th><th className="text-left py-2 text-medium dark:text-gray-400">{t('pv.colTelephone')}</th></tr></thead>
             <tbody>
               {pv.participants.map((p) => (
                 <tr key={p.id}><td className="py-1">{p.prenom} {p.nom}</td><td className="py-1">{p.initiales || '-'}</td><td className="py-1">{p.telephone || '-'}</td></tr>
               ))}
             </tbody>
           </table>
-        </section>
+        </Card>
 
-        <section className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('pv.pointsParProjet')}</h2>
-            {availableProjets.length > 0 && (
-              !addingPoint ? (
-                <button onClick={() => setAddingPoint(true)} className="bg-primary text-white px-3 py-1.5 rounded-lg text-sm font-medium">{t('pv.addProject')}</button>
-              ) : (
-                <div className="flex gap-2 items-center">
-                  <select value={newPointProjetId} onChange={(e) => setNewPointProjetId(e.target.value ? Number(e.target.value) : '')} className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm dark:bg-gray-700 dark:text-gray-100">
-                    <option value="">{t('pv.chooseProject')}</option>
-                    {availableProjets.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
-                  </select>
-                  <button onClick={handleAddPoint} disabled={!newPointProjetId} className="bg-primary text-white px-3 py-1.5 rounded-lg text-sm disabled:opacity-50">{t('pv.add')}</button>
-                  <button onClick={() => { setAddingPoint(false); setNewPointProjetId('') }} className="text-gray-600 dark:text-gray-400 text-sm">{t('pv.form.cancel')}</button>
-                </div>
-              )
-            )}
-          </div>
-
+        <Card
+          title={t('pv.pointsParProjet')}
+          headerActions={
+            availableProjets.length > 0 &&
+            (addingPoint ? (
+              <div className="flex gap-2 items-center">
+                <select value={newPointProjetId} onChange={(e) => setNewPointProjetId(e.target.value ? Number(e.target.value) : '')} className="border border-medium dark:border-gray-600 rounded-lg px-2 py-1 text-small dark:bg-gray-700 dark:text-gray-100">
+                  <option value="">{t('pv.chooseProject')}</option>
+                  {availableProjets.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
+                </select>
+                <Button size="sm" variant="primary" onClick={handleAddPoint} disabled={!newPointProjetId}>{t('pv.add')}</Button>
+                <Button size="sm" variant="outline" onClick={() => { setAddingPoint(false); setNewPointProjetId('') }}>{t('pv.form.cancel')}</Button>
+              </div>
+            ) : (
+              <Button size="sm" variant="primary" onClick={() => setAddingPoint(true)}>{t('pv.addProject')}</Button>
+            ))
+          }
+        >
           {pv.pointsProjet.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-sm">{t('pv.noPointsProjet')}</p>
+            <p className="text-medium dark:text-gray-400 text-small">{t('pv.noPointsProjet')}</p>
           ) : (
             <div className="space-y-6">
               {pv.pointsProjet.map((point, index) => (
-                <div key={point.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-gray-50/50 dark:bg-gray-700/50">
+                <div key={point.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-gray-50/50 dark:bg-gray-700/50 surface-elevated">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100">{t('pv.affaire', { n: index + 1, name: point.projetNom, code: point.projetCode })}</h3>
-                    <button onClick={() => setEditingPoint(editingPoint === point.id ? null : point.id)} className="text-sm text-primary hover:underline">{t('pv.edit')}</button>
+                    <h3 className="font-medium text-dark dark:text-gray-100">{t('pv.affaire', { n: index + 1, name: point.projetNom, code: point.projetCode })}</h3>
+                    <Button variant="outline" size="sm" onClick={() => setEditingPoint(editingPoint === point.id ? null : point.id)}>{t('pv.edit')}</Button>
                   </div>
-                  {point.chefProjetNom && <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{t('pv.chefProjet')} {point.chefProjetNom}</p>}
-                  <div className="grid grid-cols-3 gap-4 text-sm mb-2 text-gray-900 dark:text-gray-200">
-                    <div><span className="text-gray-500 dark:text-gray-400">{t('pv.avancementPhysique')}</span> {point.avancementPhysiquePct != null ? point.avancementPhysiquePct + ' %' : '-'}</div>
-                    <div><span className="text-gray-500 dark:text-gray-400">{t('pv.avancementFinancier')}</span> {point.avancementFinancierPct != null ? point.avancementFinancierPct + ' %' : '-'}</div>
-                    <div><span className="text-gray-500 dark:text-gray-400">{t('pv.delaiConsomme')}</span> {point.delaiConsommePct != null ? point.delaiConsommePct + ' %' : '-'}</div>
+                  {point.chefProjetNom && <p className="text-small text-medium dark:text-gray-400 mb-2">{t('pv.chefProjet')} {point.chefProjetNom}</p>}
+                  <div className="grid grid-cols-3 gap-4 text-small mb-2 text-dark dark:text-gray-200">
+                    <div><span className="text-medium dark:text-gray-400">{t('pv.avancementPhysique')}</span> {point.avancementPhysiquePct != null ? point.avancementPhysiquePct + ' %' : '-'}</div>
+                    <div><span className="text-medium dark:text-gray-400">{t('pv.avancementFinancier')}</span> {point.avancementFinancierPct != null ? point.avancementFinancierPct + ' %' : '-'}</div>
+                    <div><span className="text-medium dark:text-gray-400">{t('pv.delaiConsomme')}</span> {point.delaiConsommePct != null ? point.delaiConsommePct + ' %' : '-'}</div>
                   </div>
-                  {point.resumeTravauxPrevisions && <p className="text-sm text-gray-700 dark:text-gray-300 mb-1"><span className="font-medium">{t('pv.travauxPrevisions')}</span> {point.resumeTravauxPrevisions}</p>}
-                  {point.pointsBloquantsResume && <p className="text-sm text-gray-700 dark:text-gray-300 mb-1"><span className="font-medium">{t('pv.pointsBloquants')}</span> {point.pointsBloquantsResume}</p>}
-                  {point.besoinsMateriel && <p className="text-sm text-gray-700 dark:text-gray-300 mb-1"><span className="font-medium">{t('pv.besoinsMateriel')}</span> {point.besoinsMateriel}</p>}
-                  {point.besoinsHumain && <p className="text-sm text-gray-700 dark:text-gray-300 mb-1"><span className="font-medium">{t('pv.besoinsHumain')}</span> {point.besoinsHumain}</p>}
-                  {point.propositionsAmelioration && <p className="text-sm text-gray-700 dark:text-gray-300"><span className="font-medium">{t('pv.propositions')}</span> {point.propositionsAmelioration}</p>}
+                  {point.resumeTravauxPrevisions && <p className="text-small text-dark dark:text-gray-300 mb-1"><span className="font-medium">{t('pv.travauxPrevisions')}</span> {point.resumeTravauxPrevisions}</p>}
+                  {point.pointsBloquantsResume && <p className="text-small text-dark dark:text-gray-300 mb-1"><span className="font-medium">{t('pv.pointsBloquants')}</span> {point.pointsBloquantsResume}</p>}
+                  {point.besoinsMateriel && <p className="text-small text-dark dark:text-gray-300 mb-1"><span className="font-medium">{t('pv.besoinsMateriel')}</span> {point.besoinsMateriel}</p>}
+                  {point.besoinsHumain && <p className="text-small text-dark dark:text-gray-300 mb-1"><span className="font-medium">{t('pv.besoinsHumain')}</span> {point.besoinsHumain}</p>}
+                  {point.propositionsAmelioration && <p className="text-small text-dark dark:text-gray-300"><span className="font-medium">{t('pv.propositions')}</span> {point.propositionsAmelioration}</p>}
                   {editingPoint === point.id && (
                     <PointProjetEditForm
                       point={point}
@@ -167,13 +169,12 @@ export const ReunionHebdoPVPage = () => {
               ))}
             </div>
           )}
-        </section>
+        </Card>
 
         {pv.divers && (
-          <section className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('pv.divers')}</h2>
-            <pre className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-sans">{pv.divers}</pre>
-          </section>
+          <Card title={t('pv.divers')}>
+            <pre className="text-small text-medium dark:text-gray-400 whitespace-pre-wrap font-sans">{pv.divers}</pre>
+          </Card>
         )}
       </div>
     </PageContainer>
@@ -221,21 +222,36 @@ function PointProjetEditForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 p-4 bg-white dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg space-y-3">
+    <form onSubmit={handleSubmit} className="mt-4 p-4 surface-elevated border border-gray-200 dark:border-gray-600 rounded-lg space-y-3">
       <div className="grid grid-cols-3 gap-4">
-        <div><label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('pv.form.avPhysiquePct')}</label><input type="number" min={0} max={100} step={0.01} value={avancementPhysiquePct} onChange={(e) => setAvancementPhysiquePct(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm dark:bg-gray-700 dark:text-gray-100" /></div>
-        <div><label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('pv.form.avFinancierPct')}</label><input type="number" min={0} max={100} step={0.01} value={avancementFinancierPct} onChange={(e) => setAvancementFinancierPct(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm dark:bg-gray-700 dark:text-gray-100" /></div>
-        <div><label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('pv.form.delaiConsommePct')}</label><input type="number" min={0} max={100} step={0.01} value={delaiConsommePct} onChange={(e) => setDelaiConsommePct(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm dark:bg-gray-700 dark:text-gray-100" /></div>
+        <Input label={t('pv.form.avPhysiquePct')} type="number" min={0} max={100} step={0.01} value={avancementPhysiquePct} onChange={(e) => setAvancementPhysiquePct(e.target.value)} />
+        <Input label={t('pv.form.avFinancierPct')} type="number" min={0} max={100} step={0.01} value={avancementFinancierPct} onChange={(e) => setAvancementFinancierPct(e.target.value)} />
+        <Input label={t('pv.form.delaiConsommePct')} type="number" min={0} max={100} step={0.01} value={delaiConsommePct} onChange={(e) => setDelaiConsommePct(e.target.value)} />
       </div>
-      <div><label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('pv.form.travauxPrevisions')}</label><textarea value={resumeTravauxPrevisions} onChange={(e) => setResumeTravauxPrevisions(e.target.value)} rows={2} className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm dark:bg-gray-700 dark:text-gray-100" /></div>
-      <div><label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('pv.form.pointsBloquants')}</label><textarea value={pointsBloquantsResume} onChange={(e) => setPointsBloquantsResume(e.target.value)} rows={2} className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm dark:bg-gray-700 dark:text-gray-100" /></div>
-      <div><label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('pv.form.besoinsMateriel')}</label><textarea value={besoinsMateriel} onChange={(e) => setBesoinsMateriel(e.target.value)} rows={1} className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm dark:bg-gray-700 dark:text-gray-100" /></div>
-      <div><label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('pv.form.besoinsHumain')}</label><textarea value={besoinsHumain} onChange={(e) => setBesoinsHumain(e.target.value)} rows={1} className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm dark:bg-gray-700 dark:text-gray-100" /></div>
-      <div><label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('pv.form.propositions')}</label><textarea value={propositionsAmelioration} onChange={(e) => setPropositionsAmelioration(e.target.value)} rows={1} className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm dark:bg-gray-700 dark:text-gray-100" /></div>
-      <div className="flex gap-2 pt-2">
-        <button type="submit" disabled={saving} className="bg-primary text-white px-3 py-1.5 rounded text-sm disabled:opacity-50">{t('pv.form.save')}</button>
-        <button type="button" onClick={onCancel} className="bg-gray-200 text-gray-800 px-3 py-1.5 rounded text-sm">{t('pv.form.cancel')}</button>
-        <button type="button" onClick={() => onDelete()} className="text-red-600 text-sm">{t('pv.form.removeFromPV')}</button>
+      <div>
+        <label className="block text-small font-medium text-dark dark:text-gray-200 mb-xs">{t('pv.form.travauxPrevisions')}</label>
+        <textarea value={resumeTravauxPrevisions} onChange={(e) => setResumeTravauxPrevisions(e.target.value)} rows={2} className="w-full px-md py-sm border border-medium dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-gray-100" />
+      </div>
+      <div>
+        <label className="block text-small font-medium text-dark dark:text-gray-200 mb-xs">{t('pv.form.pointsBloquants')}</label>
+        <textarea value={pointsBloquantsResume} onChange={(e) => setPointsBloquantsResume(e.target.value)} rows={2} className="w-full px-md py-sm border border-medium dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-gray-100" />
+      </div>
+      <div>
+        <label className="block text-small font-medium text-dark dark:text-gray-200 mb-xs">{t('pv.form.besoinsMateriel')}</label>
+        <textarea value={besoinsMateriel} onChange={(e) => setBesoinsMateriel(e.target.value)} rows={1} className="w-full px-md py-sm border border-medium dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-gray-100" />
+      </div>
+      <div>
+        <label className="block text-small font-medium text-dark dark:text-gray-200 mb-xs">{t('pv.form.besoinsHumain')}</label>
+        <textarea value={besoinsHumain} onChange={(e) => setBesoinsHumain(e.target.value)} rows={1} className="w-full px-md py-sm border border-medium dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-gray-100" />
+      </div>
+      <div>
+        <label className="block text-small font-medium text-dark dark:text-gray-200 mb-xs">{t('pv.form.propositions')}</label>
+        <textarea value={propositionsAmelioration} onChange={(e) => setPropositionsAmelioration(e.target.value)} rows={1} className="w-full px-md py-sm border border-medium dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-gray-100" />
+      </div>
+      <div className="flex flex-wrap gap-2 pt-2">
+        <Button type="submit" variant="primary" size="sm" disabled={saving} isLoading={saving}>{t('pv.form.save')}</Button>
+        <Button type="button" variant="outline" size="sm" onClick={onCancel}>{t('pv.form.cancel')}</Button>
+        <Button type="button" variant="danger" size="sm" onClick={() => onDelete()}>{t('pv.form.removeFromPV')}</Button>
       </div>
     </form>
   )

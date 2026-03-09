@@ -31,7 +31,6 @@ export async function buildProjetExcel(payload: ProjetDocumentPayload): Promise<
   const XLSX: XLSX = await import('xlsx')
   const {
     projet,
-    rapport,
     lignesCA,
     pointsBloquants,
     previsions,

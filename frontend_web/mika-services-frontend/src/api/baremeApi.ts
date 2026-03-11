@@ -2,9 +2,7 @@ import api from './axios'
 import type {
   CoefficientEloignement,
   CorpsEtatBareme,
-  BaremeArticleList,
   BaremeArticleDetail,
-  BaremeArticleCompare,
   BaremeVersion,
   BaremeArticlesPage,
   BaremeArticlesComparePage,

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { useDerniereMiseAJour, useBaremeArticles, useBaremeArticlesCompare, useCoefficientsEloignement } from '../hooks/useBaremeQueries'
+import { useDerniereMiseAJour, useBaremeArticlesCompare, useCoefficientsEloignement } from '../hooks/useBaremeQueries'
 import { useBaremeListParams } from '../hooks/useBaremeListParams'
 import { BaremeFilters } from '../components/BaremeFilters'
 import { TypeLigneBareme } from '../types'
@@ -38,15 +38,13 @@ export function BaremePage() {
   const totalPages = pageData?.totalPages ?? 0
   const currentPage = pageData?.number ?? params.page
 
-  const getTypeLabel = (type: string) => {
-    if (type === TypeLigneBareme.MATERIAU) return t('list.typeMateriau')
-    if (type === TypeLigneBareme.PRESTATION_ENTETE) return t('list.typePrestation')
-    return type
-  }
-
-  /** Valeur numérique pour comparer les prix (min/max) : matériau = prixTtc, prestation = déboursé ou P.V */
+  /** Valeur numérique pour comparer les prix (min/max) : matériau = prixTtc (ou premier prix fournisseur), prestation = déboursé ou P.V */
   const getCompareValue = (row: (typeof content)[0]): number | null => {
-    if (row.type === TypeLigneBareme.MATERIAU) return row.prixTtc ?? null
+    if (row.type === TypeLigneBareme.MATERIAU) {
+      const r = row as import('@/features/bareme/types').BaremeArticleCompare
+      const firstPrix = r.prixParFournisseur?.find((pf) => pf.prixTtc != null)
+      return firstPrix?.prixTtc != null ? Number(firstPrix.prixTtc) : null
+    }
     const v = row.debourse ?? row.prixVente
     return v != null ? Number(v) : null
   }
@@ -90,7 +88,9 @@ export function BaremePage() {
   /** Affiche toujours une valeur (jamais de cellule vide) : montant ou "—". */
   const formatPrice = (row: (typeof content)[0]) => {
     if (row.type === TypeLigneBareme.MATERIAU) {
-      const v = row.prixTtc ?? 0
+      const r = row as import('@/features/bareme/types').BaremeArticleCompare
+      const firstPrix = r.prixParFournisseur?.find((pf) => pf.prixTtc != null)
+      const v = firstPrix?.prixTtc != null ? Number(firstPrix.prixTtc) : 0
       return formatMontant(Number.isFinite(v) ? v : 0)
     }
     const d = row.debourse ?? 0

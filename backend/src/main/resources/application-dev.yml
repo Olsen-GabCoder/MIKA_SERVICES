@@ -1,4 +1,11 @@
 # Configuration Développement
+# Import barème : charge l'Excel et remplit tous les champs vides (—, 0, ou valeur par défaut).
+# Pour peuplement sans Excel (données 100 % synthétiques), mettre seed-enabled: true et path: ""
+bareme:
+  seed-enabled: false
+  import:
+    path: ../docs/BAREME DES PRIX BÂTIMENT AVEC SOUS DETAILS (Tout_Corps_d'Etat).xls
+
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/mika_services_dev?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC

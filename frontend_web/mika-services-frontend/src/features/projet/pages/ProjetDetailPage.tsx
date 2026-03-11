@@ -12,9 +12,33 @@ import { fetchProjetById, clearProjetDetail } from '@/store/slices/projetSlice'
 import { projetApi, pointBloquantApi } from '@/api/projetApi'
 import { reportingApi } from '@/api/reportingApi'
 import { ProjetVisualisationsSection } from '@/features/projet/components/ProjetVisualisations'
-import type { PointBloquant, Prevision, ModeSuiviMensuel } from '@/types/projet'
+import type { PointBloquant, Prevision, ModeSuiviMensuel, Priorite, StatutPointBloquant } from '@/types/projet'
 import { getTypeProjetDisplay, getProjetTypes } from '@/types/projet'
 import type { ProjetReport } from '@/types/reporting'
+
+/** Classes CSS pour la couleur du texte priorité (clair + dark). */
+function getPrioriteTextClass(priorite: Priorite | string): string {
+  const map: Record<string, string> = {
+    BASSE: 'text-gray-600 dark:text-gray-400',
+    NORMALE: 'text-blue-600 dark:text-blue-400',
+    HAUTE: 'text-amber-700 dark:text-amber-400',
+    URGENTE: 'text-orange-700 dark:text-orange-400',
+    CRITIQUE: 'text-red-700 dark:text-red-400',
+  }
+  return `text-xs ${map[priorite] ?? map.NORMALE}`
+}
+
+/** Classes CSS pour la couleur du texte statut point bloquant (clair + dark). */
+function getStatutPointBloquantTextClass(statut: StatutPointBloquant | string): string {
+  const map: Record<string, string> = {
+    OUVERT: 'text-amber-700 dark:text-amber-400',
+    EN_COURS: 'text-blue-600 dark:text-blue-400',
+    RESOLU: 'text-green-700 dark:text-green-400',
+    FERME: 'text-gray-600 dark:text-gray-400',
+    ESCALADE: 'text-red-700 dark:text-red-400',
+  }
+  return `text-xs ${map[statut] ?? map.OUVERT}`
+}
 
 /** Liste des mois entre dateDebut et dateFin (période du projet). */
 function getMoisEntreDates(
@@ -579,25 +603,27 @@ export const ProjetDetailPage = () => {
                 {/* Points bloquants + Besoins */}
                 <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600 grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('detail.pointsBloquants')}</h3>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">{t('detail.pointsBloquants')}</h3>
                     {pointsBloquants.length > 0 ? (
                       <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
                         {pointsBloquants.map((pb) => (
                           <li key={pb.id}>
                             <span className="font-medium text-gray-900 dark:text-gray-100">{pb.titre}</span>
                             {pb.description && <span className="text-gray-600 dark:text-gray-400"> — {pb.description}</span>}
-                            <span className="text-xs text-gray-500"> ({pb.priorite}, {pb.statut})</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {' '}(<span className={getPrioriteTextClass(pb.priorite)}>{t(`enums.priorite.${pb.priorite}`)}</span>, <span className={getStatutPointBloquantTextClass(pb.statut)}>{t(`enums.statutPointBloquant.${pb.statut}`)}</span>)
+                            </span>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-gray-500 text-sm">{t('detail.noPointsBloquants')}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.noPointsBloquants')}</p>
                     )}
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('detail.besoinsMateriel')}</h3>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">{t('detail.besoinsMateriel')}</h3>
                       {projet.besoinsMateriel ? (
                         <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1 list-disc list-inside">
                           {projet.besoinsMateriel.split(/\s*•\s*/).filter(Boolean).map((s, i) => (
@@ -605,11 +631,11 @@ export const ProjetDetailPage = () => {
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-sm text-gray-500">—</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">—</p>
                       )}
                     </div>
                     <div>
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{t('detail.besoinsHumain')}</h3>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">{t('detail.besoinsHumain')}</h3>
                       {projet.besoinsHumain ? (
                         <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1 list-disc list-inside">
                           {projet.besoinsHumain.split(/\s*•\s*/).filter(Boolean).map((s, i) => (
@@ -617,7 +643,7 @@ export const ProjetDetailPage = () => {
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-sm text-gray-500">—</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">—</p>
                       )}
                     </div>
                   </div>
@@ -652,21 +678,21 @@ export const ProjetDetailPage = () => {
         {(pointsBloquants.length > 0 || (rapport && (rapport.planning.tachesEnRetard > 0 || rapport.securite.risquesCritiques > 0))) && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {pointsBloquants.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <span className="font-semibold text-amber-800">{t('detail.pointsBloquants')}</span>
-                <p className="text-amber-700 text-sm mt-1">{t('detail.pointsToProcess', { count: pointsBloquants.length })}</p>
+              <div className="bg-amber-50 dark:bg-amber-900/25 border border-amber-200 dark:border-amber-700/50 rounded-xl p-4">
+                <span className="font-semibold text-amber-800 dark:text-amber-200">{t('detail.pointsBloquants')}</span>
+                <p className="text-amber-700 dark:text-amber-300 text-sm mt-1">{t('detail.pointsToProcess', { count: pointsBloquants.length })}</p>
               </div>
             )}
             {rapport && rapport.planning.tachesEnRetard > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <span className="font-semibold text-red-800">{t('detail.retards')}</span>
-                <p className="text-red-700 text-sm mt-1">{t('detail.tasksLate', { count: rapport.planning.tachesEnRetard })}</p>
+              <div className="bg-red-50 dark:bg-red-900/25 border border-red-200 dark:border-red-700/50 rounded-xl p-4">
+                <span className="font-semibold text-red-800 dark:text-red-200">{t('detail.retards')}</span>
+                <p className="text-red-700 dark:text-red-300 text-sm mt-1">{t('detail.tasksLate', { count: rapport.planning.tachesEnRetard })}</p>
               </div>
             )}
             {rapport && rapport.securite.risquesCritiques > 0 && (
-              <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
-                <span className="font-semibold text-orange-800">{t('detail.risquesCritiques')}</span>
-                <p className="text-orange-700 text-sm mt-1">{t('detail.risksCount', { count: rapport.securite.risquesCritiques })}</p>
+              <div className="bg-orange-50 dark:bg-orange-900/25 border border-orange-200 dark:border-orange-700/50 rounded-xl p-4">
+                <span className="font-semibold text-orange-800 dark:text-orange-200">{t('detail.risquesCritiques')}</span>
+                <p className="text-orange-700 dark:text-orange-300 text-sm mt-1">{t('detail.risksCount', { count: rapport.securite.risquesCritiques })}</p>
               </div>
             )}
           </div>

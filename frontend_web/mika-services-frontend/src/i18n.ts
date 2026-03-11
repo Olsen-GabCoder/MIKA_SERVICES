@@ -17,6 +17,7 @@ import frSecurite from './locales/fr/securite.json'
 import frReporting from './locales/fr/reporting.json'
 import frDocument from './locales/fr/document.json'
 import frFournisseur from './locales/fr/fournisseur.json'
+import frBareme from './locales/fr/bareme.json'
 import frParametres from './locales/fr/parametres.json'
 import enCommon from './locales/en/common.json'
 import enLayout from './locales/en/layout.json'
@@ -34,6 +35,7 @@ import enSecurite from './locales/en/securite.json'
 import enReporting from './locales/en/reporting.json'
 import enDocument from './locales/en/document.json'
 import enFournisseur from './locales/en/fournisseur.json'
+import enBareme from './locales/en/bareme.json'
 import enParametres from './locales/en/parametres.json'
 
 const LOCALE_KEY = 'mika-locale'
@@ -66,6 +68,7 @@ const resources = {
     reporting: frReporting as Record<string, unknown>,
     document: frDocument as Record<string, unknown>,
     fournisseur: frFournisseur as Record<string, unknown>,
+    bareme: frBareme as Record<string, unknown>,
     parametres: frParametres as Record<string, unknown>,
   },
   en: {
@@ -85,6 +88,7 @@ const resources = {
     reporting: enReporting as Record<string, unknown>,
     document: enDocument as Record<string, unknown>,
     fournisseur: enFournisseur as Record<string, unknown>,
+    bareme: enBareme as Record<string, unknown>,
     parametres: enParametres as Record<string, unknown>,
   },
 }
@@ -97,7 +101,7 @@ export const i18nReady = i18n.use(initReactI18next).init({
   lng: initialLocale,
   fallbackLng: 'fr',
   defaultNS: 'common',
-  ns: ['common', 'layout', 'auth', 'user', 'projet', 'equipe', 'reunionHebdo', 'materiel', 'communication', 'budget', 'planning', 'qualite', 'securite', 'reporting', 'document', 'fournisseur', 'parametres'],
+  ns: ['common', 'layout', 'auth', 'user', 'projet', 'equipe', 'reunionHebdo', 'materiel', 'communication', 'budget', 'planning', 'qualite', 'securite', 'reporting', 'document', 'fournisseur', 'bareme', 'parametres'],
   interpolation: {
     escapeValue: false,
   },

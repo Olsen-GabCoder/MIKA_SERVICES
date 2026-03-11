@@ -34,6 +34,8 @@ const ReunionHebdoPVPage = lazy(() => import('@/features/reunionhebdo/pages/Reun
 const ActivityTrackingPage = lazy(() => import('@/features/user/pages/ActivityTrackingPage').then(m => ({ default: m.ActivityTrackingPage })))
 const NotFoundPage = lazy(() => import('@/features/errors/pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })))
 const ReportingPage = lazy(() => import('@/features/reporting/pages/ReportingPage'))
+const BaremePage = lazy(() => import('@/features/bareme/pages/BaremePage').then(m => ({ default: m.BaremePage })))
+const BaremeArticleDetailPage = lazy(() => import('@/features/bareme/pages/BaremeArticleDetailPage').then(m => ({ default: m.BaremeArticleDetailPage })))
 
 const LazyFallback = () => (
   <div className="flex items-center justify-center min-h-[40vh]">
@@ -189,6 +191,14 @@ const router = createBrowserRouter([
       {
         path: 'fournisseurs',
         element: <ProtectedRoute><L><FournisseurPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'bareme',
+        element: <ProtectedRoute><L><BaremePage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'bareme/articles/:id',
+        element: <ProtectedRoute><L><BaremeArticleDetailPage /></L></ProtectedRoute>,
       },
       {
         path: 'suivi-activite',

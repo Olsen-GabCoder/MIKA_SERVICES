@@ -27,6 +27,8 @@ interface ProjetState {
   totalElements: number
   totalPages: number
   currentPage: number
+  /** Dernière page demandée (pending) : on n'applique fulfilled que si la réponse correspond (évite race conditions) */
+  pendingListPage: number | null
   loading: boolean
   error: string | null
 }
@@ -39,6 +41,7 @@ const initialState: ProjetState = {
   totalElements: 0,
   totalPages: 0,
   currentPage: 0,
+  pendingListPage: null,
   loading: false,
   error: null,
 }
@@ -187,21 +190,29 @@ const projetSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Fetch projets
-      .addCase(fetchProjets.pending, (state) => {
+      .addCase(fetchProjets.pending, (state, action) => {
         state.loading = true
         state.error = null
+        state.pendingListPage = action.meta.arg.page ?? 0
+        state.projets = []
       })
       .addCase(fetchProjets.fulfilled, (state, action) => {
         state.loading = false
+        const requestedPage = state.pendingListPage ?? 0
+        const responsePage = typeof action.payload?.number === 'number' ? action.payload.number : 0
+        if (responsePage !== requestedPage) {
+          state.pendingListPage = null
+          return
+        }
+        state.pendingListPage = null
         state.projets = (action.payload.content ?? []).map(normalizeProjetTypes)
         state.totalElements = action.payload.totalElements ?? 0
         state.totalPages = Math.max(0, action.payload.totalPages ?? 0)
-        // Spring Page renvoie toujours 'number' (0-based), utiliser directement
-        const pageNumber = action.payload?.number
-        state.currentPage = typeof pageNumber === 'number' && pageNumber >= 0 ? pageNumber : 0
+        state.currentPage = responsePage >= 0 ? responsePage : 0
       })
       .addCase(fetchProjets.rejected, (state, action) => {
         state.loading = false
+        state.pendingListPage = null
         state.error = (typeof action.payload === 'string' ? action.payload : action.error.message) || 'Erreur lors du chargement des projets'
       })
       // Fetch projet by ID
@@ -219,21 +230,29 @@ const projetSlice = createSlice({
         state.error = action.error.message || 'Erreur lors du chargement du projet'
       })
       // Search projets
-      .addCase(searchProjets.pending, (state) => {
+      .addCase(searchProjets.pending, (state, action) => {
         state.loading = true
         state.error = null
+        state.pendingListPage = action.meta.arg.page ?? 0
+        state.projets = []
       })
       .addCase(searchProjets.fulfilled, (state, action) => {
         state.loading = false
+        const requestedPage = state.pendingListPage ?? 0
+        const responsePage = typeof action.payload?.number === 'number' ? action.payload.number : 0
+        if (responsePage !== requestedPage) {
+          state.pendingListPage = null
+          return
+        }
+        state.pendingListPage = null
         state.projets = (action.payload.content ?? []).map(normalizeProjetTypes)
         state.totalElements = action.payload.totalElements ?? 0
         state.totalPages = Math.max(0, action.payload.totalPages ?? 0)
-        // Spring Page renvoie toujours 'number' (0-based), utiliser directement
-        const pageNumber = action.payload?.number
-        state.currentPage = typeof pageNumber === 'number' && pageNumber >= 0 ? pageNumber : 0
+        state.currentPage = responsePage >= 0 ? responsePage : 0
       })
       .addCase(searchProjets.rejected, (state, action) => {
         state.loading = false
+        state.pendingListPage = null
         state.error = (typeof action.payload === 'string' ? action.payload : action.error.message) || 'Erreur lors de la recherche'
       })
       // Create projet

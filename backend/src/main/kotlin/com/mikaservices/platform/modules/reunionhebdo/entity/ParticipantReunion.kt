@@ -8,16 +8,24 @@ import jakarta.persistence.*
 @Table(name = "participants_reunion", indexes = [
     Index(name = "idx_part_reunion", columnList = "reunion_id"),
     Index(name = "idx_part_user", columnList = "user_id"),
-    Index(name = "idx_part_reunion_user", columnList = "reunion_id, user_id", unique = true)
 ])
 class ParticipantReunion(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reunion_id", nullable = false)
     var reunion: ReunionHebdo,
 
+    /** Utilisateur inscrit dans l’application ; null si participant saisi manuellement (hors appli). */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    var user: User,
+    @JoinColumn(name = "user_id", nullable = true)
+    var user: User? = null,
+
+    /** Nom de famille (participant manuel uniquement). */
+    @Column(name = "nom_manuel", length = 120)
+    var nomManuel: String? = null,
+
+    /** Prénom (participant manuel uniquement). */
+    @Column(name = "prenom_manuel", length = 120)
+    var prenomManuel: String? = null,
 
     @Column(name = "initiales", length = 10)
     var initiales: String? = null,
@@ -35,7 +43,7 @@ class ParticipantReunion(
         return id != null && id == other.id
     }
 
-    override fun hashCode(): Int = id?.hashCode() ?: reunion.id.hashCode().plus(user.id.hashCode())
+    override fun hashCode(): Int = id?.hashCode() ?: System.identityHashCode(this)
 
-    override fun toString(): String = "ParticipantReunion(id=$id, reunionId=${reunion.id}, userId=${user.id})"
+    override fun toString(): String = "ParticipantReunion(id=$id, reunionId=${reunion.id}, userId=${user?.id})"
 }

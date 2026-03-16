@@ -49,17 +49,39 @@ class ReunionHebdoService(
                 .orElseThrow { ResourceNotFoundException("Utilisateur non trouvé: $id") }
         }
         val saved = reunionHebdoRepository.save(reunion)
-        request.participants.forEachIndexed { index, pr ->
-            val user = userRepository.findById(pr.userId)
-                .orElseThrow { ResourceNotFoundException("Utilisateur non trouvé: ${pr.userId}") }
-            val part = ParticipantReunion(
-                reunion = saved,
-                user = user,
-                initiales = pr.initiales,
-                telephone = pr.telephone ?: user.telephone,
-                present = pr.present
-            )
-            saved.participants.add(part)
+        val seenUserIds = mutableSetOf<Long>()
+        request.participants.forEach { pr ->
+            when {
+                pr.userId != null -> {
+                    if (!seenUserIds.add(pr.userId!!)) return@forEach
+                    val user = userRepository.findById(pr.userId!!)
+                        .orElseThrow { ResourceNotFoundException("Utilisateur non trouvé: ${pr.userId}") }
+                    saved.participants.add(
+                        ParticipantReunion(
+                            reunion = saved,
+                            user = user,
+                            nomManuel = null,
+                            prenomManuel = null,
+                            initiales = pr.initiales,
+                            telephone = pr.telephone ?: user.telephone,
+                            present = pr.present
+                        )
+                    )
+                }
+                !pr.nomManuel.isNullOrBlank() && !pr.prenomManuel.isNullOrBlank() -> {
+                    saved.participants.add(
+                        ParticipantReunion(
+                            reunion = saved,
+                            user = null,
+                            nomManuel = pr.nomManuel!!.trim(),
+                            prenomManuel = pr.prenomManuel!!.trim(),
+                            initiales = pr.initiales?.trim()?.takeIf { it.isNotEmpty() },
+                            telephone = pr.telephone?.trim(),
+                            present = pr.present
+                        )
+                    )
+                }
+            }
         }
         reunionHebdoRepository.save(saved)
         logger.info("Réunion hebdo créée: id=${saved.id}, date=${saved.dateReunion}")
@@ -97,19 +119,42 @@ class ReunionHebdoService(
                 .orElseThrow { ResourceNotFoundException("Utilisateur non trouvé: $rid") }
         }
         request.participants?.let { list ->
+            val rid = reunion.id ?: throw IllegalStateException("Réunion sans id")
+            participantReunionRepository.deleteByReunionId(rid)
             reunion.participants.clear()
+            val seenUserIds = mutableSetOf<Long>()
             list.forEach { pr ->
-                val user = userRepository.findById(pr.userId)
-                    .orElseThrow { ResourceNotFoundException("Utilisateur non trouvé: ${pr.userId}") }
-                reunion.participants.add(
-                    ParticipantReunion(
-                        reunion = reunion,
-                        user = user,
-                        initiales = pr.initiales,
-                        telephone = pr.telephone ?: user.telephone,
-                        present = pr.present
-                    )
-                )
+                when {
+                    pr.userId != null -> {
+                        if (!seenUserIds.add(pr.userId!!)) return@forEach
+                        val user = userRepository.findById(pr.userId!!)
+                            .orElseThrow { ResourceNotFoundException("Utilisateur non trouvé: ${pr.userId}") }
+                        reunion.participants.add(
+                            ParticipantReunion(
+                                reunion = reunion,
+                                user = user,
+                                nomManuel = null,
+                                prenomManuel = null,
+                                initiales = pr.initiales,
+                                telephone = pr.telephone ?: user.telephone,
+                                present = pr.present
+                            )
+                        )
+                    }
+                    !pr.nomManuel.isNullOrBlank() && !pr.prenomManuel.isNullOrBlank() -> {
+                        reunion.participants.add(
+                            ParticipantReunion(
+                                reunion = reunion,
+                                user = null,
+                                nomManuel = pr.nomManuel!!.trim(),
+                                prenomManuel = pr.prenomManuel!!.trim(),
+                                initiales = pr.initiales?.trim()?.takeIf { it.isNotEmpty() },
+                                telephone = pr.telephone?.trim(),
+                                present = pr.present
+                            )
+                        )
+                    }
+                }
             }
         }
         val saved = reunionHebdoRepository.save(reunion)

@@ -142,12 +142,12 @@ export const ProfileForm = ({ user, children }: ProfileFormProps) => {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-stretch"
-    >
-      {/* Colonne gauche : même hauteur que la droite — en-tête, infos personnelles, fiche mission (remplit l'espace restant) */}
-      <div className="flex flex-col gap-6 min-h-0">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-stretch">
+      {/* Formulaire profil uniquement (colonne gauche) — la colonne droite (CV, MDP, 2FA, sessions) est hors formulaire pour éviter la validation des champs mot de passe au clic sur "Enregistrer les modifications" */}
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col gap-6 min-h-0"
+      >
         <ProfileHeader user={user} />
         <ProfileSectionCard
           header={
@@ -252,13 +252,13 @@ export const ProfileForm = ({ user, children }: ProfileFormProps) => {
             {t('profile.saveNote')}
           </p>
         </ProfileSectionCard>
-      </div>
+      </form>
 
-      {/* Colonne droite : même hauteur que la gauche — CV, mot de passe, 2FA, sessions */}
+      {/* Colonne droite : CV, mot de passe, 2FA, sessions (hors formulaire profil) */}
       <div className="flex flex-col gap-6 min-h-0">
         {children}
       </div>
-    </form>
+    </div>
   )
 }
 

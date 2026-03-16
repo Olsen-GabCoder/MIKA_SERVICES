@@ -130,10 +130,9 @@ const PasswordField = ({
         type={show ? 'text' : 'password'}
         value={value}
         onChange={onChange}
-        required
-        minLength={8}
         autoComplete={autoComplete}
         className="pr-11"
+        aria-required={label.toLowerCase().includes('nouveau') || label.toLowerCase().includes('new')}
       />
       <button
         type="button"

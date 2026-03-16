@@ -68,6 +68,10 @@ export const ReunionHebdoFormPage = () => {
   const [divers, setDivers] = useState('')
   const [redacteurId, setRedacteurId] = useState<number | ''>('')
   const [participantIds, setParticipantIds] = useState<number[]>([])
+  /** Participants présents sans compte appli (PV) */
+  const [manualParticipants, setManualParticipants] = useState<
+    { key: string; prenom: string; nom: string; initiales: string; telephone: string }[]
+  >([])
 
   useEffect(() => {
     userApi.getAll({ page: 0, size: 500 }).then((res) => setUsers(res.content)).catch(() => setUsers([]))
@@ -92,7 +96,18 @@ export const ReunionHebdoFormPage = () => {
           setStatut(r.statut)
           setDivers(r.divers || '')
           setRedacteurId(r.redacteur?.id ?? '')
-          setParticipantIds(r.participants.map((p) => p.userId))
+          setParticipantIds(r.participants.filter((p) => p.userId != null).map((p) => p.userId as number))
+          setManualParticipants(
+            r.participants
+              .filter((p) => p.manuel || p.userId == null)
+              .map((p, i) => ({
+                key: `m-${p.id}-${i}`,
+                prenom: p.prenom || '',
+                nom: p.nom || '',
+                initiales: p.initiales || '',
+                telephone: p.telephone || '',
+              }))
+          )
         })
         .catch(() => setError(t('form.notFound')))
         .finally(() => setLoading(false))
@@ -103,7 +118,17 @@ export const ReunionHebdoFormPage = () => {
     e.preventDefault()
     setError(null)
     setSaving(true)
-    const participants: ParticipantReunionRequest[] = participantIds.map((userId) => ({ userId, present: true }))
+    const fromApp: ParticipantReunionRequest[] = [...new Set(participantIds)].map((userId) => ({ userId, present: true }))
+    const fromManual: ParticipantReunionRequest[] = manualParticipants
+      .filter((m) => m.prenom.trim() && m.nom.trim())
+      .map((m) => ({
+        nomManuel: m.nom.trim(),
+        prenomManuel: m.prenom.trim(),
+        initiales: m.initiales.trim() || undefined,
+        telephone: m.telephone.trim() || undefined,
+        present: true,
+      }))
+    const participants: ParticipantReunionRequest[] = [...fromApp, ...fromManual]
     try {
       if (isEdit && id) {
         const data: ReunionHebdoUpdateRequest = {
@@ -142,6 +167,18 @@ export const ReunionHebdoFormPage = () => {
 
   const toggleParticipant = (userId: number) => {
     setParticipantIds((prev) => (prev.includes(userId) ? prev.filter((i) => i !== userId) : [...prev, userId]))
+  }
+
+  const addManualRow = () => {
+    setManualParticipants((prev) => [...prev, { key: `new-${Date.now()}`, prenom: '', nom: '', initiales: '', telephone: '' }])
+  }
+
+  const updateManual = (key: string, field: 'prenom' | 'nom' | 'initiales' | 'telephone', value: string) => {
+    setManualParticipants((prev) => prev.map((r) => (r.key === key ? { ...r, [field]: value } : r)))
+  }
+
+  const removeManual = (key: string) => {
+    setManualParticipants((prev) => prev.filter((r) => r.key !== key))
   }
 
   const addOrdreDuJourFromList = () => {
@@ -261,15 +298,56 @@ export const ReunionHebdoFormPage = () => {
           <label className="block text-small font-medium text-dark dark:text-gray-200 mb-xs">{t('form.divers')}</label>
           <textarea value={divers} onChange={(e) => setDivers(e.target.value)} rows={3} className="w-full px-md py-sm border border-medium dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-800 dark:text-gray-100" />
         </div>
-        <div>
-          <label className="block text-small font-medium text-dark dark:text-gray-200 mb-xs">{t('form.participants')}</label>
-          <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 dark:bg-gray-800/50">
-            {users.map((u) => (
-              <label key={u.id} className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={participantIds.includes(u.id)} onChange={() => toggleParticipant(u.id)} className="rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-500" />
-                <span className="text-sm text-dark dark:text-gray-200">{u.prenom} {u.nom}</span>
-              </label>
-            ))}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-small font-medium text-dark dark:text-gray-200 mb-xs">{t('form.participants')}</label>
+            <p className="text-xs text-medium dark:text-gray-400 mb-2">{t('form.participantsAppHint')}</p>
+            <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 dark:bg-gray-800/50">
+              {users.map((u) => (
+                <label key={u.id} className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={participantIds.includes(u.id)} onChange={() => toggleParticipant(u.id)} className="rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-500" />
+                  <span className="text-sm text-dark dark:text-gray-200">{u.prenom} {u.nom}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <label className="block text-small font-medium text-dark dark:text-gray-200">{t('form.participantsManual')}</label>
+              <Button type="button" variant="outline" size="sm" onClick={addManualRow}>
+                {t('form.participantsManualAdd')}
+              </Button>
+            </div>
+            <p className="text-xs text-medium dark:text-gray-400 mb-2">{t('form.participantsManualHint')}</p>
+            {manualParticipants.length === 0 ? (
+              <p className="text-small text-medium dark:text-gray-400 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg px-3">{t('form.participantsManualEmpty')}</p>
+            ) : (
+              <div className="space-y-3 border border-gray-200 dark:border-gray-600 rounded-lg p-3 dark:bg-gray-800/30">
+                {manualParticipants.map((row) => (
+                  <div key={row.key} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end border-b border-gray-100 dark:border-gray-700 pb-3 last:border-0 last:pb-0">
+                    <div className="sm:col-span-3">
+                      <label className="block text-xs text-medium dark:text-gray-400 mb-0.5">{t('form.participantsManualPrenom')}</label>
+                      <input value={row.prenom} onChange={(e) => updateManual(row.key, 'prenom', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-medium dark:border-gray-600 rounded dark:bg-gray-800 dark:text-gray-100" />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className="block text-xs text-medium dark:text-gray-400 mb-0.5">{t('form.participantsManualNom')}</label>
+                      <input value={row.nom} onChange={(e) => updateManual(row.key, 'nom', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-medium dark:border-gray-600 rounded dark:bg-gray-800 dark:text-gray-100" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs text-medium dark:text-gray-400 mb-0.5">{t('pv.colInitiales')}</label>
+                      <input value={row.initiales} onChange={(e) => updateManual(row.key, 'initiales', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-medium dark:border-gray-600 rounded dark:bg-gray-800 dark:text-gray-100" />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className="block text-xs text-medium dark:text-gray-400 mb-0.5">{t('pv.colTelephone')}</label>
+                      <input value={row.telephone} onChange={(e) => updateManual(row.key, 'telephone', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-medium dark:border-gray-600 rounded dark:bg-gray-800 dark:text-gray-100" />
+                    </div>
+                    <div className="sm:col-span-1 flex justify-end">
+                      <button type="button" onClick={() => removeManual(row.key)} className="text-danger text-xs font-medium dark:text-red-400">{t('form.ordreDuJourRemove')}</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap gap-3 pt-4">

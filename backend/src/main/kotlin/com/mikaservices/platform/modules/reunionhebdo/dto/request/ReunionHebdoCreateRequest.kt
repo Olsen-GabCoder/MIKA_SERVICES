@@ -19,8 +19,13 @@ data class ReunionHebdoCreateRequest(
     val participants: List<ParticipantReunionRequest> = emptyList()
 )
 
+/**
+ * Participant soit lié à un utilisateur ([userId]), soit saisi à la main ([nomManuel] + [prenomManuel]).
+ */
 data class ParticipantReunionRequest(
-    val userId: Long,
+    val userId: Long? = null,
+    val nomManuel: String? = null,
+    val prenomManuel: String? = null,
     val initiales: String? = null,
     val telephone: String? = null,
     val present: Boolean = true

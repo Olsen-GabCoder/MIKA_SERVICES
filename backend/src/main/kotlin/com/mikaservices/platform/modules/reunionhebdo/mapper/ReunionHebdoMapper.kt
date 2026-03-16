@@ -17,16 +17,33 @@ object ReunionHebdoMapper {
         )
     }
 
-    fun toParticipantResponse(p: ParticipantReunion): ParticipantReunionResponse = ParticipantReunionResponse(
-        id = p.id!!,
-        userId = p.user.id!!,
-        nom = p.user.nom,
-        prenom = p.user.prenom,
-        email = p.user.email,
-        initiales = p.initiales,
-        telephone = p.telephone ?: p.user.telephone,
-        present = p.present
-    )
+    fun toParticipantResponse(p: ParticipantReunion): ParticipantReunionResponse {
+        val u = p.user
+        if (u != null) {
+            return ParticipantReunionResponse(
+                id = p.id!!,
+                userId = u.id!!,
+                nom = u.nom,
+                prenom = u.prenom,
+                email = u.email,
+                initiales = p.initiales,
+                telephone = p.telephone ?: u.telephone,
+                present = p.present,
+                manuel = false
+            )
+        }
+        return ParticipantReunionResponse(
+            id = p.id!!,
+            userId = null,
+            nom = p.nomManuel?.trim().orEmpty(),
+            prenom = p.prenomManuel?.trim().orEmpty(),
+            email = "",
+            initiales = p.initiales,
+            telephone = p.telephone,
+            present = p.present,
+            manuel = true
+        )
+    }
 
     fun toPointProjetPVResponse(pp: PointProjetPV): PointProjetPVResponse = PointProjetPVResponse(
         id = pp.id!!,

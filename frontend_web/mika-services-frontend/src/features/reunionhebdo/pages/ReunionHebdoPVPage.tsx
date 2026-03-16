@@ -144,7 +144,11 @@ export const ReunionHebdoPVPage = () => {
             <thead><tr><th className="text-left py-2 text-medium dark:text-gray-400">{t('pv.colNom')}</th><th className="text-left py-2 text-medium dark:text-gray-400">{t('pv.colInitiales')}</th><th className="text-left py-2 text-medium dark:text-gray-400">{t('pv.colTelephone')}</th></tr></thead>
             <tbody>
               {pv.participants.map((p) => (
-                <tr key={p.id}><td className="py-1">{p.prenom} {p.nom}</td><td className="py-1">{p.initiales || '-'}</td><td className="py-1">{p.telephone || '-'}</td></tr>
+                <tr key={p.id}>
+                  <td className="py-1">{p.prenom} {p.nom}{p.manuel ? <span className="ml-1 text-xs text-medium dark:text-gray-500">({t('pv.externe')})</span> : null}</td>
+                  <td className="py-1">{p.initiales || '-'}</td>
+                  <td className="py-1">{p.telephone || '-'}</td>
+                </tr>
               ))}
             </tbody>
           </table>

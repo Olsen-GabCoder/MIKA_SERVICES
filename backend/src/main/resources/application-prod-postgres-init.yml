@@ -1,0 +1,7 @@
+# À utiliser UNIQUEMENT au premier déploiement sur une base PostgreSQL vide.
+# Ajoute temporairement : SPRING_PROFILES_ACTIVE=prod,prod-postgres,prod-postgres-init
+# Après le premier démarrage réussi, retirer prod-postgres-init et redéployer (ddl-auto redevient none).
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update

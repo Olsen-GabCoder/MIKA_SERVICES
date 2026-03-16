@@ -35,13 +35,16 @@ data class ReunionHebdoSummaryResponse(
 
 data class ParticipantReunionResponse(
     val id: Long,
-    val userId: Long,
+    /** Null si participant saisi manuellement (hors compte appli). */
+    val userId: Long?,
     val nom: String,
     val prenom: String,
     val email: String,
     val initiales: String?,
     val telephone: String?,
-    val present: Boolean
+    val present: Boolean,
+    /** True si présence issue d’une saisie manuelle (pas d’utilisateur lié). */
+    val manuel: Boolean = false
 )
 
 data class PointProjetPVResponse(

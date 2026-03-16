@@ -11,13 +11,16 @@ export interface ReunionUserSummary {
 
 export interface ParticipantReunion {
   id: number
-  userId: number
+  /** Présent si participant lié à un compte appli */
+  userId?: number | null
   nom: string
   prenom: string
   email: string
   initiales?: string
   telephone?: string
   present: boolean
+  /** Saisi manuellement (hors appli) */
+  manuel?: boolean
 }
 
 export interface PointProjetPV {
@@ -90,7 +93,9 @@ export interface ReunionHebdoUpdateRequest {
 }
 
 export interface ParticipantReunionRequest {
-  userId: number
+  userId?: number
+  nomManuel?: string
+  prenomManuel?: string
   initiales?: string
   telephone?: string
   present?: boolean

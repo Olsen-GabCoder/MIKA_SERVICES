@@ -132,7 +132,7 @@ export const ProfileForm = ({ user, children }: ProfileFormProps) => {
       }))
       if (result.payload) {
         setSuccessMessage(t('profile.updateSuccess'))
-        dispatch(setUser(result.payload))
+        dispatch(setUser(result.payload as User))
       }
     } catch (error: any) {
       setErrorMessage(error?.message || t('profile.errorUpdate'))

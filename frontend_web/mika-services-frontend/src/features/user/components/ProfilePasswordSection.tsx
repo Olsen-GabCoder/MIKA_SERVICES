@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { fetchUserFromToken } from '@/store/slices/authSlice'
+import { setCurrentUser } from '@/store/slices/userSlice'
 import { userApi } from '@/api/userApi'
 import { handleApiError } from '@/utils/errorHandler'
 import { validatePassword } from '@/utils/passwordValidation'
@@ -178,7 +179,8 @@ export const ProfilePasswordSection = () => {
     setSuccess(null)
     try {
       await userApi.changeMyPassword({ currentPassword, newPassword })
-      await dispatch(fetchUserFromToken()).unwrap().catch(() => {})
+      const user = await dispatch(fetchUserFromToken()).unwrap().catch(() => null)
+      if (user) dispatch(setCurrentUser(user))
       setSuccess(t('profile.passwordChangedSuccess'))
       setCurrentPassword('')
       setNewPassword('')

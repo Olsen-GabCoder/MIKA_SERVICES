@@ -69,6 +69,12 @@
     "SENIOR": "Senior"
   },
   "profile": {
+    "title": "My profile",
+    "noUserData": "No user information available",
+    "groupIdentity": "Identity",
+    "groupContact": "Contact",
+    "groupAddress": "Address",
+    "sinceLabel": "Since {{year}}",
     "mustChangePasswordAlert": "You must change your password to continue. Please set a new password below.",
     "updateSuccess": "Profile updated successfully",
     "errorUpdate": "Error updating profile",
@@ -96,6 +102,11 @@
       "submitChangePassword": "Change password",
       "showPassword": "Show password",
       "hidePassword": "Hide password",
+    "passwordStrengthVeryWeak": "Very weak",
+    "passwordStrengthWeak": "Weak",
+    "passwordStrengthMedium": "Medium",
+    "passwordStrengthStrong": "Strong",
+    "passwordStrengthVeryStrong": "Very strong",
     "sessions": {
       "title": "Active sessions",
       "subtitle": "Sessions where you are logged in. You can revoke a session to log out on that device.",

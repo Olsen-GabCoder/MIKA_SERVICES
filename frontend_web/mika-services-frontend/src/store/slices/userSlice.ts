@@ -3,7 +3,7 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 import type { User } from '@/types'
 import type { RootState } from '@/store/store'
 import { userApi } from '@/api/userApi'
-import type { UserCreateRequest, UserUpdateRequest, UserGetAllParams } from '@/api/userApi'
+import type { UserCreateRequest, UserUpdateRequest, UserGetAllParams, UpdateMyProfilePayload } from '@/api/userApi'
 import type { PaginatedResponse } from '@/api/userApi'
 import { handleApiError, isNetworkError } from '@/utils/errorHandler'
 import { getUsersCache, getUsersCacheIfValid, setUsersCache, clearUsersCache, CACHE_DURATION_MS } from '@/utils/offlineCache'
@@ -121,6 +121,19 @@ export const updateUser = createAsyncThunk(
   async ({ id, data }: { id: number; data: UserUpdateRequest }, { rejectWithValue }) => {
     try {
       const user = await userApi.update(id, data)
+      clearUsersCache()
+      return user
+    } catch (err) {
+      return rejectWithValue(handleApiError(err))
+    }
+  }
+)
+
+export const updateMyProfile = createAsyncThunk(
+  'user/updateMyProfile',
+  async (data: UpdateMyProfilePayload, { rejectWithValue }) => {
+    try {
+      const user = await userApi.updateMyProfile(data)
       clearUsersCache()
       return user
     } catch (err) {
@@ -252,6 +265,23 @@ const userSlice = createSlice({
     builder.addCase(updateUser.rejected, (state, action) => {
       state.isLoading = false
       state.error = (action.payload as string) || action.error.message || 'Erreur lors de la mise à jour de l\'utilisateur'
+    })
+
+    // Update my profile (PATCH /users/me)
+    builder.addCase(updateMyProfile.pending, (state) => {
+      state.isLoading = true
+      state.error = null
+    })
+    builder.addCase(updateMyProfile.fulfilled, (state, action) => {
+      state.isLoading = false
+      state.currentUser = action.payload
+      const index = state.users.findIndex(u => u.id === action.payload.id)
+      if (index !== -1) state.users[index] = action.payload
+      if (state.selectedUser?.id === action.payload.id) state.selectedUser = action.payload
+    })
+    builder.addCase(updateMyProfile.rejected, (state, action) => {
+      state.isLoading = false
+      state.error = (action.payload as string) || action.error.message || 'Erreur lors de la mise à jour du profil'
     })
 
     // Delete user

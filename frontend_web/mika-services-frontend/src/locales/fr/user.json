@@ -69,6 +69,12 @@
     "SENIOR": "Senior"
   },
   "profile": {
+    "title": "Mon profil",
+    "noUserData": "Aucune information utilisateur disponible",
+    "groupIdentity": "Identité",
+    "groupContact": "Contact",
+    "groupAddress": "Adresse",
+    "sinceLabel": "Depuis {{year}}",
     "mustChangePasswordAlert": "Vous devez modifier votre mot de passe pour continuer. Définissez un nouveau mot de passe ci-dessous.",
     "updateSuccess": "Profil mis à jour avec succès",
     "errorUpdate": "Erreur lors de la mise à jour du profil",
@@ -96,6 +102,11 @@
       "submitChangePassword": "Modifier le mot de passe",
       "showPassword": "Afficher le mot de passe",
       "hidePassword": "Masquer le mot de passe",
+    "passwordStrengthVeryWeak": "Très faible",
+    "passwordStrengthWeak": "Faible",
+    "passwordStrengthMedium": "Moyen",
+    "passwordStrengthStrong": "Fort",
+    "passwordStrengthVeryStrong": "Très fort",
     "sessions": {
       "title": "Sessions actives",
       "subtitle": "Sessions où vous êtes connecté. Vous pouvez révoquer une session pour vous déconnecter sur cet appareil.",

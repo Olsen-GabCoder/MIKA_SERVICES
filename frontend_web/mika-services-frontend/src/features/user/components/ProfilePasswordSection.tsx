@@ -64,10 +64,11 @@ const getStrength = (pwd: string) => {
   return score
 }
 
-const STRENGTH_LABELS = ['', 'Très faible', 'Faible', 'Moyen', 'Fort', 'Très fort']
 const STRENGTH_CLASSES = ['', 'text-red-600', 'text-orange-500', 'text-yellow-600', 'text-green-600', 'text-green-700 dark:text-green-400']
 
 const StrengthMeter = ({ password }: { password: string }) => {
+  const { t } = useTranslation('user')
+  const strengthLabels = ['', t('profile.passwordStrengthVeryWeak'), t('profile.passwordStrengthWeak'), t('profile.passwordStrengthMedium'), t('profile.passwordStrengthStrong'), t('profile.passwordStrengthVeryStrong')]
   const score = getStrength(password)
   if (!password) return null
   return (
@@ -91,7 +92,7 @@ const StrengthMeter = ({ password }: { password: string }) => {
         ))}
       </div>
       <span className={`text-xs font-semibold min-w-[70px] text-right ${STRENGTH_CLASSES[score]}`}>
-        {STRENGTH_LABELS[score]}
+        {strengthLabels[score]}
       </span>
     </div>
   )

@@ -110,6 +110,20 @@ export interface UserUpdateRequest {
   superieurHierarchiqueId?: number | null
 }
 
+/** Payload pour PATCH /users/me (mise à jour du profil par l'utilisateur connecté). */
+export interface UpdateMyProfilePayload {
+  nom: string
+  prenom: string
+  email: string
+  telephone?: string
+  dateEmbauche?: string
+  adresse?: string
+  ville?: string
+  quartier?: string
+  province?: string
+  ficheMission?: string
+}
+
 export interface ChangePasswordRequest {
   currentPassword: string
   newPassword: string
@@ -265,6 +279,11 @@ export const userApi = {
 
   changeMyPassword: async (data: ChangePasswordRequest): Promise<void> => {
     await apiClient.put('/users/me/password', data)
+  },
+
+  updateMyProfile: async (data: UpdateMyProfilePayload): Promise<User> => {
+    const response = await apiClient.patch<User>('/users/me', data)
+    return response.data
   },
 
   updateNotificationPreferences: async (payload: NotificationPreferencesUpdatePayload): Promise<User> => {

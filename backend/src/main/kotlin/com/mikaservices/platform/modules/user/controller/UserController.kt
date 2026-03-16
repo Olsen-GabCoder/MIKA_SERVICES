@@ -7,6 +7,7 @@ import com.mikaservices.platform.modules.user.dto.request.AdminResetPasswordRequ
 import com.mikaservices.platform.modules.user.dto.request.ChangePasswordRequest
 import com.mikaservices.platform.modules.user.dto.request.NotificationPreferencesUpdateRequest
 import com.mikaservices.platform.modules.user.dto.request.SessionPreferencesUpdateRequest
+import com.mikaservices.platform.modules.user.dto.request.UpdateMyProfileRequest
 import com.mikaservices.platform.modules.user.dto.request.UserCreateRequest
 import com.mikaservices.platform.modules.user.dto.request.UserUpdateRequest
 import com.mikaservices.platform.modules.user.dto.response.LoginHistoryEntryResponse
@@ -91,6 +92,15 @@ class UserController(
         return ResponseEntity.ok()
             .contentType(MediaType.IMAGE_JPEG)
             .body(resource)
+    }
+
+    @PatchMapping("/me")
+    @Operation(summary = "Mettre à jour mon profil", description = "Mise à jour des informations du profil de l'utilisateur connecté (nom, prénom, email, contact, adresse, fiche mission)")
+    fun updateMyProfile(
+        @Valid @RequestBody request: UpdateMyProfileRequest
+    ): ResponseEntity<UserResponse> {
+        val user = userService.updateMyProfile(request)
+        return ResponseEntity.ok(user)
     }
 
     @PutMapping("/me/password")

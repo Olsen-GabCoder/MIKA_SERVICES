@@ -5,7 +5,8 @@ import type { User } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useAppDispatch } from '@/store/hooks'
-import { updateUser } from '@/store/slices/userSlice'
+import { updateMyProfile } from '@/store/slices/userSlice'
+import { setUser } from '@/store/slices/authSlice'
 import { ProfileHeader } from './ProfileHeader'
 import { ProfileSectionCard, ProfileSectionCardHeader } from './ProfileSectionCard'
 
@@ -117,23 +118,21 @@ export const ProfileForm = ({ user, children }: ProfileFormProps) => {
     setSuccessMessage(null)
     setErrorMessage(null)
     try {
-      const result = await dispatch(updateUser({
-        id: user.id,
-        data: {
-          nom: data.nom,
-          prenom: data.prenom,
-          email: data.email,
-          telephone: data.telephone || undefined,
-          dateEmbauche: data.dateEmbauche || undefined,
-          adresse: data.adresse || undefined,
-          ville: data.ville || undefined,
-          quartier: data.quartier || undefined,
-          province: data.province || undefined,
-          ficheMission: data.ficheMission || undefined,
-        },
+      const result = await dispatch(updateMyProfile({
+        nom: data.nom,
+        prenom: data.prenom,
+        email: data.email,
+        telephone: data.telephone || undefined,
+        dateEmbauche: data.dateEmbauche || undefined,
+        adresse: data.adresse || undefined,
+        ville: data.ville || undefined,
+        quartier: data.quartier || undefined,
+        province: data.province || undefined,
+        ficheMission: data.ficheMission || undefined,
       }))
       if (result.payload) {
         setSuccessMessage(t('profile.updateSuccess'))
+        dispatch(setUser(result.payload))
       }
     } catch (error: any) {
       setErrorMessage(error?.message || t('profile.errorUpdate'))
@@ -158,7 +157,7 @@ export const ProfileForm = ({ user, children }: ProfileFormProps) => {
           {successMessage && <Banner type="success" message={successMessage} />}
           {errorMessage && <Banner type="error" message={errorMessage} />}
 
-          <FieldGroup label={t('profile.groupIdentity') ?? 'Identité'}>
+          <FieldGroup label={t('profile.groupIdentity')}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
                 label={t('form.nom')}
@@ -202,7 +201,7 @@ export const ProfileForm = ({ user, children }: ProfileFormProps) => {
             </div>
           </FieldGroup>
 
-          <FieldGroup label={t('profile.groupAddress') ?? 'Adresse'}>
+          <FieldGroup label={t('profile.groupAddress')}>
             <Input
               label={t('form.adresse')}
               error={errors.adresse?.message}

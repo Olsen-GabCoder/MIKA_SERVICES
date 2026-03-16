@@ -36,7 +36,7 @@ export const ProfilePage = () => {
     return (
       <PageContainer>
         <Card>
-          <p className="text-center text-gray-500 dark:text-gray-400">Aucune information utilisateur disponible</p>
+          <p className="text-center text-gray-500 dark:text-gray-400">{t('profile.noUserData')}</p>
         </Card>
       </PageContainer>
     )
@@ -44,7 +44,7 @@ export const ProfilePage = () => {
 
   return (
     <PageContainer size="full" className="w-full space-y-6 bg-gray-50/80 dark:bg-gray-900/80">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Mon Profil</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('profile.title')}</h1>
 
       {userForDisplay?.mustChangePassword && (
         <div

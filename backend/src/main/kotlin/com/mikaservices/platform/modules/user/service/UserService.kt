@@ -11,6 +11,7 @@ import com.mikaservices.platform.modules.user.dto.request.AdminResetPasswordRequ
 import com.mikaservices.platform.modules.user.dto.request.ChangePasswordRequest
 import com.mikaservices.platform.modules.user.dto.request.NotificationPreferencesUpdateRequest
 import com.mikaservices.platform.modules.user.dto.request.SessionPreferencesUpdateRequest
+import com.mikaservices.platform.modules.user.dto.request.UpdateMyProfileRequest
 import com.mikaservices.platform.modules.user.dto.request.UserCreateRequest
 import com.mikaservices.platform.modules.user.dto.request.UserUpdateRequest
 import com.mikaservices.platform.modules.user.dto.response.AuditLogResponse
@@ -256,6 +257,28 @@ class UserService(
         request.logoutOnBrowserClose?.let { user.logoutOnBrowserClose = it }
         userRepository.save(user)
         logger.debug("Préférences session mises à jour pour: ${user.email} (defaultSessionDuration=${user.defaultSessionDuration}, logoutOnBrowserClose=${user.logoutOnBrowserClose})")
+        return UserMapper.toResponse(user)
+    }
+
+    /** Mise à jour du profil par l'utilisateur connecté (champs modifiables depuis la page Mon profil). */
+    fun updateMyProfile(request: UpdateMyProfileRequest): UserResponse {
+        val user = getCurrentUserEntityOrNull()
+            ?: throw BadRequestException("Utilisateur non authentifié")
+        if (request.email != user.email && userRepository.existsByEmail(request.email)) {
+            throw ConflictException("Un utilisateur avec cet email existe déjà")
+        }
+        user.nom = request.nom
+        user.prenom = request.prenom
+        user.email = request.email
+        user.telephone = request.telephone
+        user.dateEmbauche = request.dateEmbauche
+        user.adresse = request.adresse
+        user.ville = request.ville
+        user.quartier = request.quartier
+        user.province = request.province
+        user.ficheMission = request.ficheMission
+        userRepository.save(user)
+        logger.debug("Profil mis à jour pour: ${user.email}")
         return UserMapper.toResponse(user)
     }
 

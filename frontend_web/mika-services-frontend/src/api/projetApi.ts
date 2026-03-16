@@ -47,7 +47,10 @@ export const projetApi = {
       if (filters?.clientId != null) params.clientId = filters.clientId
       if (filters?.responsableId != null) params.responsableId = filters.responsableId
       if (sort?.sortBy) params.sort = `${sort.sortBy},${sort.sortDir}`
-      const response = await apiClient.get<PageResponse<ProjetSummary>>(API_ENDPOINTS.PROJETS.BASE, { params })
+      const response = await apiClient.get<PageResponse<ProjetSummary>>(API_ENDPOINTS.PROJETS.BASE, {
+        params,
+        headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+      })
       return response.data
     } catch {
       if (USE_MOCK_FALLBACK) return Promise.resolve(getMockProjetsPage(page, size))
@@ -86,7 +89,10 @@ export const projetApi = {
     if (filters?.clientId != null) params.clientId = filters.clientId
     if (filters?.responsableId != null) params.responsableId = filters.responsableId
     if (sort?.sortBy) params.sort = `${sort.sortBy},${sort.sortDir}`
-    const response = await apiClient.get<PageResponse<ProjetSummary>>(API_ENDPOINTS.PROJETS.SEARCH, { params })
+    const response = await apiClient.get<PageResponse<ProjetSummary>>(API_ENDPOINTS.PROJETS.SEARCH, {
+      params,
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+    })
     return response.data
   },
 

@@ -193,21 +193,24 @@ const projetSlice = createSlice({
       .addCase(fetchProjets.pending, (state, action) => {
         state.loading = true
         state.error = null
-        state.pendingListPage = action.meta.arg.page ?? 0
-        state.projets = []
+        const requestedPage = action.meta.arg.page ?? 0
+        state.pendingListPage = requestedPage
+        if (requestedPage !== state.currentPage) {
+          state.projets = []
+        }
       })
       .addCase(fetchProjets.fulfilled, (state, action) => {
         state.loading = false
         const requestedPage = state.pendingListPage ?? 0
-        const responsePage = typeof action.payload?.number === 'number' ? action.payload.number : 0
-        if (responsePage !== requestedPage) {
+        const responsePage = Number(action.payload?.number)
+        if (Number.isNaN(responsePage) || responsePage !== requestedPage) {
           state.pendingListPage = null
           return
         }
         state.pendingListPage = null
         state.projets = (action.payload.content ?? []).map(normalizeProjetTypes)
-        state.totalElements = action.payload.totalElements ?? 0
-        state.totalPages = Math.max(0, action.payload.totalPages ?? 0)
+        state.totalElements = Number(action.payload.totalElements) || 0
+        state.totalPages = Math.max(0, Number(action.payload.totalPages) || 0)
         state.currentPage = responsePage >= 0 ? responsePage : 0
       })
       .addCase(fetchProjets.rejected, (state, action) => {
@@ -233,21 +236,24 @@ const projetSlice = createSlice({
       .addCase(searchProjets.pending, (state, action) => {
         state.loading = true
         state.error = null
-        state.pendingListPage = action.meta.arg.page ?? 0
-        state.projets = []
+        const requestedPage = action.meta.arg.page ?? 0
+        state.pendingListPage = requestedPage
+        if (requestedPage !== state.currentPage) {
+          state.projets = []
+        }
       })
       .addCase(searchProjets.fulfilled, (state, action) => {
         state.loading = false
         const requestedPage = state.pendingListPage ?? 0
-        const responsePage = typeof action.payload?.number === 'number' ? action.payload.number : 0
-        if (responsePage !== requestedPage) {
+        const responsePage = Number(action.payload?.number)
+        if (Number.isNaN(responsePage) || responsePage !== requestedPage) {
           state.pendingListPage = null
           return
         }
         state.pendingListPage = null
         state.projets = (action.payload.content ?? []).map(normalizeProjetTypes)
-        state.totalElements = action.payload.totalElements ?? 0
-        state.totalPages = Math.max(0, action.payload.totalPages ?? 0)
+        state.totalElements = Number(action.payload.totalElements) || 0
+        state.totalPages = Math.max(0, Number(action.payload.totalPages) || 0)
         state.currentPage = responsePage >= 0 ? responsePage : 0
       })
       .addCase(searchProjets.rejected, (state, action) => {

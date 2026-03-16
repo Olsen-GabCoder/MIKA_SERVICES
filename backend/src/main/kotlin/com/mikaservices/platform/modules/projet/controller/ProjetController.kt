@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.core.io.Resource
+import org.springframework.http.CacheControl
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -55,11 +56,14 @@ class ProjetController(
         @RequestParam(required = false) responsableId: Long?
     ): ResponseEntity<Page<ProjetSummaryResponse>> {
         val hasFilters = statut != null || type != null || clientId != null || responsableId != null
-        return if (hasFilters) {
-            ResponseEntity.ok<Page<ProjetSummaryResponse>>(projetService.findAllFiltered(statut, type, clientId, responsableId, pageable))
+        val body = if (hasFilters) {
+            projetService.findAllFiltered(statut, type, clientId, responsableId, pageable)
         } else {
-            ResponseEntity.ok<Page<ProjetSummaryResponse>>(projetService.findAll(pageable))
+            projetService.findAll(pageable)
         }
+        return ResponseEntity.ok()
+            .cacheControl(CacheControl.noStore().mustRevalidate())
+            .body(body)
     }
 
     @GetMapping("/{id}")
@@ -88,11 +92,14 @@ class ProjetController(
         @RequestParam(required = false) responsableId: Long?
     ): ResponseEntity<Page<ProjetSummaryResponse>> {
         val hasFilters = statut != null || type != null || clientId != null || responsableId != null
-        return if (hasFilters) {
-            ResponseEntity.ok<Page<ProjetSummaryResponse>>(projetService.searchFiltered(q, statut, type, clientId, responsableId, pageable))
+        val body = if (hasFilters) {
+            projetService.searchFiltered(q, statut, type, clientId, responsableId, pageable)
         } else {
-            ResponseEntity.ok<Page<ProjetSummaryResponse>>(projetService.search(q, pageable))
+            projetService.search(q, pageable)
         }
+        return ResponseEntity.ok()
+            .cacheControl(CacheControl.noStore().mustRevalidate())
+            .body(body)
     }
 
     @GetMapping("/statut/{statut}")

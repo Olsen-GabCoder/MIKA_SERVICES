@@ -9,6 +9,14 @@ const MAX_RETRIES = 2
 const RETRY_BASE_DELAY_MS = 800
 
 const NO_CACHE_PATHS = ['/auth/login', '/auth/refresh', '/auth/verify-2fa', '/auth/logout']
+/** GET listes paginées (sans ID) : ne pas cacher pour éviter de renvoyer une autre page. */
+function isPaginatedListRequest(url: string): boolean {
+  const u = url ?? ''
+  return u === '/projets' || u.startsWith('/projets?') ||
+    u === 'projets' || u.startsWith('projets?') ||
+    u === '/projets/search' || u.startsWith('/projets/search?') ||
+    u === 'projets/search' || u.startsWith('projets/search?')
+}
 
 function isRetryable(error: AxiosError): boolean {
   if (error.response) return false
@@ -34,6 +42,7 @@ function getRequestCacheKey(config: InternalAxiosRequestConfig): { url: string; 
   if (config.method?.toUpperCase() !== 'GET') return null
   const url = config.url ?? ''
   if (NO_CACHE_PATHS.some((p) => url.includes(p))) return null
+  if (isPaginatedListRequest(url)) return null
   const params = config.params ? JSON.stringify(config.params) : undefined
   return { url, params }
 }
@@ -61,12 +70,20 @@ apiClient.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error)
 )
 
-// Normaliser paginated Spring Data
+// Normaliser paginated Spring Data (plusieurs formats possibles)
 apiClient.interceptors.response.use((response) => {
   const data = response.data
-  if (data && Array.isArray(data.content) && data.page && typeof data.page === 'object') {
+  if (!data || !Array.isArray(data.content)) return response
+  if (data.page && typeof data.page === 'object') {
     const { page, ...rest } = data
     response.data = { ...rest, ...page }
+    return response
+  }
+  if (data.pageable && typeof data.pageable === 'object' && typeof data.number === 'undefined') {
+    const pageNumber = data.pageable.pageNumber
+    if (typeof pageNumber === 'number') {
+      response.data = { ...data, number: pageNumber }
+    }
   }
   return response
 })

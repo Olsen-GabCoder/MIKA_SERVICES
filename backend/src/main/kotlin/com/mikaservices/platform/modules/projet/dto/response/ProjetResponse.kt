@@ -53,6 +53,7 @@ data class ProjetResponse(
 
 data class ProjetSummaryResponse(
     val id: Long,
+    val numeroMarche: String? = null,
     val nom: String,
     val type: TypeProjet,
     val types: List<TypeProjet>,

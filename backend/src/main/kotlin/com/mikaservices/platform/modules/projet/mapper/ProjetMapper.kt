@@ -95,6 +95,7 @@ object ProjetMapper {
             val effectiveType = entity.type ?: TypeProjet.AUTRE
             ProjetSummaryResponse(
                 id = id,
+                numeroMarche = entity.numeroMarche,
                 nom = entity.nom ?: "",
                 type = effectiveType,
                 types = effectiveTypes(entity),

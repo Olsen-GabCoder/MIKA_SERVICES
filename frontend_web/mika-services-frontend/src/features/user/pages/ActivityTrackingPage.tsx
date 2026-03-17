@@ -95,6 +95,15 @@ function tabActions(cat: TabKey): string[] | null {
   return Object.entries(ACTION_META).filter(([, m]) => m.category === cat).map(([k]) => k)
 }
 
+/** Format attendu yyyy-MM-dd (valeur native de <input type="date">). Évite d'envoyer des dates corrompues (ex. 0002, 0202). */
+const ISO_DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
+function toDateRangeISO(dateStr: string, endOfDay: boolean): string | null {
+  if (!dateStr || !ISO_DATE_ONLY.test(dateStr)) return null
+  const iso = endOfDay ? `${dateStr}T23:59:59.999` : `${dateStr}T00:00:00`
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
+
 // ─── Component ────────────────────────────────────────────────
 export const ActivityTrackingPage = () => {
   const { t } = useTranslation(['user', 'common'])
@@ -138,9 +147,11 @@ export const ActivityTrackingPage = () => {
       const p: Record<string, string | number | undefined> = { page, size }
       if (selectedUserId) p.userId = Number(selectedUserId)
       if (effectiveActions) p.action = effectiveActions
-      // Plage du jour sélectionné dans le fuseau de l'utilisateur, envoyée en ISO UTC (évite 0 résultat en prod)
-      if (startDate) p.startDate = new Date(startDate + 'T00:00:00').toISOString()
-      if (endDate) p.endDate = new Date(endDate + 'T23:59:59.999').toISOString()
+      // Plage du jour en fuseau utilisateur → ISO UTC ; n'envoyer que si format yyyy-MM-dd (évite 0002, 0202, 502)
+      const startIso = startDate ? toDateRangeISO(startDate, false) : null
+      const endIso = endDate ? toDateRangeISO(endDate, true) : null
+      if (startIso) p.startDate = startIso
+      if (endIso) p.endDate = endIso
       const res: PaginatedResponse<AuditLogEntry> = await auditApi.getGlobalLogs(p as Parameters<typeof auditApi.getGlobalLogs>[0])
       setLogs(res.content)
       setTotalPages(res.totalPages)

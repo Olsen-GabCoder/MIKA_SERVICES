@@ -12,11 +12,12 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
-import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 @RestController
 @RequestMapping("/audit")
@@ -42,17 +43,29 @@ class AuditController(
 
     @GetMapping("/global")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    @Operation(summary = "Logs d'audit globaux", description = "Tous les logs avec filtres (userId, module, action, dates). Dates en ISO datetime (ex. 2026-03-17T00:00:00.000Z) : plage interprétée en UTC pour correspondre au jour sélectionné par l'utilisateur dans son fuseau.")
+    @Operation(summary = "Logs d'audit globaux", description = "Tous les logs avec filtres (userId, module, action, dates). Dates en ISO datetime (ex. 2026-03-17T00:00:00.000Z). Parsing défensif : valeur invalide ignorée.")
     fun getGlobalLogs(
         @RequestParam(required = false) userId: Long?,
         @RequestParam(required = false) module: String?,
         @RequestParam(required = false) action: String?,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) startDate: LocalDateTime?,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) endDate: LocalDateTime?,
+        @RequestParam(required = false) startDate: String?,
+        @RequestParam(required = false) endDate: String?,
         @PageableDefault(size = 40) pageable: Pageable
     ): ResponseEntity<Page<AuditLogResponse>> {
         val actions = action?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() }
-        return ResponseEntity.ok(auditLogService.findFiltered(userId, module, actions, startDate, endDate, pageable))
+        val start = parseIsoToLocalDateTime(startDate)
+        val end = parseIsoToLocalDateTime(endDate)
+        return ResponseEntity.ok(auditLogService.findFiltered(userId, module, actions, start, end, pageable))
+    }
+
+    /** Parse ISO instant (ex. 2026-03-17T00:00:00.000Z) en LocalDateTime UTC. Retourne null si invalide (évite 500). */
+    private fun parseIsoToLocalDateTime(iso: String?): LocalDateTime? {
+        if (iso.isNullOrBlank()) return null
+        return try {
+            Instant.parse(iso).atZone(ZoneId.of("UTC")).toLocalDateTime()
+        } catch (_: Exception) {
+            null
+        }
     }
 
     @GetMapping("/user/{userId}/summary")

@@ -1,0 +1,19 @@
+# Profil "default" : utilisé quand aucun profil n'est activé (ex. lancement depuis IntelliJ sans "Active profiles").
+# En local, on reste sur MySQL comme en dev.
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/mika_services_dev?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: olsenk2000#2000
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+# Mail : non surchargé ici. Utilise application.yml + variables du .env (MAIL_HOST, MAIL_USERNAME, etc.).
+# S'assurer que le .env est chargé au lancement (Working directory = racine du projet ou backend).

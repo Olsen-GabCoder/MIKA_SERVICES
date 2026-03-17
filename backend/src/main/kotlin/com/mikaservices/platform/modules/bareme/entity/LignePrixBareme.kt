@@ -17,8 +17,8 @@ import java.math.BigDecimal
     Index(name = "idx_bareme_ligne_corps", columnList = "corps_etat_id"),
     Index(name = "idx_bareme_ligne_type", columnList = "type"),
     Index(name = "idx_bareme_ligne_fourn", columnList = "fournisseur_bareme_id"),
-    Index(name = "idx_bareme_ligne_parent", columnList = "parent_id"),
-    Index(name = "idx_bareme_ligne_libelle", columnList = "libelle")
+    Index(name = "idx_bareme_ligne_parent", columnList = "parent_id")
+    // Pas d'index sur libelle (TEXT) : MySQL exige une longueur pour indexer BLOB/TEXT
 ])
 class LignePrixBareme(
     @ManyToOne(fetch = FetchType.LAZY)

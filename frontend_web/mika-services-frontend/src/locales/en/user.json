@@ -234,6 +234,7 @@
     "title": "Activity Tracking",
     "subtitle": "Real-time view of all interactions on the platform",
     "noLogs": "No activity recorded for these criteria.",
+    "loadError": "Unable to load activity. Check your connection or try again.",
     "refresh": "Refresh",
     "results": "results",
     "kpi": {

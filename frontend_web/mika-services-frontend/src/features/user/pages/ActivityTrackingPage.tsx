@@ -107,6 +107,7 @@ export const ActivityTrackingPage = () => {
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<boolean | null>(null)
   const [stats, setStats] = useState<GlobalAuditStats | null>(null)
 
   const [filterOptions, setFilterOptions] = useState<AuditFilterOptions>({ modules: [], actions: [] })
@@ -132,17 +133,22 @@ export const ActivityTrackingPage = () => {
 
   const fetchLogs = useCallback(async () => {
     setLoading(true)
+    setLoadError(null)
     try {
       const p: Record<string, string | number | undefined> = { page, size }
       if (selectedUserId) p.userId = Number(selectedUserId)
       if (effectiveActions) p.action = effectiveActions
-      if (startDate) p.startDate = new Date(startDate).toISOString()
-      if (endDate) p.endDate = new Date(endDate + 'T23:59:59').toISOString()
+      // Envoyer les dates au format yyyy-MM-dd : le backend interprète le jour entier (timezone serveur)
+      if (startDate) p.startDate = startDate
+      if (endDate) p.endDate = endDate
       const res: PaginatedResponse<AuditLogEntry> = await auditApi.getGlobalLogs(p as Parameters<typeof auditApi.getGlobalLogs>[0])
       setLogs(res.content)
       setTotalPages(res.totalPages)
       setTotalElements(res.totalElements)
-    } catch { setLogs([]) }
+    } catch {
+      setLogs([])
+      setLoadError(true)
+    }
     finally { setLoading(false) }
   }, [page, size, selectedUserId, effectiveActions, startDate, endDate])
 
@@ -223,6 +229,8 @@ export const ActivityTrackingPage = () => {
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 overflow-hidden">
             {loading ? (
               <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 border-t-primary rounded-full animate-spin" /></div>
+            ) : loadError ? (
+              <div className="py-12 text-center text-sm text-amber-600 dark:text-amber-400">{t('user:activity.loadError')}</div>
             ) : logs.length === 0 ? (
               <div className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">{t('user:activity.noLogs')}</div>
             ) : (

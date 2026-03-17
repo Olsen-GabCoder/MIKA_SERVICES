@@ -234,6 +234,7 @@
     "title": "Suivi d'activité",
     "subtitle": "Vision temps réel de toutes les interactions sur la plateforme",
     "noLogs": "Aucune activité enregistrée pour ces critères.",
+    "loadError": "Impossible de charger les activités. Vérifiez votre connexion ou réessayez.",
     "refresh": "Actualiser",
     "results": "résultats",
     "kpi": {

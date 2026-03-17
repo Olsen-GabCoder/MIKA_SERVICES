@@ -21,15 +21,31 @@ interface AuditLogRepository : JpaRepository<AuditLog, Long> {
         SELECT a FROM AuditLog a
         WHERE (:userId IS NULL OR a.user.id = :userId)
           AND (:module IS NULL OR a.module = :module)
-          AND (:#{#actions == null || #actions.isEmpty()} = true OR a.action IN :actions)
           AND (:startDate IS NULL OR a.createdAt >= :startDate)
           AND (:endDate IS NULL OR a.createdAt <= :endDate)
         ORDER BY a.createdAt DESC
     """)
-    fun findFiltered(
+    fun findFilteredNoActions(
         userId: Long?,
         module: String?,
-        actions: List<String>?,
+        startDate: LocalDateTime?,
+        endDate: LocalDateTime?,
+        pageable: Pageable
+    ): Page<AuditLog>
+
+    @Query("""
+        SELECT a FROM AuditLog a
+        WHERE (:userId IS NULL OR a.user.id = :userId)
+          AND (:module IS NULL OR a.module = :module)
+          AND a.action IN :actions
+          AND (:startDate IS NULL OR a.createdAt >= :startDate)
+          AND (:endDate IS NULL OR a.createdAt <= :endDate)
+        ORDER BY a.createdAt DESC
+    """)
+    fun findFilteredWithActions(
+        userId: Long?,
+        module: String?,
+        actions: List<String>,
         startDate: LocalDateTime?,
         endDate: LocalDateTime?,
         pageable: Pageable

@@ -65,9 +65,12 @@ class AuditLogService(
         endDate: LocalDateTime?,
         pageable: Pageable
     ): Page<AuditLogResponse> {
-        val actionList = if (actions.isNullOrEmpty()) null else actions
-        return auditLogRepository.findFiltered(userId, module, actionList, startDate, endDate, pageable)
-            .map { toResponse(it) }
+        val page = if (actions.isNullOrEmpty()) {
+            auditLogRepository.findFilteredNoActions(userId, module, startDate, endDate, pageable)
+        } else {
+            auditLogRepository.findFilteredWithActions(userId, module, actions, startDate, endDate, pageable)
+        }
+        return page.map { toResponse(it) }
     }
 
     @Transactional(readOnly = true)

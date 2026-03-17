@@ -59,7 +59,7 @@ export const ProjetListPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState<ProjetListFilters>({})
   const [users, setUsers] = useState<User[]>([])
-  const [sortBy, setSortBy] = useState<ProjetSortKey | ''>('')
+  const [sortBy, setSortBy] = useState<ProjetSortKey | ''>('nom')
   const [sortDir, setSortDir] = useState<SortDirection>('asc')
 
   const { formatMontant } = useFormatNumber()
@@ -190,7 +190,7 @@ export const ProjetListPage = () => {
   useEffect(() => {
     const fromListState = (location.state as { fromListState?: ListStateToRestore } | null)?.fromListState
     if (fromListState) return
-    dispatch(fetchProjets({ page: 0, size: pageSize }))
+    dispatch(fetchProjets({ page: 0, size: pageSize, ...sortParams() }))
     dispatch(fetchClients({ page: 0, size: 200 }))
     if (isAdmin) {
       userApi.getAll({ page: 0, size: 300, actif: true })
@@ -213,9 +213,9 @@ export const ProjetListPage = () => {
   const resetFilters = useCallback(() => {
     setFilters({})
     setSearchQuery('')
-    setSortBy('')
+    setSortBy('nom')
     setSortDir('asc')
-    dispatch(fetchProjets({ page: 0, size: pageSize }))
+    dispatch(fetchProjets({ page: 0, size: pageSize, sortBy: 'nom', sortDir: 'asc' }))
   }, [dispatch, pageSize])
 
   const handleSearch = () => {

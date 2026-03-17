@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.data.web.PageableDefault
 import org.springframework.core.io.Resource
 import org.springframework.http.CacheControl
@@ -49,7 +50,7 @@ class ProjetController(
     @GetMapping
     @Operation(summary = "Lister les projets (filtres optionnels : statut, type, clientId, responsableId)")
     fun findAll(
-        @PageableDefault(size = 20) pageable: Pageable,
+        @PageableDefault(size = 20, sort = ["nom", "id"], direction = Sort.Direction.ASC) pageable: Pageable,
         @RequestParam(required = false) statut: StatutProjet?,
         @RequestParam(required = false) type: TypeProjet?,
         @RequestParam(required = false) clientId: Long?,
@@ -85,7 +86,7 @@ class ProjetController(
     @Operation(summary = "Rechercher des projets (filtres optionnels : statut, type, clientId, responsableId)")
     fun search(
         @RequestParam q: String,
-        @PageableDefault(size = 20) pageable: Pageable,
+        @PageableDefault(size = 20, sort = ["nom", "id"], direction = Sort.Direction.ASC) pageable: Pageable,
         @RequestParam(required = false) statut: StatutProjet?,
         @RequestParam(required = false) type: TypeProjet?,
         @RequestParam(required = false) clientId: Long?,

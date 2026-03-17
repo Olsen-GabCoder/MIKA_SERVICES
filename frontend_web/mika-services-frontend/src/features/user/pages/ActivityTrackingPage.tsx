@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { auditApi, userApi } from '@/api/userApi'
-import type { AuditLogEntry, AuditFilterOptions, PaginatedResponse, GlobalAuditStats } from '@/api/userApi'
+import type { AuditLogEntry, AuditFilterOptions, GlobalAuditStats } from '@/api/userApi'
 import type { User } from '@/types'
 import { useFormatDate } from '@/hooks/useFormatDate'
 

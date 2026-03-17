@@ -144,18 +144,25 @@ export const ActivityTrackingPage = () => {
     setLoading(true)
     setLoadError(null)
     try {
-      const p: Record<string, string | number | undefined> = { page, size }
-      if (selectedUserId) p.userId = Number(selectedUserId)
-      if (effectiveActions) p.action = effectiveActions
-      // Plage du jour en fuseau utilisateur → ISO UTC ; n'envoyer que si format yyyy-MM-dd (évite 0002, 0202, 502)
-      const startIso = startDate ? toDateRangeISO(startDate, false) : null
-      const endIso = endDate ? toDateRangeISO(endDate, true) : null
-      if (startIso) p.startDate = startIso
-      if (endIso) p.endDate = endIso
-      const res: PaginatedResponse<AuditLogEntry> = await auditApi.getGlobalLogs(p as Parameters<typeof auditApi.getGlobalLogs>[0])
-      setLogs(res.content)
-      setTotalPages(res.totalPages)
-      setTotalElements(res.totalElements)
+      if (selectedUserId) {
+        // Même API que la page détail utilisateur : GET /users/{id}/audit-logs (fiable en prod)
+        const res = await userApi.getAuditLogs(Number(selectedUserId), page, size)
+        setLogs(res.content ?? [])
+        setTotalPages(res.totalPages ?? 0)
+        setTotalElements(res.totalElements ?? 0)
+      } else {
+        // Vue globale : GET /audit/global (filtres optionnels)
+        const p: Record<string, string | number | undefined> = { page, size }
+        if (effectiveActions) p.action = effectiveActions
+        const startIso = startDate ? toDateRangeISO(startDate, false) : null
+        const endIso = endDate ? toDateRangeISO(endDate, true) : null
+        if (startIso) p.startDate = startIso
+        if (endIso) p.endDate = endIso
+        const res = await auditApi.getGlobalLogs(p as Parameters<typeof auditApi.getGlobalLogs>[0])
+        setLogs(res.content ?? [])
+        setTotalPages(res.totalPages ?? 0)
+        setTotalElements(res.totalElements ?? 0)
+      }
     } catch {
       setLogs([])
       setLoadError(true)

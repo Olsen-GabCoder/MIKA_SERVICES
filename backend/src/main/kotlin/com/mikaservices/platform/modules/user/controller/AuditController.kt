@@ -16,7 +16,6 @@ import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 @RestController
@@ -43,19 +42,17 @@ class AuditController(
 
     @GetMapping("/global")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    @Operation(summary = "Logs d'audit globaux", description = "Tous les logs avec filtres (userId, module, action, dates). Dates au format yyyy-MM-dd (jour entier en timezone serveur). action peut contenir plusieurs valeurs séparées par des virgules.")
+    @Operation(summary = "Logs d'audit globaux", description = "Tous les logs avec filtres (userId, module, action, dates). Dates en ISO datetime (ex. 2026-03-17T00:00:00.000Z) : plage interprétée en UTC pour correspondre au jour sélectionné par l'utilisateur dans son fuseau.")
     fun getGlobalLogs(
         @RequestParam(required = false) userId: Long?,
         @RequestParam(required = false) module: String?,
         @RequestParam(required = false) action: String?,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate?,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate?,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) startDate: LocalDateTime?,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) endDate: LocalDateTime?,
         @PageableDefault(size = 40) pageable: Pageable
     ): ResponseEntity<Page<AuditLogResponse>> {
         val actions = action?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() }
-        val start = startDate?.atStartOfDay()
-        val end = endDate?.atTime(23, 59, 59, 999_999_999)
-        return ResponseEntity.ok(auditLogService.findFiltered(userId, module, actions, start, end, pageable))
+        return ResponseEntity.ok(auditLogService.findFiltered(userId, module, actions, startDate, endDate, pageable))
     }
 
     @GetMapping("/user/{userId}/summary")

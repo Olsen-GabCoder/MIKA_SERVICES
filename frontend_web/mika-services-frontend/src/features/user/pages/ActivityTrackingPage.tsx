@@ -138,9 +138,9 @@ export const ActivityTrackingPage = () => {
       const p: Record<string, string | number | undefined> = { page, size }
       if (selectedUserId) p.userId = Number(selectedUserId)
       if (effectiveActions) p.action = effectiveActions
-      // Envoyer les dates au format yyyy-MM-dd : le backend interprète le jour entier (timezone serveur)
-      if (startDate) p.startDate = startDate
-      if (endDate) p.endDate = endDate
+      // Plage du jour sélectionné dans le fuseau de l'utilisateur, envoyée en ISO UTC (évite 0 résultat en prod)
+      if (startDate) p.startDate = new Date(startDate + 'T00:00:00').toISOString()
+      if (endDate) p.endDate = new Date(endDate + 'T23:59:59.999').toISOString()
       const res: PaginatedResponse<AuditLogEntry> = await auditApi.getGlobalLogs(p as Parameters<typeof auditApi.getGlobalLogs>[0])
       setLogs(res.content)
       setTotalPages(res.totalPages)

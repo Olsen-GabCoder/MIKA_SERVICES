@@ -1,6 +1,5 @@
 package com.mikaservices.platform.modules.bareme
 
-import com.mikaservices.platform.modules.bareme.repository.CoefficientEloignementRepository
 import com.mikaservices.platform.modules.bareme.repository.CorpsEtatBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.LignePrixBaremeRepository
 import com.mikaservices.platform.modules.bareme.service.BaremeImportService
@@ -25,9 +24,6 @@ class BaremeImportServiceIntegrationTest {
     private lateinit var baremeImportService: BaremeImportService
 
     @Autowired
-    private lateinit var coefficientRepo: CoefficientEloignementRepository
-
-    @Autowired
     private lateinit var corpsEtatRepo: CorpsEtatBaremeRepository
 
     @Autowired
@@ -37,17 +33,8 @@ class BaremeImportServiceIntegrationTest {
     fun `import Excel minimal - coefficients et une feuille corps d'etat`() {
         val workbook = HSSFWorkbook()
         try {
-            // Feuille 0 : coefficients d'éloignement (en-têtes lignes 0-2, données à partir de 3)
-            val sheet0 = workbook.createSheet("Coef d'éloignement")
-            sheet0.createRow(0).createCell(0).setCellValue("Ville")
-            sheet0.createRow(1).createCell(0).setCellValue("%")
-            sheet0.createRow(2).createCell(0).setCellValue("Coef")
-            sheet0.createRow(3).createCell(0).setCellValue("LIBREVILLE")
-            sheet0.getRow(3).createCell(1).setCellValue(0.0)
-            sheet0.getRow(3).createCell(2).setCellValue(1.0)
-            sheet0.createRow(4).createCell(0).setCellValue("COCOBEACH")
-            sheet0.getRow(4).createCell(1).setCellValue(5.0)
-            sheet0.getRow(4).createCell(2).setCellValue(1.05)
+            // Feuille 0 : placeholder (plus de repository coefficients dédié dans le modèle actuel)
+            workbook.createSheet("Coef d'éloignement")
 
             // Feuille 1 : Gros-Oeuvre (en-têtes 0-2, données à partir de 3)
             val sheet1 = workbook.createSheet("Gros-Oeuvre")
@@ -64,11 +51,9 @@ class BaremeImportServiceIntegrationTest {
 
             val result = baremeImportService.importFromInputStream(ByteArrayInputStream(out.toByteArray()))
 
-            assertTrue(result.coefficientsCount >= 2, "Au moins 2 coefficients")
             assertTrue(result.corpsEtatCount >= 1, "Au moins 1 corps d'état")
             assertTrue(result.lignesCount >= 1, "Au moins 1 ligne de prix")
 
-            assertTrue(coefficientRepo.count() >= 2)
             assertTrue(corpsEtatRepo.count() >= 1)
             assertTrue(lignePrixRepo.count() >= 1)
         } finally {

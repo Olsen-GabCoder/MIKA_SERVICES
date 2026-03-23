@@ -1,5 +1,6 @@
 package com.mikaservices.platform.modules.bareme
 
+import com.mikaservices.platform.modules.bareme.dto.response.CoefficientEloignementResponse
 import com.mikaservices.platform.modules.bareme.dto.response.CorpsEtatBaremeResponse
 import com.mikaservices.platform.modules.bareme.service.BaremeLectureService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -21,6 +22,12 @@ class BaremeLectureServiceTest {
     private lateinit var lectureService: BaremeLectureService
 
     @Test
+    fun `getCoefficientsEloignement retourne liste vide si aucune donnee`() {
+        val list = lectureService.getCoefficientsEloignement()
+        assert(list is List<CoefficientEloignementResponse>)
+    }
+
+    @Test
     fun `getCorpsEtat retourne liste vide si aucune donnee`() {
         val list = lectureService.getCorpsEtat()
         assert(list is List<CorpsEtatBaremeResponse>)
@@ -32,11 +39,6 @@ class BaremeLectureServiceTest {
             corpsEtatId = null,
             type = null,
             fournisseurId = null,
-            fournisseurNom = null,
-            article = null,
-            famille = null,
-            categorie = null,
-            unite = null,
             recherche = null,
             pageable = PageRequest.of(0, 10)
         )

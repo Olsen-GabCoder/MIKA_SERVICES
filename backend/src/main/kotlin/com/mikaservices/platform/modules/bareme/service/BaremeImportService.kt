@@ -1,11 +1,9 @@
 package com.mikaservices.platform.modules.bareme.service
 
 import com.mikaservices.platform.common.enums.TypeLigneBareme
-import com.mikaservices.platform.modules.bareme.entity.CoefficientEloignement
 import com.mikaservices.platform.modules.bareme.entity.CorpsEtatBareme
 import com.mikaservices.platform.modules.bareme.entity.FournisseurBareme
 import com.mikaservices.platform.modules.bareme.entity.LignePrixBareme
-import com.mikaservices.platform.modules.bareme.repository.CoefficientEloignementRepository
 import com.mikaservices.platform.modules.bareme.repository.CorpsEtatBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.FournisseurBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.LignePrixBaremeRepository
@@ -25,12 +23,10 @@ import java.time.format.DateTimeFormatter
 
 /**
  * Import des données du barème bâtiment depuis le fichier Excel (.xls / .xlsx).
- * - Feuille 0 : coefficients d'éloignement (ville, %, coef, note).
  * - Feuilles 1 à 15 : corps d'état avec lignes matériaux et prestations (sous-détails).
  */
 @Service
 class BaremeImportService(
-    private val coefficientEloignementRepository: CoefficientEloignementRepository,
     private val corpsEtatBaremeRepository: CorpsEtatBaremeRepository,
     private val fournisseurBaremeRepository: FournisseurBaremeRepository,
     private val lignePrixBaremeRepository: LignePrixBaremeRepository
@@ -53,25 +49,26 @@ class BaremeImportService(
             try {
                 // 1) Supprimer les données existantes (ordre FK)
                 lignePrixBaremeRepository.deleteAll()
-                coefficientEloignementRepository.deleteAll()
                 fournisseurBaremeRepository.deleteAll()
                 corpsEtatBaremeRepository.deleteAll()
 
-                // 2) Feuille 0 — Coefficients d'éloignement
-                if (workbook.numberOfSheets > 0) {
-                    val sheet0 = workbook.getSheetAt(0)
-                    importCoefficientsEloignement(sheet0, result)
-                }
+                val tabularSheet = (0 until workbook.numberOfSheets)
+                    .map { workbook.getSheetAt(it) }
+                    .firstOrNull { looksLikeSupplierTable(it) }
 
-                // 3) Feuilles 1 à 15 — Corps d'état et lignes de prix
-                val corpsEtatSheetStart = 1
-                val corpsEtatSheetEnd = minOf(16, workbook.numberOfSheets)
-                for (sheetIndex in corpsEtatSheetStart until corpsEtatSheetEnd) {
-                    val sheet = workbook.getSheetAt(sheetIndex)
-                    val sheetName = sheet.sheetName
-                    if (sheetName.isBlank() || sheetName.equals("Sheet1", ignoreCase = true)) continue
-                    val corpsEtat = getOrCreateCorpsEtat(sheetName, sheetIndex, result)
-                    importLignesCorpsEtat(sheet, corpsEtat, result)
+                if (tabularSheet != null) {
+                    importTabularSupplierPrices(tabularSheet, result)
+                } else {
+                    // 2) Feuilles 1 à 15 — Corps d'état et lignes de prix
+                    val corpsEtatSheetStart = 1
+                    val corpsEtatSheetEnd = minOf(16, workbook.numberOfSheets)
+                    for (sheetIndex in corpsEtatSheetStart until corpsEtatSheetEnd) {
+                        val sheet = workbook.getSheetAt(sheetIndex)
+                        val sheetName = sheet.sheetName
+                        if (sheetName.isBlank() || sheetName.equals("Sheet1", ignoreCase = true)) continue
+                        val corpsEtat = getOrCreateCorpsEtat(sheetName, sheetIndex)
+                        importLignesCorpsEtat(sheet, corpsEtat)
+                    }
                 }
                 result.corpsEtatCount = corpsEtatBaremeRepository.count().toInt()
                 result.fournisseursCount = fournisseurBaremeRepository.count().toInt()
@@ -84,38 +81,7 @@ class BaremeImportService(
         return result
     }
 
-    private fun importCoefficientsEloignement(sheet: Sheet, result: ImportResult) {
-        // En-têtes lignes 0-2, données à partir de la ligne 3. Colonnes: 0=Ville, 1=%, 2=Coef, 3=Note
-        // Tous les vides sont remplis pour ne laisser aucun champ vide.
-        var count = 0
-        for (rowIndex in 3 until sheet.lastRowNum + 1) {
-            val row = sheet.getRow(rowIndex) ?: continue
-            val villeRaw = cellString(row.getCell(0))?.trim()
-            val pctRaw = cellNumeric(row.getCell(1))?.toBigDecimal()?.setScale(2, RoundingMode.HALF_UP)
-            val coefRaw = cellNumeric(row.getCell(2))?.toBigDecimal()?.setScale(2, RoundingMode.HALF_UP)
-            val noteRaw = cellString(row.getCell(3))?.trim()
-            // Ignorer uniquement les lignes totalement vides (aucune donnée)
-            if (villeRaw.isNullOrBlank() && pctRaw == null && coefRaw == null) continue
-            // Sinon remplir les champs vides
-            val ville = (villeRaw?.take(100)?.takeIf { it.isNotBlank() }) ?: "—"
-            val pct = pctRaw ?: BigDecimal.ZERO
-            val coef = coefRaw ?: BigDecimal.ONE
-            val note = (noteRaw?.take(2000)?.takeIf { it.isNotBlank() }) ?: "—"
-            coefficientEloignementRepository.save(
-                CoefficientEloignement(
-                    nom = ville,
-                    pourcentage = pct,
-                    coefficient = coef,
-                    note = note,
-                    ordreAffichage = count
-                )
-            )
-            count++
-        }
-        result.coefficientsCount = count
-    }
-
-    private fun getOrCreateCorpsEtat(sheetName: String, ordre: Int, result: ImportResult): CorpsEtatBareme {
+    private fun getOrCreateCorpsEtat(sheetName: String, ordre: Int): CorpsEtatBareme {
         val code = sheetName.uppercase().replace(Regex("[^A-Z0-9_]"), "_").take(80)
         return corpsEtatBaremeRepository.findByCode(code)
             ?: corpsEtatBaremeRepository.save(
@@ -140,7 +106,7 @@ class BaremeImportService(
             )
     }
 
-    private fun importLignesCorpsEtat(sheet: Sheet, corpsEtat: CorpsEtatBareme, result: ImportResult) {
+    private fun importLignesCorpsEtat(sheet: Sheet, corpsEtat: CorpsEtatBareme) {
         // Colonnes: 0=Col1(G.), 1=N°, 2=Matériaux, 3=U, 4=P.TTC, 5=Date, 6=Fournisseurs, 7=Contacts,
         //          8=Libellé, 9=Qté, 10=P.U, 11=U, 12=Sommes, 13=Déboursé, 14=P.V, 15=Coef
         var ordreLigne = 0
@@ -180,7 +146,7 @@ class BaremeImportService(
                     corpsEtat = corpsEtat,
                     type = TypeLigneBareme.MATERIAU,
                     reference = (ref?.trim()?.take(50)?.takeIf { it.isNotBlank() }) ?: "—",
-                    libelle = materiaux.trim().take(2000),
+                    libelle = materiaux?.trim()?.take(2000) ?: "—",
                     unite = (u?.trim()?.take(20)?.takeIf { it.isNotBlank() }) ?: "u",
                     prixTtc = prixTtc?.toBigDecimal()?.setScale(2, RoundingMode.HALF_UP) ?: BigDecimal.ZERO,
                     datePrix = (datePrix?.trim()?.take(50)?.takeIf { it.isNotBlank() }) ?: LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
@@ -203,7 +169,7 @@ class BaremeImportService(
                         unitePrestation = (u2?.trim()?.take(20)?.takeIf { it.isNotBlank() }) ?: "u",
                         somme = sommes?.toBigDecimal()?.setScale(2, RoundingMode.HALF_UP) ?: BigDecimal.ZERO,
                         debourse = debourse?.toBigDecimal()?.setScale(2, RoundingMode.HALF_UP) ?: BigDecimal.ZERO,
-                        prixVente = pv?.toBigDecimal()?.setScale(2, RoundingMode.HALF_UP) ?: BigDecimal.ZERO,
+                         prixVente = pv?.toBigDecimal()?.setScale(2, RoundingMode.HALF_UP) ?: BigDecimal.ZERO,
                         coefficientPv = coefPvSafe ?: BigDecimal.ONE,
                         parent = currentParent,
                         ordreLigne = ordreLigne++,
@@ -281,6 +247,98 @@ class BaremeImportService(
             }
         }
     }
+
+    private fun looksLikeSupplierTable(sheet: Sheet): Boolean {
+        val header = findHeaderRow(sheet) ?: return false
+        return header.containsKey("article") && header.containsKey("fournisseur") && header.containsKey("prix")
+    }
+
+    private fun findHeaderRow(sheet: Sheet): Map<String, Int>? {
+        val maxHeaderScan = minOf(sheet.lastRowNum, 25)
+        for (i in 0..maxHeaderScan) {
+            val row = sheet.getRow(i) ?: continue
+            val map = mutableMapOf<String, Int>()
+            for (c in 0 until minOf(row.lastCellNum.toInt().coerceAtLeast(0), 60)) {
+                val raw = cellString(row.getCell(c)) ?: continue
+                val key = normalizeHeader(raw)
+                when {
+                    key in setOf("ref_reception", "reference_reception", "ref") -> map["ref_reception"] = c
+                    key in setOf("code_fournisseur", "codefournisseur", "code_fourn") -> map["code_fournisseur"] = c
+                    key in setOf("fournisseur", "fournisseurs", "nom_fournisseur", "raison_sociale") -> map["fournisseur"] = c
+                    key in setOf("contact", "telephone", "tel") -> map["contact"] = c
+                    key in setOf("article", "articles", "libelle", "designation", "materiau") -> map["article"] = c
+                    key in setOf("unite", "unites", "u", "unit") -> map["unite"] = c
+                    key in setOf("prix", "prix_ttc", "prix_unitaire", "pu") -> map["prix"] = c
+                    key in setOf("date", "date_prix") -> map["date_prix"] = c
+                    key in setOf("famille", "famille_article") -> map["famille"] = c
+                    key in setOf("categorie", "categories", "categorie_article") -> map["categorie"] = c
+                    key in setOf("corps_etat", "corpsdetat", "lot") -> map["corps_etat"] = c
+                }
+            }
+            if (map.containsKey("article") && map.containsKey("fournisseur") && map.containsKey("prix")) {
+                val m = map.toMutableMap()
+                // Fichier type "BASE DE DONNE F" : en-têtes en E–J, colonnes A–B = réf. réception + code fournisseur sans libellé
+                val artCol = m["article"]!!
+                if (artCol >= 4) {
+                    if (!m.containsKey("ref_reception")) m["ref_reception"] = 0
+                    if (!m.containsKey("code_fournisseur")) m["code_fournisseur"] = 1
+                }
+                return m + ("_row_index" to i)
+            }
+        }
+        return null
+    }
+
+    private fun importTabularSupplierPrices(sheet: Sheet, result: ImportResult) {
+        val header = findHeaderRow(sheet) ?: return
+        val headerRow = header["_row_index"] ?: 0
+        var ordre = 0
+        for (rowIndex in (headerRow + 1)..sheet.lastRowNum) {
+            val row = sheet.getRow(rowIndex) ?: continue
+            val article = cellString(row.getCell(header["article"]!!))?.trim()
+            val fournisseurNom = cellString(row.getCell(header["fournisseur"]!!))?.trim()
+            val prix = cellNumeric(row.getCell(header["prix"]!!))
+            if (article.isNullOrBlank() || fournisseurNom.isNullOrBlank() || prix == null) continue
+
+            val corpsLibelle = header["corps_etat"]?.let { cellString(row.getCell(it)) }?.trim().takeUnless { it.isNullOrBlank() }
+                ?: "Catalogue Fournisseurs"
+            val corps = getOrCreateCorpsEtat(corpsLibelle, 1)
+            val fournisseur = getOrCreateFournisseur(fournisseurNom, header["contact"]?.let { cellString(row.getCell(it)) })
+
+            lignePrixBaremeRepository.save(
+                LignePrixBareme(
+                    corpsEtat = corps,
+                    type = TypeLigneBareme.MATERIAU,
+                    reference = header["ref_reception"]?.let { cellString(row.getCell(it)) }?.trim()?.take(50),
+                    libelle = article.take(2000),
+                    unite = header["unite"]?.let { cellString(row.getCell(it)) }?.trim()?.takeIf { it.isNotBlank() } ?: "u",
+                    prixTtc = prix.toBigDecimal().setScale(2, RoundingMode.HALF_UP),
+                    datePrix = header["date_prix"]?.let { cellString(row.getCell(it)) }?.trim()?.takeIf { it.isNotBlank() }
+                        ?: LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                    fournisseurBareme = fournisseur,
+                    contactTexte = header["contact"]?.let { cellString(row.getCell(it)) }?.trim()?.takeIf { it.isNotBlank() },
+                    refReception = header["ref_reception"]?.let { cellString(row.getCell(it)) }?.trim()?.take(50),
+                    codeFournisseur = header["code_fournisseur"]?.let { cellString(row.getCell(it)) }?.trim()?.take(30),
+                    famille = header["famille"]?.let { cellString(row.getCell(it)) }?.trim()?.take(120),
+                    categorie = header["categorie"]?.let { cellString(row.getCell(it)) }?.trim()?.take(120),
+                    ordreLigne = ordre++,
+                    numeroLigneExcel = rowIndex + 1
+                )
+            )
+        }
+        result.coefficientsCount = 0
+    }
+
+    private fun normalizeHeader(value: String): String =
+        value.lowercase()
+            .replace(Regex("[àáâä]"), "a")
+            .replace(Regex("[èéêë]"), "e")
+            .replace(Regex("[ìíîï]"), "i")
+            .replace(Regex("[òóôö]"), "o")
+            .replace(Regex("[ùúûü]"), "u")
+            .replace('\'', ' ')
+            .replace(Regex("[^a-z0-9]+"), "_")
+            .trim('_')
 
     private fun cellString(cell: Cell?): String? {
         if (cell == null) return null

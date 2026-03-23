@@ -1,11 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { baremeApi } from '@/api/baremeApi'
-import type { BaremeArticlesParams } from '@/features/bareme/types'
+import type { BaremeArticleCreateRequest, BaremeArticlesParams } from '@/features/bareme/types'
 
 const BAREME_KEYS = {
   all: ['bareme'] as const,
-  coefficients: () => [...BAREME_KEYS.all, 'coefficients'] as const,
   corpsEtat: () => [...BAREME_KEYS.all, 'corps-etat'] as const,
+  facets: (params: BaremeArticlesParams) => [...BAREME_KEYS.all, 'facets', params] as const,
   articles: (params: BaremeArticlesParams, page: number, size: number) =>
     [...BAREME_KEYS.all, 'articles', params, page, size] as const,
   articlesCompare: (params: BaremeArticlesParams, page: number, size: number) =>
@@ -14,17 +14,18 @@ const BAREME_KEYS = {
   derniereMiseAJour: () => [...BAREME_KEYS.all, 'derniere-mise-a-jour'] as const,
 }
 
-export function useCoefficientsEloignement() {
-  return useQuery({
-    queryKey: BAREME_KEYS.coefficients(),
-    queryFn: () => baremeApi.getCoefficientsEloignement(),
-  })
-}
-
 export function useCorpsEtat() {
   return useQuery({
     queryKey: BAREME_KEYS.corpsEtat(),
     queryFn: () => baremeApi.getCorpsEtat(),
+  })
+}
+
+/** Listes de filtres (catégories, familles, etc.) sur toute la base — pas seulement la page courante. */
+export function useBaremeFilterFacets(params: BaremeArticlesParams = {}) {
+  return useQuery({
+    queryKey: BAREME_KEYS.facets(params),
+    queryFn: () => baremeApi.getFilterFacets(params),
   })
 }
 
@@ -36,6 +37,7 @@ export function useBaremeArticles(
   return useQuery({
     queryKey: BAREME_KEYS.articles(params, page, size),
     queryFn: () => baremeApi.getArticles(params, page, size),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -47,6 +49,7 @@ export function useBaremeArticlesCompare(
   return useQuery({
     queryKey: BAREME_KEYS.articlesCompare(params, page, size),
     queryFn: () => baremeApi.getArticlesCompare(params, page, size),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -69,6 +72,37 @@ export function useBaremeImport() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (file: File) => baremeApi.importExcel(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: BAREME_KEYS.all })
+    },
+  })
+}
+
+export function useCreateBaremeArticle() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: BaremeArticleCreateRequest) => baremeApi.createArticle(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: BAREME_KEYS.all })
+    },
+  })
+}
+
+export function useUpdateBaremeArticle() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: BaremeArticleCreateRequest }) =>
+      baremeApi.updateArticle(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: BAREME_KEYS.all })
+    },
+  })
+}
+
+export function useDeleteBaremeArticle() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => baremeApi.deleteArticle(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: BAREME_KEYS.all })
     },

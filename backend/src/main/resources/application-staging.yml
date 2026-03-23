@@ -1,11 +1,5 @@
 # Configuration Staging
 spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/mika_services_staging?useSSL=false&serverTimezone=UTC
-    username: root
-    password: olsenk2000#2000
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
   jpa:
     hibernate:
       ddl-auto: validate   # Vérifie que le schéma correspond

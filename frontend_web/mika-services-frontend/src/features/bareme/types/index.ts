@@ -11,15 +11,6 @@ export const TypeLigneBareme = {
 
 export type TypeLigneBareme = (typeof TypeLigneBareme)[keyof typeof TypeLigneBareme]
 
-export interface CoefficientEloignement {
-  id: number
-  nom: string
-  pourcentage: number | null
-  coefficient: number
-  note: string | null
-  ordreAffichage: number
-}
-
 export interface CorpsEtatBareme {
   id: number
   code: string
@@ -36,6 +27,10 @@ export interface BaremeArticleList {
   corpsEtat: CorpsEtatBareme
   fournisseurNom: string | null
   fournisseurContact: string | null
+  famille: string | null
+  categorie: string | null
+  refReception: string | null
+  codeFournisseur: string | null
   prixTtc: number | null
   datePrix: string | null
   debourse: number | null
@@ -69,6 +64,10 @@ export interface BaremeArticleDetail {
   reference: string | null
   libelle: string | null
   unite: string | null
+  famille: string | null
+  categorie: string | null
+  refReception: string | null
+  codeFournisseur: string | null
   corpsEtat: CorpsEtatBareme
   prixParFournisseur: PrixFournisseur[]
   lignesPrestation: LignePrestation[]
@@ -100,6 +99,8 @@ export interface BaremeArticleCompare {
   reference: string | null
   libelle: string | null
   unite: string | null
+  famille: string | null
+  categorie: string | null
   corpsEtat: CorpsEtatBareme
   prixParFournisseur: PrixFournisseur[]
   debourse: number | null
@@ -122,5 +123,68 @@ export interface BaremeArticlesParams {
   corpsEtatId?: number
   type?: TypeLigneBareme
   fournisseurId?: number
+  fournisseurNom?: string
+  article?: string
+  famille?: string
+  categorie?: string
+  unite?: string
   recherche?: string
 }
+
+export interface BaremePrestationLigneCreateRequest {
+  libelle: string
+  quantite?: number | null
+  prixUnitaire?: number | null
+  unite?: string | null
+  somme?: number | null
+  prixEstime?: boolean
+}
+
+export interface BaremeArticleCreateRequest {
+  corpsEtatId: number
+  type: TypeLigneBareme
+  reference?: string | null
+  libelle: string
+  unite?: string | null
+  famille?: string | null
+  categorie?: string | null
+  fournisseurId?: number | null
+  fournisseurNom?: string | null
+  fournisseurContact?: string | null
+  prixTtc?: number | null
+  datePrix?: string | null
+  refReception?: string | null
+  codeFournisseur?: string | null
+  prixEstime?: boolean
+  debourse?: number | null
+  prixVente?: number | null
+  coefficientPv?: number | null
+  unitePrestation?: string | null
+  totauxEstimes?: boolean
+  lignesPrestation?: BaremePrestationLigneCreateRequest[]
+}
+
+/** Réponse GET /bareme/facets — listes distinctes sur toute la base (filtres croisés). */
+export interface BaremeFilterFacets {
+  categories: string[]
+  familles: string[]
+  unites: string[]
+  fournisseurs: string[]
+  articles: string[]
+}
+
+export type {
+  RawSupplierPriceRow,
+  CanonicalSupplierPriceRow,
+  CataloguePriceStats,
+  CanonicalArticleGroup,
+} from './catalogue'
+
+export {
+  normalizeSupplierName,
+  normalizeUnit,
+  normalizeArticle,
+  buildCanonicalSupplierPriceRow,
+  computePriceStats,
+  groupRowsByCanonicalArticle,
+} from './catalogue'

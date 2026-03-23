@@ -154,8 +154,8 @@ class AuthController(
     
     @PostMapping("/logout-all")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Déconnexion de toutes les sessions", description = "Déconnecte un utilisateur de toutes ses sessions actives (admin uniquement)")
+    @SecurityRequirement(name = "")
+    @Operation(summary = "DéconnebearerAuthxion de toutes les sessions", description = "Déconnecte un utilisateur de toutes ses sessions actives (admin uniquement)")
     fun logoutAll(
         @RequestParam userId: Long
     ): ResponseEntity<Map<String, String>> {

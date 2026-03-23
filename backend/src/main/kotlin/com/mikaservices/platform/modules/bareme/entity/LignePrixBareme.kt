@@ -17,7 +17,9 @@ import java.math.BigDecimal
     Index(name = "idx_bareme_ligne_corps", columnList = "corps_etat_id"),
     Index(name = "idx_bareme_ligne_type", columnList = "type"),
     Index(name = "idx_bareme_ligne_fourn", columnList = "fournisseur_bareme_id"),
-    Index(name = "idx_bareme_ligne_parent", columnList = "parent_id")
+    Index(name = "idx_bareme_ligne_parent", columnList = "parent_id"),
+    Index(name = "idx_bareme_ligne_famille", columnList = "famille"),
+    Index(name = "idx_bareme_ligne_categorie", columnList = "categorie")
     // Pas d'index sur libelle (TEXT) : MySQL exige une longueur pour indexer BLOB/TEXT
 ])
 class LignePrixBareme(
@@ -44,12 +46,24 @@ class LignePrixBareme(
     @Column(name = "date_prix", length = 50)
     var datePrix: String? = null,
 
+    @Column(name = "ref_reception", length = 50)
+    var refReception: String? = null,
+
+    @Column(name = "code_fournisseur", length = 30)
+    var codeFournisseur: String? = null,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fournisseur_bareme_id")
     var fournisseurBareme: FournisseurBareme? = null,
 
     @Column(name = "contact_texte", length = 100)
     var contactTexte: String? = null,
+
+    @Column(name = "famille", length = 120)
+    var famille: String? = null,
+
+    @Column(name = "categorie", length = 120)
+    var categorie: String? = null,
 
     @Column(name = "quantite", precision = 18, scale = 4)
     var quantite: BigDecimal? = null,

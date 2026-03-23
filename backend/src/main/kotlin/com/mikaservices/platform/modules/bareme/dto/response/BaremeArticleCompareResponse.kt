@@ -14,6 +14,8 @@ data class BaremeArticleCompareResponse(
     val reference: String?,
     val libelle: String?,
     val unite: String?,
+    val famille: String?,
+    val categorie: String?,
     val corpsEtat: CorpsEtatBaremeResponse,
     /** Pour les matériaux : tous les prix par fournisseur pour cet article. */
     val prixParFournisseur: List<PrixFournisseurDto>,

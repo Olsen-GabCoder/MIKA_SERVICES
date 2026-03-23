@@ -1,18 +1,18 @@
 package com.mikaservices.platform.modules.bareme.service
 
 import com.mikaservices.platform.common.enums.TypeLigneBareme
+import com.mikaservices.platform.common.exception.ResourceNotFoundException
 import com.mikaservices.platform.modules.bareme.dto.response.BaremeArticleCompareResponse
 import com.mikaservices.platform.modules.bareme.dto.response.BaremeArticleDetailResponse
 import com.mikaservices.platform.modules.bareme.dto.response.BaremeArticleListResponse
+import com.mikaservices.platform.modules.bareme.dto.response.BaremeFilterFacetsResponse
 import com.mikaservices.platform.modules.bareme.dto.response.CorpsEtatBaremeResponse
-import com.mikaservices.platform.modules.bareme.dto.response.CoefficientEloignementResponse
 import com.mikaservices.platform.modules.bareme.dto.response.LignePrestationDto
 import com.mikaservices.platform.modules.bareme.dto.response.PrixFournisseurDto
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import com.mikaservices.platform.modules.bareme.entity.FournisseurBareme
 import com.mikaservices.platform.modules.bareme.entity.LignePrixBareme
-import com.mikaservices.platform.modules.bareme.repository.CoefficientEloignementRepository
 import com.mikaservices.platform.modules.bareme.repository.CorpsEtatBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.FournisseurBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.LignePrixBaremeRepository
@@ -24,23 +24,18 @@ import org.springframework.stereotype.Service
 
 @Service
 class BaremeLectureService(
-    private val coefficientEloignementRepository: CoefficientEloignementRepository,
     private val corpsEtatBaremeRepository: CorpsEtatBaremeRepository,
     private val fournisseurBaremeRepository: FournisseurBaremeRepository,
     private val lignePrixBaremeRepository: LignePrixBaremeRepository
 ) {
-
-    fun getCoefficientsEloignement(): List<CoefficientEloignementResponse> =
-        coefficientEloignementRepository.findAllByOrderByOrdreAffichageAscNomAsc().map { c ->
-            CoefficientEloignementResponse(
-                id = c.id!!,
-                nom = c.nom,
-                pourcentage = c.pourcentage,
-                coefficient = c.coefficient,
-                note = c.note,
-                ordreAffichage = c.ordreAffichage
-            )
+    private fun normalizeFilterUnit(unite: String?): Pair<String?, Boolean> {
+        val normalized = unite?.trim()?.takeIf { it.isNotEmpty() }?.uppercase()
+        if (normalized == null) return null to false
+        return when (normalized) {
+            "TON", "TONNE", "T" -> "T" to true
+            else -> normalized to false
         }
+    }
 
     fun getCorpsEtat(): List<CorpsEtatBaremeResponse> =
         corpsEtatBaremeRepository.findAllByOrderByOrdreAffichageAsc().map { c ->
@@ -56,14 +51,26 @@ class BaremeLectureService(
         corpsEtatId: Long?,
         type: TypeLigneBareme?,
         fournisseurId: Long?,
+        fournisseurNom: String?,
+        article: String?,
+        famille: String?,
+        categorie: String?,
+        unite: String?,
         recherche: String?,
         pageable: Pageable
     ): Page<BaremeArticleListResponse> {
         val searchTrimmed = recherche?.trim()?.takeIf { it.isNotEmpty() }
+        val (uniteNormalized, uniteAliasT) = normalizeFilterUnit(unite)
         val page = lignePrixBaremeRepository.findArticlesFiltered(
             corpsId = corpsEtatId,
             type = type,
             fournId = fournisseurId,
+            fournNom = fournisseurNom?.trim()?.takeIf { it.isNotEmpty() },
+            famille = famille?.trim()?.takeIf { it.isNotEmpty() },
+            categorie = categorie?.trim()?.takeIf { it.isNotEmpty() },
+            unite = uniteNormalized,
+            uniteAliasT = uniteAliasT,
+            article = article?.trim()?.takeIf { it.isNotEmpty() },
             search = searchTrimmed,
             pageable = pageable
         )
@@ -72,7 +79,7 @@ class BaremeLectureService(
 
     fun getArticleById(id: Long): BaremeArticleDetailResponse {
         val ligne = lignePrixBaremeRepository.findByIdWithCorpsEtatAndFournisseur(id)
-            ?: throw NoSuchElementException("Article barème non trouvé: $id")
+            ?: throw ResourceNotFoundException("Article barème non trouvé: $id")
         return toDetailResponse(ligne)
     }
 
@@ -81,19 +88,47 @@ class BaremeLectureService(
         corpsEtatId: Long?,
         type: TypeLigneBareme?,
         fournisseurId: Long?,
+        fournisseurNom: String?,
+        article: String?,
+        famille: String?,
+        categorie: String?,
+        unite: String?,
         recherche: String?,
         pageable: Pageable
     ): Page<BaremeArticleCompareResponse> {
         val searchTrimmed = recherche?.trim()?.takeIf { it.isNotEmpty() }
-        val maxLines = 10000
-        val allPage = lignePrixBaremeRepository.findArticlesFiltered(
-            corpsId = corpsEtatId,
-            type = type,
-            fournId = fournisseurId,
-            search = searchTrimmed,
-            pageable = PageRequest.of(0, maxLines)
-        )
-        val lines = allPage.content
+        val (uniteNormalized, uniteAliasT) = normalizeFilterUnit(unite)
+        val filtersFournNom = fournisseurNom?.trim()?.takeIf { it.isNotEmpty() }
+        val filtersFamille = famille?.trim()?.takeIf { it.isNotEmpty() }
+        val filtersCategorie = categorie?.trim()?.takeIf { it.isNotEmpty() }
+        val filtersArticle = article?.trim()?.takeIf { it.isNotEmpty() }
+        val fetchPageSize = 10000
+        // Avec les prix estimés persistés en base, le volume peut dépasser 50k lignes.
+        // On relève le plafond pour éviter les réponses tronquées en comparaison.
+        val hardCap = 250000
+        val lines = mutableListOf<LignePrixBareme>()
+        var pageIndex = 0
+        var totalExpected = Int.MAX_VALUE
+        while (lines.size < totalExpected && lines.size < hardCap) {
+            val page = lignePrixBaremeRepository.findArticlesFiltered(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = filtersFournNom,
+                famille = filtersFamille,
+                categorie = filtersCategorie,
+                unite = uniteNormalized,
+                uniteAliasT = uniteAliasT,
+                article = filtersArticle,
+                search = searchTrimmed,
+                pageable = PageRequest.of(pageIndex, fetchPageSize)
+            )
+            totalExpected = page.totalElements.toInt()
+            if (page.content.isEmpty()) break
+            lines.addAll(page.content)
+            if (page.isLast) break
+            pageIndex += 1
+        }
         if (lines.isEmpty()) return PageImpl(emptyList(), pageable, 0)
 
         val key: (LignePrixBareme) -> String = { l ->
@@ -121,7 +156,7 @@ class BaremeLectureService(
         val corpsToFournisseurs = corpsIds.associateWith { cid ->
             fromPage.getValue(cid).ifEmpty {
                 lignePrixBaremeRepository.findArticlesFiltered(
-                    cid, TypeLigneBareme.MATERIAU, null, null, PageRequest.of(0, 5000)
+                    cid, TypeLigneBareme.MATERIAU, null, null, null, null, null, false, null, null, PageRequest.of(0, 5000)
                 ).content.mapNotNull { it.fournisseurBareme }.distinctBy { it.id }.sortedBy { it.nom }
             }
         }
@@ -145,29 +180,33 @@ class BaremeLectureService(
                         fournisseurId = l.fournisseurBareme?.id,
                         fournisseurNom = l.fournisseurBareme?.nom ?: "-",
                         fournisseurContact = l.fournisseurBareme?.contact,
-                        prixTtc = l.prixTtc ?: BigDecimal.ZERO,
+                        prixTtc = l.prixTtc,
                         datePrix = l.datePrix,
                         prixEstime = l.prixEstime
                     )
                 }
+                // Fournisseurs du corps d'état sans ligne prix pour cet article : pas de donnée fichier → pas de montant inventé.
+                // (Anciennement des valeurs de démo aléatoires — supprimées pour fidélité au fichier / conformité.)
                 val missingFournisseurs = fournisseursDuCorps.filter { it.id !in existingByFournisseurId }
-                val estimated = missingFournisseurs.map { f ->
+                val sansPrixPourCetArticle = missingFournisseurs.map { f ->
                     PrixFournisseurDto(
                         fournisseurId = f.id,
                         fournisseurNom = f.nom,
                         fournisseurContact = f.contact,
-                        prixTtc = BigDecimal.valueOf(5000 + (f.id!! % 25) * 2000L),
-                        datePrix = "—",
-                        prixEstime = true
+                        prixTtc = null,
+                        datePrix = null,
+                        prixEstime = false
                     )
                 }
-                val prixParFournisseur = (fromGroup + estimated).sortedBy { it.fournisseurNom }
+                val prixParFournisseur = (fromGroup + sansPrixPourCetArticle).sortedBy { it.fournisseurNom }
                 BaremeArticleCompareResponse(
                     id = first.id!!,
                     type = first.type,
                     reference = first.reference,
                     libelle = first.libelle,
                     unite = first.unite,
+                    famille = first.famille,
+                    categorie = first.categorie,
                     corpsEtat = corpsResp,
                     prixParFournisseur = prixParFournisseur,
                     debourse = null,
@@ -205,10 +244,12 @@ class BaremeLectureService(
                     reference = first.reference,
                     libelle = first.libelle,
                     unite = first.unite,
+                    famille = first.famille,
+                    categorie = first.categorie,
                     corpsEtat = corpsResp,
                     prixParFournisseur = prixParFournisseurPrestation,
-                    debourse = debourse ?: BigDecimal.ZERO,
-                    prixVente = prixVente ?: BigDecimal.ZERO,
+                    debourse = debourse,
+                    prixVente = prixVente,
                     unitePrestation = unitePrestation,
                     prixEstime = prixEstimePrest
                 )
@@ -219,18 +260,8 @@ class BaremeLectureService(
     /** Date/heure du dernier import (max updated_at sur les lignes de prix). Null si aucune donnée. */
     fun getDerniereMiseAJour(): LocalDateTime? = lignePrixBaremeRepository.findLastUpdatedAt()
 
-    /** Dump de toutes les données barème (debug) : coefficients, corps d'état, fournisseurs, échantillon de lignes. */
+    /** Dump de toutes les données barème (debug) : corps d'état, fournisseurs, échantillon de lignes. */
     fun getDebugDump(maxLignes: Int = 500): Map<String, Any> {
-        val coefficients = coefficientEloignementRepository.findAllByOrderByOrdreAffichageAscNomAsc().map { c ->
-            mapOf(
-                "id" to c.id,
-                "nom" to c.nom,
-                "pourcentage" to c.pourcentage,
-                "coefficient" to c.coefficient,
-                "note" to c.note,
-                "ordreAffichage" to c.ordreAffichage
-            )
-        }
         val corpsEtat = corpsEtatBaremeRepository.findAllByOrderByOrdreAffichageAsc().map { c ->
             mapOf("id" to c.id, "code" to c.code, "libelle" to c.libelle, "ordreAffichage" to c.ordreAffichage)
         }
@@ -257,8 +288,6 @@ class BaremeLectureService(
             )
         }
         return mapOf(
-            "coefficients" to coefficients,
-            "coefficientsCount" to coefficients.size,
             "corpsEtat" to corpsEtat,
             "corpsEtatCount" to corpsEtat.size,
             "fournisseurs" to fournisseurs,
@@ -294,6 +323,10 @@ class BaremeLectureService(
             corpsEtat = corpsResp,
             fournisseurNom = l.fournisseurBareme?.nom,
             fournisseurContact = l.fournisseurBareme?.contact,
+            famille = l.famille,
+            categorie = l.categorie,
+            refReception = l.refReception,
+            codeFournisseur = l.codeFournisseur,
             prixTtc = l.prixTtc ?: BigDecimal.ZERO,
             datePrix = l.datePrix,
             debourse = debourse ?: BigDecimal.ZERO,
@@ -340,6 +373,10 @@ class BaremeLectureService(
             reference = ligne.reference,
             libelle = ligne.libelle,
             unite = ligne.unite,
+            famille = ligne.famille,
+            categorie = ligne.categorie,
+            refReception = ligne.refReception,
+            codeFournisseur = ligne.codeFournisseur,
             corpsEtat = corpsResp,
             prixParFournisseur = prixParFournisseur,
             lignesPrestation = lignesPrestation,
@@ -348,6 +385,93 @@ class BaremeLectureService(
             coefficientPv = totalLine?.coefficientPv ?: ligne.coefficientPv,
             unitePrestation = totalLine?.unitePrestation ?: ligne.unitePrestation,
             totauxEstimes = totalLine?.prixEstime ?: false
+        )
+    }
+
+    /**
+     * Valeurs distinctes pour les filtres (toute la base), avec filtres croisés :
+     * chaque liste exclut son propre critère (ex. catégories selon famille/unité/recherche, pas selon catégorie).
+     */
+    fun getFilterFacets(
+        corpsEtatId: Long?,
+        type: TypeLigneBareme?,
+        fournisseurId: Long?,
+        fournisseurNom: String?,
+        article: String?,
+        famille: String?,
+        categorie: String?,
+        unite: String?,
+        recherche: String?
+    ): BaremeFilterFacetsResponse {
+        val searchTrimmed = recherche?.trim()?.takeIf { it.isNotEmpty() }
+        val (uniteNormalized, uniteAliasT) = normalizeFilterUnit(unite)
+        val familleF = famille?.trim()?.takeIf { it.isNotEmpty() }
+        val categorieF = categorie?.trim()?.takeIf { it.isNotEmpty() }
+        val uniteF = uniteNormalized
+        val fournisseurNomF = fournisseurNom?.trim()?.takeIf { it.isNotEmpty() }
+        val articleF = article?.trim()?.takeIf { it.isNotEmpty() }
+
+        val categories = lignePrixBaremeRepository.findDistinctCategories(
+            corpsId = corpsEtatId,
+            type = type,
+            fournId = fournisseurId,
+            fournNom = fournisseurNomF,
+            famille = familleF,
+            unite = uniteF,
+            uniteAliasT = uniteAliasT,
+            article = articleF,
+            search = searchTrimmed
+        )
+        val familles = lignePrixBaremeRepository.findDistinctFamilles(
+            corpsId = corpsEtatId,
+            type = type,
+            fournId = fournisseurId,
+            fournNom = fournisseurNomF,
+            categorie = categorieF,
+            unite = uniteF,
+            uniteAliasT = uniteAliasT,
+            article = articleF,
+            search = searchTrimmed
+        )
+        val unites = lignePrixBaremeRepository.findDistinctUnites(
+            corpsId = corpsEtatId,
+            type = type,
+            fournId = fournisseurId,
+            fournNom = fournisseurNomF,
+            famille = familleF,
+            categorie = categorieF,
+            article = articleF,
+            search = searchTrimmed
+        )
+        val fournisseurs = lignePrixBaremeRepository.findDistinctFournisseurNoms(
+            corpsId = corpsEtatId,
+            type = type,
+            fournId = fournisseurId,
+            fournNom = fournisseurNomF,
+            famille = familleF,
+            categorie = categorieF,
+            unite = uniteF,
+            uniteAliasT = uniteAliasT,
+            article = articleF,
+            search = searchTrimmed
+        )
+        val articles = lignePrixBaremeRepository.findDistinctArticleLibelles(
+            corpsId = corpsEtatId,
+            type = type,
+            fournId = fournisseurId,
+            fournNom = fournisseurNomF,
+            famille = familleF,
+            categorie = categorieF,
+            unite = uniteF,
+            uniteAliasT = uniteAliasT,
+            search = searchTrimmed
+        )
+        return BaremeFilterFacetsResponse(
+            categories = categories,
+            familles = familles,
+            unites = unites,
+            fournisseurs = fournisseurs,
+            articles = articles
         )
     }
 }

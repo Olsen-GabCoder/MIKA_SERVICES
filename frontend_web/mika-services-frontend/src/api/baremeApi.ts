@@ -1,25 +1,27 @@
 import api from './axios'
 import type {
-  CoefficientEloignement,
   CorpsEtatBareme,
   BaremeArticleDetail,
   BaremeVersion,
   BaremeArticlesPage,
   BaremeArticlesComparePage,
   BaremeArticlesParams,
+  BaremeFilterFacets,
+  BaremeArticleCreateRequest,
   TypeLigneBareme,
 } from '@/features/bareme/types'
 
 const BASE = '/bareme'
 
 export const baremeApi = {
-  getCoefficientsEloignement: async (): Promise<CoefficientEloignement[]> => {
-    const r = await api.get(`${BASE}/coefficients-eloignement`)
+  getCorpsEtat: async (): Promise<CorpsEtatBareme[]> => {
+    const r = await api.get(`${BASE}/corps-etat`)
     return r.data
   },
 
-  getCorpsEtat: async (): Promise<CorpsEtatBareme[]> => {
-    const r = await api.get(`${BASE}/corps-etat`)
+  getFilterFacets: async (params: BaremeArticlesParams = {}): Promise<BaremeFilterFacets> => {
+    const { page: _p, size: _s, ...rest } = params
+    const r = await api.get<BaremeFilterFacets>(`${BASE}/facets`, { params: rest })
     return r.data
   },
 
@@ -68,6 +70,20 @@ export const baremeApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     return r.data
+  },
+
+  createArticle: async (payload: BaremeArticleCreateRequest): Promise<BaremeArticleDetail> => {
+    const r = await api.post<BaremeArticleDetail>(`${BASE}/articles`, payload)
+    return r.data
+  },
+
+  updateArticle: async (id: number, payload: BaremeArticleCreateRequest): Promise<BaremeArticleDetail> => {
+    const r = await api.put<BaremeArticleDetail>(`${BASE}/articles/${id}`, payload)
+    return r.data
+  },
+
+  deleteArticle: async (id: number): Promise<void> => {
+    await api.delete(`${BASE}/articles/${id}`)
   },
 }
 

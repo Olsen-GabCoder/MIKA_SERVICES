@@ -9,7 +9,13 @@ spring:
 
   # Profil actif (dev, staging, prod)
   profiles:
-    active: dev
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    # Source de vérité unique: variables d'environnement (.env en local, variables plateforme en staging/prod)
+    url: ${DATABASE_URL:jdbc:mysql://localhost:3306/mika_services_dev?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DATABASE_USERNAME:root}
+    password: ${DATABASE_PASSWORD:}
+    driver-class-name: ${DATABASE_DRIVER_CLASS_NAME:com.mysql.cj.jdbc.Driver}
 
   # SMTP (variables d'environnement ou depuis .env)
   mail:

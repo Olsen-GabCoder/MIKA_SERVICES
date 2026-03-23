@@ -36,6 +36,8 @@ const NotFoundPage = lazy(() => import('@/features/errors/pages/NotFoundPage').t
 const ReportingPage = lazy(() => import('@/features/reporting/pages/ReportingPage'))
 const BaremePage = lazy(() => import('@/features/bareme/pages/BaremePage').then(m => ({ default: m.BaremePage })))
 const BaremeArticleDetailPage = lazy(() => import('@/features/bareme/pages/BaremeArticleDetailPage').then(m => ({ default: m.BaremeArticleDetailPage })))
+const BaremeArticleCreatePage = lazy(() => import('@/features/bareme/pages/BaremeArticleCreatePage').then(m => ({ default: m.BaremeArticleCreatePage })))
+const BaremeArticleEditPage = lazy(() => import('@/features/bareme/pages/BaremeArticleEditPage').then(m => ({ default: m.BaremeArticleEditPage })))
 
 const LazyFallback = () => (
   <div className="flex items-center justify-center min-h-[40vh]">
@@ -199,6 +201,14 @@ const router = createBrowserRouter([
       {
         path: 'bareme/articles/:id',
         element: <ProtectedRoute><L><BaremeArticleDetailPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'bareme/articles/nouveau',
+        element: <ProtectedRoute requireAdmin><L><BaremeArticleCreatePage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'bareme/articles/:id/edit',
+        element: <ProtectedRoute requireAdmin><L><BaremeArticleEditPage /></L></ProtectedRoute>,
       },
       {
         path: 'suivi-activite',

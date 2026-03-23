@@ -1,37 +1,61 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useCorpsEtat } from '../hooks/useBaremeQueries'
-import type { TypeLigneBareme } from '../types'
-import { TypeLigneBareme as TypeEnum } from '../types'
 import { DEBOUNCE_MS } from '../hooks/useBaremeListParams'
 
 interface BaremeFiltersProps {
-  corpsEtatId: number | null
-  type: TypeLigneBareme | null
   recherche: string
-  onCorpsEtatIdChange: (id: number | null) => void
-  onTypeChange: (type: TypeLigneBareme | null) => void
+  article: string
+  fournisseur: string
+  unite: string
+  famille: string
+  categorie: string
+  articleOptions: string[]
+  fournisseurOptions: string[]
+  uniteOptions: string[]
+  familleOptions: string[]
+  categorieOptions: string[]
   onRechercheChange: (q: string) => void
+  onArticleChange: (value: string) => void
+  onFournisseurChange: (value: string) => void
+  onUniteChange: (value: string) => void
+  onFamilleChange: (value: string) => void
+  onCategorieChange: (value: string) => void
   onReset: () => void
 }
 
 export function BaremeFilters({
-  corpsEtatId,
-  type,
   recherche,
-  onCorpsEtatIdChange,
-  onTypeChange,
+  article,
+  fournisseur,
+  unite,
+  famille,
+  categorie,
+  articleOptions,
+  fournisseurOptions,
+  uniteOptions,
+  familleOptions,
+  categorieOptions,
   onRechercheChange,
+  onArticleChange,
+  onFournisseurChange,
+  onUniteChange,
+  onFamilleChange,
+  onCategorieChange,
   onReset,
 }: BaremeFiltersProps) {
   const { t } = useTranslation('bareme')
-  const { data: corpsEtatList = [], isLoading: loadingCorps } = useCorpsEtat()
   const [searchInput, setSearchInput] = useState(recherche)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     setSearchInput(recherche)
   }, [recherche])
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -42,7 +66,13 @@ export function BaremeFilters({
     [onRechercheChange]
   )
 
-  const hasActiveFilters = corpsEtatId != null || type != null || recherche.trim() !== ''
+  const hasActiveFilters =
+    recherche.trim() !== '' ||
+    article.trim() !== '' ||
+    fournisseur.trim() !== '' ||
+    unite.trim() !== '' ||
+    famille.trim() !== '' ||
+    categorie.trim() !== ''
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-4">
@@ -70,39 +100,89 @@ export function BaremeFilters({
             />
           </div>
         </div>
-        <div className="min-w-0 flex-1 sm:max-w-[200px]">
+        <div className="min-w-0 w-full sm:w-auto">
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-            {t('list.corpsEtat')}
+            {t('list.articleCanonique')}
           </label>
           <select
-            value={corpsEtatId ?? ''}
-            onChange={(e) => onCorpsEtatIdChange(e.target.value ? Number(e.target.value) : null)}
-            disabled={loadingCorps}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            value={article}
+            onChange={(e) => onArticleChange(e.target.value)}
+            className="w-full sm:w-56 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
           >
             <option value="">{t('list.all')}</option>
-            {corpsEtatList.map((ce) => (
-              <option key={ce.id} value={ce.id}>
-                {ce.code ? `${ce.code} – ${ce.libelle}` : ce.libelle}
+            {articleOptions.map((value) => (
+              <option key={value} value={value}>
+                {value}
               </option>
             ))}
           </select>
         </div>
         <div className="min-w-0 w-full sm:w-auto">
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-            {t('list.type')}
+            {t('list.fournisseur')}
           </label>
           <select
-            value={type ?? ''}
-            onChange={(e) => {
-              const v = e.target.value
-              onTypeChange(v === 'MATERIAU' || v === 'PRESTATION_ENTETE' ? v : null)
-            }}
+            value={fournisseur}
+            onChange={(e) => onFournisseurChange(e.target.value)}
+            className="w-full sm:w-56 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+          >
+            <option value="">{t('list.all')}</option>
+            {fournisseurOptions.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="min-w-0 w-full sm:w-auto">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+            {t('list.uniteCanonique')}
+          </label>
+          <select
+            value={unite}
+            onChange={(e) => onUniteChange(e.target.value)}
             className="w-full sm:w-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
           >
             <option value="">{t('list.all')}</option>
-            <option value={TypeEnum.MATERIAU}>{t('list.typeMateriau')}</option>
-            <option value={TypeEnum.PRESTATION_ENTETE}>{t('list.typePrestation')}</option>
+            {uniteOptions.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="min-w-0 w-full sm:w-auto">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+            {t('list.famille')}
+          </label>
+          <select
+            value={famille}
+            onChange={(e) => onFamilleChange(e.target.value)}
+            className="w-full sm:w-52 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+          >
+            <option value="">{t('list.all')}</option>
+            {familleOptions.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="min-w-0 w-full sm:w-auto">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+            {t('list.categorie')}
+          </label>
+          <select
+            value={categorie}
+            onChange={(e) => onCategorieChange(e.target.value)}
+            className="w-full sm:w-52 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+          >
+            <option value="">{t('list.all')}</option>
+            {categorieOptions.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
           </select>
         </div>
         {hasActiveFilters && (

@@ -1,20 +1,20 @@
 # Configuration Développement
-# Import barème : charge l'Excel et remplit tous les champs vides (—, 0, ou valeur par défaut).
-# Pour peuplement sans Excel (données 100 % synthétiques), mettre seed-enabled: true et path: ""
+# Import barème : au démarrage, charge l'Excel si bareme.import.path existe (relatif au répertoire de travail ou backend).
+# Source de vérité actuelle : docs/BASE DE DONNE F.xlsx
 bareme:
   seed-enabled: false
   import:
-    path: ../docs/BAREME DES PRIX BÂTIMENT AVEC SOUS DETAILS (Tout_Corps_d'Etat).xls
+    # IMPORTANT: laisser vide pour éviter tout ré-import automatique au démarrage.
+    # Sinon le barème peut être réécrasé et casser les facettes (ex: Famille).
+    path: ""
 
 spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/mika_services_dev?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: olsenk2000#2000
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
   jpa:
     hibernate:
+      # update = Hibernate peut ALTER les colonnes (enums, etc.) puis relire tout le schéma (FK, index) → lourd pour mysqld.
+      # Si MySQL renvoie "Out of memory" / Error 1041 au démarrage : redémarrer le service MySQL, fermer les applis gourmandes,
+      # ou baisser innodb_buffer_pool_size dans my.ini si trop élevé pour la RAM disponible.
+      # Contournement rapide (schéma déjà à jour) : export SPRING_JPA_HIBERNATE_DDL_AUTO=validate ou passer à validate ci‑dessous.
       ddl-auto: update
     show-sql: true
     open-in-view: false
@@ -29,4 +29,5 @@ logging:
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    # TRACE sur chaque paramètre JDBC = logs énormes au démarrage ; DEBUG suffit en général.
+    org.hibernate.type.descriptor.sql.BasicBinder: DEBUG

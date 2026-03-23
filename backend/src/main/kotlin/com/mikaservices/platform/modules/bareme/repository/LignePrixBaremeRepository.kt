@@ -19,6 +19,10 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
     fun findByCorpsEtatId(corpsEtatId: Long): List<LignePrixBareme>
 
     fun findByParentIdOrderByOrdreLigneAsc(parentId: Long): List<LignePrixBareme>
+    fun deleteByParentId(parentId: Long): Long
+
+    @Query("SELECT COALESCE(MAX(l.ordreLigne), 0) FROM LignePrixBareme l WHERE l.corpsEtat.id = :corpsId AND l.parent IS NULL")
+    fun findMaxOrdreLigneByCorpsId(@Param("corpsId") corpsId: Long): Int
 
     fun findByParentIsNullAndCorpsEtatIdAndType(corpsEtatId: Long, type: TypeLigneBareme, pageable: Pageable): Page<LignePrixBareme>
 
@@ -32,12 +36,27 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
         AND (:corpsId IS NULL OR l.corpsEtat.id = :corpsId)
         AND (:type IS NULL OR l.type = :type)
         AND (:fournId IS NULL OR l.fournisseurBareme.id = :fournId)
+        AND (:fournNom IS NULL OR LOWER(COALESCE(l.fournisseurBareme.nom, '')) = LOWER(:fournNom))
+        AND (:famille IS NULL OR LOWER(COALESCE(l.famille, '')) = LOWER(:famille))
+        AND (:categorie IS NULL OR LOWER(COALESCE(l.categorie, '')) = LOWER(:categorie))
+        AND (
+            :unite IS NULL
+            OR LOWER(COALESCE(l.unite, COALESCE(l.unitePrestation, ''))) = LOWER(:unite)
+            OR (:uniteAliasT = true AND LOWER(COALESCE(l.unite, COALESCE(l.unitePrestation, ''))) IN ('t', 'ton', 'tonne'))
+        )
+        AND (:article IS NULL OR LOWER(COALESCE(l.libelle, COALESCE(l.reference, ''))) = LOWER(:article))
         AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
     """)
     fun findArticlesFiltered(
         @Param("corpsId") corpsId: Long?,
         @Param("type") type: TypeLigneBareme?,
         @Param("fournId") fournId: Long?,
+        @Param("fournNom") fournNom: String?,
+        @Param("famille") famille: String?,
+        @Param("categorie") categorie: String?,
+        @Param("unite") unite: String?,
+        @Param("uniteAliasT") uniteAliasT: Boolean,
+        @Param("article") article: String?,
         @Param("search") search: String?,
         pageable: Pageable
     ): Page<LignePrixBareme>
@@ -58,4 +77,166 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
 
     @Query("SELECT MAX(l.updatedAt) FROM LignePrixBareme l")
     fun findLastUpdatedAt(): LocalDateTime?
+
+    /** Facettes catégorie : mêmes filtres que la liste sauf [categorie]. */
+    @Query(
+        """
+        SELECT DISTINCT l.categorie FROM LignePrixBareme l
+        WHERE l.parent IS NULL
+        AND (:corpsId IS NULL OR l.corpsEtat.id = :corpsId)
+        AND (:type IS NULL OR l.type = :type)
+        AND (:fournId IS NULL OR l.fournisseurBareme.id = :fournId)
+        AND (:fournNom IS NULL OR LOWER(COALESCE(l.fournisseurBareme.nom, '')) = LOWER(:fournNom))
+        AND (:famille IS NULL OR LOWER(COALESCE(l.famille, '')) = LOWER(:famille))
+        AND (
+            :unite IS NULL
+            OR LOWER(COALESCE(l.unite, COALESCE(l.unitePrestation, ''))) = LOWER(:unite)
+            OR (:uniteAliasT = true AND LOWER(COALESCE(l.unite, COALESCE(l.unitePrestation, ''))) IN ('t', 'ton', 'tonne'))
+        )
+        AND (:article IS NULL OR LOWER(COALESCE(l.libelle, COALESCE(l.reference, ''))) = LOWER(:article))
+        AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
+        AND l.categorie IS NOT NULL AND l.categorie <> ''
+        ORDER BY l.categorie
+        """
+    )
+    fun findDistinctCategories(
+        @Param("corpsId") corpsId: Long?,
+        @Param("type") type: TypeLigneBareme?,
+        @Param("fournId") fournId: Long?,
+        @Param("fournNom") fournNom: String?,
+        @Param("famille") famille: String?,
+        @Param("unite") unite: String?,
+        @Param("uniteAliasT") uniteAliasT: Boolean,
+        @Param("article") article: String?,
+        @Param("search") search: String?
+    ): List<String>
+
+    /** Facettes famille : mêmes filtres sauf [famille]. */
+    @Query(
+        """
+        SELECT DISTINCT l.famille FROM LignePrixBareme l
+        WHERE l.parent IS NULL
+        AND (:corpsId IS NULL OR l.corpsEtat.id = :corpsId)
+        AND (:type IS NULL OR l.type = :type)
+        AND (:fournId IS NULL OR l.fournisseurBareme.id = :fournId)
+        AND (:fournNom IS NULL OR LOWER(COALESCE(l.fournisseurBareme.nom, '')) = LOWER(:fournNom))
+        AND (:categorie IS NULL OR LOWER(COALESCE(l.categorie, '')) = LOWER(:categorie))
+        AND (
+            :unite IS NULL
+            OR LOWER(COALESCE(l.unite, COALESCE(l.unitePrestation, ''))) = LOWER(:unite)
+            OR (:uniteAliasT = true AND LOWER(COALESCE(l.unite, COALESCE(l.unitePrestation, ''))) IN ('t', 'ton', 'tonne'))
+        )
+        AND (:article IS NULL OR LOWER(COALESCE(l.libelle, COALESCE(l.reference, ''))) = LOWER(:article))
+        AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
+        AND l.famille IS NOT NULL AND l.famille <> ''
+        ORDER BY l.famille
+        """
+    )
+    fun findDistinctFamilles(
+        @Param("corpsId") corpsId: Long?,
+        @Param("type") type: TypeLigneBareme?,
+        @Param("fournId") fournId: Long?,
+        @Param("fournNom") fournNom: String?,
+        @Param("categorie") categorie: String?,
+        @Param("unite") unite: String?,
+        @Param("uniteAliasT") uniteAliasT: Boolean,
+        @Param("article") article: String?,
+        @Param("search") search: String?
+    ): List<String>
+
+    /** Facettes unité : mêmes filtres sauf [unite]. */
+    @Query(
+        """
+        SELECT DISTINCT COALESCE(l.unite, l.unitePrestation, '') FROM LignePrixBareme l
+        WHERE l.parent IS NULL
+        AND (:corpsId IS NULL OR l.corpsEtat.id = :corpsId)
+        AND (:type IS NULL OR l.type = :type)
+        AND (:fournId IS NULL OR l.fournisseurBareme.id = :fournId)
+        AND (:fournNom IS NULL OR LOWER(COALESCE(l.fournisseurBareme.nom, '')) = LOWER(:fournNom))
+        AND (:famille IS NULL OR LOWER(COALESCE(l.famille, '')) = LOWER(:famille))
+        AND (:categorie IS NULL OR LOWER(COALESCE(l.categorie, '')) = LOWER(:categorie))
+        AND (:article IS NULL OR LOWER(COALESCE(l.libelle, COALESCE(l.reference, ''))) = LOWER(:article))
+        AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
+        AND COALESCE(l.unite, l.unitePrestation, '') <> ''
+        ORDER BY COALESCE(l.unite, l.unitePrestation, '')
+        """
+    )
+    fun findDistinctUnites(
+        @Param("corpsId") corpsId: Long?,
+        @Param("type") type: TypeLigneBareme?,
+        @Param("fournId") fournId: Long?,
+        @Param("fournNom") fournNom: String?,
+        @Param("famille") famille: String?,
+        @Param("categorie") categorie: String?,
+        @Param("article") article: String?,
+        @Param("search") search: String?
+    ): List<String>
+
+    /** Noms de fournisseurs distincts (lignes avec fournisseur), tous filtres appliqués. */
+    @Query(
+        """
+        SELECT DISTINCT f.nom FROM LignePrixBareme l
+        JOIN l.fournisseurBareme f
+        WHERE l.parent IS NULL
+        AND (:corpsId IS NULL OR l.corpsEtat.id = :corpsId)
+        AND (:type IS NULL OR l.type = :type)
+        AND (:fournId IS NULL OR l.fournisseurBareme.id = :fournId)
+        AND (:fournNom IS NULL OR LOWER(COALESCE(l.fournisseurBareme.nom, '')) = LOWER(:fournNom))
+        AND (:famille IS NULL OR LOWER(COALESCE(l.famille, '')) = LOWER(:famille))
+        AND (:categorie IS NULL OR LOWER(COALESCE(l.categorie, '')) = LOWER(:categorie))
+        AND (
+            :unite IS NULL
+            OR LOWER(COALESCE(l.unite, COALESCE(l.unitePrestation, ''))) = LOWER(:unite)
+            OR (:uniteAliasT = true AND LOWER(COALESCE(l.unite, COALESCE(l.unitePrestation, ''))) IN ('t', 'ton', 'tonne'))
+        )
+        AND (:article IS NULL OR LOWER(COALESCE(l.libelle, COALESCE(l.reference, ''))) = LOWER(:article))
+        AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
+        ORDER BY f.nom
+        """
+    )
+    fun findDistinctFournisseurNoms(
+        @Param("corpsId") corpsId: Long?,
+        @Param("type") type: TypeLigneBareme?,
+        @Param("fournId") fournId: Long?,
+        @Param("fournNom") fournNom: String?,
+        @Param("famille") famille: String?,
+        @Param("categorie") categorie: String?,
+        @Param("unite") unite: String?,
+        @Param("uniteAliasT") uniteAliasT: Boolean,
+        @Param("article") article: String?,
+        @Param("search") search: String?
+    ): List<String>
+
+    /** Libellés / références distincts pour filtre « article canonique » (tous filtres API appliqués). */
+    @Query(
+        """
+        SELECT DISTINCT COALESCE(l.libelle, l.reference, '') FROM LignePrixBareme l
+        WHERE l.parent IS NULL
+        AND (:corpsId IS NULL OR l.corpsEtat.id = :corpsId)
+        AND (:type IS NULL OR l.type = :type)
+        AND (:fournId IS NULL OR l.fournisseurBareme.id = :fournId)
+        AND (:fournNom IS NULL OR LOWER(COALESCE(l.fournisseurBareme.nom, '')) = LOWER(:fournNom))
+        AND (:famille IS NULL OR LOWER(COALESCE(l.famille, '')) = LOWER(:famille))
+        AND (:categorie IS NULL OR LOWER(COALESCE(l.categorie, '')) = LOWER(:categorie))
+        AND (
+            :unite IS NULL
+            OR LOWER(COALESCE(l.unite, COALESCE(l.unitePrestation, ''))) = LOWER(:unite)
+            OR (:uniteAliasT = true AND LOWER(COALESCE(l.unite, COALESCE(l.unitePrestation, ''))) IN ('t', 'ton', 'tonne'))
+        )
+        AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
+        AND COALESCE(l.libelle, l.reference, '') <> ''
+        ORDER BY COALESCE(l.libelle, l.reference, '')
+        """
+    )
+    fun findDistinctArticleLibelles(
+        @Param("corpsId") corpsId: Long?,
+        @Param("type") type: TypeLigneBareme?,
+        @Param("fournId") fournId: Long?,
+        @Param("fournNom") fournNom: String?,
+        @Param("famille") famille: String?,
+        @Param("categorie") categorie: String?,
+        @Param("unite") unite: String?,
+        @Param("uniteAliasT") uniteAliasT: Boolean,
+        @Param("search") search: String?
+    ): List<String>
 }

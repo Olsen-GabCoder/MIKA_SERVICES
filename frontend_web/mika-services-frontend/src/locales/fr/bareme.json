@@ -7,7 +7,7 @@
   "listComingNext": "Liste des articles et filtres à venir (étape 2).",
   "list": {
     "filtersLabel": "Filtres",
-    "filtersByLibelle": "Filtrez par libellé, référence, unité, corps d'état et type. Les résultats affichent uniquement les prix par fournisseur.",
+    "filtersByLibelle": "Filtrez par libellé, article, fournisseur, unité, famille et catégorie.",
     "searchLibelle": "Recherche par libellé",
     "corpsEtat": "Corps d'état",
     "type": "Type",
@@ -15,6 +15,11 @@
     "typePrestation": "Prestation",
     "search": "Recherche",
     "searchPlaceholder": "Rechercher par libellé…",
+    "articleCanonique": "Article canonique",
+    "fournisseur": "Fournisseur",
+    "uniteCanonique": "Unité canonique",
+    "famille": "Famille",
+    "categorie": "Catégorie",
     "all": "Tous",
     "resetFilters": "Réinitialiser",
     "colArticle": "Article",
@@ -46,6 +51,8 @@
     "reference": "Référence",
     "unite": "Unité",
     "corpsEtat": "Corps d'état",
+    "famille": "Famille",
+    "categorie": "Catégorie",
     "type": "Type",
     "contentComingNext": "Détail complet (prix par fournisseur / décomposition) à venir à l'étape 3.",
     "prixParFournisseur": "Prix par fournisseur",
@@ -64,21 +71,36 @@
     "debourse": "Déboursé",
     "prixVente": "P.V",
     "coefficientPv": "Coefficient P.V",
-    "eloignementTitle": "Coefficient d'éloignement",
-    "eloignementLocalite": "Localité",
-    "eloignementNone": "Aucune",
-    "eloignementCoeff": "Coefficient",
-    "eloignementPourcent": "{{pct}} %",
-    "eloignementPrixCol": "Prix avec éloignement",
-    "eloignementPvLabel": "P.V avec éloignement"
+    "prixDisponibles": "Prix disponibles",
+    "meilleurPrix": "Meilleur prix",
+    "prixMoyen": "Prix moyen"
+    ,
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "confirmDelete": "Confirmer la suppression de cet article ?"
   },
-  "coefficients": {
-    "title": "Coefficients d'éloignement",
-    "subtitle": "Villes et localités avec leur coefficient appliqué aux prix.",
-    "colLocalite": "Localité",
-    "colPourcent": "%",
-    "colCoefficient": "Coefficient",
-    "colNote": "Note",
-    "empty": "Aucun coefficient d'éloignement en base."
+  "create": {
+    "addArticle": "Nouvel article",
+    "title": "Créer un article barème",
+    "subtitle": "Saisissez un matériau ou une prestation complète, en respectant les mêmes règles que les données existantes.",
+    "baseInfo": "Informations générales",
+    "type": "Type",
+    "corpsEtat": "Corps d'état",
+    "materialSection": "Informations matériau",
+    "prestationSection": "Informations prestation",
+    "priceEstimated": "Prix estimé",
+    "totalEstimated": "Totaux estimés",
+    "breakdownLines": "Lignes de décomposition",
+    "addLine": "Ajouter une ligne",
+    "removeLine": "Supprimer",
+    "create": "Créer",
+    "creating": "Création...",
+    "cancel": "Annuler"
+  },
+  "edit": {
+    "title": "Modifier un article barème",
+    "subtitle": "Mettez à jour l'article sans changer son type d'origine.",
+    "save": "Enregistrer",
+    "saving": "Enregistrement..."
   }
 }

@@ -28,6 +28,8 @@ const SEGMENT_LABEL_KEYS: Record<string, string> = {
   reporting: 'breadcrumb.reporting',
   documents: 'breadcrumb.documents',
   fournisseurs: 'breadcrumb.fournisseurs',
+  bareme: 'breadcrumb.bareme',
+  articles: 'breadcrumb.detail',
 }
 
 /** Clés pour sous-routes (nouveau, edit) par segment parent */
@@ -35,6 +37,7 @@ const SUB_LABEL_KEYS: Record<string, Record<string, string>> = {
   projets: { nouveau: 'breadcrumb.nouveauProjet', edit: 'breadcrumb.edit' },
   chantiers: { nouveau: 'breadcrumb.nouveauChantier', edit: 'breadcrumb.edit' },
   equipes: { nouveau: 'breadcrumb.nouvelleEquipe', edit: 'breadcrumb.edit' },
+  articles: { nouveau: 'breadcrumb.nouveau', edit: 'breadcrumb.edit' },
 }
 
 const isIdSegment = (s: string) => /^[a-f0-9-]{36}$/i.test(s) || /^\d+$/.test(s)

@@ -1,11 +1,9 @@
 package com.mikaservices.platform.modules.bareme.service
 
 import com.mikaservices.platform.common.enums.TypeLigneBareme
-import com.mikaservices.platform.modules.bareme.entity.CoefficientEloignement
 import com.mikaservices.platform.modules.bareme.entity.CorpsEtatBareme
 import com.mikaservices.platform.modules.bareme.entity.FournisseurBareme
 import com.mikaservices.platform.modules.bareme.entity.LignePrixBareme
-import com.mikaservices.platform.modules.bareme.repository.CoefficientEloignementRepository
 import com.mikaservices.platform.modules.bareme.repository.CorpsEtatBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.FournisseurBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.LignePrixBaremeRepository
@@ -29,7 +27,6 @@ private data class LignePrestationSeed(
  */
 @Service
 class BaremeSeedService(
-    private val coefficientEloignementRepository: CoefficientEloignementRepository,
     private val corpsEtatBaremeRepository: CorpsEtatBaremeRepository,
     private val fournisseurBaremeRepository: FournisseurBaremeRepository,
     private val lignePrixBaremeRepository: LignePrixBaremeRepository
@@ -38,38 +35,12 @@ class BaremeSeedService(
     @Transactional
     fun seedAll() {
         lignePrixBaremeRepository.deleteAll()
-        coefficientEloignementRepository.deleteAll()
         fournisseurBaremeRepository.deleteAll()
         corpsEtatBaremeRepository.deleteAll()
 
         val datePrix = LocalDate.now().minusDays(7).format(DateTimeFormatter.ISO_LOCAL_DATE)
 
-        // 1) Coefficients d'éloignement
-        val coefs = listOf(
-            Triple("Libreville", "0", "Centre urbain, pas de majoration"),
-            Triple("Port-Gentil", "5", "Zone portuaire"),
-            Triple("Franceville", "8", "Intérieur"),
-            Triple("Lambaréné", "6", "Ville moyenne"),
-            Triple("Mouila", "10", "Zone rurale"),
-            Triple("Tchibanga", "12", "Zone éloignée"),
-            Triple("Oyem", "9", "Nord"),
-            Triple("Makokou", "15", "Zone forestière"),
-            Triple("Koulamoutou", "11", "Intérieur sud"),
-            Triple("Mitzic", "14", "Nord-est")
-        )
-        coefs.forEachIndexed { i, (nom, pct, note) ->
-            coefficientEloignementRepository.save(
-                CoefficientEloignement(
-                    nom = nom,
-                    pourcentage = BigDecimal(pct),
-                    coefficient = BigDecimal("1.${pct.padStart(2, '0')}"),
-                    note = note,
-                    ordreAffichage = i
-                )
-            )
-        }
-
-        // 2) Corps d'état
+        // 1) Corps d'état
         val corpsEtats = listOf(
             "GO" to "Gros-Œuvre",
             "ELEC" to "Électricité",
@@ -86,7 +57,7 @@ class BaremeSeedService(
             )
         }
 
-        // 3) Fournisseurs
+        // 2) Fournisseurs
         val fournisseursData = listOf(
             "Bernabé BTP" to "M. Kouma – 06 12 34 56 78",
             "Dupont Matériaux" to "Mme Okou – 07 98 76 54 32",
@@ -100,7 +71,7 @@ class BaremeSeedService(
             fournisseurBaremeRepository.save(FournisseurBareme(nom = nom, contact = contact))
         }
 
-        // 4) Matériaux par corps d'état
+        // 3) Matériaux par corps d'état
         val materiauxParCorps = mapOf(
             "GO" to listOf(
                 Triple("REF-GO-001", "Sable 0/4", "m³"),

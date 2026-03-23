@@ -1,8 +1,10 @@
 package com.mikaservices.platform.modules.bareme
 
+import com.mikaservices.platform.modules.bareme.repository.CoefficientEloignementRepository
 import com.mikaservices.platform.modules.bareme.repository.CorpsEtatBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.FournisseurBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.LignePrixBaremeRepository
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -17,6 +19,7 @@ import org.springframework.test.context.ActiveProfiles
 @ActiveProfiles("dev")
 class BaremeDataDumpTest {
 
+    @Autowired private lateinit var coefficientRepo: CoefficientEloignementRepository
     @Autowired private lateinit var corpsEtatRepo: CorpsEtatBaremeRepository
     @Autowired private lateinit var fournisseurRepo: FournisseurBaremeRepository
     @Autowired private lateinit var lignePrixRepo: LignePrixBaremeRepository
@@ -24,7 +27,13 @@ class BaremeDataDumpTest {
     @Test
     fun `dump all bareme data to stdout`() {
         val sb = StringBuilder()
-        sb.appendLine("========== CORPS D'ÉTAT ==========")
+        sb.appendLine("========== COEFFICIENTS D'ÉLOIGNEMENT ==========")
+        coefficientRepo.findAllByOrderByOrdreAffichageAscNomAsc().forEach { c ->
+            sb.appendLine("  id=${c.id} | nom=${c.nom} | pourcentage=${c.pourcentage} | coefficient=${c.coefficient} | note=${c.note}")
+        }
+        sb.appendLine("Total: ${coefficientRepo.count()}")
+
+        sb.appendLine("\n========== CORPS D'ÉTAT ==========")
         corpsEtatRepo.findAllByOrderByOrdreAffichageAsc().forEach { c ->
             sb.appendLine("  id=${c.id} | code=${c.code} | libelle=${c.libelle} | ordre=${c.ordreAffichage}")
         }

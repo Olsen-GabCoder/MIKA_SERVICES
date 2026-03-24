@@ -13,6 +13,7 @@ import com.mikaservices.platform.modules.user.dto.request.UserUpdateRequest
 import com.mikaservices.platform.modules.user.dto.response.LoginHistoryEntryResponse
 import com.mikaservices.platform.modules.user.dto.response.UserForMessagingResponse
 import com.mikaservices.platform.modules.user.dto.response.UserResponse
+import com.mikaservices.platform.modules.user.dto.response.UserSummaryResponse
 import com.mikaservices.platform.modules.user.service.UserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -68,6 +69,12 @@ class UserController(
     fun getCurrentUser(): ResponseEntity<UserResponse> {
         val user = userService.getCurrentUser()
         return ResponseEntity.ok(user)
+    }
+
+    @GetMapping("/chefs-projet")
+    @Operation(summary = "Chefs de projet actifs", description = "Liste pour le filtre « chef de projet » sur la liste des projets (tout utilisateur connecté).")
+    fun listChefsProjet(): ResponseEntity<List<UserSummaryResponse>> {
+        return ResponseEntity.ok(userService.findChefsProjetActifs())
     }
 
     @GetMapping("/me/peers")

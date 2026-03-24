@@ -1,7 +1,9 @@
 package com.mikaservices.platform.modules.projet.service
 
 import com.mikaservices.platform.common.enums.StatutPointBloquant
+import com.mikaservices.platform.common.exception.ForbiddenException
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
+import com.mikaservices.platform.modules.user.service.CurrentUserService
 import com.mikaservices.platform.modules.projet.dto.request.PointBloquantCreateRequest
 import com.mikaservices.platform.modules.projet.dto.request.PointBloquantUpdateRequest
 import com.mikaservices.platform.modules.projet.dto.response.PointBloquantResponse
@@ -20,12 +22,16 @@ import org.springframework.transaction.annotation.Transactional
 class PointBloquantService(
     private val pointBloquantRepository: PointBloquantRepository,
     private val projetService: ProjetService,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val currentUserService: CurrentUserService
 ) {
     private val logger = LoggerFactory.getLogger(PointBloquantService::class.java)
 
     fun create(request: PointBloquantCreateRequest): PointBloquantResponse {
-        val projet = projetService.getProjetById(request.projetId)
+        val projet = projetService.requireCanViewProjet(request.projetId)
+        if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
+            throw ForbiddenException("Vous n'êtes pas autorisé à créer un point bloquant pour ce projet")
+        }
 
         val pointBloquant = PointBloquant(
             projet = projet,
@@ -52,13 +58,16 @@ class PointBloquantService(
 
     @Transactional(readOnly = true)
     fun findByProjetId(projetId: Long, pageable: Pageable): Page<PointBloquantResponse> {
+        projetService.requireCanViewProjet(projetId)
         return pointBloquantRepository.findByProjetId(projetId, pageable)
             .map { PointBloquantMapper.toResponse(it) }
     }
 
     @Transactional(readOnly = true)
     fun findById(id: Long): PointBloquantResponse {
-        return PointBloquantMapper.toResponse(getPointBloquantById(id))
+        val pb = getPointBloquantById(id)
+        projetService.requireCanViewProjet(pb.projet.id!!)
+        return PointBloquantMapper.toResponse(pb)
     }
 
     @Transactional(readOnly = true)
@@ -73,6 +82,10 @@ class PointBloquantService(
 
     fun update(id: Long, request: PointBloquantUpdateRequest): PointBloquantResponse {
         val pb = getPointBloquantById(id)
+        projetService.requireCanViewProjet(pb.projet.id!!)
+        if (!currentUserService.canEditProjet(pb.projet.responsableProjet?.id)) {
+            throw ForbiddenException("Vous n'êtes pas autorisé à modifier ce point bloquant")
+        }
 
         request.titre?.let { pb.titre = it }
         request.description?.let { pb.description = it }
@@ -98,6 +111,10 @@ class PointBloquantService(
 
     fun delete(id: Long) {
         val pb = getPointBloquantById(id)
+        projetService.requireCanViewProjet(pb.projet.id!!)
+        if (!currentUserService.canEditProjet(pb.projet.responsableProjet?.id)) {
+            throw ForbiddenException("Vous n'êtes pas autorisé à supprimer ce point bloquant")
+        }
         pointBloquantRepository.delete(pb)
         logger.info("Point bloquant supprimé: ${pb.titre}")
     }

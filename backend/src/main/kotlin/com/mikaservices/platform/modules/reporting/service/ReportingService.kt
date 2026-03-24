@@ -2,6 +2,7 @@ package com.mikaservices.platform.modules.reporting.service
 
 import com.mikaservices.platform.common.enums.*
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
+import com.mikaservices.platform.modules.projet.service.ProjetService
 import com.mikaservices.platform.modules.budget.repository.DepenseRepository
 import com.mikaservices.platform.modules.materiel.repository.EnginRepository
 import com.mikaservices.platform.modules.materiel.repository.MateriauRepository
@@ -25,6 +26,7 @@ import kotlin.math.round
 @Service
 @Transactional(readOnly = true)
 class ReportingService(
+    private val projetService: ProjetService,
     private val projetRepository: ProjetRepository,
     private val depenseRepository: DepenseRepository,
     private val tacheRepository: TacheRepository,
@@ -52,8 +54,7 @@ class ReportingService(
     }
 
     fun getProjetReport(projetId: Long): ProjetReportResponse {
-        val projet = projetRepository.findById(projetId)
-            .orElseThrow { ResourceNotFoundException("Projet non trouvé avec l'ID: $projetId") }
+        val projet = projetService.requireCanViewProjet(projetId)
 
         val budgetPrevu = projet.montantRevise ?: projet.montantInitial ?: BigDecimal.ZERO
         val depenses = depenseRepository.sumMontantByProjetId(projetId)

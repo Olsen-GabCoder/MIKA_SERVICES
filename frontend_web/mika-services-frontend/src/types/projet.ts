@@ -159,6 +159,8 @@ export interface ProjetSummary {
   dateDebut?: string
   dateFin?: string
   responsableNom?: string
+  /** Aligné API : pour masquer édition / désactivation si non autorisé */
+  responsableProjetId?: number
 }
 
 export interface SousProjet {

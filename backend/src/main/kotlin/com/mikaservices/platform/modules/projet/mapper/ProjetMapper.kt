@@ -89,10 +89,16 @@ object ProjetMapper {
         updatedAt = entity.updatedAt
     )
 
-    fun toSummaryResponse(entity: Projet): ProjetSummaryResponse {
+    /**
+     * @param responsableFromFk Utilisateur chargé par [Projet.responsableProjetId] (liste filtrée) pour éviter
+     * une association Hibernate incorrecte après jointures + distinct.
+     */
+    fun toSummaryResponse(entity: Projet, responsableFromFk: User? = null): ProjetSummaryResponse {
         return try {
             val id = entity.id ?: throw IllegalStateException("Projet sans ID")
             val effectiveType = entity.type ?: TypeProjet.AUTRE
+            val resp = responsableFromFk ?: entity.responsableProjet
+            val respId = entity.responsableProjetId ?: resp?.id
             ProjetSummaryResponse(
                 id = id,
                 numeroMarche = entity.numeroMarche,
@@ -106,11 +112,12 @@ object ProjetMapper {
                 avancementGlobal = entity.avancementGlobal ?: BigDecimal.ZERO,
                 dateDebut = entity.dateDebut,
                 dateFin = entity.dateFin,
-                responsableNom = entity.responsableProjet?.let { 
+                responsableNom = resp?.let {
                     val prenom = it.prenom ?: ""
                     val nom = it.nom ?: ""
                     "$prenom $nom".trim().ifBlank { null }
-                }
+                },
+                responsableProjetId = respId
             )
         } catch (e: Exception) {
             throw IllegalStateException("Erreur lors du mapping du projet ID=${entity.id}: ${e.message}", e)

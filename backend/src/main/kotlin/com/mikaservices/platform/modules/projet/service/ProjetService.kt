@@ -74,6 +74,30 @@ class ProjetService(
 ) {
     private val logger = LoggerFactory.getLogger(ProjetService::class.java)
 
+    /** Charge les utilisateurs responsables à partir de la FK SQL ([Projet.responsableProjetId]), pas de l’association JPA. */
+    private fun responsablesByProjetFk(projets: Collection<Projet>): Map<Long, User> {
+        val fkIds = projets.mapNotNull { it.responsableProjetId }.distinct()
+        if (fkIds.isEmpty()) return emptyMap()
+        return userRepository.findAllById(fkIds).filter { it.id != null }.associateBy { it.id!! }
+    }
+
+    private fun mapPageSummaries(page: Page<Projet>): Page<ProjetSummaryResponse> {
+        val byFk = responsablesByProjetFk(page.content)
+        return page.map { p ->
+            val fk = p.responsableProjetId
+            ProjetMapper.toSummaryResponse(p, fk?.let { byFk[it] })
+        }
+    }
+
+    private fun mapListSummaries(projets: List<Projet>): List<ProjetSummaryResponse> {
+        if (projets.isEmpty()) return emptyList()
+        val byFk = responsablesByProjetFk(projets)
+        return projets.map { p ->
+            val fk = p.responsableProjetId
+            ProjetMapper.toSummaryResponse(p, fk?.let { byFk[it] })
+        }
+    }
+
     private fun computeDelaiMois(dateDebut: LocalDate?, dateFin: LocalDate?): Int? {
         if (dateDebut == null || dateFin == null || dateFin.isBefore(dateDebut)) return null
         val mois = ChronoUnit.MONTHS.between(dateDebut, dateFin).toInt()
@@ -160,7 +184,7 @@ class ProjetService(
     @Transactional(readOnly = true)
     fun findAll(pageable: Pageable): Page<ProjetSummaryResponse> {
         try {
-            return projetRepository.findByActifTrue(pageable).map { ProjetMapper.toSummaryResponse(it) }
+            return mapPageSummaries(projetRepository.findByActifTrue(pageable))
         } catch (e: Exception) {
             logger.error("Erreur lors de la récupération des projets (page ${pageable.pageNumber}, size ${pageable.pageSize}): ${e.message}", e)
             throw e
@@ -169,13 +193,13 @@ class ProjetService(
 
     @Transactional(readOnly = true)
     fun findById(id: Long): ProjetResponse {
-        val projet = getProjetById(id)
+        val projet = requireCanViewProjet(id)
         return ProjetMapper.toResponse(projet)
     }
 
     @Transactional(readOnly = true)
     fun search(search: String, pageable: Pageable): Page<ProjetSummaryResponse> {
-        return projetRepository.search(search, pageable).map { ProjetMapper.toSummaryResponse(it) }
+        return mapPageSummaries(projetRepository.search(search, pageable))
     }
 
     @Transactional(readOnly = true)
@@ -187,7 +211,7 @@ class ProjetService(
         pageable: Pageable
     ): Page<ProjetSummaryResponse> {
         val spec = buildFilterSpec(statut = statut, type = type, clientId = clientId, responsableId = responsableId, search = null)
-        return projetRepository.findAll(spec, pageable).map { ProjetMapper.toSummaryResponse(it) }
+        return mapPageSummaries(projetRepository.findAll(spec, pageable))
     }
 
     @Transactional(readOnly = true)
@@ -200,10 +224,14 @@ class ProjetService(
         pageable: Pageable
     ): Page<ProjetSummaryResponse> {
         val spec = buildFilterSpec(statut = statut, type = type, clientId = clientId, responsableId = responsableId, search = search)
-        return projetRepository.findAll(spec, pageable).map { ProjetMapper.toSummaryResponse(it) }
+        return mapPageSummaries(projetRepository.findAll(spec, pageable))
     }
 
-    @Suppress("UNCHECKED_CAST")
+    /**
+     * Filtres liste/recherche : jointures simples uniquement (pas de FETCH sur client/responsable).
+     * Le double FETCH + distinct + jointure sur `types` pouvait associer le même User à tous les projets.
+     * Le chargement client/responsable se fait au map (lazy, transaction read-only).
+     */
     private fun buildFilterSpec(
         statut: StatutProjet?,
         type: TypeProjet?,
@@ -214,33 +242,15 @@ class ProjetService(
         return Specification { root, query, cb ->
             query.distinct(true)
 
-            val isCountQuery = query.resultType == Long::class.java
-                    || query.resultType == Long::class.javaObjectType
-                    || query.resultType == java.lang.Long::class.java
-
             val predicates = mutableListOf(cb.equal(root.get<Boolean>("actif"), true))
 
-            if (!isCountQuery) {
-                val clientFetch = root.fetch<Projet, Any>("client", JoinType.LEFT)
-                val respFetch = root.fetch<Projet, Any>("responsableProjet", JoinType.LEFT)
-
-                clientId?.let { id ->
-                    val j = clientFetch as jakarta.persistence.criteria.Join<*, *>
-                    predicates.add(cb.equal(j.get<Long>("id"), id))
-                }
-                responsableId?.let { id ->
-                    val j = respFetch as jakarta.persistence.criteria.Join<*, *>
-                    predicates.add(cb.equal(j.get<Long>("id"), id))
-                }
-            } else {
-                clientId?.let { id ->
-                    val j = root.join<Projet, Client>("client", JoinType.LEFT)
-                    predicates.add(cb.equal(j.get<Long>("id"), id))
-                }
-                responsableId?.let { id ->
-                    val j = root.join<Projet, User>("responsableProjet", JoinType.LEFT)
-                    predicates.add(cb.equal(j.get<Long>("id"), id))
-                }
+            clientId?.let { id ->
+                val j = root.join<Projet, Client>("client", JoinType.LEFT)
+                predicates.add(cb.equal(j.get<Long>("id"), id))
+            }
+            responsableId?.let { id ->
+                val j = root.join<Projet, User>("responsableProjet", JoinType.LEFT)
+                predicates.add(cb.equal(j.get<Long>("id"), id))
             }
 
             if (!search.isNullOrBlank()) {
@@ -263,12 +273,13 @@ class ProjetService(
 
     @Transactional(readOnly = true)
     fun findByStatut(statut: StatutProjet): List<ProjetSummaryResponse> {
-        return projetRepository.findByStatutAndActifTrue(statut).map { ProjetMapper.toSummaryResponse(it) }
+        val list = projetRepository.findByStatutAndActifTrue(statut)
+        return mapListSummaries(list)
     }
 
     @Transactional(readOnly = true)
     fun findByResponsable(userId: Long): List<ProjetSummaryResponse> {
-        return projetRepository.findByResponsableProjetId(userId).map { ProjetMapper.toSummaryResponse(it) }
+        return mapListSummaries(projetRepository.findByResponsableProjetId(userId))
     }
 
     @Transactional(readOnly = true)
@@ -277,7 +288,7 @@ class ProjetService(
     }
 
     fun update(id: Long, request: ProjetUpdateRequest): ProjetResponse {
-        val projet = getProjetById(id)
+        val projet = requireCanViewProjet(id)
         if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
             throw ForbiddenException("Vous n'êtes pas autorisé à modifier ce projet")
         }
@@ -341,10 +352,10 @@ class ProjetService(
     }
 
     fun delete(id: Long) {
-        val projet = getProjetById(id)
-        if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
-            throw ForbiddenException("Vous n'êtes pas autorisé à désactiver ce projet")
+        if (!currentUserService.hasGlobalAdminRole()) {
+            throw ForbiddenException("Seuls les administrateurs peuvent désactiver un projet")
         }
+        val projet = getProjetById(id)
         projet.actif = false
         projetRepository.save(projet)
         logger.info("Projet désactivé: ${projet.nom}")
@@ -352,13 +363,16 @@ class ProjetService(
 
     @Transactional(readOnly = true)
     fun getAvancementEtudes(projetId: Long): List<AvancementEtudeProjetResponse> {
-        getProjetById(projetId)
+        requireCanViewProjet(projetId)
         return avancementEtudeProjetRepository.findByProjetIdOrderByPhase(projetId)
             .map { AvancementEtudeProjetMapper.toResponse(it) }
     }
 
     fun saveAvancementEtudes(projetId: Long, requests: List<AvancementEtudeProjetRequest>): List<AvancementEtudeProjetResponse> {
-        val projet = getProjetById(projetId)
+        val projet = requireCanViewProjet(projetId)
+        if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
+            throw ForbiddenException("Vous n'êtes pas autorisé à modifier l'avancement des études de ce projet")
+        }
         val existing = avancementEtudeProjetRepository.findByProjetIdOrderByPhase(projetId).associateBy { it.phase }
         requests.forEach { req ->
             val entity = existing[req.phase] ?: AvancementEtudeProjet(projet = projet, phase = req.phase)
@@ -373,13 +387,16 @@ class ProjetService(
 
     @Transactional(readOnly = true)
     fun getSuiviMensuel(projetId: Long): List<CAPrevisionnelRealiseResponse> {
-        getProjetById(projetId)
+        requireCanViewProjet(projetId)
         return caPrevisionnelRealiseRepository.findByProjetIdOrderByAnneeAscMoisAsc(projetId)
             .map { CAPrevisionnelRealiseMapper.toResponse(it) }
     }
 
     fun saveSuiviMensuel(projetId: Long, requests: List<CAPrevisionnelRealiseRequest>): List<CAPrevisionnelRealiseResponse> {
-        val projet = getProjetById(projetId)
+        val projet = requireCanViewProjet(projetId)
+        if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
+            throw ForbiddenException("Vous n'êtes pas autorisé à modifier le suivi mensuel de ce projet")
+        }
         val existing = caPrevisionnelRealiseRepository.findByProjetIdOrderByAnneeAscMoisAsc(projetId)
             .associateBy { "${it.mois}-${it.annee}" }
         var cumulRealise = java.math.BigDecimal.ZERO
@@ -411,7 +428,7 @@ class ProjetService(
      * Le mode AUTO conserve l'API historique saveSuiviMensuel (upsert sans suppression).
      */
     fun replaceSuiviMensuel(projetId: Long, requests: List<CAPrevisionnelRealiseRequest>): List<CAPrevisionnelRealiseResponse> {
-        getProjetById(projetId)
+        requireCanViewProjet(projetId)
         val requestKeys = requests.map { "${it.mois}-${it.annee}" }.toSet()
         val existing = caPrevisionnelRealiseRepository.findByProjetIdOrderByAnneeAscMoisAsc(projetId)
         existing.forEach { e ->
@@ -425,12 +442,12 @@ class ProjetService(
 
     @Transactional(readOnly = true)
     fun getPrevisions(projetId: Long): List<PrevisionResponse> {
-        getProjetById(projetId)
+        requireCanViewProjet(projetId)
         return previsionRepository.findByProjetId(projetId).map { PrevisionMapper.toResponse(it) }
     }
 
     fun createPrevision(projetId: Long, request: PrevisionCreateRequest): PrevisionResponse {
-        val projet = getProjetById(projetId)
+        val projet = requireCanViewProjet(projetId)
         if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
             throw ForbiddenException("Seul le chef de projet peut ajouter des prévisions pour ce projet.")
         }
@@ -473,7 +490,7 @@ class ProjetService(
     }
 
     fun updatePrevision(projetId: Long, previsionId: Long, request: PrevisionUpdateRequest): PrevisionResponse {
-        val projet = getProjetById(projetId)
+        val projet = requireCanViewProjet(projetId)
         if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
             throw ForbiddenException("Seul le chef de projet peut modifier les prévisions de ce projet.")
         }
@@ -492,7 +509,7 @@ class ProjetService(
     }
 
     fun deletePrevision(projetId: Long, previsionId: Long) {
-        val projet = getProjetById(projetId)
+        val projet = requireCanViewProjet(projetId)
         if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
             throw ForbiddenException("Seul le chef de projet peut supprimer les prévisions de ce projet.")
         }
@@ -507,9 +524,21 @@ class ProjetService(
             .orElseThrow { ResourceNotFoundException("Projet non trouvé avec l'ID: $id") }
     }
 
+    private fun assertCanViewProjet(projet: Projet) {
+        if (!currentUserService.canViewProjet(projet.responsableProjet?.id)) {
+            throw ForbiddenException("Vous n'êtes pas autorisé à consulter ce projet")
+        }
+    }
+
+    fun requireCanViewProjet(id: Long): Projet {
+        val projet = getProjetById(id)
+        assertCanViewProjet(projet)
+        return projet
+    }
+
     /** Historique du projet : périodes passées (semaines) avec prévisions, points bloquants et résumés PV. */
     fun getHistorique(projetId: Long, maxSemaines: Int = 52): ProjetHistoriqueResponse {
-        val projet = getProjetById(projetId)
+        val projet = requireCanViewProjet(projetId)
         val now = LocalDate.now()
         val weekFields = WeekFields.of(Locale.getDefault())
         val currentSemaine = now.get(weekFields.weekOfWeekBasedYear()).toInt()

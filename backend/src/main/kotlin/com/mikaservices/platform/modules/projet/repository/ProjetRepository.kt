@@ -26,6 +26,9 @@ interface ProjetRepository : JpaRepository<Projet, Long>, JpaSpecificationExecut
     @EntityGraph(attributePaths = ["client", "responsableProjet"])
     fun findByStatutAndActifTrue(statut: StatutProjet): List<Projet>
 
+    @EntityGraph(attributePaths = ["client", "responsableProjet"])
+    fun findByStatutAndActifTrueAndResponsableProjetId(statut: StatutProjet, responsableProjetId: Long): List<Projet>
+
     fun findByType(type: TypeProjet): List<Projet>
     fun findByClientId(clientId: Long): List<Projet>
     fun findByResponsableProjetId(userId: Long): List<Projet>
@@ -38,4 +41,13 @@ interface ProjetRepository : JpaRepository<Projet, Long>, JpaSpecificationExecut
 
     @Query("SELECT COUNT(p) FROM Projet p WHERE p.statut = :statut AND p.actif = true")
     fun countByStatut(@Param("statut") statut: StatutProjet): Long
+
+    @Query(
+        "SELECT COUNT(p) FROM Projet p WHERE p.statut = :statut AND p.actif = true " +
+            "AND p.responsableProjet.id = :responsableId"
+    )
+    fun countByStatutAndActifTrueAndResponsableProjetId(
+        @Param("statut") statut: StatutProjet,
+        @Param("responsableId") responsableId: Long
+    ): Long
 }

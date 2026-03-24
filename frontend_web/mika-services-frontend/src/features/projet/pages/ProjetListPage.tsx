@@ -11,9 +11,14 @@ import { getProjetTypes } from '@/types/projet'
 import type { ProjetListFilters, ProjetSortKey, SortDirection } from '@/api/projetApi'
 import type { ProjetSummary, StatutProjet, TypeProjet } from '@/types/projet'
 import { userApi } from '@/api/userApi'
-import type { User } from '@/types'
+import type { UserSummary } from '@/types'
 import { useFormatNumber } from '@/hooks/useFormatNumber'
 import { getEffectiveConnectionQuality, AUTO_REFRESH_INTERVAL_MS } from '@/utils/connectionQualityPreferences'
+import {
+  canDeleteProjetEffective,
+  canEditProjetEffective,
+  hasGlobalAdminRoleEffective,
+} from '@/utils/authRoles'
 
 const STATUT_COLORS: Record<string, string> = {
   EN_ATTENTE: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
@@ -53,12 +58,13 @@ export const ProjetListPage = () => {
   const confirm = useConfirm()
   const { projets, totalElements, totalPages, currentPage, loading, error, clients } = useAppSelector((state) => state.projet)
   const currentUser = useAppSelector((state) => state.auth.user)
+  const accessToken = useAppSelector((state) => state.auth.accessToken)
   const pageSize = useAppSelector((state) => state.ui.itemsPerPage)
   const { autoRefreshListsEnabled, connectionQuality } = useAppSelector((state) => state.ui)
-  const isAdmin = currentUser?.roles?.some((r) => r.code === 'ADMIN' || r.code === 'SUPER_ADMIN')
+  const isAdmin = hasGlobalAdminRoleEffective(currentUser, accessToken)
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState<ProjetListFilters>({})
-  const [users, setUsers] = useState<User[]>([])
+  const [chefUsers, setChefUsers] = useState<UserSummary[]>([])
   const [sortBy, setSortBy] = useState<ProjetSortKey | ''>('nom')
   const [sortDir, setSortDir] = useState<SortDirection>('asc')
 
@@ -111,19 +117,23 @@ export const ProjetListPage = () => {
     [t]
   )
 
-  const filterParams = () => ({
-    ...(filters.statut && { statut: filters.statut }),
-    ...(filters.type && { type: filters.type }),
-    ...(filters.clientId != null && { clientId: filters.clientId }),
-    ...(filters.responsableId != null && { responsableId: filters.responsableId }),
-  })
+  /** Filtres API : liste complète pour tous ; filtre chef optionnel. */
+  const buildListQueryFilters = useCallback((): ProjetListFilters => {
+    const out: ProjetListFilters = {
+      ...(filters.statut && { statut: filters.statut }),
+      ...(filters.type && { type: filters.type }),
+      ...(filters.clientId != null && { clientId: filters.clientId }),
+      ...(filters.responsableId != null && { responsableId: filters.responsableId }),
+    }
+    return out
+  }, [filters.statut, filters.type, filters.clientId, filters.responsableId])
 
   const sortParams = () =>
     sortBy ? { sortBy: sortBy as ProjetSortKey, sortDir } : {}
 
   const refetchListRef = useRef<() => void>(() => {})
   refetchListRef.current = () => {
-    const params = { page: currentPage, size: pageSize, ...filterParams(), ...sortParams() }
+    const params = { page: currentPage, size: pageSize, ...buildListQueryFilters(), ...sortParams() }
     if (searchQuery.trim()) dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
     else dispatch(fetchProjets(params))
   }
@@ -139,7 +149,7 @@ export const ProjetListPage = () => {
     const nextDir: SortDirection = sortBy === column && sortDir === 'asc' ? 'desc' : 'asc'
     setSortBy(column)
     setSortDir(nextDir)
-    const params = { page: 0, size: pageSize, ...filterParams(), sortBy: column, sortDir: nextDir }
+    const params = { page: 0, size: pageSize, ...buildListQueryFilters(), sortBy: column, sortDir: nextDir }
     if (searchQuery.trim()) dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
     else dispatch(fetchProjets(params))
   }
@@ -169,13 +179,14 @@ export const ProjetListPage = () => {
       setSortBy((fromListState.sortBy as ProjetSortKey) ?? '')
       setSortDir(fromListState.sortDir ?? 'asc')
       dispatch(setItemsPerPage(fromListState.size ?? 20))
+      const restored = fromListState.filters ?? {}
       const params = {
         page: fromListState.page ?? 0,
         size: fromListState.size ?? 20,
-        ...(fromListState.filters?.statut && { statut: fromListState.filters.statut }),
-        ...(fromListState.filters?.type && { type: fromListState.filters.type }),
-        ...(fromListState.filters?.clientId != null && { clientId: fromListState.filters.clientId }),
-        ...(fromListState.filters?.responsableId != null && { responsableId: fromListState.filters.responsableId }),
+        ...(restored.statut && { statut: restored.statut }),
+        ...(restored.type && { type: restored.type }),
+        ...(restored.clientId != null && { clientId: restored.clientId }),
+        ...(restored.responsableId != null && { responsableId: restored.responsableId }),
         ...(fromListState.sortBy && fromListState.sortDir && { sortBy: fromListState.sortBy, sortDir: fromListState.sortDir }),
       }
       if (fromListState.searchQuery?.trim()) {
@@ -192,23 +203,20 @@ export const ProjetListPage = () => {
     if (fromListState) return
     dispatch(fetchProjets({ page: 0, size: pageSize, ...sortParams() }))
     dispatch(fetchClients({ page: 0, size: 200 }))
-    if (isAdmin) {
-      userApi.getAll({ page: 0, size: 300, actif: true })
-        .then((r) => setUsers(r.content ?? []))
-        .catch(() => setUsers([]))
-    } else {
-      setUsers([])
-    }
-  }, [dispatch, isAdmin])
+    userApi
+      .getChefsProjet()
+      .then((r) => setChefUsers(r ?? []))
+      .catch(() => setChefUsers([]))
+  }, [dispatch, pageSize, sortBy, sortDir, location.state])
 
   const applyFilters = useCallback(() => {
-    const params = { page: 0, size: pageSize, ...filterParams(), ...sortParams() }
+    const params = { page: 0, size: pageSize, ...buildListQueryFilters(), ...sortParams() }
     if (searchQuery.trim()) {
       dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
     } else {
       dispatch(fetchProjets(params))
     }
-  }, [dispatch, searchQuery, filters, sortBy, sortDir, pageSize])
+  }, [dispatch, searchQuery, buildListQueryFilters, sortBy, sortDir, pageSize])
 
   const resetFilters = useCallback(() => {
     setFilters({})
@@ -219,7 +227,7 @@ export const ProjetListPage = () => {
   }, [dispatch, pageSize])
 
   const handleSearch = () => {
-    const params = { page: 0, size: pageSize, ...filterParams(), ...sortParams() }
+    const params = { page: 0, size: pageSize, ...buildListQueryFilters(), ...sortParams() }
     if (searchQuery.trim()) {
       dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
     } else {
@@ -229,7 +237,7 @@ export const ProjetListPage = () => {
 
   const handlePageChange = (page: number) => {
     if (page < 0 || (totalPages > 0 && page >= totalPages)) return
-    const params = { page, size: pageSize, ...filterParams(), ...sortParams() }
+    const params = { page, size: pageSize, ...buildListQueryFilters(), ...sortParams() }
     if (searchQuery.trim()) {
       dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
     } else {
@@ -240,7 +248,7 @@ export const ProjetListPage = () => {
   const handleDelete = async (id: number, nom: string) => {
     if (await confirm({ messageKey: 'confirm.deactivateProject', messageParams: { name: nom } })) {
       await dispatch(deleteProjet(id))
-      const params = { page: currentPage, size: pageSize, ...filterParams(), ...sortParams() }
+      const params = { page: currentPage, size: pageSize, ...buildListQueryFilters(), ...sortParams() }
       if (searchQuery.trim()) dispatch(searchProjets({ q: searchQuery, ...params }))
       else dispatch(fetchProjets(params))
     }
@@ -310,7 +318,7 @@ export const ProjetListPage = () => {
     URL.revokeObjectURL(url)
   }, [projets, t, STATUT_LABELS, getTypeDisplay])
 
-  const listSubtitle = isAdmin ? t('list.subtitleAll') : t('list.subtitleMine')
+  const listSubtitle = t('list.subtitleAll')
 
   return (
     <PageContainer size="full" className="h-full flex flex-col min-h-0 bg-gray-50/80 dark:bg-gray-900/80">
@@ -383,7 +391,7 @@ export const ProjetListPage = () => {
             <button
               onClick={() => {
                 setSearchQuery('')
-                dispatch(fetchProjets({ page: 0, size: pageSize, ...filterParams(), ...sortParams() }))
+                dispatch(fetchProjets({ page: 0, size: pageSize, ...buildListQueryFilters(), ...sortParams() }))
               }}
               className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2.5 rounded-lg font-medium transition-all"
             >
@@ -443,8 +451,10 @@ export const ProjetListPage = () => {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
               >
                 <option value="">{t('list.all')}</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>{u.nom} {u.prenom ?? ''}</option>
+                {chefUsers.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.nom} {u.prenom ?? ''}
+                  </option>
                 ))}
               </select>
             </div>
@@ -614,30 +624,39 @@ export const ProjetListPage = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{projet.responsableNom || '—'}</td>
                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => navigate(`/projets/${projet.id}/edit`)}
-                          className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors"
-                          title={t('list.edit')}
-                          aria-label={t('list.editProject', { name: projet.nom })}
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                          {t('list.edit')}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(projet.id, projet.nom)}
-                          className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium transition-colors"
-                          title={t('list.delete')}
-                          aria-label={t('list.deleteProject', { name: projet.nom })}
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                          {t('list.delete')}
-                        </button>
-                      </div>
+                      {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) ||
+                      canDeleteProjetEffective(currentUser, accessToken) ? (
+                        <div className="flex items-center justify-center gap-2">
+                          {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) && (
+                            <button
+                              onClick={() => navigate(`/projets/${projet.id}/edit`)}
+                              className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors"
+                              title={t('list.edit')}
+                              aria-label={t('list.editProject', { name: projet.nom })}
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              {t('list.edit')}
+                            </button>
+                          )}
+                          {canDeleteProjetEffective(currentUser, accessToken) && (
+                            <button
+                              onClick={() => handleDelete(projet.id, projet.nom)}
+                              className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium transition-colors"
+                              title={t('list.delete')}
+                              aria-label={t('list.deleteProject', { name: projet.nom })}
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              {t('list.delete')}
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-500 text-sm text-center block">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -678,24 +697,31 @@ export const ProjetListPage = () => {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('list.managerShort')} : {projet.responsableNom || '—'}</p>
                   </div>
                 </div>
-                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-600 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/projets/${projet.id}/edit`)}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
-                    aria-label={t('list.editProject', { name: projet.nom })}
-                  >
-                    {t('list.edit')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(projet.id, projet.nom)}
-                    className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
-                    aria-label={t('list.deleteProject', { name: projet.nom })}
-                  >
-                    {t('list.delete')}
-                  </button>
-                </div>
+                {(canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) ||
+                  canDeleteProjetEffective(currentUser, accessToken)) && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-600 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                    {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) && (
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/projets/${projet.id}/edit`)}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                        aria-label={t('list.editProject', { name: projet.nom })}
+                      >
+                        {t('list.edit')}
+                      </button>
+                    )}
+                    {canDeleteProjetEffective(currentUser, accessToken) && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(projet.id, projet.nom)}
+                        className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
+                        aria-label={t('list.deleteProject', { name: projet.nom })}
+                      >
+                        {t('list.delete')}
+                      </button>
+                    )}
+                  </div>
+                )}
               </article>
             ))}
           </div>
@@ -717,7 +743,7 @@ export const ProjetListPage = () => {
                   onChange={(e) => {
                     const newSize = Number(e.target.value)
                     dispatch(setItemsPerPage(newSize))
-                    const params = { page: 0, size: newSize, ...filterParams(), ...sortParams() }
+                    const params = { page: 0, size: newSize, ...buildListQueryFilters(), ...sortParams() }
                     if (searchQuery.trim()) dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
                     else dispatch(fetchProjets(params))
                   }}

@@ -159,6 +159,10 @@ class Projet(
     @JoinColumn(name = "responsable_projet_id")
     var responsableProjet: User? = null,
 
+    /** Même colonne que [responsableProjet] : valeur FK brute pour mapper la liste sans dépendre de l’association (jointures Criteria). */
+    @Column(name = "responsable_projet_id", insertable = false, updatable = false)
+    var responsableProjetId: Long? = null,
+
     @Column(name = "partenaire_principal", length = 200)
     var partenairePrincipal: String? = null,
 

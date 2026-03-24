@@ -64,7 +64,9 @@ data class ProjetSummaryResponse(
     val avancementGlobal: BigDecimal,
     val dateDebut: LocalDate?,
     val dateFin: LocalDate?,
-    val responsableNom: String?
+    val responsableNom: String?,
+    /** ID du chef de projet (pour droits UI liste) */
+    val responsableProjetId: Long? = null
 )
 
 data class ProjetUserSummary(

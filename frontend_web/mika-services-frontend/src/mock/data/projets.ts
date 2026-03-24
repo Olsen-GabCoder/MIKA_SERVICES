@@ -1,11 +1,12 @@
-import type { Projet, ProjetSummary, PageResponse, PointBloquant, Prevision, AvancementEtudeProjet, PhaseEtude } from '@/types/projet'
+import type { Projet, ProjetSummary, PageResponse, PointBloquant, Prevision, AvancementEtudeProjet, PhaseEtude, StatutProjet, TypeProjet } from '@/types/projet'
+import { getProjetTypes } from '@/types/projet'
 
 export const mockProjetSummaries: ProjetSummary[] = [
-  { id: 1, nom: 'Réhabilitation RN1 - Section Libreville / Owendo', type: 'VOIRIE', statut: 'EN_COURS', clientNom: 'Ministère des Travaux Publics', montantHT: 120_000_000, avancementGlobal: 58, dateDebut: '2024-01-15', dateFin: '2025-06-30', responsableNom: 'Jean Mbenda' },
-  { id: 2, nom: 'Assainissement quartier Akébé', type: 'ASSAINISSEMENT', statut: 'EN_COURS', clientNom: 'Ville de Libreville', montantHT: 85_000_000, avancementGlobal: 67, dateDebut: '2024-03-01', dateFin: '2025-02-28', responsableNom: 'Marie Okoué' },
-  { id: 3, nom: 'Construction pont sur la Komo', type: 'PONT', statut: 'PLANIFIE', clientNom: 'État gabonais', montantHT: 250_000_000, avancementGlobal: 0, dateDebut: '2025-01-01', dateFin: '2026-12-31', responsableNom: 'Paul Mba' },
-  { id: 4, nom: 'Voirie secondaire Port-Gentil', type: 'VOIRIE', statut: 'TERMINE', clientNom: 'Région Ogooué-Maritime', montantHT: 45_000_000, avancementGlobal: 100, dateDebut: '2023-06-01', dateFin: '2024-05-15', responsableNom: 'Anne Nguema' },
-  { id: 5, nom: 'Terrassement zone industrielle', type: 'TERRASSEMENT', statut: 'TERMINE', clientNom: 'GSEZ', montantHT: 32_000_000, avancementGlobal: 100, dateDebut: '2023-09-01', dateFin: '2024-04-30', responsableNom: 'Pierre Ndong' },
+  { id: 1, nom: 'Réhabilitation RN1 - Section Libreville / Owendo', type: 'VOIRIE', statut: 'EN_COURS', clientNom: 'Ministère des Travaux Publics', montantHT: 120_000_000, avancementGlobal: 58, dateDebut: '2024-01-15', dateFin: '2025-06-30', responsableNom: 'Jean Mbenda', responsableProjetId: 101 },
+  { id: 2, nom: 'Assainissement quartier Akébé', type: 'ASSAINISSEMENT', statut: 'EN_COURS', clientNom: 'Ville de Libreville', montantHT: 85_000_000, avancementGlobal: 67, dateDebut: '2024-03-01', dateFin: '2025-02-28', responsableNom: 'Marie Okoué', responsableProjetId: 102 },
+  { id: 3, nom: 'Construction pont sur la Komo', type: 'PONT', statut: 'PLANIFIE', clientNom: 'État gabonais', montantHT: 250_000_000, avancementGlobal: 0, dateDebut: '2025-01-01', dateFin: '2026-12-31', responsableNom: 'Paul Mba', responsableProjetId: 103 },
+  { id: 4, nom: 'Voirie secondaire Port-Gentil', type: 'VOIRIE', statut: 'TERMINE', clientNom: 'Région Ogooué-Maritime', montantHT: 45_000_000, avancementGlobal: 100, dateDebut: '2023-06-01', dateFin: '2024-05-15', responsableNom: 'Anne Nguema', responsableProjetId: 104 },
+  { id: 5, nom: 'Terrassement zone industrielle', type: 'TERRASSEMENT', statut: 'TERMINE', clientNom: 'GSEZ', montantHT: 32_000_000, avancementGlobal: 100, dateDebut: '2023-09-01', dateFin: '2024-04-30', responsableNom: 'Pierre Ndong', responsableProjetId: 105 },
 ]
 
 function pageResponse<T>(content: T[], page = 0, size = 20): PageResponse<T> {
@@ -18,6 +19,39 @@ function pageResponse<T>(content: T[], page = 0, size = 20): PageResponse<T> {
 
 export function getMockProjetsPage(page = 0, size = 20): PageResponse<ProjetSummary> {
   return pageResponse(mockProjetSummaries, page, size)
+}
+
+export interface MockProjetListFilters {
+  statut?: StatutProjet
+  type?: TypeProjet
+  responsableId?: number
+}
+
+/** Recherche texte + filtres optionnels sur les données mock (aligné usage liste / search API). */
+export function getMockProjetsSearchPage(
+  q: string,
+  page = 0,
+  size = 20,
+  filters?: MockProjetListFilters
+): PageResponse<ProjetSummary> {
+  const needle = q.trim().toLowerCase()
+  let list = [...mockProjetSummaries]
+  if (needle) {
+    list = list.filter(
+      (p) =>
+        p.nom.toLowerCase().includes(needle) ||
+        (p.clientNom?.toLowerCase().includes(needle) ?? false) ||
+        String(p.id).includes(needle)
+    )
+  }
+  if (filters?.statut) list = list.filter((p) => p.statut === filters.statut)
+  if (filters?.type) {
+    list = list.filter((p) => getProjetTypes(p).includes(filters.type!))
+  }
+  if (filters?.responsableId != null) {
+    list = list.filter((p) => p.responsableProjetId === filters.responsableId)
+  }
+  return pageResponse(list, page, size)
 }
 
 const PHASES: PhaseEtude[] = ['APS', 'APD', 'EXE', 'GEOTECHNIQUE', 'HYDRAULIQUE', 'EIES', 'PAES']

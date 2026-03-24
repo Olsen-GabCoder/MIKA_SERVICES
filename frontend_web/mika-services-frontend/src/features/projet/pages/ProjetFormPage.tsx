@@ -11,6 +11,7 @@ import { projetApi, pointBloquantApi } from '@/api/projetApi'
 import type { User } from '@/types'
 import type { ProjetCreateRequest, ProjetUpdateRequest, TypeProjet, StatutProjet, SourceFinancement, TypeClient, PhaseEtude, EtatValidationEtude, PointBloquant, Prevision, Priorite, StatutPointBloquant, TypePrevision, ModeSuiviMensuel } from '@/types/projet'
 import { useFormatNumber } from '@/hooks/useFormatNumber'
+import { canEditProjetEffective, hasGlobalAdminRoleEffective } from '@/utils/authRoles'
 
 /** Types de projet : chaque type est distinct (sans regroupement) + type personnalisé */
 const TYPE_OPTIONS: { value: TypeProjet; label: string }[] = [
@@ -451,14 +452,21 @@ export const ProjetFormPage = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const currentUser = useAppSelector((state) => state.auth.user)
+  const accessToken = useAppSelector((state) => state.auth.accessToken)
   const { projetDetail, clients, loading } = useAppSelector((state) => state.projet)
   const [error, setError] = useState<string | null>(null)
   const [dateErrors, setDateErrors] = useState<{ dateDebut?: string; dateFin?: string; dateDebutReel?: string; dateFinReelle?: string }>({})
   const [users, setUsers] = useState<User[]>([])
 
-  const isAdmin = currentUser?.roles?.some((r) => r.code === 'ADMIN' || r.code === 'SUPER_ADMIN') ?? false
-  const isChefDeProjet = !isEdit || Boolean(projetDetail?.responsableProjet && currentUser?.id === projetDetail.responsableProjet.id)
-  const readOnly = isEdit && !isChefDeProjet && !isAdmin
+  const canEditExisting =
+    !isEdit ||
+    hasGlobalAdminRoleEffective(currentUser, accessToken) ||
+    canEditProjetEffective(
+      currentUser,
+      accessToken,
+      projetDetail?.responsableProjet?.id ?? projetDetail?.responsableProjetId
+    )
+  const readOnly = isEdit && !canEditExisting
 
   const [form, setForm] = useState<ProjetCreateRequest>({
     nom: '',

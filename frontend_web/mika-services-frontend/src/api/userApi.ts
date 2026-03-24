@@ -1,6 +1,6 @@
 import apiClient from './axios'
 import { API_ENDPOINTS } from '@/constants/api'
-import type { User } from '@/types'
+import type { User, UserSummary } from '@/types'
 
 export interface AuditLogEntry {
   id: number
@@ -206,6 +206,12 @@ export const userApi = {
   getMe: async (): Promise<User> => {
     const response = await apiClient.get<User>('/users/me')
     return response.data
+  },
+
+  /** Chefs de projet actifs (filtre liste projets). Accessible à tout utilisateur connecté. */
+  getChefsProjet: async (): Promise<UserSummary[]> => {
+    const response = await apiClient.get<UserSummary[]>(`${API_ENDPOINTS.USERS.BASE}/chefs-projet`)
+    return response.data ?? []
   },
 
   /** Liste des autres utilisateurs (destinataires messagerie). Accessible à tout utilisateur connecté. */

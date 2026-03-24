@@ -42,9 +42,7 @@
   },
   "dashboard": {
     "loading": "Loading dashboard…",
-    "greeting": "Hello, {{name}}",
     "subtitle": "Dashboard — MIKA SERVICES",
-    "userFallback": "User",
     "notificationsUnread_one": "{{count}} unread notification",
     "notificationsUnread_other": "{{count}} unread notifications",
     "messagesUnread_one": "{{count}} unread message",
@@ -102,6 +100,10 @@
   "db": {
     "header": "Dashboard",
     "subtitle": "Strategic overview — real-time indicators",
+    "greetingMale": "Hello, Mr. {{name}}",
+    "greetingFemale": "Hello, Ms. {{name}}",
+    "greetingNeutral": "Hello, {{name}}",
+    "userFallback": "User",
     "seeMore": "See details →",
     "seeAll": "See all",
     "quickAccess": "Quick Access",

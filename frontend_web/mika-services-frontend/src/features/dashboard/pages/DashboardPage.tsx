@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { fetchGlobalDashboard, fetchProjetReport, clearProjetReport } from '@/store/slices/reportingSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
-import { fetchNotificationsNonLuesCount, fetchMessagesNonLusCount } from '@/store/slices/communicationSlice'
+import { fetchNotificationsNonLuesCount } from '@/store/slices/communicationSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
 import MeteoWidget from '../components/MeteoWidget'
 import {
@@ -100,16 +100,37 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const { dashboard, projetReport, loading } = useAppSelector(s => s.reporting)
   const user = useAppSelector((s: any) => s.auth.user)
-  const { messagesNonLusCount, notificationsNonLuesCount } = useAppSelector(s => s.communication)
+  const { notificationsNonLuesCount } = useAppSelector(s => s.communication)
   const projets = useAppSelector(s => s.projet.projets)
   const [selectedProjetId, setSelectedProjetId] = useState<number | null>(null)
+
+  const { dashboardGreetingKey, dashboardGreetingName } = useMemo(() => {
+    const fb = t('db.userFallback')
+    if (!user) {
+      return { dashboardGreetingKey: 'db.greetingNeutral' as const, dashboardGreetingName: fb }
+    }
+    const prenom = user.prenom?.trim()
+    const nom = user.nom?.trim()
+    const hasPersonal = !!(prenom || nom)
+    const neutralName = prenom || nom || fb
+    const formalName = nom || prenom || fb
+    if (!hasPersonal) {
+      return { dashboardGreetingKey: 'db.greetingNeutral' as const, dashboardGreetingName: neutralName }
+    }
+    if (user.sexe === 'HOMME') {
+      return { dashboardGreetingKey: 'db.greetingMale' as const, dashboardGreetingName: formalName }
+    }
+    if (user.sexe === 'FEMME') {
+      return { dashboardGreetingKey: 'db.greetingFemale' as const, dashboardGreetingName: formalName }
+    }
+    return { dashboardGreetingKey: 'db.greetingNeutral' as const, dashboardGreetingName: neutralName }
+  }, [user, t])
 
   useEffect(() => {
     dispatch(fetchGlobalDashboard())
     dispatch(fetchProjets({ page: 0, size: 200 }))
     if (user?.id) {
       dispatch(fetchNotificationsNonLuesCount(user.id))
-      dispatch(fetchMessagesNonLusCount(user.id))
     }
   }, [dispatch, user?.id])
 
@@ -255,29 +276,22 @@ export default function DashboardPage() {
                 <span className="dashboard-title-shimmer">{t('db.header')}</span>
               </h1>
             </div>
-            <p className="text-white/80 text-sm ml-4">{t('db.subtitle')}</p>
+            <p className="text-white text-sm ml-4 font-medium opacity-95">{t('db.subtitle')}</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {notificationsNonLuesCount > 0 && user?.inAppNotificationsEnabled !== false && (
               <button onClick={() => navigate('/notifications')}
-                className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-3 py-2 rounded-xl hover:bg-white/20 transition text-xs font-medium">
+                className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-3 py-2 rounded-xl hover:bg-white/20 transition text-xs font-medium text-white">
                 <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
                 {t('dashboard.notificationsUnread', { count: notificationsNonLuesCount })}
               </button>
             )}
-            {messagesNonLusCount > 0 && (
-              <button onClick={() => navigate('/messagerie')}
-                className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-3 py-2 rounded-xl hover:bg-white/20 transition text-xs font-medium">
-                <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                {t('dashboard.messagesUnread', { count: messagesNonLusCount })}
-              </button>
-            )}
-            <span className="hidden sm:flex items-center gap-1.5 text-white/50 text-xs">
-              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold">
-                {user?.prenom?.[0] ?? '?'}
+            <span className="inline-flex items-center gap-2 text-white text-sm font-semibold drop-shadow-sm">
+              <span className="w-7 h-7 shrink-0 rounded-full bg-white/25 border border-white/40 flex items-center justify-center text-xs font-bold text-white">
+                {dashboardGreetingName.charAt(0).toUpperCase()}
               </span>
-              {t('dashboard.greeting', { name: user?.prenom || '' })}
+              {t(dashboardGreetingKey, { name: dashboardGreetingName })}
             </span>
           </div>
         </div>

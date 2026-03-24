@@ -49,9 +49,7 @@
   },
   "dashboard": {
     "loading": "Chargement du tableau de bord…",
-    "greeting": "Bonjour, {{name}}",
     "subtitle": "Tableau de bord — MIKA SERVICES",
-    "userFallback": "Utilisateur",
     "notificationsUnread_one": "{{count}} notification non lue",
     "notificationsUnread_other": "{{count}} notifications non lues",
     "messagesUnread_one": "{{count}} message non lu",
@@ -109,6 +107,10 @@
   "db": {
     "header": "Tableau de Bord",
     "subtitle": "Vue d'ensemble stratégique — indicateurs en temps réel",
+    "greetingMale": "Bonjour, M. {{name}}",
+    "greetingFemale": "Bonjour, Mme {{name}}",
+    "greetingNeutral": "Bonjour, {{name}}",
+    "userFallback": "Utilisateur",
     "seeMore": "Voir les détails →",
     "seeAll": "Voir tout",
     "quickAccess": "Accès rapide",

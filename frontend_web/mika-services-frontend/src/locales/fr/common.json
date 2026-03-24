@@ -107,9 +107,8 @@
   "db": {
     "header": "Tableau de Bord",
     "subtitle": "Vue d'ensemble stratégique — indicateurs en temps réel",
-    "greetingMale": "Bonjour, M. {{name}}",
-    "greetingFemale": "Bonjour, Mme {{name}}",
-    "greetingUnknownSex": "Bonjour, M./Mme {{name}}",
+    "greetingMale": "Bonjour, Monsieur {{name}}",
+    "greetingFemale": "Bonjour, Madame {{name}}",
     "greetingNeutral": "Bonjour, {{name}}",
     "userFallback": "Utilisateur",
     "seeMore": "Voir les détails →",

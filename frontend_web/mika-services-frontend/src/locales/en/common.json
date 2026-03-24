@@ -102,7 +102,6 @@
     "subtitle": "Strategic overview — real-time indicators",
     "greetingMale": "Hello, Mr. {{name}}",
     "greetingFemale": "Hello, Ms. {{name}}",
-    "greetingUnknownSex": "Hello, Mr./Ms. {{name}}",
     "greetingNeutral": "Hello, {{name}}",
     "userFallback": "User",
     "seeMore": "See details →",

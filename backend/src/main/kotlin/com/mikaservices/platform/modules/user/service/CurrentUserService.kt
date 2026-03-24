@@ -55,4 +55,13 @@ class CurrentUserService(
         if (user.roles.none { it.code == "CHEF_PROJET" }) return false
         return user.id != null && responsableProjetId != null && user.id == responsableProjetId
     }
+
+    /**
+     * Consultation d’un projet : tout utilisateur authentifié peut consulter n’importe quel projet
+     * (liste complète, détail, exports en lecture). Les écritures restent sur [canEditProjet] / admin pour suppression.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun canViewProjet(responsableProjetId: Long?): Boolean {
+        return getCurrentUser() != null
+    }
 }

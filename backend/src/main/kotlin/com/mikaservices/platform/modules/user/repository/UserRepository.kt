@@ -1,6 +1,7 @@
 package com.mikaservices.platform.modules.user.repository
 
 import com.mikaservices.platform.modules.user.entity.User
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
@@ -9,6 +10,8 @@ import java.util.*
 
 @Repository
 interface UserRepository : JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
+    /** Rôles chargés : évite LazyInitializationException hors @Transactional (ex. ProjetController). */
+    @EntityGraph(attributePaths = ["roles"])
     fun findByEmail(email: String): Optional<User>
     fun findByMatricule(matricule: String): Optional<User>
     fun findByActifTrue(): List<User>

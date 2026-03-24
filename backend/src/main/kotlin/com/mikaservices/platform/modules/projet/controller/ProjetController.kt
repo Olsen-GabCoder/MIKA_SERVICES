@@ -128,7 +128,8 @@ class ProjetController(
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Désactiver un projet")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @Operation(summary = "Désactiver un projet (administrateurs uniquement)")
     fun delete(@PathVariable id: Long): ResponseEntity<Map<String, String>> {
         projetService.delete(id)
         return ResponseEntity.ok(mapOf("message" to "Projet désactivé avec succès"))

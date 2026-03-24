@@ -17,6 +17,7 @@ import com.mikaservices.platform.modules.user.dto.request.UserUpdateRequest
 import com.mikaservices.platform.modules.user.dto.response.AuditLogResponse
 import com.mikaservices.platform.modules.user.dto.response.LoginHistoryEntryResponse
 import com.mikaservices.platform.modules.user.dto.response.UserForMessagingResponse
+import com.mikaservices.platform.modules.user.dto.response.UserSummaryResponse
 import com.mikaservices.platform.modules.user.dto.response.UserResponse
 import com.mikaservices.platform.modules.user.entity.Departement
 import com.mikaservices.platform.modules.user.entity.Role
@@ -206,6 +207,16 @@ class UserService(
         val email = SecurityContextHolder.getContext().authentication?.name
             ?: throw BadRequestException("Utilisateur non authentifié")
         return findByEmail(email)
+    }
+
+    @Transactional(readOnly = true)
+    fun findChefsProjetActifs(): List<UserSummaryResponse> {
+        return userRepository.findByRoleCode("CHEF_PROJET")
+            .asSequence()
+            .filter { it.actif }
+            .sortedWith(compareBy({ it.nom.lowercase() }, { it.prenom.lowercase() }))
+            .map { UserMapper.toSummaryResponse(it) }
+            .toList()
     }
 
     /** Liste des autres utilisateurs actifs (destinataires possibles pour la messagerie). Accessible à tout utilisateur connecté. */

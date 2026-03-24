@@ -21,7 +21,7 @@ export interface ProjetListFilters {
 export type ProjetSortKey = 'nom' | 'type' | 'client.nom' | 'montantHT' | 'avancementGlobal' | 'statut' | 'responsableProjet.nom'
 export type SortDirection = 'asc' | 'desc'
 import { USE_MOCK, USE_MOCK_FALLBACK } from '@/config/mock'
-import { getMockProjetsPage, getMockProjetById } from '@/mock/data/projets'
+import { getMockProjetsPage, getMockProjetsSearchPage, getMockProjetById } from '@/mock/data/projets'
 import { getMockClientsPage } from '@/mock/data/clients'
 
 // ============================================
@@ -83,17 +83,30 @@ export const projetApi = {
     filters?: ProjetListFilters,
     sort?: { sortBy: ProjetSortKey; sortDir: SortDirection }
   ): Promise<PageResponse<ProjetSummary>> => {
-    const params: Record<string, string | number | undefined> = { q, page, size }
-    if (filters?.statut) params.statut = filters.statut
-    if (filters?.type) params.type = filters.type
-    if (filters?.clientId != null) params.clientId = filters.clientId
-    if (filters?.responsableId != null) params.responsableId = filters.responsableId
-    if (sort?.sortBy) params.sort = `${sort.sortBy},${sort.sortDir}`
-    const response = await apiClient.get<PageResponse<ProjetSummary>>(API_ENDPOINTS.PROJETS.SEARCH, {
-      params,
-      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
-    })
-    return response.data
+    const mockFilters = filters
+      ? {
+          statut: filters.statut,
+          type: filters.type,
+          responsableId: filters.responsableId,
+        }
+      : undefined
+    if (USE_MOCK) return Promise.resolve(getMockProjetsSearchPage(q, page, size, mockFilters))
+    try {
+      const params: Record<string, string | number | undefined> = { q, page, size }
+      if (filters?.statut) params.statut = filters.statut
+      if (filters?.type) params.type = filters.type
+      if (filters?.clientId != null) params.clientId = filters.clientId
+      if (filters?.responsableId != null) params.responsableId = filters.responsableId
+      if (sort?.sortBy) params.sort = `${sort.sortBy},${sort.sortDir}`
+      const response = await apiClient.get<PageResponse<ProjetSummary>>(API_ENDPOINTS.PROJETS.SEARCH, {
+        params,
+        headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+      })
+      return response.data
+    } catch {
+      if (USE_MOCK_FALLBACK) return Promise.resolve(getMockProjetsSearchPage(q, page, size, mockFilters))
+      throw new Error('Erreur recherche projets')
+    }
   },
 
   findByStatut: async (statut: string): Promise<ProjetSummary[]> => {

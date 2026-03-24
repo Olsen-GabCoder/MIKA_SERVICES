@@ -1,7 +1,9 @@
 package com.mikaservices.platform.modules.projet.service
 
 import com.mikaservices.platform.common.exception.ConflictException
+import com.mikaservices.platform.common.exception.ForbiddenException
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
+import com.mikaservices.platform.modules.user.service.CurrentUserService
 import com.mikaservices.platform.modules.projet.dto.request.SousProjetCreateRequest
 import com.mikaservices.platform.modules.projet.dto.request.SousProjetUpdateRequest
 import com.mikaservices.platform.modules.projet.dto.response.SousProjetResponse
@@ -20,7 +22,8 @@ import org.springframework.transaction.annotation.Transactional
 class SousProjetService(
     private val sousProjetRepository: SousProjetRepository,
     private val projetService: ProjetService,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val currentUserService: CurrentUserService
 ) {
     private val logger = LoggerFactory.getLogger(SousProjetService::class.java)
 
@@ -29,7 +32,10 @@ class SousProjetService(
             throw ConflictException("Un sous-projet avec le code '${request.code}' existe déjà")
         }
 
-        val projet = projetService.getProjetById(request.projetId)
+        val projet = projetService.requireCanViewProjet(request.projetId)
+        if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
+            throw ForbiddenException("Vous n'êtes pas autorisé à créer un sous-projet pour ce projet")
+        }
 
         val sousProjet = SousProjet(
             projet = projet,
@@ -57,17 +63,22 @@ class SousProjetService(
 
     @Transactional(readOnly = true)
     fun findByProjetId(projetId: Long, pageable: Pageable): Page<SousProjetResponse> {
+        projetService.requireCanViewProjet(projetId)
         return sousProjetRepository.findByProjetId(projetId, pageable).map { SousProjetMapper.toResponse(it) }
     }
 
     @Transactional(readOnly = true)
     fun findById(id: Long): SousProjetResponse {
         val sousProjet = getSousProjetById(id)
+        projetService.requireCanViewProjet(sousProjet.projet.id!!)
         return SousProjetMapper.toResponse(sousProjet)
     }
 
     fun update(id: Long, request: SousProjetUpdateRequest): SousProjetResponse {
         val sousProjet = getSousProjetById(id)
+        if (!currentUserService.canEditProjet(sousProjet.projet.responsableProjet?.id)) {
+            throw ForbiddenException("Vous n'êtes pas autorisé à modifier ce sous-projet")
+        }
 
         request.nom?.let { sousProjet.nom = it }
         request.description?.let { sousProjet.description = it }
@@ -92,6 +103,10 @@ class SousProjetService(
 
     fun delete(id: Long) {
         val sousProjet = getSousProjetById(id)
+        projetService.requireCanViewProjet(sousProjet.projet.id!!)
+        if (!currentUserService.canEditProjet(sousProjet.projet.responsableProjet?.id)) {
+            throw ForbiddenException("Vous n'êtes pas autorisé à supprimer ce sous-projet")
+        }
         sousProjetRepository.delete(sousProjet)
         logger.info("Sous-projet supprimé: ${sousProjet.code}")
     }

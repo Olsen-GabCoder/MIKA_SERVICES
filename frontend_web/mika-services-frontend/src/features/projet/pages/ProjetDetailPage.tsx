@@ -15,6 +15,7 @@ import { ProjetVisualisationsSection } from '@/features/projet/components/Projet
 import type { PointBloquant, Prevision, ModeSuiviMensuel, Priorite, StatutPointBloquant } from '@/types/projet'
 import { getTypeProjetDisplay, getProjetTypes } from '@/types/projet'
 import type { ProjetReport } from '@/types/reporting'
+import { canEditProjetEffective } from '@/utils/authRoles'
 
 /** Classes CSS pour la couleur du texte priorité (clair + dark). */
 function getPrioriteTextClass(priorite: Priorite | string): string {
@@ -104,6 +105,7 @@ export const ProjetDetailPage = () => {
   const location = useLocation()
   const dispatch = useAppDispatch()
   const currentUser = useAppSelector((state) => state.auth.user)
+  const accessToken = useAppSelector((state) => state.auth.accessToken)
   const { projetDetail: projet, loading, error } = useAppSelector((state) => state.projet)
   const [pointsBloquants, setPointsBloquants] = useState<PointBloquant[]>([])
   const [previsions, setPrevisions] = useState<Prevision[]>([])
@@ -114,8 +116,9 @@ export const ProjetDetailPage = () => {
   const [suiviMensuelExpanded, setSuiviMensuelExpanded] = useState(false)
 
   const monthsShort = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => t(`detail.monthsShort_${i}`))
-  const isAdmin = currentUser?.roles?.some((r) => r.code === 'ADMIN' || r.code === 'SUPER_ADMIN') ?? false
-  const isChefDeProjet = Boolean(projet?.responsableProjet && currentUser?.id === projet.responsableProjet.id)
+  const canEditProjet =
+    projet != null &&
+    canEditProjetEffective(currentUser, accessToken, projet.responsableProjet?.id ?? projet.responsableProjetId)
 
   useEffect(() => {
     if (id) dispatch(fetchProjetById(Number(id)))
@@ -291,7 +294,7 @@ export const ProjetDetailPage = () => {
             >
               {exportingDocument ? t('detail.downloadGenerating') : t('detail.downloadDocument')}
             </button>
-            {(isChefDeProjet || isAdmin) && (
+            {canEditProjet && (
               <button onClick={() => navigate(`/projets/${projet.id}/edit`)} className="bg-white dark:bg-gray-100 text-primary hover:bg-white/90 dark:hover:bg-gray-200 font-semibold px-5 py-2 rounded-lg shadow">
                 {t('detail.editProject')}
               </button>

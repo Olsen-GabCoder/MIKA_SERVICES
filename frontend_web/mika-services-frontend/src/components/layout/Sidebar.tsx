@@ -346,11 +346,11 @@ export const Sidebar = () => {
                   <img
                     src={avatarSrc}
                     alt=""
-                    className={`rounded-full object-cover border-2 border-white/20 ${effectiveCollapsed ? 'w-9 h-9' : 'w-10 h-10'}`}
+                    className={`rounded-full object-cover border-2 border-white shadow-sm ${effectiveCollapsed ? 'w-9 h-9' : 'w-10 h-10'}`}
                   />
                 ) : (
                   <span
-                    className={`rounded-full bg-white/20 flex items-center justify-center text-white font-semibold border-2 border-white/20 ${effectiveCollapsed ? 'w-9 h-9 text-sm' : 'w-10 h-10 text-sm'}`}
+                    className={`rounded-full bg-white/25 flex items-center justify-center text-white font-semibold border-2 border-white/40 ${effectiveCollapsed ? 'w-9 h-9 text-sm' : 'w-10 h-10 text-sm'}`}
                     aria-hidden
                   >
                     {getInitials(user)}

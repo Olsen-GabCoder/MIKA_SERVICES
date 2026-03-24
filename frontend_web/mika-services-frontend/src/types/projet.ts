@@ -137,6 +137,8 @@ export interface Projet {
   observations?: string
   propositionsAmelioration?: string
   responsableProjet?: ProjetUserSummary
+  /** Présent si l’API l’expose (repli si responsableProjet absent). */
+  responsableProjetId?: number
   partenairePrincipal?: string
   actif: boolean
   nombreSousProjets: number

@@ -117,13 +117,18 @@ export default function DashboardPage() {
     if (!hasPersonal) {
       return { dashboardGreetingKey: 'db.greetingNeutral' as const, dashboardGreetingName: neutralName }
     }
-    if (user.sexe === 'HOMME') {
+    const sexeRaw = user.sexe
+    const sexeNorm =
+      sexeRaw == null || sexeRaw === ''
+        ? null
+        : String(sexeRaw).replace(/^Sexe\./i, '').toUpperCase()
+    if (sexeNorm === 'HOMME') {
       return { dashboardGreetingKey: 'db.greetingMale' as const, dashboardGreetingName: formalName }
     }
-    if (user.sexe === 'FEMME') {
+    if (sexeNorm === 'FEMME') {
       return { dashboardGreetingKey: 'db.greetingFemale' as const, dashboardGreetingName: formalName }
     }
-    return { dashboardGreetingKey: 'db.greetingNeutral' as const, dashboardGreetingName: neutralName }
+    return { dashboardGreetingKey: 'db.greetingUnknownSex' as const, dashboardGreetingName: formalName }
   }, [user, t])
 
   useEffect(() => {

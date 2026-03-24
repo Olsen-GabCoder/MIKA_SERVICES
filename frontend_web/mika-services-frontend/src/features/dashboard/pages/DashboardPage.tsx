@@ -128,7 +128,7 @@ export default function DashboardPage() {
     if (sexeNorm === 'FEMME') {
       return { dashboardGreetingKey: 'db.greetingFemale' as const, dashboardGreetingName: formalName }
     }
-    return { dashboardGreetingKey: 'db.greetingUnknownSex' as const, dashboardGreetingName: formalName }
+    return { dashboardGreetingKey: 'db.greetingNeutral' as const, dashboardGreetingName: neutralName }
   }, [user, t])
 
   useEffect(() => {

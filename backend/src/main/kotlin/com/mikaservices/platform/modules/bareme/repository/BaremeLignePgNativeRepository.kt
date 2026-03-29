@@ -54,42 +54,46 @@ class BaremeLignePgNativeRepository(
         p.addValue("search", search?.trim())
     }
 
+    /**
+     * PostgreSQL refuse « impossible de déterminer le type du paramètre » si la première utilisation
+     * est `param IS NULL` ; il faut d’abord lier le type (colonne = param ou CAST explicite).
+     */
     private fun clauseCorpsTypeFourn(): String {
         val tc = typeCol()
         return """
             l.parent_id IS NULL
-            AND (:corpsId IS NULL OR l.corps_etat_id = :corpsId)
-            AND (:typeEnum IS NULL OR $tc = CAST(:typeEnum AS varchar))
-            AND (:fournId IS NULL OR l.fournisseur_bareme_id = :fournId)
+            AND (l.corps_etat_id = :corpsId OR :corpsId IS NULL)
+            AND ($tc = CAST(:typeEnum AS varchar) OR :typeEnum IS NULL)
+            AND (l.fournisseur_bareme_id = :fournId OR :fournId IS NULL)
         """.trimIndent().replace("\n", " ")
     }
 
     private fun clauseFournNom(): String =
-        "AND (:fournNom IS NULL OR LOWER(COALESCE(fb.nom::text, '')) = LOWER(CAST(:fournNom AS text))) "
+        "AND (LOWER(COALESCE(fb.nom::text, '')) = LOWER(CAST(:fournNom AS text)) OR :fournNom IS NULL) "
 
     private fun clauseFamille(): String =
-        "AND (:famille IS NULL OR LOWER(COALESCE(l.famille::text, '')) = LOWER(CAST(:famille AS text))) "
+        "AND (LOWER(COALESCE(l.famille::text, '')) = LOWER(CAST(:famille AS text)) OR :famille IS NULL) "
 
     private fun clauseCategorie(): String =
-        "AND (:categorie IS NULL OR LOWER(COALESCE(l.categorie::text, '')) = LOWER(CAST(:categorie AS text))) "
+        "AND (LOWER(COALESCE(l.categorie::text, '')) = LOWER(CAST(:categorie AS text)) OR :categorie IS NULL) "
 
     private fun clauseUnite(): String {
         val u = unitLowerExpr()
         return """
             AND (
-              :unite IS NULL
+              CAST(:unite AS text) IS NULL
               OR $u = LOWER(CAST(:unite AS text))
-              OR (:uniteAliasT = true AND $u IN ('t', 'ton', 'tonne'))
+              OR (CAST(:uniteAliasT AS boolean) IS TRUE AND $u IN ('t', 'ton', 'tonne'))
             )
         """.trimIndent().replace("\n", " ")
     }
 
     private fun clauseArticle(): String =
-        "AND (:article IS NULL OR LOWER(COALESCE(l.libelle::text, COALESCE(l.reference::text, ''))) = " +
-            "LOWER(CAST(:article AS text))) "
+        "AND (LOWER(COALESCE(l.libelle::text, COALESCE(l.reference::text, ''))) = " +
+            "LOWER(CAST(:article AS text)) OR :article IS NULL) "
 
     private fun clauseSearch(): String =
-        "AND (:search IS NULL OR CAST(:search AS text) = '' OR " +
+        "AND (CAST(:search AS text) IS NULL OR CAST(:search AS text) = '' OR " +
             "LOWER(l.libelle::text) LIKE LOWER(CONCAT('%', CAST(:search AS text), '%'))) "
 
     private fun fromJoin(): String =
@@ -149,7 +153,8 @@ class BaremeLignePgNativeRepository(
             append(clauseSearch())
         }
         val order = pgOrderBy(pageable)
-        val sql = "SELECT l.id ${fromJoin()}WHERE $w $order LIMIT :limit OFFSET :offset"
+        val sql =
+            "SELECT l.id ${fromJoin()}WHERE $w $order LIMIT CAST(:limit AS int) OFFSET CAST(:offset AS bigint)"
         return jdbc.query(sql, p) { rs, _ -> rs.getLong(1) }
     }
 

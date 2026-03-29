@@ -8,5 +8,6 @@ data class BaremeFilterFacetsResponse(
     val familles: List<String>,
     val unites: List<String>,
     val fournisseurs: List<String>,
-    val articles: List<String>
+    val articles: List<String>,
+    val depots: List<String>
 )

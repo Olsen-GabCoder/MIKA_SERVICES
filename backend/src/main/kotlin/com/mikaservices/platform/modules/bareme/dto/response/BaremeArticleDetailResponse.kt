@@ -14,6 +14,7 @@ data class BaremeArticleDetailResponse(
     val unite: String?,
     val famille: String?,
     val categorie: String?,
+    val depot: String?,
     val refReception: String?,
     val codeFournisseur: String?,
     val corpsEtat: CorpsEtatBaremeResponse,

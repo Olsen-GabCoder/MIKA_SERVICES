@@ -7,12 +7,13 @@ import com.mikaservices.platform.modules.bareme.dto.response.BaremeArticleDetail
 import com.mikaservices.platform.modules.bareme.dto.response.BaremeArticleListResponse
 import com.mikaservices.platform.modules.bareme.dto.response.BaremeFilterFacetsResponse
 import com.mikaservices.platform.modules.bareme.dto.response.CorpsEtatBaremeResponse
+import com.mikaservices.platform.modules.bareme.dto.response.FournisseurBaremeListItemResponse
 import com.mikaservices.platform.modules.bareme.dto.response.LignePrestationDto
 import com.mikaservices.platform.modules.bareme.dto.response.PrixFournisseurDto
 import java.math.BigDecimal
 import java.time.LocalDateTime
-import com.mikaservices.platform.modules.bareme.entity.FournisseurBareme
 import com.mikaservices.platform.modules.bareme.entity.LignePrixBareme
+import com.mikaservices.platform.modules.bareme.repository.BaremeCompareJdbcRepository
 import com.mikaservices.platform.modules.bareme.repository.CorpsEtatBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.FournisseurBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.LignePrixBaremeRepository
@@ -26,7 +27,8 @@ import org.springframework.stereotype.Service
 class BaremeLectureService(
     private val corpsEtatBaremeRepository: CorpsEtatBaremeRepository,
     private val fournisseurBaremeRepository: FournisseurBaremeRepository,
-    private val lignePrixBaremeRepository: LignePrixBaremeRepository
+    private val lignePrixBaremeRepository: LignePrixBaremeRepository,
+    private val baremeCompareJdbcRepository: BaremeCompareJdbcRepository
 ) {
     private fun normalizeFilterUnit(unite: String?): Pair<String?, Boolean> {
         val normalized = unite?.trim()?.takeIf { it.isNotEmpty() }?.uppercase()
@@ -37,6 +39,30 @@ class BaremeLectureService(
         }
     }
 
+    /**
+     * Une ligne physique par fournisseur logique : si la BDD contient plusieurs lignes pour le même fournisseur
+     * (même id, ou même nom si pas d’id), on garde celle avec [LignePrixBareme.updatedAt] le plus récent, puis [LignePrixBareme.id] max.
+     */
+    private fun dedupeMateriauLignesParFournisseur(lines: List<LignePrixBareme>): List<LignePrixBareme> {
+        if (lines.isEmpty()) return lines
+        val byKey = lines.groupBy { line ->
+            val fid = line.fournisseurBareme?.id
+            if (fid != null) {
+                "id:$fid"
+            } else {
+                val nom = line.fournisseurBareme?.nom?.trim()?.lowercase().orEmpty()
+                if (nom.isNotEmpty()) {
+                    "nom:$nom"
+                } else {
+                    "line:${line.id}"
+                }
+            }
+        }
+        return byKey.values.map { groupLines ->
+            groupLines.maxWith(compareBy<LignePrixBareme> { it.updatedAt }.thenBy { it.id })
+        }
+    }
+
     fun getCorpsEtat(): List<CorpsEtatBaremeResponse> =
         corpsEtatBaremeRepository.findAllByOrderByOrdreAffichageAsc().map { c ->
             CorpsEtatBaremeResponse(
@@ -44,6 +70,15 @@ class BaremeLectureService(
                 code = c.code,
                 libelle = c.libelle,
                 ordreAffichage = c.ordreAffichage
+            )
+        }
+
+    fun getFournisseursBareme(): List<FournisseurBaremeListItemResponse> =
+        fournisseurBaremeRepository.findAllByOrderByNomAsc().map { f ->
+            FournisseurBaremeListItemResponse(
+                id = f.id!!,
+                nom = f.nom,
+                contact = f.contact
             )
         }
 
@@ -83,7 +118,7 @@ class BaremeLectureService(
         return toDetailResponse(ligne)
     }
 
-    /** Articles groupés par (corps d'état, libellé, référence, unité, type) pour comparaison des prix entre fournisseurs. Pagination sur les articles (groupes), pas sur les lignes. */
+    /** Articles groupés par (corps d'état, libellé, unité, type) pour comparaison ; un prix par fournisseur (ligne la plus récente). Pagination sur les groupes. */
     fun getArticlesCompare(
         corpsEtatId: Long?,
         type: TypeLigneBareme?,
@@ -102,111 +137,85 @@ class BaremeLectureService(
         val filtersFamille = famille?.trim()?.takeIf { it.isNotEmpty() }
         val filtersCategorie = categorie?.trim()?.takeIf { it.isNotEmpty() }
         val filtersArticle = article?.trim()?.takeIf { it.isNotEmpty() }
-        val fetchPageSize = 10000
-        // Avec les prix estimés persistés en base, le volume peut dépasser 50k lignes.
-        // On relève le plafond pour éviter les réponses tronquées en comparaison.
-        val hardCap = 250000
-        val lines = mutableListOf<LignePrixBareme>()
-        var pageIndex = 0
-        var totalExpected = Int.MAX_VALUE
-        while (lines.size < totalExpected && lines.size < hardCap) {
-            val page = lignePrixBaremeRepository.findArticlesFiltered(
-                corpsId = corpsEtatId,
-                type = type,
-                fournId = fournisseurId,
-                fournNom = filtersFournNom,
-                famille = filtersFamille,
-                categorie = filtersCategorie,
-                unite = uniteNormalized,
-                uniteAliasT = uniteAliasT,
-                article = filtersArticle,
-                search = searchTrimmed,
-                pageable = PageRequest.of(pageIndex, fetchPageSize)
-            )
-            totalExpected = page.totalElements.toInt()
-            if (page.content.isEmpty()) break
-            lines.addAll(page.content)
-            if (page.isLast) break
-            pageIndex += 1
-        }
-        if (lines.isEmpty()) return PageImpl(emptyList(), pageable, 0)
 
-        val key: (LignePrixBareme) -> String = { l ->
-            "${l.corpsEtat.id!!}|${l.libelle}|${l.reference}|${l.unite}|${l.type}"
-        }
-        val groups = lines.groupBy(key).values.toList()
+        val total = baremeCompareJdbcRepository.countDistinctArticleGroups(
+            corpsEtatId = corpsEtatId,
+            type = type,
+            fournId = fournisseurId,
+            fournNom = filtersFournNom,
+            famille = filtersFamille,
+            categorie = filtersCategorie,
+            unite = uniteNormalized,
+            uniteAliasT = uniteAliasT,
+            article = filtersArticle,
+            search = searchTrimmed
+        )
+        if (total == 0L) return PageImpl(emptyList(), pageable, 0)
 
-        val sortedGroups = groups.sortedWith(
-            compareBy(
-                { it.first().corpsEtat.ordreAffichage },
-                { it.first().libelle.orEmpty() }
-            )
+        val pageSize = pageable.pageSize.coerceAtLeast(1)
+        val pageNumber = pageable.pageNumber.coerceIn(0, ((total - 1) / pageSize).toInt().coerceAtLeast(0))
+        val offset = pageNumber * pageSize
+
+        val groupKeys = baremeCompareJdbcRepository.findDistinctArticleGroupKeys(
+            corpsEtatId = corpsEtatId,
+            type = type,
+            fournId = fournisseurId,
+            fournNom = filtersFournNom,
+            famille = filtersFamille,
+            categorie = filtersCategorie,
+            unite = uniteNormalized,
+            uniteAliasT = uniteAliasT,
+            article = filtersArticle,
+            search = searchTrimmed,
+            offset = offset,
+            limit = pageSize
         )
 
-        val total = sortedGroups.size
-        val pageNumber = pageable.pageNumber.coerceIn(0, (total - 1).coerceAtLeast(0) / pageable.pageSize.coerceAtLeast(1))
-        val pageSize = pageable.pageSize.coerceAtLeast(1)
-        val from = pageNumber * pageSize
-        val to = (from + pageSize).coerceAtMost(total)
-        val corpsIds = lines.map { it.corpsEtat.id!! }.toSet()
-        val fromPage = corpsIds.associateWith { cid ->
-            lines.filter { it.corpsEtat.id == cid && it.type == TypeLigneBareme.MATERIAU && it.fournisseurBareme != null }
-                .mapNotNull { it.fournisseurBareme }.distinctBy { it.id }.sortedBy { it.nom }
-        }
-        val corpsToFournisseurs = corpsIds.associateWith { cid ->
-            fromPage.getValue(cid).ifEmpty {
-                lignePrixBaremeRepository.findArticlesFiltered(
-                    cid, TypeLigneBareme.MATERIAU, null, null, null, null, null, false, null, null, PageRequest.of(0, 5000)
-                ).content.mapNotNull { it.fournisseurBareme }.distinctBy { it.id }.sortedBy { it.nom }
-            }
-        }
-        val pageContent = sortedGroups.subList(from, to).map { group ->
-            toCompareResponse(group, corpsToFournisseurs[group.first().corpsEtat.id!!].orEmpty())
+        val pageContent = groupKeys.map { key ->
+            val lines = lignePrixBaremeRepository.findLinesForArticleGroup(
+                corpsId = key.corpsEtatId,
+                libelle = key.libelle,
+                unite = key.unite,
+                type = key.type
+            )
+            toCompareResponse(lines)
         }
 
-        return PageImpl(pageContent, PageRequest.of(pageNumber, pageSize), total.toLong())
+        return PageImpl(pageContent, PageRequest.of(pageNumber, pageSize), total)
     }
 
-    private fun toCompareResponse(group: List<LignePrixBareme>, fournisseursDuCorps: List<FournisseurBareme> = emptyList()): BaremeArticleCompareResponse {
-        val first = group.first()
+    private fun toCompareResponse(group: List<LignePrixBareme>): BaremeArticleCompareResponse {
+        if (group.isEmpty()) {
+            throw IllegalStateException("Groupe barème vide (clé sans lignes)")
+        }
+        val representative = group.minBy { it.id!! }
+        val first = representative
         val corps = first.corpsEtat
         val corpsResp = CorpsEtatBaremeResponse(id = corps.id!!, code = corps.code, libelle = corps.libelle, ordreAffichage = corps.ordreAffichage)
 
         return when (first.type) {
             TypeLigneBareme.MATERIAU -> {
-                val existingByFournisseurId = group.mapNotNull { it.fournisseurBareme?.id }.toSet()
-                val fromGroup = group.map { l ->
-                    PrixFournisseurDto(
-                        fournisseurId = l.fournisseurBareme?.id,
-                        fournisseurNom = l.fournisseurBareme?.nom ?: "-",
-                        fournisseurContact = l.fournisseurBareme?.contact,
-                        prixTtc = l.prixTtc,
-                        datePrix = l.datePrix,
-                        prixEstime = l.prixEstime
-                    )
-                }
-                // Fournisseurs du corps d'état sans ligne prix pour cet article : pas de donnée fichier → pas de montant inventé.
-                // (Anciennement des valeurs de démo aléatoires — supprimées pour fidélité au fichier / conformité.)
-                val missingFournisseurs = fournisseursDuCorps.filter { it.id !in existingByFournisseurId }
-                val sansPrixPourCetArticle = missingFournisseurs.map { f ->
-                    PrixFournisseurDto(
-                        fournisseurId = f.id,
-                        fournisseurNom = f.nom,
-                        fournisseurContact = f.contact,
-                        prixTtc = null,
-                        datePrix = null,
-                        prixEstime = false
-                    )
-                }
-                val prixParFournisseur = (fromGroup + sansPrixPourCetArticle).sortedBy { it.fournisseurNom }
+                val chosenLines = dedupeMateriauLignesParFournisseur(group)
+                val prixParFournisseur = chosenLines
+                    .map { l ->
+                        PrixFournisseurDto(
+                            fournisseurId = l.fournisseurBareme?.id,
+                            fournisseurNom = l.fournisseurBareme?.nom ?: "-",
+                            fournisseurContact = l.fournisseurBareme?.contact,
+                            prixTtc = l.prixTtc,
+                            datePrix = l.datePrix,
+                            prixEstime = l.prixEstime
+                        )
+                    }
+                    .sortedBy { it.fournisseurNom }
                 BaremeArticleCompareResponse(
-                    id = first.id!!,
+                    id = representative.id!!,
                     type = first.type,
-                    reference = first.reference,
+                    reference = representative.reference,
                     libelle = first.libelle,
                     unite = first.unite,
-                    famille = first.famille,
-                    categorie = first.categorie,
+                    famille = representative.famille,
+                    categorie = representative.categorie,
                     corpsEtat = corpsResp,
                     prixParFournisseur = prixParFournisseur,
                     debourse = null,
@@ -228,26 +237,16 @@ class BaremeLectureService(
                     if (unitePrestation == null) unitePrestation = it.unitePrestation
                     prixEstimePrest = it.prixEstime
                 }
-                val prixParFournisseurPrestation = fournisseursDuCorps.map { f ->
-                    PrixFournisseurDto(
-                        fournisseurId = f.id,
-                        fournisseurNom = f.nom,
-                        fournisseurContact = f.contact,
-                        prixTtc = null,
-                        datePrix = null,
-                        prixEstime = false
-                    )
-                }
                 BaremeArticleCompareResponse(
-                    id = first.id!!,
+                    id = representative.id!!,
                     type = first.type,
-                    reference = first.reference,
+                    reference = representative.reference,
                     libelle = first.libelle,
                     unite = first.unite,
-                    famille = first.famille,
-                    categorie = first.categorie,
+                    famille = representative.famille,
+                    categorie = representative.categorie,
                     corpsEtat = corpsResp,
-                    prixParFournisseur = prixParFournisseurPrestation,
+                    prixParFournisseur = emptyList(),
                     debourse = debourse,
                     prixVente = prixVente,
                     unitePrestation = unitePrestation,
@@ -342,21 +341,24 @@ class BaremeLectureService(
 
         val prixParFournisseur = when (ligne.type) {
             TypeLigneBareme.MATERIAU -> {
-                lignePrixBaremeRepository.findSameArticle(
+                val group = lignePrixBaremeRepository.findLinesForArticleGroup(
                     corpsId = corps.id!!,
                     libelle = ligne.libelle,
                     unite = ligne.unite,
                     type = TypeLigneBareme.MATERIAU
-                ).map { l ->
-                    PrixFournisseurDto(
-                        fournisseurId = l.fournisseurBareme?.id,
-                        fournisseurNom = l.fournisseurBareme?.nom ?: "-",
-                        fournisseurContact = l.fournisseurBareme?.contact,
-                        prixTtc = l.prixTtc ?: BigDecimal.ZERO,
-                        datePrix = l.datePrix,
-                        prixEstime = l.prixEstime
-                    )
-                }
+                )
+                dedupeMateriauLignesParFournisseur(group)
+                    .map { l ->
+                        PrixFournisseurDto(
+                            fournisseurId = l.fournisseurBareme?.id,
+                            fournisseurNom = l.fournisseurBareme?.nom ?: "-",
+                            fournisseurContact = l.fournisseurBareme?.contact,
+                            prixTtc = l.prixTtc ?: BigDecimal.ZERO,
+                            datePrix = l.datePrix,
+                            prixEstime = l.prixEstime
+                        )
+                    }
+                    .sortedBy { it.fournisseurNom }
             }
             else -> emptyList()
         }
@@ -375,6 +377,7 @@ class BaremeLectureService(
             unite = ligne.unite,
             famille = ligne.famille,
             categorie = ligne.categorie,
+            depot = ligne.depot,
             refReception = ligne.refReception,
             codeFournisseur = ligne.codeFournisseur,
             corpsEtat = corpsResp,
@@ -466,12 +469,25 @@ class BaremeLectureService(
             uniteAliasT = uniteAliasT,
             search = searchTrimmed
         )
+        val depots = lignePrixBaremeRepository.findDistinctDepots(
+            corpsId = corpsEtatId,
+            type = type,
+            fournId = fournisseurId,
+            fournNom = fournisseurNomF,
+            famille = familleF,
+            categorie = categorieF,
+            unite = uniteF,
+            uniteAliasT = uniteAliasT,
+            article = articleF,
+            search = searchTrimmed
+        )
         return BaremeFilterFacetsResponse(
             categories = categories,
             familles = familles,
             unites = unites,
             fournisseurs = fournisseurs,
-            articles = articles
+            articles = articles,
+            depots = depots
         )
     }
 }

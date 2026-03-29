@@ -65,6 +65,10 @@ class LignePrixBareme(
     @Column(name = "categorie", length = 120)
     var categorie: String? = null,
 
+    /** Dépôt optionnel (ex. ADR, LBV) — fichier PRO. */
+    @Column(name = "depot", length = 20)
+    var depot: String? = null,
+
     @Column(name = "quantite", precision = 18, scale = 4)
     var quantite: BigDecimal? = null,
 

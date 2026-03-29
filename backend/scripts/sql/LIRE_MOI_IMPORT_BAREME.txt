@@ -1,0 +1,13 @@
+Import barème depuis BASE_DE_DONNEES_PRO.xlsx
+==============================================
+
+1) Régénérer le SQL après modification de l’Excel (à la racine du projet) :
+   python scripts/generate_bareme_sql_from_excel.py
+
+2) Charger en base MySQL (adapter utilisateur, base, mot de passe) :
+   mysql -u VOTRE_USER -p VOTRE_BASE < backend/scripts/sql/import_bareme_base_de_donnees.sql
+
+Le script vide puis remplit : bareme_corps_etat, bareme_fournisseurs, bareme_lignes_prix.
+Encodage : UTF-8 (caractères accentués dans les libellés).
+
+Dernière génération : voir l’en-tête du fichier .sql (nombre de lignes).

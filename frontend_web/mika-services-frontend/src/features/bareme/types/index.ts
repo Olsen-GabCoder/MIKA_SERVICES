@@ -58,6 +58,12 @@ export interface LignePrestation {
   prixEstime?: boolean
 }
 
+export interface FournisseurBaremeListItem {
+  id: number
+  nom: string
+  contact: string | null
+}
+
 export interface BaremeArticleDetail {
   id: number
   type: TypeLigneBareme
@@ -66,6 +72,7 @@ export interface BaremeArticleDetail {
   unite: string | null
   famille: string | null
   categorie: string | null
+  depot?: string | null
   refReception: string | null
   codeFournisseur: string | null
   corpsEtat: CorpsEtatBareme
@@ -129,6 +136,8 @@ export interface BaremeArticlesParams {
   categorie?: string
   unite?: string
   recherche?: string
+  /** Tri Spring Data : `propriété,direction` (ex. `reference,asc`, `fournisseurBareme.nom,desc`). */
+  sort?: string
 }
 
 export interface BaremePrestationLigneCreateRequest {
@@ -140,6 +149,16 @@ export interface BaremePrestationLigneCreateRequest {
   prixEstime?: boolean
 }
 
+/** Offre fournisseur + prix (PUT matériau avec synchronisation du groupe). */
+export interface BaremeMateriauOffreRequest {
+  fournisseurId?: number | null
+  fournisseurNom?: string | null
+  fournisseurContact?: string | null
+  prixTtc?: number | null
+  datePrix?: string | null
+  prixEstime?: boolean
+}
+
 export interface BaremeArticleCreateRequest {
   corpsEtatId: number
   type: TypeLigneBareme
@@ -148,6 +167,7 @@ export interface BaremeArticleCreateRequest {
   unite?: string | null
   famille?: string | null
   categorie?: string | null
+  depot?: string | null
   fournisseurId?: number | null
   fournisseurNom?: string | null
   fournisseurContact?: string | null
@@ -162,6 +182,8 @@ export interface BaremeArticleCreateRequest {
   unitePrestation?: string | null
   totauxEstimes?: boolean
   lignesPrestation?: BaremePrestationLigneCreateRequest[]
+  /** Si défini et non vide sur POST/PUT matériau : une ligne par offre (création groupe ou remplacement du groupe). */
+  offresMateriau?: BaremeMateriauOffreRequest[] | null
 }
 
 /** Réponse GET /bareme/facets — listes distinctes sur toute la base (filtres croisés). */
@@ -171,6 +193,8 @@ export interface BaremeFilterFacets {
   unites: string[]
   fournisseurs: string[]
   articles: string[]
+  /** @deprecated Facette non utilisée côté UI */
+  depots?: string[]
 }
 
 export type {

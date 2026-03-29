@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DEBOUNCE_MS } from '../hooks/useBaremeListParams'
-
 interface BaremeFiltersProps {
   recherche: string
   article: string
@@ -66,6 +65,13 @@ export function BaremeFilters({
     [onRechercheChange]
   )
 
+  const handleClearSearch = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    setSearchInput('')
+    onRechercheChange('')
+  }, [onRechercheChange])
+
+  const searchTrimmed = searchInput.trim()
   const hasActiveFilters =
     recherche.trim() !== '' ||
     article.trim() !== '' ||
@@ -76,11 +82,7 @@ export function BaremeFilters({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-4">
-      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
-        {t('list.filtersLabel')}
-      </p>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t('list.filtersByLibelle')}</p>
-      <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-end">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-start sm:items-end">
         <div className="min-w-0 flex-1 sm:min-w-[220px]">
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
             {t('list.searchLibelle')}
@@ -99,6 +101,17 @@ export function BaremeFilters({
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
             />
           </div>
+          {searchTrimmed ? (
+            <div className="mt-1.5 flex justify-end">
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="text-xs font-medium text-primary hover:text-primary-dark dark:text-secondary-light underline-offset-2 hover:underline"
+              >
+                {t('list.backToCatalog')}
+              </button>
+            </div>
+          ) : null}
         </div>
         <div className="min-w-0 w-full sm:w-auto">
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
@@ -153,7 +166,7 @@ export function BaremeFilters({
         </div>
         <div className="min-w-0 w-full sm:w-auto">
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-            {t('list.famille')}
+            {t('list.corpsEtat')}
           </label>
           <select
             value={famille}
@@ -189,7 +202,7 @@ export function BaremeFilters({
           <button
             type="button"
             onClick={onReset}
-            className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+            className="self-end sm:self-auto bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-medium text-sm transition-colors"
           >
             {t('list.resetFilters')}
           </button>

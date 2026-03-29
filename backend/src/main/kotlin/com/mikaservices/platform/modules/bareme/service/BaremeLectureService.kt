@@ -12,6 +12,7 @@ import com.mikaservices.platform.modules.bareme.dto.response.LignePrestationDto
 import com.mikaservices.platform.modules.bareme.dto.response.PrixFournisseurDto
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import java.util.Locale
 import com.mikaservices.platform.modules.bareme.entity.LignePrixBareme
 import com.mikaservices.platform.modules.bareme.repository.BaremeCompareJdbcRepository
 import com.mikaservices.platform.modules.bareme.repository.CorpsEtatBaremeRepository
@@ -30,6 +31,10 @@ class BaremeLectureService(
     private val lignePrixBaremeRepository: LignePrixBaremeRepository,
     private val baremeCompareJdbcRepository: BaremeCompareJdbcRepository
 ) {
+    /** Tri stable côté appli (les requêtes DISTINCT n'ont plus ORDER BY : compatibilité PostgreSQL). */
+    private fun sortFacetStrings(values: List<String>): List<String> =
+        values.sortedWith(compareBy { it.lowercase(Locale.FRENCH) })
+
     private fun normalizeFilterUnit(unite: String?): Pair<String?, Boolean> {
         val normalized = unite?.trim()?.takeIf { it.isNotEmpty() }?.uppercase()
         if (normalized == null) return null to false
@@ -482,12 +487,12 @@ class BaremeLectureService(
             search = searchTrimmed
         )
         return BaremeFilterFacetsResponse(
-            categories = categories,
-            familles = familles,
-            unites = unites,
-            fournisseurs = fournisseurs,
-            articles = articles,
-            depots = depots
+            categories = sortFacetStrings(categories),
+            familles = sortFacetStrings(familles),
+            unites = sortFacetStrings(unites),
+            fournisseurs = sortFacetStrings(fournisseurs),
+            articles = sortFacetStrings(articles),
+            depots = sortFacetStrings(depots)
         )
     }
 }

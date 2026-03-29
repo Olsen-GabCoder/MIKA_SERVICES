@@ -4,7 +4,6 @@ import com.mikaservices.platform.modules.bareme.entity.LignePrixBareme
 import com.mikaservices.platform.common.enums.TypeLigneBareme
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -34,10 +33,9 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
     fun findReferencesStartingWith(@Param("pattern") pattern: String): List<String>
 
     /**
-     * Pas de JOIN FETCH ici : avec [Page], PostgreSQL / Hibernate peut échouer sur le comptage ou la requête.
-     * [EntityGraph] charge corps + fournisseur en une requête batch correcte pour la page.
+     * Liste paginée sans FETCH / EntityGraph : compatibilité PostgreSQL (count + données).
+     * [org.hibernate.annotations.BatchSize] sur l'entité limite le N+1 sur corpsEtat / fournisseurBareme.
      */
-    @EntityGraph(attributePaths = ["corpsEtat", "fournisseurBareme"])
     @Query("""
         SELECT l FROM LignePrixBareme l
         WHERE l.parent IS NULL
@@ -110,7 +108,6 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
         AND (:article IS NULL OR LOWER(COALESCE(l.libelle, COALESCE(l.reference, ''))) = LOWER(:article))
         AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
         AND l.categorie IS NOT NULL AND l.categorie <> ''
-        ORDER BY l.categorie
         """
     )
     fun findDistinctCategories(
@@ -143,7 +140,6 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
         AND (:article IS NULL OR LOWER(COALESCE(l.libelle, COALESCE(l.reference, ''))) = LOWER(:article))
         AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
         AND l.famille IS NOT NULL AND l.famille <> ''
-        ORDER BY l.famille
         """
     )
     fun findDistinctFamilles(
@@ -172,7 +168,6 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
         AND (:article IS NULL OR LOWER(COALESCE(l.libelle, COALESCE(l.reference, ''))) = LOWER(:article))
         AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
         AND COALESCE(l.unite, l.unitePrestation, '') <> ''
-        ORDER BY COALESCE(l.unite, l.unitePrestation, '')
         """
     )
     fun findDistinctUnites(
@@ -205,7 +200,6 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
         )
         AND (:article IS NULL OR LOWER(COALESCE(l.libelle, COALESCE(l.reference, ''))) = LOWER(:article))
         AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
-        ORDER BY f.nom
         """
     )
     fun findDistinctFournisseurNoms(
@@ -239,7 +233,6 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
         )
         AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
         AND COALESCE(l.libelle, l.reference, '') <> ''
-        ORDER BY COALESCE(l.libelle, l.reference, '')
         """
     )
     fun findDistinctArticleLibelles(
@@ -273,7 +266,6 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
         AND (:article IS NULL OR LOWER(COALESCE(l.libelle, COALESCE(l.reference, ''))) = LOWER(:article))
         AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
         AND l.depot IS NOT NULL AND l.depot <> ''
-        ORDER BY l.depot
         """
     )
     fun findDistinctDepots(

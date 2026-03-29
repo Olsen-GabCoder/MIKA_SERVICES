@@ -28,6 +28,10 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
 
     fun findByCorpsEtatIdAndTypeAndParentIsNull(corpsEtatId: Long, type: TypeLigneBareme, pageable: Pageable): Page<LignePrixBareme>
 
+    /** Références pour reprise de séquence MAT-YYYY-NNNNN (pattern type [MAT-2025-%]). */
+    @Query("SELECT l.reference FROM LignePrixBareme l WHERE l.reference IS NOT NULL AND l.reference LIKE :pattern")
+    fun findReferencesStartingWith(@Param("pattern") pattern: String): List<String>
+
     @Query("""
         SELECT l FROM LignePrixBareme l
         LEFT JOIN FETCH l.corpsEtat
@@ -61,14 +65,20 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
         pageable: Pageable
     ): Page<LignePrixBareme>
 
-    @Query("""
+    /** Toutes les lignes racine d’un même « article » comparaison (inclut toutes les lignes matériau / fournisseurs). */
+    @Query(
+        """
         SELECT l FROM LignePrixBareme l
+        LEFT JOIN FETCH l.corpsEtat
         LEFT JOIN FETCH l.fournisseurBareme
-        WHERE l.corpsEtat.id = :corpsId AND l.type = :type
-        AND (COALESCE(l.libelle, '') = COALESCE(:libelle, ''))
-        AND (COALESCE(l.unite, '') = COALESCE(:unite, ''))
-    """)
-    fun findSameArticle(
+        WHERE l.parent IS NULL
+        AND l.corpsEtat.id = :corpsId
+        AND COALESCE(l.libelle, '') = COALESCE(:libelle, '')
+        AND COALESCE(l.unite, '') = COALESCE(:unite, '')
+        AND l.type = :type
+        """
+    )
+    fun findLinesForArticleGroup(
         @Param("corpsId") corpsId: Long,
         @Param("libelle") libelle: String?,
         @Param("unite") unite: String?,
@@ -237,6 +247,41 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
         @Param("categorie") categorie: String?,
         @Param("unite") unite: String?,
         @Param("uniteAliasT") uniteAliasT: Boolean,
+        @Param("search") search: String?
+    ): List<String>
+
+    /** Dépôts distincts (facettes), mêmes filtres que les catégories. */
+    @Query(
+        """
+        SELECT DISTINCT l.depot FROM LignePrixBareme l
+        WHERE l.parent IS NULL
+        AND (:corpsId IS NULL OR l.corpsEtat.id = :corpsId)
+        AND (:type IS NULL OR l.type = :type)
+        AND (:fournId IS NULL OR l.fournisseurBareme.id = :fournId)
+        AND (:fournNom IS NULL OR LOWER(COALESCE(l.fournisseurBareme.nom, '')) = LOWER(:fournNom))
+        AND (:famille IS NULL OR LOWER(COALESCE(l.famille, '')) = LOWER(:famille))
+        AND (:categorie IS NULL OR LOWER(COALESCE(l.categorie, '')) = LOWER(:categorie))
+        AND (
+            :unite IS NULL
+            OR LOWER(COALESCE(l.unite, COALESCE(l.unitePrestation, ''))) = LOWER(:unite)
+            OR (:uniteAliasT = true AND LOWER(COALESCE(l.unite, COALESCE(l.unitePrestation, ''))) IN ('t', 'ton', 'tonne'))
+        )
+        AND (:article IS NULL OR LOWER(COALESCE(l.libelle, COALESCE(l.reference, ''))) = LOWER(:article))
+        AND (:search IS NULL OR :search = '' OR LOWER(l.libelle) LIKE LOWER(CONCAT('%', :search, '%')))
+        AND l.depot IS NOT NULL AND l.depot <> ''
+        ORDER BY l.depot
+        """
+    )
+    fun findDistinctDepots(
+        @Param("corpsId") corpsId: Long?,
+        @Param("type") type: TypeLigneBareme?,
+        @Param("fournId") fournId: Long?,
+        @Param("fournNom") fournNom: String?,
+        @Param("famille") famille: String?,
+        @Param("categorie") categorie: String?,
+        @Param("unite") unite: String?,
+        @Param("uniteAliasT") uniteAliasT: Boolean,
+        @Param("article") article: String?,
         @Param("search") search: String?
     ): List<String>
 }

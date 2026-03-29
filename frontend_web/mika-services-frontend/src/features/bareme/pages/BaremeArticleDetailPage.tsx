@@ -7,19 +7,32 @@ import { useDeleteBaremeArticle, useBaremeArticle } from '../hooks/useBaremeQuer
 import { TypeLigneBareme } from '../types'
 import { useFormatNumber } from '@/hooks/useFormatNumber'
 import type { BaremeListParams } from '../hooks/useBaremeListParams'
+import { parseBaremeCatalogSortField } from '../baremeCatalogSort'
 import { useAppSelector } from '@/store/hooks'
 import { handleApiError } from '@/utils/errorHandler'
 
-function buildListSearchParams(params: BaremeListParams): string {
+function buildListSearchParams(params: Partial<BaremeListParams>): string {
   const sp = new URLSearchParams()
-  if (params.page > 0) sp.set('page', String(params.page))
-  if (params.size !== 20) sp.set('size', String(params.size))
-  if (params.recherche.trim()) sp.set('recherche', params.recherche.trim())
-  if (params.article.trim()) sp.set('article', params.article.trim())
-  if (params.fournisseur.trim()) sp.set('fournisseur', params.fournisseur.trim())
-  if (params.unite.trim()) sp.set('unite', params.unite.trim())
-  if (params.famille.trim()) sp.set('famille', params.famille.trim())
-  if (params.categorie.trim()) sp.set('categorie', params.categorie.trim())
+  const page = params.page ?? 0
+  const size = params.size ?? 20
+  const recherche = params.recherche ?? ''
+  const article = params.article ?? ''
+  const fournisseur = params.fournisseur ?? ''
+  const unite = params.unite ?? ''
+  const famille = params.famille ?? ''
+  const categorie = params.categorie ?? ''
+  if (page > 0) sp.set('page', String(page))
+  if (size !== 20) sp.set('size', String(size))
+  if (recherche.trim()) sp.set('recherche', recherche.trim())
+  if (article.trim()) sp.set('article', article.trim())
+  if (fournisseur.trim()) sp.set('fournisseur', fournisseur.trim())
+  if (unite.trim()) sp.set('unite', unite.trim())
+  if (famille.trim()) sp.set('famille', famille.trim())
+  if (categorie.trim()) sp.set('categorie', categorie.trim())
+  const sortField = parseBaremeCatalogSortField(params.sortField)
+  const sortDir = params.sortDir === 'desc' ? 'desc' : 'asc'
+  if (sortField !== 'reference') sp.set('csort', sortField)
+  if (sortDir === 'desc') sp.set('cdir', 'desc')
   const q = sp.toString()
   return q ? `?${q}` : ''
 }
@@ -42,7 +55,7 @@ export function BaremeArticleDetailPage() {
   const articleId = id != null ? parseInt(id, 10) : null
   const { data: article, isLoading, isError } = useBaremeArticle(articleId)
   const deleteMutation = useDeleteBaremeArticle()
-  const fromListParams = location.state as { fromListParams?: BaremeListParams } | null
+  const fromListParams = location.state as { fromListParams?: Partial<BaremeListParams> } | null
   const stickySentinelRef = useRef<HTMLDivElement | null>(null)
   const [isStickyPinned, setIsStickyPinned] = useState(false)
 
@@ -197,9 +210,7 @@ export function BaremeArticleDetailPage() {
           )}
           <dt className="text-gray-500 dark:text-gray-400">{t('detail.unite')}</dt>
           <dd className="text-gray-900 dark:text-gray-100">{article.unite ?? article.unitePrestation ?? '—'}</dd>
-          <dt className="text-gray-500 dark:text-gray-400">{t('detail.corpsEtat')}</dt>
-          <dd className="text-gray-900 dark:text-gray-100">{article.corpsEtat?.libelle ?? '—'}</dd>
-          <dt className="text-gray-500 dark:text-gray-400">{t('detail.famille')}</dt>
+          <dt className="text-gray-500 dark:text-gray-400">{t('list.corpsEtat')}</dt>
           <dd className="text-gray-900 dark:text-gray-100">{article.famille ?? '—'}</dd>
           <dt className="text-gray-500 dark:text-gray-400">{t('detail.categorie')}</dt>
           <dd className="text-gray-900 dark:text-gray-100">{article.categorie ?? '—'}</dd>
@@ -273,7 +284,10 @@ export function BaremeArticleDetailPage() {
                         ? 'text-danger font-semibold'
                         : 'text-gray-900 dark:text-gray-100'
                   return (
-                  <tr key={pf.fournisseurId ?? idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <tr
+                    key={`pf-${idx}-${pf.fournisseurId ?? 'n'}-${pf.fournisseurNom ?? ''}-${pf.prixTtc ?? ''}-${pf.datePrix ?? ''}`}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  >
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{pf.fournisseurNom ?? '—'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{pf.fournisseurContact ?? '—'}</td>
                     <td className={`px-6 py-4 text-sm text-right font-medium ${priceClass}`}>

@@ -22,34 +22,48 @@ export function useCorpsEtat() {
 }
 
 /** Listes de filtres (catégories, familles, etc.) sur toute la base — pas seulement la page courante. */
-export function useBaremeFilterFacets(params: BaremeArticlesParams = {}) {
+export function useBaremeFilterFacets(params: BaremeArticlesParams = {}, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: BAREME_KEYS.facets(params),
     queryFn: () => baremeApi.getFilterFacets(params),
+    placeholderData: keepPreviousData,
+    enabled: options?.enabled ?? true,
+  })
+}
+
+export function useBaremeFournisseurs(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: [...BAREME_KEYS.all, 'fournisseurs'] as const,
+    queryFn: () => baremeApi.getFournisseursBareme(),
+    enabled: options?.enabled ?? true,
   })
 }
 
 export function useBaremeArticles(
   params: BaremeArticlesParams = {},
   page = 0,
-  size = 20
+  size = 20,
+  options?: { enabled?: boolean }
 ) {
   return useQuery({
     queryKey: BAREME_KEYS.articles(params, page, size),
     queryFn: () => baremeApi.getArticles(params, page, size),
     placeholderData: keepPreviousData,
+    enabled: options?.enabled ?? true,
   })
 }
 
 export function useBaremeArticlesCompare(
   params: BaremeArticlesParams = {},
   page = 0,
-  size = 20
+  size = 20,
+  options?: { enabled?: boolean }
 ) {
   return useQuery({
     queryKey: BAREME_KEYS.articlesCompare(params, page, size),
     queryFn: () => baremeApi.getArticlesCompare(params, page, size),
     placeholderData: keepPreviousData,
+    enabled: options?.enabled ?? true,
   })
 }
 

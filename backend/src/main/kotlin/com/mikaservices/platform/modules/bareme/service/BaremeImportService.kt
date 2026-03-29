@@ -11,6 +11,7 @@ import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.Sheet
+import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -23,7 +24,12 @@ import java.time.format.DateTimeFormatter
 
 /**
  * Import des données du barème bâtiment depuis le fichier Excel (.xls / .xlsx).
- * - Feuilles 1 à 15 : corps d'état avec lignes matériaux et prestations (sous-détails).
+ *
+ * Fichier de référence produit : **BASE_DE_DONNEES_PRO.xlsx**, feuille **« Base de Données »** :
+ * cette feuille est utilisée en priorité pour le tableau matériaux / fournisseurs / prix.
+ *
+ * Sinon : première feuille détectée comme tableau prix-fournisseur (comportement historique),
+ * ou feuilles 1 à 15 au format corps d'état (legacy).
  */
 @Service
 class BaremeImportService(
@@ -52,14 +58,13 @@ class BaremeImportService(
                 fournisseurBaremeRepository.deleteAll()
                 corpsEtatBaremeRepository.deleteAll()
 
-                val tabularSheet = (0 until workbook.numberOfSheets)
-                    .map { workbook.getSheetAt(it) }
-                    .firstOrNull { looksLikeSupplierTable(it) }
+                val preferredBaseSheet = findSheetBaseDeDonnees(workbook)
+                val tabularSheet = resolveTabularSheet(workbook, preferredBaseSheet, result)
 
                 if (tabularSheet != null) {
                     importTabularSupplierPrices(tabularSheet, result)
-                } else {
-                    // 2) Feuilles 1 à 15 — Corps d'état et lignes de prix
+                } else if (preferredBaseSheet == null) {
+                    // Pas de feuille « Base de Données » : ancien format (feuilles 1 à 15 = corps d'état)
                     val corpsEtatSheetStart = 1
                     val corpsEtatSheetEnd = minOf(16, workbook.numberOfSheets)
                     for (sheetIndex in corpsEtatSheetStart until corpsEtatSheetEnd) {
@@ -70,6 +75,7 @@ class BaremeImportService(
                         importLignesCorpsEtat(sheet, corpsEtat)
                     }
                 }
+                // Si la feuille « Base de Données » existe mais n'est pas lisible : erreurs dans result.errors, pas d'import legacy.
                 result.corpsEtatCount = corpsEtatBaremeRepository.count().toInt()
                 result.fournisseursCount = fournisseurBaremeRepository.count().toInt()
                 result.lignesCount = lignePrixBaremeRepository.count().toInt()
@@ -248,6 +254,61 @@ class BaremeImportService(
         }
     }
 
+    /**
+     * Feuille catalogue du fichier **BASE_DE_DONNEES_PRO.xlsx** (nom affiché Excel avec accents).
+     */
+    private fun normalizeSheetTitleForMatch(name: String): String =
+        name.trim()
+            .lowercase()
+            .replace("é", "e").replace("è", "e").replace("ê", "e").replace("ë", "e")
+            .replace("à", "a").replace("â", "a").replace("ä", "a")
+            .replace("ù", "u").replace("û", "u").replace("ü", "u")
+            .replace("ô", "o").replace("ö", "o")
+            .replace("î", "i").replace("ï", "i")
+            .replace("ç", "c")
+            .replace(Regex("\\s+"), " ")
+
+    private fun findSheetBaseDeDonnees(workbook: Workbook): Sheet? {
+        val target = normalizeSheetTitleForMatch("Base de Données")
+        for (i in 0 until workbook.numberOfSheets) {
+            val sheet = workbook.getSheetAt(i)
+            if (normalizeSheetTitleForMatch(sheet.sheetName) == target) return sheet
+        }
+        return null
+    }
+
+    /**
+     * Priorité : feuille « Base de Données » si elle est détectable comme tableau prix/fournisseur.
+     * Sinon : première feuille compatible (fichiers sans cette feuille).
+     * Si la feuille existe mais n'est pas lisible : message d'erreur, pas de secours sur les autres feuilles.
+     */
+    private fun resolveTabularSheet(workbook: Workbook, preferredBaseSheet: Sheet?, result: ImportResult): Sheet? {
+        if (preferredBaseSheet != null) {
+            if (looksLikeSupplierTable(preferredBaseSheet)) {
+                logger.info(
+                    "Import barème : feuille « {} » (source catalogue type BASE_DE_DONNEES_PRO).",
+                    preferredBaseSheet.sheetName
+                )
+                return preferredBaseSheet
+            }
+            result.errors.add(
+                "La feuille « Base de Données » est présente mais les colonnes attendues " +
+                    "(libellé/article, fournisseur, prix) n’ont pas été détectées."
+            )
+            return null
+        }
+        val fallback = (0 until workbook.numberOfSheets)
+            .map { workbook.getSheetAt(it) }
+            .firstOrNull { looksLikeSupplierTable(it) }
+        if (fallback != null) {
+            logger.warn(
+                "Feuille « Base de Données » absente : import depuis la première feuille tabulaire détectée (« {} »).",
+                fallback.sheetName
+            )
+        }
+        return fallback
+    }
+
     private fun looksLikeSupplierTable(sheet: Sheet): Boolean {
         val header = findHeaderRow(sheet) ?: return false
         return header.containsKey("article") && header.containsKey("fournisseur") && header.containsKey("prix")
@@ -262,7 +323,7 @@ class BaremeImportService(
                 val raw = cellString(row.getCell(c)) ?: continue
                 val key = normalizeHeader(raw)
                 when {
-                    key in setOf("ref_reception", "reference_reception", "ref") -> map["ref_reception"] = c
+                    key in setOf("ref_reception", "reference_reception", "ref", "reference") -> map["ref_reception"] = c
                     key in setOf("code_fournisseur", "codefournisseur", "code_fourn") -> map["code_fournisseur"] = c
                     key in setOf("fournisseur", "fournisseurs", "nom_fournisseur", "raison_sociale") -> map["fournisseur"] = c
                     key in setOf("contact", "telephone", "tel") -> map["contact"] = c

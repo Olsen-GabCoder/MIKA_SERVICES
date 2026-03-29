@@ -1,0 +1,77 @@
+=== STRUCTURE ===
+Total lignes brutes: 3311
+Index ligne en-tête colonnes: 2
+En-têtes: ('RÉFÉRENCE', 'FOURNISSEUR', 'CATÉGORIE', 'FAMILLE', 'DÉSIGNATION', 'UNITÉ', 'PRIX UNITAIRE (FCFA)')
+Lignes de données: 3308
+
+=== UNICITÉ RÉFÉRENCE MAT ===
+Rouges données MAT-: 3308
+Références uniques: 3308
+Références en double (si >0): 0
+
+=== CLÉ DÉSIGNATION + UNITÉ ===
+Paires (désignation, unité) uniques: 1631
+Paires avec >1 ligne (plusieurs fournisseurs ou doublons): 213
+Top 15 par nombre de lignes:
+  161 lignes | SABLES GROS GRAINS | unit=GD
+  131 lignes | GRAVIER 0/25 | unit=T
+  124 lignes | GRAVIER 5/15 | unit=T
+  92 lignes | BETON B30 | unit=M3
+  90 lignes | GRAVIER 15/25 | unit=T
+  75 lignes | BETON B20 | unit=M3
+  64 lignes | ACIER DE Ø8 MM | unit=UN
+  61 lignes | CIMENT 42.5 R | unit=UN
+  55 lignes | ACIER DE Ø10 MM | unit=UN
+  46 lignes | ACIER DE Ø12 MM | unit=UN
+  30 lignes | POINTE TOC 80 | unit=UN
+  29 lignes | POINTE 80 | unit=UN
+  27 lignes | ACIER DE Ø14 MM | unit=UN
+  26 lignes | LATTE 5M | unit=UN
+  26 lignes | LATTE 4M | unit=UN
+
+=== FOURNISSEURS ===
+Fournisseurs distincts: 132
+Top 15 volume:
+  825 | SOCIETE JAD
+  449 | ZANNE-SERVICES
+  207 | MEGADOR BETON
+  197 | —
+  117 | SOCIETE DE CONSTRUCTION DU GAB
+  104 | CIMAF
+  102 | BERNABE GABON
+  99 | SOFERGA
+  94 | ABIDO
+  91 | DAVUM GABON
+  79 | FOBERD GABON
+  63 | MATELEC
+  62 | BERNABÉ
+  60 | COLAS GABON
+  60 | TECNOBAT
+
+=== CATÉGORIE / FAMILLE ===
+Catégories distinctes: 34
+  1014 | MENUISERIE
+  364 | GRAVIER
+  250 | ACIERS
+  228 | BETON
+  222 | SABLES
+  170 | LATERITE
+  139 | PLOMBERIE
+  121 | TUBES
+  115 | CIMENT
+  92 | ÉLECTRICITÉ
+  88 | FERRONNERIE
+  79 | CHARPENTE & COUVERTURE
+  57 | GROS ŒUVRES
+  56 | PEINTURE & VITRERIE
+  53 | ASSAINISSEMENT
+  50 | POLYANE
+  44 | VOIRIE & RÉSEAUX DIVERS
+  26 | BRIQUES
+  23 | CLÔTURE & SOUTÈNEMENTS
+  23 | JARDINS & ESPACES VERTS
+Familles distinctes: 13
+
+=== PRIX ===
+Prix numériques: 3227 / 3308
+Min 5.0 Max 2712000.0

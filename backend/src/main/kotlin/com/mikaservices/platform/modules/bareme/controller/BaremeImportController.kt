@@ -8,6 +8,7 @@ import com.mikaservices.platform.modules.bareme.dto.response.BaremeArticleListRe
 import com.mikaservices.platform.modules.bareme.dto.response.BaremeFilterFacetsResponse
 import com.mikaservices.platform.modules.bareme.dto.response.BaremeVersionResponse
 import com.mikaservices.platform.modules.bareme.dto.response.CorpsEtatBaremeResponse
+import com.mikaservices.platform.modules.bareme.dto.response.FournisseurBaremeListItemResponse
 import com.mikaservices.platform.modules.bareme.service.BaremeImportService
 import com.mikaservices.platform.modules.bareme.service.BaremeEcritureService
 import com.mikaservices.platform.modules.bareme.service.BaremeLectureService
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.MediaType
 import org.springframework.http.HttpStatus
@@ -45,6 +47,11 @@ class BaremeImportController(
     @Operation(summary = "Liste des corps d'état", description = "Pour filtre du dashboard (Gros-Oeuvre, Assainissement, etc.)")
     fun getCorpsEtat(): ResponseEntity<List<CorpsEtatBaremeResponse>> =
         ResponseEntity.ok(baremeLectureService.getCorpsEtat())
+
+    @GetMapping("/fournisseurs")
+    @Operation(summary = "Fournisseurs barème (id + nom)", description = "Liste ordonnée pour listes déroulantes de saisie.")
+    fun getFournisseursBareme(): ResponseEntity<List<FournisseurBaremeListItemResponse>> =
+        ResponseEntity.ok(baremeLectureService.getFournisseursBareme())
 
     @GetMapping("/facets")
     @Operation(
@@ -82,7 +89,7 @@ class BaremeImportController(
         description = "Filtres optionnels : corpsEtatId, type (MATERIAU/PRESTATION_ENTETE), fournisseurId, recherche (sur libellé)"
     )
     fun getArticles(
-        @PageableDefault(size = 20) pageable: Pageable,
+        @PageableDefault(size = 20, sort = ["reference"], direction = Sort.Direction.ASC) pageable: Pageable,
         @RequestParam(required = false) corpsEtatId: Long?,
         @RequestParam(required = false) type: TypeLigneBareme?,
         @RequestParam(required = false) fournisseurId: Long?,
@@ -111,7 +118,7 @@ class BaremeImportController(
     @GetMapping("/articles/compare")
     @Operation(
         summary = "Articles groupés pour comparaison des prix entre fournisseurs",
-        description = "Mêmes filtres que /articles (recherche sur libellé, corpsEtatId, type). Retourne un article par groupe (même libellé+corps+unité) avec la liste des prix par fournisseur. Pagination sur les articles (groupes)."
+        description = "Mêmes filtres que /articles. Un groupe = même libellé + corps + unité (sans scinder par réf. MAT-). Un prix par fournisseur (ligne la plus récente en updated_at). Pagination sur les groupes."
     )
     fun getArticlesCompare(
         @PageableDefault(size = 20) pageable: Pageable,
@@ -147,13 +154,19 @@ class BaremeImportController(
 
     @PostMapping("/articles")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    @Operation(summary = "Créer un article barème", description = "Crée un matériau ou une prestation (entête + sous-lignes + total). Réservé ADMIN/SUPER_ADMIN.")
+    @Operation(
+        summary = "Créer un article barème",
+        description = "Crée un matériau ou une prestation. Matériau : si offresMateriau est renseigné (liste non vide), crée une ligne par offre (même libellé/unité/famille/catégorie, références MAT distinctes) ; sinon création historique avec fournisseurId / prixTtc sur la racine. Prestation : entête + sous-lignes + total. Réservé ADMIN/SUPER_ADMIN."
+    )
     fun createArticle(@Valid @RequestBody request: BaremeArticleCreateRequest): ResponseEntity<BaremeArticleDetailResponse> =
         ResponseEntity.status(HttpStatus.CREATED).body(baremeEcritureService.createArticle(request))
 
     @PutMapping("/articles/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    @Operation(summary = "Modifier un article barème", description = "Met à jour un matériau ou une prestation complète. Réservé ADMIN/SUPER_ADMIN.")
+    @Operation(
+        summary = "Modifier un article barème",
+        description = "Matériau : si offresMateriau est renseigné (liste non vide), remplace tout le groupe (même libellé+unité avant MAJ) par ces offres et aligne libellé/unité/famille/catégorie/corps sur toutes les lignes ; sinon mise à jour historique d’une seule ligne (fournisseurId/prixTtc). Prestation : inchangé. Réservé ADMIN/SUPER_ADMIN."
+    )
     fun updateArticle(
         @PathVariable id: Long,
         @Valid @RequestBody request: BaremeArticleCreateRequest

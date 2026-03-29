@@ -9,6 +9,7 @@ import type {
   BaremeFilterFacets,
   BaremeArticleCreateRequest,
   TypeLigneBareme,
+  FournisseurBaremeListItem,
 } from '@/features/bareme/types'
 
 const BASE = '/bareme'
@@ -19,8 +20,13 @@ export const baremeApi = {
     return r.data
   },
 
+  getFournisseursBareme: async (): Promise<FournisseurBaremeListItem[]> => {
+    const r = await api.get<FournisseurBaremeListItem[]>(`${BASE}/fournisseurs`)
+    return r.data
+  },
+
   getFilterFacets: async (params: BaremeArticlesParams = {}): Promise<BaremeFilterFacets> => {
-    const { page: _p, size: _s, ...rest } = params
+    const { page: _p, size: _s, sort: _sort, ...rest } = params
     const r = await api.get<BaremeFilterFacets>(`${BASE}/facets`, { params: rest })
     return r.data
   },

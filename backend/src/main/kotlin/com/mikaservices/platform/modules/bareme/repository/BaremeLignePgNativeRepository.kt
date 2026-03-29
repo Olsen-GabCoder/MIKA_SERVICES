@@ -54,28 +54,25 @@ class BaremeLignePgNativeRepository(
         p.addValue("search", search?.trim())
     }
 
-    /**
-     * PostgreSQL refuse « impossible de déterminer le type du paramètre » si la première utilisation
-     * est `param IS NULL` ; il faut d’abord lier le type (colonne = param ou CAST explicite).
-     */
+    /** Chaque occurrence de paramètre est typée avec `CAST(:x AS …)` pour l’inférence PostgreSQL. */
     private fun clauseCorpsTypeFourn(): String {
         val tc = typeCol()
         return """
             l.parent_id IS NULL
-            AND (l.corps_etat_id = :corpsId OR :corpsId IS NULL)
-            AND ($tc = CAST(:typeEnum AS varchar) OR :typeEnum IS NULL)
-            AND (l.fournisseur_bareme_id = :fournId OR :fournId IS NULL)
+            AND (l.corps_etat_id = CAST(:corpsId AS bigint) OR CAST(:corpsId AS bigint) IS NULL)
+            AND ($tc = CAST(:typeEnum AS varchar) OR CAST(:typeEnum AS varchar) IS NULL)
+            AND (l.fournisseur_bareme_id = CAST(:fournId AS bigint) OR CAST(:fournId AS bigint) IS NULL)
         """.trimIndent().replace("\n", " ")
     }
 
     private fun clauseFournNom(): String =
-        "AND (LOWER(COALESCE(fb.nom::text, '')) = LOWER(CAST(:fournNom AS text)) OR :fournNom IS NULL) "
+        "AND (LOWER(COALESCE(fb.nom::text, '')) = LOWER(CAST(:fournNom AS text)) OR CAST(:fournNom AS text) IS NULL) "
 
     private fun clauseFamille(): String =
-        "AND (LOWER(COALESCE(l.famille::text, '')) = LOWER(CAST(:famille AS text)) OR :famille IS NULL) "
+        "AND (LOWER(COALESCE(l.famille::text, '')) = LOWER(CAST(:famille AS text)) OR CAST(:famille AS text) IS NULL) "
 
     private fun clauseCategorie(): String =
-        "AND (LOWER(COALESCE(l.categorie::text, '')) = LOWER(CAST(:categorie AS text)) OR :categorie IS NULL) "
+        "AND (LOWER(COALESCE(l.categorie::text, '')) = LOWER(CAST(:categorie AS text)) OR CAST(:categorie AS text) IS NULL) "
 
     private fun clauseUnite(): String {
         val u = unitLowerExpr()
@@ -90,7 +87,7 @@ class BaremeLignePgNativeRepository(
 
     private fun clauseArticle(): String =
         "AND (LOWER(COALESCE(l.libelle::text, COALESCE(l.reference::text, ''))) = " +
-            "LOWER(CAST(:article AS text)) OR :article IS NULL) "
+            "LOWER(CAST(:article AS text)) OR CAST(:article AS text) IS NULL) "
 
     private fun clauseSearch(): String =
         "AND (CAST(:search AS text) IS NULL OR CAST(:search AS text) = '' OR " +

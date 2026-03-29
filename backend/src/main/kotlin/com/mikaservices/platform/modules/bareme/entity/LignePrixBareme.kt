@@ -3,6 +3,7 @@ package com.mikaservices.platform.modules.bareme.entity
 import com.mikaservices.platform.common.entity.BaseEntity
 import com.mikaservices.platform.common.enums.TypeLigneBareme
 import jakarta.persistence.*
+import org.hibernate.annotations.BatchSize
 import java.math.BigDecimal
 
 /**
@@ -13,6 +14,7 @@ import java.math.BigDecimal
  * Les sous-détails d'une prestation sont liés via parent (self-reference).
  */
 @Entity
+@BatchSize(size = 64)
 @Table(name = "bareme_lignes_prix", indexes = [
     Index(name = "idx_bareme_ligne_corps", columnList = "corps_etat_id"),
     Index(name = "idx_bareme_ligne_type", columnList = "type"),

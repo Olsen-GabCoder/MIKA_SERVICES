@@ -43,6 +43,11 @@ CREATE TABLE IF NOT EXISTS bareme_mat_ref_sequence (
 );
 """
 
+# Schémas Render anciens : colonne attendue par JPA (facettes dépôt)
+ENSURE_LIGNES_DEPOT_COLUMN = """
+ALTER TABLE bareme_lignes_prix ADD COLUMN IF NOT EXISTS depot VARCHAR(20);
+"""
+
 
 def load_env(path: str) -> dict[str, str]:
     out: dict[str, str] = {}
@@ -205,6 +210,9 @@ def main() -> None:
 
             pcur.execute(CREATE_MAT_REF_SEQ_IF_MISSING)
             print("bareme_mat_ref_sequence : table créée si absente (Render / ancien schéma).")
+
+            pcur.execute(ENSURE_LIGNES_DEPOT_COLUMN)
+            print("bareme_lignes_prix.depot : colonne ajoutée si absente.")
 
             pcur.execute(
                 """

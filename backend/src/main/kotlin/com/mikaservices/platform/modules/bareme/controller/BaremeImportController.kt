@@ -11,7 +11,9 @@ import com.mikaservices.platform.modules.bareme.dto.response.CorpsEtatBaremeResp
 import com.mikaservices.platform.modules.bareme.dto.response.FournisseurBaremeListItemResponse
 import com.mikaservices.platform.modules.bareme.service.BaremeImportService
 import com.mikaservices.platform.modules.bareme.service.BaremeEcritureService
+import com.mikaservices.platform.modules.bareme.dto.response.BaremeDbSchemaDiagnosticResponse
 import com.mikaservices.platform.modules.bareme.service.BaremeLectureService
+import com.mikaservices.platform.modules.bareme.service.BaremeSchemaDiagnosticService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Page
@@ -40,8 +42,19 @@ import jakarta.validation.Valid
 class BaremeImportController(
     private val baremeImportService: BaremeImportService,
     private val baremeLectureService: BaremeLectureService,
-    private val baremeEcritureService: BaremeEcritureService
+    private val baremeEcritureService: BaremeEcritureService,
+    private val baremeSchemaDiagnosticService: BaremeSchemaDiagnosticService,
 ) {
+
+    @GetMapping("/diagnostic/db-schema")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @Operation(
+        summary = "Diagnostic schéma barème (lecture seule)",
+        description = "Retourne les types SQL réels des colonnes (information_schema). " +
+            "Sert à confirmer une cause 500 de type lower(bytea) sous PostgreSQL. Réservé ADMIN."
+    )
+    fun getBaremeDbSchemaDiagnostic(): ResponseEntity<BaremeDbSchemaDiagnosticResponse> =
+        ResponseEntity.ok(baremeSchemaDiagnosticService.diagnose())
 
     @GetMapping("/corps-etat")
     @Operation(summary = "Liste des corps d'état", description = "Pour filtre du dashboard (Gros-Oeuvre, Assainissement, etc.)")

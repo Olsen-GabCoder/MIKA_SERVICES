@@ -14,6 +14,24 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
     @Query("SELECT l FROM LignePrixBareme l LEFT JOIN FETCH l.corpsEtat LEFT JOIN FETCH l.fournisseurBareme WHERE l.id = :id")
     fun findByIdWithCorpsEtatAndFournisseur(@Param("id") id: Long): LignePrixBareme?
 
+    /**
+     * Charge une liste de lignes par leurs IDs avec JOIN FETCH sur corpsEtat et fournisseurBareme.
+     *
+     * IMPORTANT : utilisé après findArticleIdsFiltered (chemin PostgreSQL) pour éviter le
+     * LazyInitializationException qui survenait avec findAllById() + open-in-view: false.
+     * Un seul JOIN FETCH par requête : Hibernate interdit plusieurs collection-fetch simultanés
+     * (MultipleBagFetchException). corpsEtat est @ManyToOne (pas une collection) → pas de problème.
+     * fournisseurBareme est @ManyToOne (pas une collection) → pas de problème.
+     * Les enfants (@OneToMany) restent lazy et sont chargés séparément si nécessaire.
+     */
+    @Query("""
+        SELECT l FROM LignePrixBareme l
+        LEFT JOIN FETCH l.corpsEtat
+        LEFT JOIN FETCH l.fournisseurBareme
+        WHERE l.id IN :ids
+    """)
+    fun findAllByIdWithAssociations(@Param("ids") ids: List<Long>): List<LignePrixBareme>
+
     fun findByCorpsEtatIdOrderByOrdreLigneAscNumeroLigneExcelAsc(corpsEtatId: Long, pageable: Pageable): Page<LignePrixBareme>
 
     fun findByCorpsEtatId(corpsEtatId: Long): List<LignePrixBareme>
@@ -67,7 +85,7 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
         pageable: Pageable
     ): Page<LignePrixBareme>
 
-    /** Toutes les lignes racine d’un même « article » comparaison (inclut toutes les lignes matériau / fournisseurs). */
+    /** Toutes les lignes racine d'un même « article » comparaison (inclut toutes les lignes matériau / fournisseurs). */
     @Query(
         """
         SELECT l FROM LignePrixBareme l

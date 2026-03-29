@@ -8,8 +8,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 
 /**
- * PostgreSQL : liste + facettes barème en SQL natif avec `LOWER(...::text)` pour éviter l’erreur
+ * PostgreSQL : liste + facettes barème en SQL natif avec `LOWER(...::text)` pour éviter l'erreur
  * « la fonction lower(bytea) n'existe pas » si des colonnes sont encore BYTEA.
+ *
+ * CORRECTION : fromJoin() utilise LEFT JOIN (était INNER JOIN) pour ne pas exclure les lignes
+ * sans fournisseur (prestations, lignes sans fournisseur_bareme_id).
  */
 @Repository
 class BaremeLignePgNativeRepository(
@@ -20,9 +23,9 @@ class BaremeLignePgNativeRepository(
     val isPostgres: Boolean
         get() =
             jdbcUrl.contains("postgresql", ignoreCase = true) ||
-                databaseUrl.startsWith("postgresql://", ignoreCase = true) ||
-                databaseUrl.startsWith("postgres://", ignoreCase = true) ||
-                databaseUrl.contains("jdbc:postgresql", ignoreCase = true)
+                    databaseUrl.startsWith("postgresql://", ignoreCase = true) ||
+                    databaseUrl.startsWith("postgres://", ignoreCase = true) ||
+                    databaseUrl.contains("jdbc:postgresql", ignoreCase = true)
 
     private fun typeCol(): String = """l."type""""
 
@@ -54,7 +57,7 @@ class BaremeLignePgNativeRepository(
         p.addValue("search", search?.trim())
     }
 
-    /** Chaque occurrence de paramètre est typée avec `CAST(:x AS …)` pour l’inférence PostgreSQL. */
+    /** Chaque occurrence de paramètre est typée avec `CAST(:x AS …)` pour l'inférence PostgreSQL. */
     private fun clauseCorpsTypeFourn(): String {
         val tc = typeCol()
         return """
@@ -87,14 +90,18 @@ class BaremeLignePgNativeRepository(
 
     private fun clauseArticle(): String =
         "AND (LOWER(COALESCE(l.libelle::text, COALESCE(l.reference::text, ''))) = " +
-            "LOWER(CAST(:article AS text)) OR CAST(:article AS text) IS NULL) "
+                "LOWER(CAST(:article AS text)) OR CAST(:article AS text) IS NULL) "
 
     private fun clauseSearch(): String =
         "AND (CAST(:search AS text) IS NULL OR CAST(:search AS text) = '' OR " +
-            "LOWER(l.libelle::text) LIKE LOWER(CONCAT('%', CAST(:search AS text), '%'))) "
+                "LOWER(l.libelle::text) LIKE LOWER(CONCAT('%', CAST(:search AS text), '%'))) "
 
+    /**
+     * LEFT JOIN pour inclure les lignes sans fournisseur (prestations, lignes matériaux sans fournisseur_bareme_id).
+     * L'ancien INNER JOIN excluait silencieusement ces lignes, créant une divergence avec le chemin JPQL/MySQL.
+     */
     private fun fromJoin(): String =
-        "FROM bareme_lignes_prix l INNER JOIN bareme_fournisseurs fb ON fb.id = l.fournisseur_bareme_id "
+        "FROM bareme_lignes_prix l LEFT JOIN bareme_fournisseurs fb ON fb.id = l.fournisseur_bareme_id "
 
     fun countArticlesFiltered(
         corpsId: Long?,
@@ -274,6 +281,8 @@ class BaremeLignePgNativeRepository(
             append(" ").append(clauseUnite())
             append(" ").append(clauseArticle())
             append(clauseSearch())
+            // Exclure les lignes sans fournisseur des facettes fournisseurs (LEFT JOIN → fb.nom peut être NULL)
+            append("AND fb.nom IS NOT NULL ")
         }
         val sql = "SELECT DISTINCT fb.nom::text AS v ${fromJoin()}WHERE $w ORDER BY 1"
         return jdbc.query(sql, p) { rs, _ -> rs.getString("v") }.filterNotNull()

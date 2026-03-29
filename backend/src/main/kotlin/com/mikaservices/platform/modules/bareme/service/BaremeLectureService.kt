@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class BaremeLectureService(
@@ -48,7 +49,7 @@ class BaremeLectureService(
 
     /**
      * Une ligne physique par fournisseur logique : si la BDD contient plusieurs lignes pour le même fournisseur
-     * (même id, ou même nom si pas d’id), on garde celle avec [LignePrixBareme.updatedAt] le plus récent, puis [LignePrixBareme.id] max.
+     * (même id, ou même nom si pas d'id), on garde celle avec [LignePrixBareme.updatedAt] le plus récent, puis [LignePrixBareme.id] max.
      */
     private fun dedupeMateriauLignesParFournisseur(lines: List<LignePrixBareme>): List<LignePrixBareme> {
         if (lines.isEmpty()) return lines
@@ -70,6 +71,7 @@ class BaremeLectureService(
         }
     }
 
+    @Transactional(readOnly = true)
     fun getCorpsEtat(): List<CorpsEtatBaremeResponse> =
         corpsEtatBaremeRepository.findAllByOrderByOrdreAffichageAsc().map { c ->
             CorpsEtatBaremeResponse(
@@ -80,6 +82,7 @@ class BaremeLectureService(
             )
         }
 
+    @Transactional(readOnly = true)
     fun getFournisseursBareme(): List<FournisseurBaremeListItemResponse> =
         fournisseurBaremeRepository.findAllByOrderByNomAsc().map { f ->
             FournisseurBaremeListItemResponse(
@@ -89,6 +92,7 @@ class BaremeLectureService(
             )
         }
 
+    @Transactional(readOnly = true)
     fun getArticles(
         corpsEtatId: Long?,
         type: TypeLigneBareme?,
@@ -137,7 +141,11 @@ class BaremeLectureService(
                 search = searchTrimmed,
                 pageable = pageable,
             )
-            val byId = lignePrixBaremeRepository.findAllById(ids).associateBy { requireNotNull(it.id) }
+            // CORRECTION : utiliser findByIdWithCorpsEtatAndFournisseur n'est pas batch-able.
+            // On utilise une requête JPQL avec JOIN FETCH pour charger corpsEtat ET fournisseurBareme
+            // en une seule requête, évitant le LazyInitializationException (open-in-view: false).
+            val lignes = lignePrixBaremeRepository.findAllByIdWithAssociations(ids)
+            val byId = lignes.associateBy { requireNotNull(it.id) }
             val ordered = ids.mapNotNull { byId[it] }
             return PageImpl(ordered.map { toListResponse(it) }, pageable, total)
         }
@@ -158,6 +166,7 @@ class BaremeLectureService(
         return page.map { toListResponse(it) }
     }
 
+    @Transactional(readOnly = true)
     fun getArticleById(id: Long): BaremeArticleDetailResponse {
         val ligne = lignePrixBaremeRepository.findByIdWithCorpsEtatAndFournisseur(id)
             ?: throw ResourceNotFoundException("Article barème non trouvé: $id")
@@ -165,6 +174,7 @@ class BaremeLectureService(
     }
 
     /** Articles groupés par (corps d'état, libellé, unité, type) pour comparaison ; un prix par fournisseur (ligne la plus récente). Pagination sur les groupes. */
+    @Transactional(readOnly = true)
     fun getArticlesCompare(
         corpsEtatId: Long?,
         type: TypeLigneBareme?,
@@ -303,9 +313,11 @@ class BaremeLectureService(
     }
 
     /** Date/heure du dernier import (max updated_at sur les lignes de prix). Null si aucune donnée. */
+    @Transactional(readOnly = true)
     fun getDerniereMiseAJour(): LocalDateTime? = lignePrixBaremeRepository.findLastUpdatedAt()
 
     /** Dump de toutes les données barème (debug) : corps d'état, fournisseurs, échantillon de lignes. */
+    @Transactional(readOnly = true)
     fun getDebugDump(maxLignes: Int = 500): Map<String, Any> {
         val corpsEtat = corpsEtatBaremeRepository.findAllByOrderByOrdreAffichageAsc().map { c ->
             mapOf("id" to c.id, "code" to c.code, "libelle" to c.libelle, "ordreAffichage" to c.ordreAffichage)
@@ -441,6 +453,7 @@ class BaremeLectureService(
      * Valeurs distinctes pour les filtres (toute la base), avec filtres croisés :
      * chaque liste exclut son propre critère (ex. catégories selon famille/unité/recherche, pas selon catégorie).
      */
+    @Transactional(readOnly = true)
     fun getFilterFacets(
         corpsEtatId: Long?,
         type: TypeLigneBareme?,

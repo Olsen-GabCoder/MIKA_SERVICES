@@ -14,9 +14,15 @@ import org.springframework.stereotype.Repository
 @Repository
 class BaremeCompareJdbcRepository(
     private val jdbc: NamedParameterJdbcTemplate,
-    @Value("\${spring.datasource.url:}") private val jdbcUrl: String
+    @Value("\${spring.datasource.url:}") private val jdbcUrl: String,
+    @Value("\${DATABASE_URL:}") private val databaseUrl: String,
 ) {
-    private val isPostgres: Boolean get() = jdbcUrl.contains("postgresql", ignoreCase = true)
+    private val isPostgres: Boolean
+        get() =
+            jdbcUrl.contains("postgresql", ignoreCase = true) ||
+                databaseUrl.startsWith("postgresql://", ignoreCase = true) ||
+                databaseUrl.startsWith("postgres://", ignoreCase = true) ||
+                databaseUrl.contains("jdbc:postgresql", ignoreCase = true)
 
     /** Colonne enum type : mot réservé sous PostgreSQL. */
     private fun sqlTypeColumn(alias: String): String =
@@ -49,16 +55,27 @@ class BaremeCompareJdbcRepository(
             sb.append(" AND l.fournisseur_bareme_id = :fournId")
             p.addValue("fournId", fournId)
         }
+        val nomCol = if (isPostgres) "f.nom::text" else "f.nom"
+        val famCol = if (isPostgres) "l.famille::text" else "l.famille"
+        val catCol = if (isPostgres) "l.categorie::text" else "l.categorie"
+        val unitCoalesce =
+            if (isPostgres) "COALESCE(l.unite::text, COALESCE(l.unite_prestation::text, ''))"
+            else "COALESCE(l.unite, COALESCE(l.unite_prestation, ''))"
+        val libRefCoalesce =
+            if (isPostgres) "COALESCE(l.libelle::text, COALESCE(l.reference::text, ''))"
+            else "COALESCE(l.libelle, COALESCE(l.reference, ''))"
+        val libCol = if (isPostgres) "l.libelle::text" else "l.libelle"
+
         if (!fournNom.isNullOrBlank()) {
-            sb.append(" AND LOWER(COALESCE(f.nom, '')) = LOWER(:fournNom)")
+            sb.append(" AND LOWER(COALESCE($nomCol, '')) = LOWER(:fournNom)")
             p.addValue("fournNom", fournNom.trim())
         }
         if (!famille.isNullOrBlank()) {
-            sb.append(" AND LOWER(COALESCE(l.famille, '')) = LOWER(:famille)")
+            sb.append(" AND LOWER(COALESCE($famCol, '')) = LOWER(:famille)")
             p.addValue("famille", famille.trim())
         }
         if (!categorie.isNullOrBlank()) {
-            sb.append(" AND LOWER(COALESCE(l.categorie, '')) = LOWER(:categorie)")
+            sb.append(" AND LOWER(COALESCE($catCol, '')) = LOWER(:categorie)")
             p.addValue("categorie", categorie.trim())
         }
         if (!unite.isNullOrBlank()) {
@@ -66,23 +83,21 @@ class BaremeCompareJdbcRepository(
             if (uniteAliasT && u in setOf("T", "TON", "TONNE")) {
                 sb.append(
                     """ AND (
-                    LOWER(COALESCE(l.unite, COALESCE(l.unite_prestation, ''))) = 'T'
-                    OR LOWER(COALESCE(l.unite, COALESCE(l.unite_prestation, ''))) IN ('ton','tonne')
+                    LOWER($unitCoalesce) = 't'
+                    OR LOWER($unitCoalesce) IN ('ton','tonne')
                 )"""
                 )
             } else {
-                sb.append(" AND LOWER(COALESCE(l.unite, COALESCE(l.unite_prestation, ''))) = LOWER(:unite)")
+                sb.append(" AND LOWER($unitCoalesce) = LOWER(:unite)")
                 p.addValue("unite", unite.trim())
             }
         }
         if (!article.isNullOrBlank()) {
-            sb.append(
-                " AND LOWER(COALESCE(l.libelle, COALESCE(l.reference, ''))) = LOWER(:article)"
-            )
+            sb.append(" AND LOWER($libRefCoalesce) = LOWER(:article)")
             p.addValue("article", article.trim())
         }
         if (!search.isNullOrBlank()) {
-            sb.append(" AND LOWER(l.libelle) LIKE LOWER(:searchLike)")
+            sb.append(" AND LOWER($libCol) LIKE LOWER(:searchLike)")
             p.addValue("searchLike", "%${search.trim()}%")
         }
         return sb.toString() to p

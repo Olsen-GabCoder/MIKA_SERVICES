@@ -17,6 +17,7 @@ import com.mikaservices.platform.modules.bareme.entity.LignePrixBareme
 import com.mikaservices.platform.modules.bareme.repository.BaremeCompareJdbcRepository
 import com.mikaservices.platform.modules.bareme.repository.CorpsEtatBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.FournisseurBaremeRepository
+import com.mikaservices.platform.modules.bareme.repository.BaremeLignePgNativeRepository
 import com.mikaservices.platform.modules.bareme.repository.LignePrixBaremeRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
@@ -29,7 +30,8 @@ class BaremeLectureService(
     private val corpsEtatBaremeRepository: CorpsEtatBaremeRepository,
     private val fournisseurBaremeRepository: FournisseurBaremeRepository,
     private val lignePrixBaremeRepository: LignePrixBaremeRepository,
-    private val baremeCompareJdbcRepository: BaremeCompareJdbcRepository
+    private val baremeCompareJdbcRepository: BaremeCompareJdbcRepository,
+    private val baremeLignePgNativeRepository: BaremeLignePgNativeRepository,
 ) {
     /** Tri stable côté appli (les requêtes DISTINCT n'ont plus ORDER BY : compatibilité PostgreSQL). */
     private fun sortFacetStrings(values: List<String>): List<String> =
@@ -101,16 +103,55 @@ class BaremeLectureService(
     ): Page<BaremeArticleListResponse> {
         val searchTrimmed = recherche?.trim()?.takeIf { it.isNotEmpty() }
         val (uniteNormalized, uniteAliasT) = normalizeFilterUnit(unite)
+        val fournNomF = fournisseurNom?.trim()?.takeIf { it.isNotEmpty() }
+        val familleF = famille?.trim()?.takeIf { it.isNotEmpty() }
+        val categorieF = categorie?.trim()?.takeIf { it.isNotEmpty() }
+        val articleF = article?.trim()?.takeIf { it.isNotEmpty() }
+
+        if (baremeLignePgNativeRepository.isPostgres) {
+            val total = baremeLignePgNativeRepository.countArticlesFiltered(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournNomF,
+                famille = familleF,
+                categorie = categorieF,
+                unite = uniteNormalized,
+                uniteAliasT = uniteAliasT,
+                article = articleF,
+                search = searchTrimmed,
+            )
+            if (total == 0L) {
+                return PageImpl(emptyList(), pageable, 0)
+            }
+            val ids = baremeLignePgNativeRepository.findArticleIdsFiltered(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournNomF,
+                famille = familleF,
+                categorie = categorieF,
+                unite = uniteNormalized,
+                uniteAliasT = uniteAliasT,
+                article = articleF,
+                search = searchTrimmed,
+                pageable = pageable,
+            )
+            val byId = lignePrixBaremeRepository.findAllById(ids).associateBy { requireNotNull(it.id) }
+            val ordered = ids.mapNotNull { byId[it] }
+            return PageImpl(ordered.map { toListResponse(it) }, pageable, total)
+        }
+
         val page = lignePrixBaremeRepository.findArticlesFiltered(
             corpsId = corpsEtatId,
             type = type,
             fournId = fournisseurId,
-            fournNom = fournisseurNom?.trim()?.takeIf { it.isNotEmpty() },
-            famille = famille?.trim()?.takeIf { it.isNotEmpty() },
-            categorie = categorie?.trim()?.takeIf { it.isNotEmpty() },
+            fournNom = fournNomF,
+            famille = familleF,
+            categorie = categorieF,
             unite = uniteNormalized,
             uniteAliasT = uniteAliasT,
-            article = article?.trim()?.takeIf { it.isNotEmpty() },
+            article = articleF,
             search = searchTrimmed,
             pageable = pageable
         )
@@ -419,73 +460,150 @@ class BaremeLectureService(
         val fournisseurNomF = fournisseurNom?.trim()?.takeIf { it.isNotEmpty() }
         val articleF = article?.trim()?.takeIf { it.isNotEmpty() }
 
-        val categories = lignePrixBaremeRepository.findDistinctCategories(
-            corpsId = corpsEtatId,
-            type = type,
-            fournId = fournisseurId,
-            fournNom = fournisseurNomF,
-            famille = familleF,
-            unite = uniteF,
-            uniteAliasT = uniteAliasT,
-            article = articleF,
-            search = searchTrimmed
-        )
-        val familles = lignePrixBaremeRepository.findDistinctFamilles(
-            corpsId = corpsEtatId,
-            type = type,
-            fournId = fournisseurId,
-            fournNom = fournisseurNomF,
-            categorie = categorieF,
-            unite = uniteF,
-            uniteAliasT = uniteAliasT,
-            article = articleF,
-            search = searchTrimmed
-        )
-        val unites = lignePrixBaremeRepository.findDistinctUnites(
-            corpsId = corpsEtatId,
-            type = type,
-            fournId = fournisseurId,
-            fournNom = fournisseurNomF,
-            famille = familleF,
-            categorie = categorieF,
-            article = articleF,
-            search = searchTrimmed
-        )
-        val fournisseurs = lignePrixBaremeRepository.findDistinctFournisseurNoms(
-            corpsId = corpsEtatId,
-            type = type,
-            fournId = fournisseurId,
-            fournNom = fournisseurNomF,
-            famille = familleF,
-            categorie = categorieF,
-            unite = uniteF,
-            uniteAliasT = uniteAliasT,
-            article = articleF,
-            search = searchTrimmed
-        )
-        val articles = lignePrixBaremeRepository.findDistinctArticleLibelles(
-            corpsId = corpsEtatId,
-            type = type,
-            fournId = fournisseurId,
-            fournNom = fournisseurNomF,
-            famille = familleF,
-            categorie = categorieF,
-            unite = uniteF,
-            uniteAliasT = uniteAliasT,
-            search = searchTrimmed
-        )
-        val depots = lignePrixBaremeRepository.findDistinctDepots(
-            corpsId = corpsEtatId,
-            type = type,
-            fournId = fournisseurId,
-            fournNom = fournisseurNomF,
-            famille = familleF,
-            categorie = categorieF,
-            unite = uniteF,
-            uniteAliasT = uniteAliasT,
-            article = articleF,
-            search = searchTrimmed
-        )
+        val categories: List<String>
+        val familles: List<String>
+        val unites: List<String>
+        val fournisseurs: List<String>
+        val articles: List<String>
+        val depots: List<String>
+
+        if (baremeLignePgNativeRepository.isPostgres) {
+            categories = baremeLignePgNativeRepository.findDistinctCategories(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournisseurNomF,
+                famille = familleF,
+                unite = uniteF,
+                uniteAliasT = uniteAliasT,
+                article = articleF,
+                search = searchTrimmed,
+            )
+            familles = baremeLignePgNativeRepository.findDistinctFamilles(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournisseurNomF,
+                categorie = categorieF,
+                unite = uniteF,
+                uniteAliasT = uniteAliasT,
+                article = articleF,
+                search = searchTrimmed,
+            )
+            unites = baremeLignePgNativeRepository.findDistinctUnites(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournisseurNomF,
+                famille = familleF,
+                categorie = categorieF,
+                article = articleF,
+                search = searchTrimmed,
+            )
+            fournisseurs = baremeLignePgNativeRepository.findDistinctFournisseurNoms(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournisseurNomF,
+                famille = familleF,
+                categorie = categorieF,
+                unite = uniteF,
+                uniteAliasT = uniteAliasT,
+                article = articleF,
+                search = searchTrimmed,
+            )
+            articles = baremeLignePgNativeRepository.findDistinctArticleLibelles(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournisseurNomF,
+                famille = familleF,
+                categorie = categorieF,
+                unite = uniteF,
+                uniteAliasT = uniteAliasT,
+                search = searchTrimmed,
+            )
+            depots = baremeLignePgNativeRepository.findDistinctDepots(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournisseurNomF,
+                famille = familleF,
+                categorie = categorieF,
+                unite = uniteF,
+                uniteAliasT = uniteAliasT,
+                article = articleF,
+                search = searchTrimmed,
+            )
+        } else {
+            categories = lignePrixBaremeRepository.findDistinctCategories(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournisseurNomF,
+                famille = familleF,
+                unite = uniteF,
+                uniteAliasT = uniteAliasT,
+                article = articleF,
+                search = searchTrimmed,
+            )
+            familles = lignePrixBaremeRepository.findDistinctFamilles(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournisseurNomF,
+                categorie = categorieF,
+                unite = uniteF,
+                uniteAliasT = uniteAliasT,
+                article = articleF,
+                search = searchTrimmed,
+            )
+            unites = lignePrixBaremeRepository.findDistinctUnites(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournisseurNomF,
+                famille = familleF,
+                categorie = categorieF,
+                article = articleF,
+                search = searchTrimmed,
+            )
+            fournisseurs = lignePrixBaremeRepository.findDistinctFournisseurNoms(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournisseurNomF,
+                famille = familleF,
+                categorie = categorieF,
+                unite = uniteF,
+                uniteAliasT = uniteAliasT,
+                article = articleF,
+                search = searchTrimmed,
+            )
+            articles = lignePrixBaremeRepository.findDistinctArticleLibelles(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournisseurNomF,
+                famille = familleF,
+                categorie = categorieF,
+                unite = uniteF,
+                uniteAliasT = uniteAliasT,
+                search = searchTrimmed,
+            )
+            depots = lignePrixBaremeRepository.findDistinctDepots(
+                corpsId = corpsEtatId,
+                type = type,
+                fournId = fournisseurId,
+                fournNom = fournisseurNomF,
+                famille = familleF,
+                categorie = categorieF,
+                unite = uniteF,
+                uniteAliasT = uniteAliasT,
+                article = articleF,
+                search = searchTrimmed,
+            )
+        }
         return BaremeFilterFacetsResponse(
             categories = sortFacetStrings(categories),
             familles = sortFacetStrings(familles),

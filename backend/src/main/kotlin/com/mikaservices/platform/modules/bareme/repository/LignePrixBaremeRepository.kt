@@ -4,6 +4,7 @@ import com.mikaservices.platform.modules.bareme.entity.LignePrixBareme
 import com.mikaservices.platform.common.enums.TypeLigneBareme
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -32,10 +33,13 @@ interface LignePrixBaremeRepository : JpaRepository<LignePrixBareme, Long> {
     @Query("SELECT l.reference FROM LignePrixBareme l WHERE l.reference IS NOT NULL AND l.reference LIKE :pattern")
     fun findReferencesStartingWith(@Param("pattern") pattern: String): List<String>
 
+    /**
+     * Pas de JOIN FETCH ici : avec [Page], PostgreSQL / Hibernate peut échouer sur le comptage ou la requête.
+     * [EntityGraph] charge corps + fournisseur en une requête batch correcte pour la page.
+     */
+    @EntityGraph(attributePaths = ["corpsEtat", "fournisseurBareme"])
     @Query("""
         SELECT l FROM LignePrixBareme l
-        LEFT JOIN FETCH l.corpsEtat
-        LEFT JOIN FETCH l.fournisseurBareme
         WHERE l.parent IS NULL
         AND (:corpsId IS NULL OR l.corpsEtat.id = :corpsId)
         AND (:type IS NULL OR l.type = :type)

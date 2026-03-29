@@ -90,16 +90,45 @@ def mysql_rows(cur: pymysql.cursors.Cursor, table: str) -> tuple[list[str], list
     return cols, rows
 
 
-def pg_table_columns(pcur, table: str) -> list[str]:
+def pg_table_columns_and_types(pcur, table: str) -> tuple[list[str], dict[str, str]]:
     pcur.execute(
         """
-        SELECT column_name FROM information_schema.columns
+        SELECT column_name, data_type
+        FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = %s
         ORDER BY ordinal_position
         """,
         (table,),
     )
-    return [row[0] for row in pcur.fetchall()]
+    rows = pcur.fetchall()
+    names = [r[0] for r in rows]
+    types = {r[0]: (r[1] or "").lower() for r in rows}
+    return names, types
+
+
+def coerce_value_for_pg(pg_data_type: str, val: Any) -> Any:
+    """MySQL (pymysql) peut renvoyer BIT/bool en bytes ; PostgreSQL attend un vrai bool."""
+    if val is None:
+        return None
+    t = (pg_data_type or "").lower()
+    if t == "boolean":
+        if isinstance(val, bool):
+            return val
+        if isinstance(val, (bytes, bytearray, memoryview)):
+            b = bytes(val)
+            if len(b) == 0:
+                return False
+            return any(x != 0 for x in b)
+        if isinstance(val, int):
+            return val != 0
+        if isinstance(val, str):
+            s = val.strip().lower()
+            return s in ("1", "true", "t", "yes", "y", "on")
+    return val
+
+
+def coerce_aligned_row(insert_cols: list[str], row: tuple[Any, ...], pg_types: dict[str, str]) -> tuple[Any, ...]:
+    return tuple(coerce_value_for_pg(pg_types.get(c, ""), v) for c, v in zip(insert_cols, row, strict=True))
 
 
 def align_rows_to_pg_columns(
@@ -188,13 +217,15 @@ def main() -> None:
                 """
             )
 
-            pg_cols_by_table = {t: pg_table_columns(pcur, t) for t in TABLES}
+            pg_meta_by_table: dict[str, tuple[list[str], dict[str, str]]] = {
+                t: pg_table_columns_and_types(pcur, t) for t in TABLES
+            }
 
             for t in TABLES:
                 cols, rows = data[t]
                 if not rows:
                     continue
-                pg_cols = pg_cols_by_table[t]
+                pg_cols, pg_types = pg_meta_by_table[t]
                 insert_cols, aligned_rows, skip_m, skip_p = align_rows_to_pg_columns(cols, rows, pg_cols)
                 if not insert_cols:
                     raise RuntimeError(f"{t}: aucune colonne commune MySQL / PostgreSQL")
@@ -202,10 +233,11 @@ def main() -> None:
                     print(f"  {t}: colonnes MySQL ignorées (absentes en PG) : {', '.join(skip_m)}")
                 if skip_p:
                     print(f"  {t}: colonnes PG non remplies depuis MySQL : {', '.join(skip_p)}")
+                coerced_rows = [coerce_aligned_row(insert_cols, r, pg_types) for r in aligned_rows]
                 col_sql = ", ".join(insert_cols)
                 placeholders = ", ".join(["%s"] * len(insert_cols))
                 sql = f"INSERT INTO {t} ({col_sql}) VALUES ({placeholders})"
-                psycopg2.extras.execute_batch(pcur, sql, aligned_rows, page_size=2000)
+                psycopg2.extras.execute_batch(pcur, sql, coerced_rows, page_size=2000)
                 print(f"inséré {len(rows)} lignes -> {t}")
 
             pcur.execute(

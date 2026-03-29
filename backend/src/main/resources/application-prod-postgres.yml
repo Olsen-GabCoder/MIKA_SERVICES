@@ -3,6 +3,11 @@
 # DATABASE_URL au format Render : postgresql://user:password@host:port/dbname
 # ou JDBC : jdbc:postgresql://host:port/dbname (avec DATABASE_USERNAME / DATABASE_PASSWORD)
 
+# Schémas hérités / imports : colonnes texte parfois en BYTEA → lower() et LIKE échouent.
+# Désactiver explicitement avec BAREME_FIX_PG_TEXT_COLUMNS=false ou bareme.fix-pg-text-columns=false
+bareme:
+  fix-pg-text-columns: true
+
 spring:
   datasource:
     # Si DATABASE_URL est déjà en jdbc:postgresql://, utilisé tel quel avec USERNAME/PASSWORD

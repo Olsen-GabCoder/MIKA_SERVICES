@@ -2,6 +2,7 @@ package com.mikaservices.platform.modules.projet.controller
 
 import com.mikaservices.platform.modules.projet.scheduler.PlatformStatusScheduler
 import com.mikaservices.platform.modules.projet.scheduler.ProjetRappelScheduler
+import com.mikaservices.platform.modules.rapport.scheduler.RapportHebdoScheduler
 import com.mikaservices.platform.modules.reunionhebdo.scheduler.ReunionHebdoPVScheduler
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
@@ -29,6 +30,7 @@ class SchedulerAdminController(
     private val platformStatusScheduler: PlatformStatusScheduler,
     private val projetRappelScheduler: ProjetRappelScheduler,
     private val reunionHebdoPVScheduler: ReunionHebdoPVScheduler,
+    private val rapportHebdoScheduler: RapportHebdoScheduler,
 ) {
     private val logger = LoggerFactory.getLogger(SchedulerAdminController::class.java)
 
@@ -64,6 +66,18 @@ class SchedulerAdminController(
             ResponseEntity.ok(mapOf("status" to "ok", "message" to "Rappel jeudi déclenché — vérifiez les logs et votre boîte mail."))
         } catch (e: Exception) {
             logger.error("[SchedulerAdmin] Erreur rappel jeudi: ${e.message}", e)
+            ResponseEntity.internalServerError().body(mapOf("status" to "error", "message" to (e.message ?: "Erreur inconnue")))
+        }
+    }
+
+    @PostMapping("/rapport-hebdo")
+    fun triggerRapportHebdo(): ResponseEntity<Map<String, String>> {
+        logger.info("[SchedulerAdmin] Déclenchement manuel du rapport hebdomadaire PDF")
+        return try {
+            rapportHebdoScheduler.envoyerRapportHebdo()
+            ResponseEntity.ok(mapOf("status" to "ok", "message" to "Rapport hebdomadaire PDF déclenché — vérifiez les logs et votre boîte mail."))
+        } catch (e: Exception) {
+            logger.error("[SchedulerAdmin] Erreur rapport hebdo: ${e.message}", e)
             ResponseEntity.internalServerError().body(mapOf("status" to "error", "message" to (e.message ?: "Erreur inconnue")))
         }
     }

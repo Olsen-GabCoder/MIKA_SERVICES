@@ -1,6 +1,7 @@
 package com.mikaservices.platform.config.mail
 
 import com.mikaservices.platform.common.enums.Sexe
+import com.mikaservices.platform.modules.rapport.data.RapportHebdoData
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
@@ -12,6 +13,7 @@ import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.math.BigDecimal
+import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
@@ -762,6 +764,177 @@ class EmailService(
             logger.info("Email $logLabel envoyé à $to (Resend API)")
         } catch (e: Exception) {
             logger.error("Échec envoi email [$logLabel] vers $to via Resend API — ${e.message}", e)
+            throw e
+        }
+    }
+
+    // ─── Rapport hebdomadaire PDF (jeudi 18h) ─────────────────────
+
+    /**
+     * Envoie le rapport hebdomadaire PDF en pièce jointe.
+     * Le PDF est généré côté serveur par [RapportHebdoPdfGenerator].
+     * Appelé par [com.mikaservices.platform.modules.rapport.scheduler.RapportHebdoScheduler].
+     */
+    fun sendRapportHebdoEmail(
+        to: String,
+        prenom: String,
+        data: RapportHebdoData,
+        pdfBytes: ByteArray,
+        nomFichier: String,
+        sexe: Sexe? = null
+    ) {
+        val greeting = salut(sexe, prenom)
+        val listeLink = link("/projets")
+        val subject = "MIKA Services — Rapport hebdomadaire — Semaine ${data.semaine}/${data.annee}"
+
+        val plainBody = """
+            $greeting,
+
+            Veuillez trouver en pièce jointe le rapport hebdomadaire automatique de MIKA Services.
+
+            Semaine : ${data.semaine} / ${data.annee}
+            Date d'émission : ${data.dateEmission}
+            Projets actifs : ${data.totalProjets}
+            Points bloquants ouverts : ${data.totalPointsBloquants}
+
+            Ce rapport contient l'état de chaque projet actif (avancement physique,
+            financier, délai consommé, besoins matériels et humains, observations,
+            propositions et points bloquants) mis à jour par les chefs de projet.
+
+            Accéder à la liste des projets : $listeLink
+
+            — L'équipe MIKA Services
+        """.trimIndent()
+
+        val htmlBody = wrapHtml("""
+            <p>${htmlEscape(greeting)},</p>
+            <p style="margin:4px 0 16px;color:#6b7280;font-size:13px;">
+              Rapport hebdomadaire automatique &mdash;
+              <strong>Semaine ${data.semaine} / ${data.annee}</strong>
+            </p>
+
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-left:3px solid #FF6B35;border-radius:4px;margin:0 0 20px;font-size:13px;">
+              <tr>
+                <td style="padding:12px 16px;">
+                  <strong style="color:#1e3a5f;">${data.totalProjets}</strong> projet(s) actif(s)
+                  &nbsp;|&nbsp;
+                  <strong style="color:#374151;">${data.totalPointsBloquants}</strong> point(s) bloquant(s) ouvert(s)
+                  ${if (data.projetsEnCours.isNotEmpty()) "&nbsp;|&nbsp;<strong style=\"color:#16a34a;\">${data.projetsEnCours.size} en cours</strong>" else ""}
+                </td>
+              </tr>
+            </table>
+
+            <p style="font-size:13px;color:#555;">
+              Vous trouverez en pi&egrave;ce jointe le rapport complet au format PDF.
+              Il contient pour chaque projet l&rsquo;avancement physique, financier, le d&eacute;lai consomm&eacute;,
+              les besoins mat&eacute;riels et humains, les observations et les points bloquants actifs.
+            </p>
+
+            ${buttonHtml("Voir les projets", listeLink)}
+        """.trimIndent())
+
+        try {
+            sendWithAttachment(to, subject, plainBody, htmlBody, pdfBytes, nomFichier, "rapport hebdo PDF")
+        } catch (e: Exception) {
+            logger.warn("Envoi rapport hebdo PDF échoué vers $to: ${e.message}")
+        }
+    }
+
+    /**
+     * Envoi d'un email avec pièce jointe.
+     * Priorité : Brevo API > Resend API > SMTP JavaMailSender.
+     */
+    private fun sendWithAttachment(
+        to: String,
+        subject: String,
+        plainBody: String,
+        htmlBody: String,
+        attachment: ByteArray,
+        filename: String,
+        logLabel: String
+    ) {
+        val brevoKey = resolveBrevoApiKey()
+        if (brevoKey.isNotBlank()) {
+            sendViaBrevoApiWithAttachment(to, subject, plainBody, htmlBody, attachment, filename, logLabel, brevoKey)
+            return
+        }
+        val resendKey = resolveResendApiKey()
+        if (resendKey.isNotBlank()) {
+            sendViaResendApiWithAttachment(to, subject, plainBody, htmlBody, attachment, filename, logLabel, resendKey)
+            return
+        }
+        // SMTP fallback
+        try {
+            val fromAddress = if (from.isNotBlank() && from.contains("@")) from.trim() else "noreply@mikaservices.com"
+            val message = mailSender.createMimeMessage()
+            val helper = MimeMessageHelper(message, true, "UTF-8")
+            helper.setFrom(fromAddress)
+            helper.setTo(to)
+            helper.setSubject(subject)
+            helper.setText(plainBody, htmlBody)
+            helper.addAttachment(filename, jakarta.mail.util.ByteArrayDataSource(attachment, "application/pdf"))
+            mailSender.send(message)
+            logger.info("Email $logLabel avec pièce jointe envoyé à $to (SMTP)")
+        } catch (e: Exception) {
+            logger.error("Échec envoi email [$logLabel] avec pièce jointe vers $to — ${e.message}", e)
+            throw e
+        }
+    }
+
+    private fun sendViaBrevoApiWithAttachment(
+        to: String, subject: String, plainBody: String, htmlBody: String,
+        attachment: ByteArray, filename: String, logLabel: String, apiKey: String
+    ) {
+        try {
+            val fromAddress = if (from.isNotBlank() && from.contains("@")) from.trim() else "noreply@mikaservices.com"
+            val headers = HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_JSON
+                set("api-key", apiKey)
+            }
+            val body = mapOf(
+                "sender"     to mapOf("email" to fromAddress, "name" to "MIKA Services"),
+                "to"         to listOf(mapOf("email" to to)),
+                "subject"    to subject,
+                "htmlContent" to htmlBody,
+                "textContent" to plainBody,
+                "attachment" to listOf(mapOf(
+                    "content" to Base64.getEncoder().encodeToString(attachment),
+                    "name"    to filename
+                ))
+            )
+            restTemplate.postForObject("https://api.brevo.com/v3/smtp/email", HttpEntity(body, headers), Map::class.java)
+            logger.info("Email $logLabel avec pièce jointe envoyé à $to (Brevo API)")
+        } catch (e: Exception) {
+            logger.error("Échec envoi email [$logLabel] avec PJ vers $to via Brevo — ${e.message}", e)
+            throw e
+        }
+    }
+
+    private fun sendViaResendApiWithAttachment(
+        to: String, subject: String, plainBody: String, htmlBody: String,
+        attachment: ByteArray, filename: String, logLabel: String, apiKey: String
+    ) {
+        try {
+            val fromAddress = if (from.isBlank() || !from.contains("@")) "onboarding@resend.dev" else from.trim()
+            val headers = HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_JSON
+                setBearerAuth(apiKey)
+            }
+            val body = mapOf(
+                "from"        to fromAddress,
+                "to"          to listOf(to),
+                "subject"     to subject,
+                "text"        to plainBody,
+                "html"        to htmlBody,
+                "attachments" to listOf(mapOf(
+                    "content"  to Base64.getEncoder().encodeToString(attachment),
+                    "filename" to filename
+                ))
+            )
+            restTemplate.postForObject("https://api.resend.com/emails", HttpEntity(body, headers), Map::class.java)
+            logger.info("Email $logLabel avec pièce jointe envoyé à $to (Resend API)")
+        } catch (e: Exception) {
+            logger.error("Échec envoi email [$logLabel] avec PJ vers $to via Resend — ${e.message}", e)
             throw e
         }
     }

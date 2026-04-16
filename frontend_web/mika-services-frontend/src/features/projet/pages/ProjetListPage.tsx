@@ -342,6 +342,29 @@ export const ProjetListPage = () => {
     RECEPTION_DEFINITIVE: 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300',
   }
 
+  const STATUT_BORDER: Record<string, string> = {
+    EN_ATTENTE:           'border-l-gray-400',
+    PLANIFIE:             'border-l-blue-500',
+    EN_COURS:             'border-l-emerald-500',
+    SUSPENDU:             'border-l-amber-500',
+    TERMINE:              'border-l-violet-500',
+    ABANDONNE:            'border-l-red-500',
+    RECEPTION_PROVISOIRE: 'border-l-indigo-500',
+    RECEPTION_DEFINITIVE: 'border-l-teal-500',
+  }
+
+  const AVATAR_COLORS = ['bg-blue-500','bg-emerald-500','bg-violet-500','bg-rose-500','bg-amber-500','bg-teal-500','bg-indigo-500','bg-pink-500']
+  const getInitials = (nom?: string): string => {
+    if (!nom?.trim()) return '?'
+    const parts = nom.trim().split(/\s+/)
+    return parts.length >= 2 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : nom.substring(0, 2).toUpperCase()
+  }
+  const getAvatarColor = (nom?: string): string => !nom ? 'bg-gray-400' : AVATAR_COLORS[nom.charCodeAt(0) % AVATAR_COLORS.length]
+  const fmtDate = (iso?: string): string => {
+    if (!iso) return ''
+    try { return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) } catch { return iso }
+  }
+
   return (
     <PageContainer size="full" className="h-full flex flex-col min-h-0 bg-gray-50 dark:bg-[#0d0f14]">
 
@@ -546,208 +569,167 @@ export const ProjetListPage = () => {
         ) : (
           <div className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-md overflow-hidden">
 
-            {/* ── Tableau desktop ── */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full" role="table">
-                <thead>
-                  <tr className="border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/40">
-                    {SORTABLE_COLUMNS.map(({ key, label, align = 'left', title }) => (
-                      <th
-                        key={key}
-                        scope="col"
-                        title={title}
-                        onClick={() => handleSort(key)}
-                        aria-sort={sortBy === key ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
-                        className={`px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none transition-colors duration-150 group/th ${
-                          sortBy === key
-                            ? 'text-primary dark:text-orange-400'
-                            : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                        } ${align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'}`}
-                      >
-                        <span className="inline-flex items-center gap-1.5">
-                          {label}
-                          <span className={`transition-opacity ${sortBy === key ? 'opacity-100' : 'opacity-0 group-hover/th:opacity-50'}`}>
-                            {sortBy === key ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
-                          </span>
-                        </span>
-                      </th>
-                    ))}
-                    <th scope="col" className="px-5 py-3.5 text-right text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                      {t('list.actions')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {projets.map((projet) => (
-                    <tr
-                      key={projet.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => openProjetDetail(projet)}
-                      onKeyDown={(e) => handleRowKeyDown(e, projet)}
-                      aria-label={t('list.openDetail', { name: projet.nom })}
-                      className="group hover:bg-gradient-to-r hover:from-orange-50/60 hover:to-amber-50/30 dark:hover:from-orange-950/20 dark:hover:to-amber-950/10 cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
-                    >
-                      {/* Nom */}
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3.5">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-orange-100/80 dark:from-primary/20 dark:to-orange-900/30 flex items-center justify-center flex-shrink-0 group-hover:from-primary/20 group-hover:to-orange-200/80 dark:group-hover:from-primary/30 dark:group-hover:to-orange-900/50 transition-all duration-200 shadow-sm group-hover:shadow-md group-hover:shadow-primary/10">
-                            <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[200px] group-hover:text-primary dark:group-hover:text-orange-400 transition-colors duration-200">
-                              {projet.nom}
-                            </p>
+            {/* ── Sort pills ── */}
+            <div className="flex flex-wrap items-center gap-2 px-5 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/30">
+              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex-shrink-0">
+                Trier :
+              </span>
+              {SORTABLE_COLUMNS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleSort(key)}
+                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all duration-150 ${
+                    sortBy === key
+                      ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                      : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-primary/50 hover:text-primary dark:hover:text-orange-400'
+                  }`}
+                >
+                  {label}
+                  {sortBy === key && <span className="ml-0.5">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                </button>
+              ))}
+            </div>
+
+            {/* ── Liste de cartes projets ── */}
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              {projets.map((projet) => {
+                const canEdit = canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId)
+                const canDelete = canDeleteProjetEffective(currentUser, accessToken)
+                return (
+                  <div
+                    key={projet.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openProjetDetail(projet)}
+                    onKeyDown={(e) => handleRowKeyDown(e, projet)}
+                    aria-label={t('list.openDetail', { name: projet.nom })}
+                    className={`group relative flex gap-4 px-5 py-4 border-l-4 ${STATUT_BORDER[projet.statut] ?? 'border-l-gray-300 dark:border-l-gray-600'} hover:bg-orange-50/40 dark:hover:bg-orange-950/10 cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/40`}
+                  >
+                    {/* Icône projet */}
+                    <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-primary/10 to-orange-100/80 dark:from-primary/20 dark:to-orange-900/30 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:from-primary/20 group-hover:to-orange-200/80 dark:group-hover:from-primary/30 dark:group-hover:to-orange-900/50 transition-all duration-200">
+                      <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+
+                    {/* Contenu principal */}
+                    <div className="flex-1 min-w-0">
+
+                      {/* Ligne 1 : nom + statut + actions */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate group-hover:text-primary dark:group-hover:text-orange-400 transition-colors duration-200">
+                            {projet.nom}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                             {projet.codeProjet && (
-                              <p className="text-[11px] font-mono text-gray-400 dark:text-gray-500 mt-0.5">{projet.codeProjet}</p>
+                              <span className="text-[11px] font-mono text-gray-400 dark:text-gray-500">{projet.codeProjet}</span>
+                            )}
+                            {projet.codeProjet && <span className="text-gray-300 dark:text-gray-600 text-[10px]">·</span>}
+                            <span className="text-[11px] text-gray-500 dark:text-gray-400">{getTypeDisplay(projet)}</span>
+                            {projet.clientNom && (
+                              <>
+                                <span className="text-gray-300 dark:text-gray-600 text-[10px]">·</span>
+                                <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate max-w-[180px]">{projet.clientNom}</span>
+                              </>
                             )}
                           </div>
                         </div>
-                      </td>
-                      {/* Type */}
-                      <td className="px-5 py-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200/60 dark:border-gray-700/60">
-                          {getTypeDisplay(projet)}
-                        </span>
-                      </td>
-                      {/* Client */}
-                      <td className="px-5 py-4">
-                        <span className="text-sm text-gray-700 dark:text-gray-300 font-medium truncate max-w-[150px] block">
-                          {projet.clientNom || '—'}
-                        </span>
-                      </td>
-                      {/* Montant */}
-                      <td className="px-5 py-4">
-                        <span className="text-sm font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">
-                          {formatMontant(projet.montantHT)}
-                        </span>
-                      </td>
-                      {/* Avancement */}
-                      <td className="px-5 py-4 text-center" title={t('list.columns.avancementGlobalTitle')}>
-                        <div className="flex flex-col items-center gap-1.5">
-                          <div className="w-24 h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+
+                        {/* Badge statut + boutons d'action */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${STATUT_BADGE[projet.statut] ?? 'bg-gray-100 text-gray-600'}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${STATUT_DOT[projet.statut] ?? 'bg-gray-400'}`} />
+                            {STATUT_LABELS[projet.statut]?.label || projet.statut}
+                          </span>
+                          {(canEdit || canDelete) && (
+                            <div
+                              className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity duration-200"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {canEdit && (
+                                <button
+                                  type="button"
+                                  onClick={() => navigate(`/projets/${projet.id}/edit`)}
+                                  title={t('list.edit')}
+                                  aria-label={t('list.editProject', { name: projet.nom })}
+                                  className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-all duration-150 hover:scale-110"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(projet.id, projet.nom)}
+                                  title={t('list.delete')}
+                                  aria-label={t('list.deleteProject', { name: projet.nom })}
+                                  className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-all duration-150 hover:scale-110"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Ligne 2 : progression + budget + date + responsable */}
+                      <div className="mt-2.5 flex items-center gap-4 flex-wrap">
+
+                        {/* Barre de progression */}
+                        <div className="flex items-center gap-2 flex-1 min-w-[120px]">
+                          <div className="flex-1 h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
                             <div
                               className="h-full rounded-full bg-gradient-to-r from-primary to-orange-400 transition-all duration-700 shadow-sm"
                               style={{ width: `${Math.min(projet.avancementGlobal, 100)}%` }}
                             />
                           </div>
-                          <span className="text-xs font-bold text-gray-600 dark:text-gray-400 tabular-nums">
+                          <span className="text-xs font-bold text-primary dark:text-orange-400 tabular-nums w-8 text-right flex-shrink-0">
                             {projet.avancementGlobal}%
                           </span>
                         </div>
-                      </td>
-                      {/* Statut */}
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border border-transparent ${STATUT_BADGE[projet.statut] ?? 'bg-gray-100 text-gray-600'}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${STATUT_DOT[projet.statut] ?? 'bg-gray-400'}`} />
-                          {STATUT_LABELS[projet.statut]?.label || projet.statut}
-                        </span>
-                      </td>
-                      {/* Responsable */}
-                      <td className="px-5 py-4">
-                        <span className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-[130px] block">
-                          {projet.responsableNom || '—'}
-                        </span>
-                      </td>
-                      {/* Actions */}
-                      <td className="px-5 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                        {(canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) ||
-                          canDeleteProjetEffective(currentUser, accessToken)) ? (
-                          <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) && (
-                              <button
-                                onClick={() => navigate(`/projets/${projet.id}/edit`)}
-                                title={t('list.edit')}
-                                aria-label={t('list.editProject', { name: projet.nom })}
-                                className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-all duration-150 hover:scale-110"
-                              >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                              </button>
-                            )}
-                            {canDeleteProjetEffective(currentUser, accessToken) && (
-                              <button
-                                onClick={() => handleDelete(projet.id, projet.nom)}
-                                title={t('list.delete')}
-                                aria-label={t('list.deleteProject', { name: projet.nom })}
-                                className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-all duration-150 hover:scale-110"
-                              >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-gray-300 dark:text-gray-700">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
 
-            {/* ── Cartes mobile ── */}
-            <div className="md:hidden divide-y-2 divide-gray-200 dark:divide-gray-700">
-              {projets.map((projet) => (
-                <article
-                  key={projet.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => openProjetDetail(projet)}
-                  onKeyDown={(e) => handleRowKeyDown(e, projet)}
-                  aria-label={t('list.openDetail', { name: projet.nom })}
-                  className="p-5 hover:bg-orange-50/50 dark:hover:bg-orange-950/10 cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
-                >
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-orange-100 dark:from-primary/20 dark:to-orange-900/30 flex items-center justify-center flex-shrink-0 shadow-sm">
-                      <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{projet.nom}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{getTypeDisplay(projet)} · {projet.clientNom || '—'}</p>
-                      <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-semibold ${STATUT_BADGE[projet.statut] ?? 'bg-gray-100 text-gray-600'}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${STATUT_DOT[projet.statut] ?? 'bg-gray-400'}`} />
-                          {STATUT_LABELS[projet.statut]?.label || projet.statut}
-                        </span>
-                        <span className="text-xs font-bold text-gray-500 dark:text-gray-400 tabular-nums">{projet.avancementGlobal}%</span>
-                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 tabular-nums">{formatMontant(projet.montantHT)}</span>
+                        {/* Budget */}
+                        {projet.montantHT != null && (
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{formatMontant(projet.montantHT)}</span>
+                          </div>
+                        )}
+
+                        {/* Date de fin */}
+                        {projet.dateFin && (
+                          <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
+                            <svg className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{fmtDate(projet.dateFin)}</span>
+                          </div>
+                        )}
+
+                        {/* Responsable avec avatar */}
+                        {projet.responsableNom && (
+                          <div className="hidden md:flex items-center gap-1.5 flex-shrink-0">
+                            <div className={`w-6 h-6 rounded-full ${getAvatarColor(projet.responsableNom)} flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 shadow-sm`}>
+                              {getInitials(projet.responsableNom)}
+                            </div>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[110px]">{projet.responsableNom}</span>
+                          </div>
+                        )}
                       </div>
-                      {/* Mini progress mobile */}
-                      <div className="w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 mt-2.5 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-primary to-orange-400"
-                          style={{ width: `${Math.min(projet.avancementGlobal, 100)}%` }}
-                        />
-                      </div>
+
                     </div>
                   </div>
-                  {(canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) ||
-                    canDeleteProjetEffective(currentUser, accessToken)) && (
-                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                      {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) && (
-                        <button type="button" onClick={() => navigate(`/projets/${projet.id}/edit`)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-                          {t('list.edit')}
-                        </button>
-                      )}
-                      {canDeleteProjetEffective(currentUser, accessToken) && (
-                        <button type="button" onClick={() => handleDelete(projet.id, projet.nom)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                          {t('list.delete')}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </article>
-              ))}
+                )
+              })}
             </div>
 
             {/* ── PAGINATION ── */}

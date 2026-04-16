@@ -38,10 +38,14 @@ data class RapportHebdoData(
     val dateEmission: LocalDate,
     val projetsEnCours: List<ProjetRapportRow>,
     val projetsPlanifies: List<ProjetRapportRow>,
-    val projetsReceptionProvisoire: List<ProjetRapportRow>
+    val projetsEnAttente: List<ProjetRapportRow>,
+    val projetsReceptionProvisoire: List<ProjetRapportRow>,
+    val projetsReceptionDefinitive: List<ProjetRapportRow>,
+    val projetsSuspendus: List<ProjetRapportRow>
 ) {
     val tousLesProjets: List<ProjetRapportRow>
-        get() = projetsEnCours + projetsPlanifies + projetsReceptionProvisoire
+        get() = projetsEnCours + projetsPlanifies + projetsEnAttente +
+                projetsReceptionProvisoire + projetsReceptionDefinitive + projetsSuspendus
     val totalProjets: Int get() = tousLesProjets.size
     val totalPointsBloquants: Int get() = tousLesProjets.sumOf { it.pointsBloquants.size }
 }

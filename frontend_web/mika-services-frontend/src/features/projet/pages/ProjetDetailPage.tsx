@@ -17,17 +17,6 @@ import { getTypeProjetDisplay, getProjetTypes } from '@/types/projet'
 import type { ProjetReport } from '@/types/reporting'
 import { canEditProjetEffective } from '@/utils/authRoles'
 
-/** Classes CSS pour la couleur du texte priorité (clair + dark). */
-function getPrioriteTextClass(priorite: Priorite | string): string {
-  const map: Record<string, string> = {
-    BASSE: 'text-gray-600 dark:text-gray-400',
-    NORMALE: 'text-blue-600 dark:text-blue-400',
-    HAUTE: 'text-amber-700 dark:text-amber-400',
-    URGENTE: 'text-orange-700 dark:text-orange-400',
-    CRITIQUE: 'text-red-700 dark:text-red-400',
-  }
-  return `text-xs ${map[priorite] ?? map.NORMALE}`
-}
 
 /** Classes CSS pour la couleur du texte statut point bloquant (clair + dark). */
 function getStatutPointBloquantTextClass(statut: StatutPointBloquant | string): string {
@@ -460,22 +449,40 @@ export const ProjetDetailPage = () => {
         {/* 2. Tableau de suivi mensuel */}
         <section className={CARD}>
           <div className={`${CARD_HEADER} flex items-center justify-between gap-3`}>
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">{t('detail.section2')}</h2>
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">{t('detail.section2')}</h2>
+            </div>
             {lignesCA.length > 0 && suiviMensuelHasMore && (
               <button
                 type="button"
                 onClick={() => setSuiviMensuelExpanded((e) => !e)}
-                className="text-xs font-medium text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary hover:underline shrink-0"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary border border-primary/30 rounded-full px-3 py-1 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors shrink-0"
               >
-                {suiviMensuelExpanded ? t('detail.showLess') : t('detail.showAllMonths', { count: lignesCA.length })}
+                {suiviMensuelExpanded ? (
+                  <>
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+                    {t('detail.showLess')}
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                    {t('detail.showAllMonths', { count: lignesCA.length })}
+                  </>
+                )}
               </button>
             )}
           </div>
           <div className={CARD_BODY}>
             {lignesCA.length === 0 ? (
-              <p className="text-gray-600 text-sm py-4">
-                {modeSuiviMensuel === 'MANUEL' ? t('detail.suiviMensuelEmptyManual') : t('detail.suiviMensuelEmpty')}
-              </p>
+              <div className="flex items-center gap-3 py-6 text-gray-500 dark:text-gray-400">
+                <svg className="w-8 h-8 text-gray-300 dark:text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18M10 3v18M14 3v18" />
+                </svg>
+                <p className="text-sm">{modeSuiviMensuel === 'MANUEL' ? t('detail.suiviMensuelEmptyManual') : t('detail.suiviMensuelEmpty')}</p>
+              </div>
             ) : (
               <>
                 <div className={TABLE_WRAP}>
@@ -488,41 +495,118 @@ export const ProjetDetailPage = () => {
                       <col style={{ width: '20%' }} />
                     </colgroup>
                     <thead>
-                      <tr>
-                        <th className={TH_BASE}>{t('detail.colMonth')}</th>
-                        <th className={`${TH_BASE} text-right`}>{t('detail.colCaPrevisionnel')}</th>
-                        <th className={`${TH_BASE} text-right`}>{t('detail.colCaRealise')}</th>
-                        <th className={`${TH_BASE} text-right`}>{t('detail.colEcart')}</th>
-                        <th className={`${TH_BASE} text-right`}>{t('detail.colAvancementCumule')}</th>
+                      <tr className="border-b-2 border-gray-200 dark:border-gray-600">
+                        <th className={`${TH_BASE} bg-gray-50 dark:bg-gray-700/80`}>
+                          <span className="flex items-center gap-1.5">
+                            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            {t('detail.colMonth')}
+                          </span>
+                        </th>
+                        <th className={`${TH_BASE} text-right bg-gray-50 dark:bg-gray-700/80`}>{t('detail.colCaPrevisionnel')}</th>
+                        <th className={`${TH_BASE} text-right bg-gray-50 dark:bg-gray-700/80`}>{t('detail.colCaRealise')}</th>
+                        <th className={`${TH_BASE} text-right bg-gray-50 dark:bg-gray-700/80`}>{t('detail.colEcart')}</th>
+                        <th className={`${TH_BASE} text-right bg-gray-50 dark:bg-gray-700/80`}>{t('detail.colAvancementCumule')}</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {lignesCAVisibles.map((ligne) => (
-                        <tr key={ligne.label} className="hover:bg-gray-50/60 dark:hover:bg-gray-700/60 transition-colors">
-                          <td className={`${TD_BASE} font-medium text-gray-900 dark:text-gray-100`}>{ligne.label}</td>
-                          <td className={`${TD_BASE} text-right tabular-nums text-gray-500`}>{ligne.caPrevisionnel === 0 ? '—' : formatMontant(ligne.caPrevisionnel)}</td>
-                          <td className={`${TD_BASE} text-right tabular-nums text-gray-500`}>{ligne.caRealise === 0 ? '—' : formatMontant(ligne.caRealise)}</td>
-                          <td className={`${TD_BASE} text-right tabular-nums font-medium ${ligne.ecart === 0 ? 'text-gray-500' : ligne.ecart >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>{ligne.ecart === 0 ? '—' : formatMontant(ligne.ecart)}</td>
-                          <td className={`${TD_BASE} text-right tabular-nums font-semibold text-gray-500 dark:text-gray-400`}>{ligne.avancementCumule == null ? '—' : ligne.avancementCumule === 0 ? '—' : `${ligne.avancementCumule} %`}</td>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {lignesCAVisibles.map((ligne, idx) => (
+                        <tr
+                          key={ligne.label}
+                          className={`hover:bg-primary/[0.03] dark:hover:bg-primary/10 transition-colors ${idx % 2 === 1 ? 'bg-gray-50/50 dark:bg-gray-800/30' : ''}`}
+                        >
+                          <td className={`${TD_BASE} border-none font-semibold text-gray-800 dark:text-gray-100`}>
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary/40 shrink-0" />
+                              {ligne.label}
+                            </span>
+                          </td>
+                          <td className={`${TD_BASE} border-none text-right tabular-nums text-gray-600 dark:text-gray-300`}>
+                            {ligne.caPrevisionnel === 0 ? <span className="text-gray-300 dark:text-gray-600">—</span> : formatMontant(ligne.caPrevisionnel)}
+                          </td>
+                          <td className={`${TD_BASE} border-none text-right tabular-nums font-medium text-gray-700 dark:text-gray-200`}>
+                            {ligne.caRealise === 0 ? <span className="text-gray-300 dark:text-gray-600">—</span> : formatMontant(ligne.caRealise)}
+                          </td>
+                          <td className={`${TD_BASE} border-none text-right`}>
+                            {ligne.ecart === 0 ? (
+                              <span className="text-gray-300 dark:text-gray-600 tabular-nums">—</span>
+                            ) : (
+                              <span className={`inline-flex items-center justify-end gap-1 tabular-nums text-xs font-semibold px-2 py-0.5 rounded-full border ${ligne.ecart >= 0 ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800'}`}>
+                                {ligne.ecart >= 0 ? (
+                                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+                                ) : (
+                                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                )}
+                                {formatMontant(Math.abs(ligne.ecart))}
+                              </span>
+                            )}
+                          </td>
+                          <td className={`${TD_BASE} border-none`}>
+                            {ligne.avancementCumule == null || ligne.avancementCumule === 0 ? (
+                              <span className="text-gray-300 dark:text-gray-600 tabular-nums float-right">—</span>
+                            ) : (
+                              <div className="flex items-center justify-end gap-2">
+                                <div className="w-14 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5 overflow-hidden shrink-0">
+                                  <div
+                                    className="h-1.5 rounded-full bg-gradient-to-r from-primary to-amber-400 transition-all duration-500"
+                                    style={{ width: `${Math.min(ligne.avancementCumule, 100)}%` }}
+                                  />
+                                </div>
+                                <span className="tabular-nums text-xs font-bold text-gray-700 dark:text-gray-200 shrink-0">{ligne.avancementCumule} %</span>
+                              </div>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                     {totauxCA && (
                       <tfoot>
-                        <tr className="bg-primary/10 dark:bg-primary/20 border-t-2 border-primary/30 dark:border-primary/40">
-                          <td className="py-3 px-3 text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">{t('detail.total')}</td>
+                        <tr className="bg-gradient-to-r from-primary/10 to-orange-50/60 dark:from-primary/20 dark:to-gray-800 border-t-2 border-primary/30 dark:border-primary/40">
+                          <td className="py-3 px-3 text-sm font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest">
+                            <span className="flex items-center gap-1.5">
+                              <svg className="w-3.5 h-3.5 text-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+                              {t('detail.total')}
+                            </span>
+                          </td>
                           <td className="py-3 px-3 text-right tabular-nums text-sm font-bold text-gray-900 dark:text-gray-100">{formatMontant(totauxCA.caPrevisionnel)}</td>
                           <td className="py-3 px-3 text-right tabular-nums text-sm font-bold text-gray-900 dark:text-gray-100">{formatMontant(totauxCA.caRealise)}</td>
-                          <td className={`py-3 px-3 text-right tabular-nums text-sm font-bold ${totauxCA.ecart === 0 ? 'text-gray-600 dark:text-gray-300' : totauxCA.ecart >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>{formatMontant(totauxCA.ecart)}</td>
-                          <td className="py-3 px-3 text-right tabular-nums text-sm font-semibold text-gray-700 dark:text-gray-200">{totauxCA.avancementCumule != null ? `${totauxCA.avancementCumule} %` : '—'}</td>
+                          <td className="py-3 px-3 text-right">
+                            {totauxCA.ecart === 0 ? (
+                              <span className="tabular-nums text-sm font-bold text-gray-500">{formatMontant(totauxCA.ecart)}</span>
+                            ) : (
+                              <span className={`inline-flex items-center justify-end gap-1 tabular-nums text-xs font-bold px-2.5 py-1 rounded-full border ${totauxCA.ecart >= 0 ? 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700' : 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700'}`}>
+                                {totauxCA.ecart >= 0 ? (
+                                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+                                ) : (
+                                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                )}
+                                {formatMontant(Math.abs(totauxCA.ecart))}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-3">
+                            {totauxCA.avancementCumule != null ? (
+                              <div className="flex items-center justify-end gap-2">
+                                <div className="w-16 bg-white/60 dark:bg-gray-600 rounded-full h-2 overflow-hidden shrink-0 border border-primary/20">
+                                  <div
+                                    className="h-2 rounded-full bg-gradient-to-r from-primary to-amber-400 transition-all duration-500"
+                                    style={{ width: `${Math.min(totauxCA.avancementCumule, 100)}%` }}
+                                  />
+                                </div>
+                                <span className="tabular-nums text-sm font-bold text-primary dark:text-primary-light shrink-0">{totauxCA.avancementCumule} %</span>
+                              </div>
+                            ) : '—'}
+                          </td>
                         </tr>
                       </tfoot>
                     )}
                   </table>
                 </div>
-                <p className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 text-xs text-gray-500 dark:text-gray-400">
-                  {t('detail.suiviMensuelHint', { budget: formatMontant(budgetPrevu), depenses: formatMontant(depensesTotales) })}
-                </p>
+                <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <svg className="w-3.5 h-3.5 text-primary/60 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{t('detail.suiviMensuelHint', { budget: formatMontant(budgetPrevu), depenses: formatMontant(depensesTotales) })}</span>
+                </div>
               </>
             )}
           </div>

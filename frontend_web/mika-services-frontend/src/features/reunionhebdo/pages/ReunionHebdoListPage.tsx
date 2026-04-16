@@ -236,7 +236,6 @@ function ReunionCard({
   onNavigatePV,
   onEdit,
   onDelete,
-  formatDateFn,
   t,
 }: {
   r: ReunionHebdoSummary
@@ -244,7 +243,6 @@ function ReunionCard({
   onNavigatePV: () => void
   onEdit: () => void
   onDelete: () => void
-  formatDateFn: (d: string, opts?: object) => string
   t: (k: string) => string
 }) {
   const cfg = STATUT_CFG[r.statut] ?? STATUT_CFG.BROUILLON
@@ -593,7 +591,6 @@ export const ReunionHebdoListPage = () => {
                       onNavigatePV={() => navigate(`/reunions-hebdo/${r.id}`)}
                       onEdit={() => navigate(`/reunions-hebdo/${r.id}/edit`)}
                       onDelete={() => handleDelete(r.id, r.dateReunion)}
-                      formatDateFn={formatDate}
                       t={t}
                     />
                   ))}

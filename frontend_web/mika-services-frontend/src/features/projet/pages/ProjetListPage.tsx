@@ -360,10 +360,7 @@ export const ProjetListPage = () => {
     return parts.length >= 2 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : nom.substring(0, 2).toUpperCase()
   }
   const getAvatarColor = (nom?: string): string => !nom ? 'bg-gray-400' : AVATAR_COLORS[nom.charCodeAt(0) % AVATAR_COLORS.length]
-  const fmtDate = (iso?: string): string => {
-    if (!iso) return ''
-    try { return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) } catch { return iso }
-  }
+
 
   return (
     <PageContainer size="full" className="h-full flex flex-col min-h-0 bg-gray-50 dark:bg-[#0d0f14]">

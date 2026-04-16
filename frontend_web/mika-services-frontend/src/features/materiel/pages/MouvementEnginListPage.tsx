@@ -91,7 +91,7 @@ type PendingAction = { type: 'depart' | 'reception' | 'annuler'; mouvementId: nu
 export function MouvementEnginListPage() {
   const { t, i18n } = useTranslation('materiel')
   const dispatch = useAppDispatch()
-  const confirm = useConfirm()
+  const _confirm = useConfirm()
   const { mouvements, totalElements, totalPages, currentPage, loading, actionLoading, error } = useAppSelector((s) => s.mouvementEngin)
 
   const [filterStatut, setFilterStatut] = useState<StatutMouvementEngin | ''>('')

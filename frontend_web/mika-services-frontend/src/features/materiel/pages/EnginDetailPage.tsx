@@ -72,7 +72,7 @@ export function EnginDetailPage() {
 
   if (loading) {
     return (
-      <PageContainer size="lg" className="py-10 flex justify-center">
+      <PageContainer size="wide" className="py-10 flex justify-center">
         <div className="w-8 h-8 border-4 border-gray-200 dark:border-gray-600 border-t-primary rounded-full animate-spin" />
       </PageContainer>
     )
@@ -80,7 +80,7 @@ export function EnginDetailPage() {
 
   if (error || !enginDetail) {
     return (
-      <PageContainer size="lg" className="py-10">
+      <PageContainer size="wide" className="py-10">
         <div className="text-center text-gray-500 dark:text-gray-400">
           <p className="font-bold text-lg">{t('detail.notFound')}</p>
           <button type="button" onClick={() => navigate('/engins')} className="mt-4 text-primary text-sm font-semibold hover:underline">
@@ -94,7 +94,7 @@ export function EnginDetailPage() {
   const statutStyle = STATUT_ENGIN_STYLE[enginDetail.statut] ?? STATUT_ENGIN_STYLE.HORS_SERVICE
 
   return (
-    <PageContainer size="lg" className="space-y-6">
+    <PageContainer size="wide" className="space-y-6">
       {/* Header */}
       <div className="relative overflow-hidden rounded-2xl shadow-xl shadow-primary/10">
         <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-dark to-secondary" />

@@ -124,7 +124,7 @@ function CheckBox({
    ═══════════════════════════════════════════════════════════════════ */
 
 export function DemandeMaterielFormPage() {
-  const { t } = useTranslation('materiel')
+  const { t: _t } = useTranslation('materiel')
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const formRef = useRef<HTMLDivElement>(null)
@@ -282,7 +282,7 @@ export function DemandeMaterielFormPage() {
 
           <motion.button
             type="button"
-            onClick={handleSubmit as () => void}
+            onClick={() => { void handleSubmit() }}
             disabled={submitting}
             className="flex items-center gap-2 px-5 py-2 rounded-lg bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-bold shadow-lg shadow-primary/25 disabled:opacity-50"
             whileHover={{ scale: 1.03, boxShadow: '0 12px 30px -4px rgba(232, 90, 42, 0.4)' }}

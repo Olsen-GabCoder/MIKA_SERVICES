@@ -7,6 +7,8 @@
 
 import { useState } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts'
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const PieAny = Pie as React.ComponentType<any>
 import { useCountUp } from '../hooks/useCountUp'
 
 const STATUT_CONFIG: Record<string, { label: string; color: string }> = {
@@ -60,7 +62,7 @@ export default function FleetDonutChart({ data, total }: FleetDonutChartProps) {
       <div className="relative w-64 h-64 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie
+            <PieAny
               data={chartData}
               cx="50%" cy="50%"
               innerRadius={75}
@@ -70,13 +72,13 @@ export default function FleetDonutChart({ data, total }: FleetDonutChartProps) {
               strokeWidth={0}
               activeIndex={activeIndex ?? undefined}
               activeShape={renderActiveShape}
-              onMouseEnter={(_, index) => setActiveIndex(index)}
+              onMouseEnter={(_: unknown, index: number) => setActiveIndex(index)}
               onMouseLeave={() => setActiveIndex(null)}
               animationBegin={300}
               animationDuration={1200}
               animationEasing="ease-out"
             >
-              {chartData.map((entry, i) => (
+              {chartData.map((entry: { color: string }, i: number) => (
                 <Cell key={i} fill={entry.color} />
               ))}
             </Pie>

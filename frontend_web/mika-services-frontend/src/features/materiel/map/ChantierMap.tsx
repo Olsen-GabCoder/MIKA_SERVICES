@@ -28,7 +28,28 @@ import { createProjetMarker, createTooltipContent } from './chantierMarker'
 import { spreadOverlappingMarkers } from './spreadMarkers'
 
 /* ------------------------------------------------------------------ */
-/*  Types                                                               */
+/*  Types exportés                                                     */
+/* ------------------------------------------------------------------ */
+
+export interface ChantierAffectationRef {
+  id: number
+  enginId: number
+  enginNom: string
+  enginCode: string
+}
+
+export interface ChantierMapData {
+  id: number
+  projetId: number
+  projetNom: string
+  codeProjet?: string
+  health: import('./chantierMarker').ChantierHealthStatus
+  affectations: ChantierAffectationRef[]
+  enginStatuts: string[]
+}
+
+/* ------------------------------------------------------------------ */
+/*  Types internes                                                     */
 /* ------------------------------------------------------------------ */
 
 interface ProjetPin {

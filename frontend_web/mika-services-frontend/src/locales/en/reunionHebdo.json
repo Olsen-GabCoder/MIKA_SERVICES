@@ -84,7 +84,7 @@
     "statPagination": "Pagination",
     "paginationRange": "{{from}} – {{to}} of {{total}}",
     "sectionTable": "Meeting list",
-    "newMeeting": "+ New meeting",
+    "newMeeting": "New meeting",
     "loading": "Loading…",
     "emptyTitle": "No meetings recorded",
     "emptyHint": "Create a weekly meeting to start writing minutes",

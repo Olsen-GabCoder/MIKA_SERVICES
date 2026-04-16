@@ -766,6 +766,167 @@ class EmailService(
         }
     }
 
+    // ─── PV hebdomadaire automatique (jeudi 18h) ──────────────────
+
+    /**
+     * Envoie le PV de la réunion hebdomadaire à un destinataire.
+     * Pas de liste de participants — uniquement les points projets.
+     * Appelé par [com.mikaservices.platform.modules.reunionhebdo.scheduler.ReunionHebdoPVScheduler].
+     */
+    fun sendPVHebdoEmail(to: String, prenom: String, data: ReunionHebdoPVEmailData, sexe: Sexe? = null) {
+        val greeting = salut(sexe, prenom)
+        val reunionLink = link("/reunions-hebdo/${data.reunionId}/pv")
+        val listeLink = link("/reunions-hebdo")
+
+        val dateFormatee = data.dateReunion.format(java.time.format.DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", java.util.Locale.FRENCH))
+            .replaceFirstChar { it.uppercase() }
+
+        val semaine = data.dateReunion.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)
+        val subject = "MIKA Services — PV Réunion hebdomadaire — Semaine $semaine"
+
+        // ─── Corps texte brut ─────────────────────────────────────
+        val plainProjetLines = data.pointsProjets.joinToString("\n\n") { p ->
+            buildString {
+                append("${p.ordreAffichage + 1}. ${p.projetNom} (${p.projetCode})")
+                p.chefProjetNom?.let { append("\n   Chef de projet : $it") }
+                p.avancementPhysiquePct?.let { append("\n   Avancement physique : $it %") }
+                p.avancementFinancierPct?.let { append("\n   Avancement financier : $it %") }
+                p.delaiConsommePct?.let { append("\n   Délai consommé : $it %") }
+                p.resumeTravauxPrevisions?.takeIf { it.isNotBlank() }?.let { append("\n   Travaux / Prévisions : $it") }
+                p.pointsBloquantsResume?.takeIf { it.isNotBlank() }?.let { append("\n   Points bloquants : $it") }
+                p.besoinsMateriel?.takeIf { it.isNotBlank() }?.let { append("\n   Besoins matériels : $it") }
+                p.besoinsHumain?.takeIf { it.isNotBlank() }?.let { append("\n   Besoins humains : $it") }
+                p.propositionsAmelioration?.takeIf { it.isNotBlank() }?.let { append("\n   Propositions : $it") }
+            }
+        }
+
+        val plainBody = """
+            $greeting,
+
+            Veuillez trouver ci-dessous le procès-verbal automatique de la réunion hebdomadaire du $dateFormatee.
+
+            Date : ${data.dateReunion}
+            ${if (!data.lieu.isNullOrBlank()) "Lieu : ${data.lieu}" else ""}
+            ${if (data.heureDebut != null) "Heure : ${data.heureDebut}${if (data.heureFin != null) " — ${data.heureFin}" else ""}" else ""}
+
+            Points par projet (${data.totalAffaires}) :
+            $plainProjetLines
+
+            ${if (!data.divers.isNullOrBlank()) "Divers :\n${data.divers}" else ""}
+
+            Accéder au PV en ligne : $reunionLink
+
+            — L'équipe MIKA Services
+        """.trimIndent()
+
+        // ─── Corps HTML ───────────────────────────────────────────
+        fun pct(value: java.math.BigDecimal?): String = value?.let { "${it.toPlainString()}%" } ?: "—"
+
+        fun progressBar(value: java.math.BigDecimal?, color: String): String {
+            val pctInt = value?.toInt()?.coerceIn(0, 100) ?: 0
+            return """<div style="background:#e5e7eb;border-radius:4px;height:6px;width:100%;margin:3px 0 6px;">
+                        <div style="background:$color;border-radius:4px;height:6px;width:$pctInt%;"></div>
+                      </div>"""
+        }
+
+        fun fieldRow(label: String, value: String?): String {
+            if (value.isNullOrBlank()) return ""
+            return """<tr>
+                        <td style="padding:4px 8px 4px 0;font-size:12px;color:#6b7280;white-space:nowrap;vertical-align:top;">$label</td>
+                        <td style="padding:4px 0;font-size:13px;color:#1f2937;vertical-align:top;">${htmlEscape(value)}</td>
+                      </tr>"""
+        }
+
+        val htmlProjetCards = data.pointsProjets.joinToString("") { p ->
+            val projetLink = link("/projets/${p.projetCode}")
+            """<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;font-size:13px;">
+               <tr><td style="padding:10px 14px;background:#f8fafc;border-bottom:1px solid #e5e7eb;">
+                 <span style="font-weight:700;color:#1e3a5f;font-size:14px;">${htmlEscape(p.projetNom)}</span>
+                 <span style="color:#6b7280;font-size:12px;margin-left:8px;">(${htmlEscape(p.projetCode)})</span>
+                 ${if (!p.chefProjetNom.isNullOrBlank()) "<span style=\"float:right;font-size:11px;color:#6b7280;\">Chef de projet : ${htmlEscape(p.chefProjetNom)}</span>" else ""}
+               </td></tr>
+               <tr><td style="padding:12px 14px;">
+                 <table width="100%" cellpadding="0" cellspacing="0">
+                   <tr>
+                     <td width="32%" style="padding-right:12px;vertical-align:top;">
+                       <div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Av. physique</div>
+                       ${progressBar(p.avancementPhysiquePct, "#2E5266")}
+                       <div style="font-size:12px;font-weight:600;color:#2E5266;">${pct(p.avancementPhysiquePct)}</div>
+                     </td>
+                     <td width="32%" style="padding-right:12px;vertical-align:top;">
+                       <div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Av. financier</div>
+                       ${progressBar(p.avancementFinancierPct, "#FF6B35")}
+                       <div style="font-size:12px;font-weight:600;color:#FF6B35;">${pct(p.avancementFinancierPct)}</div>
+                     </td>
+                     <td width="32%" style="vertical-align:top;">
+                       <div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Délai consommé</div>
+                       ${progressBar(p.delaiConsommePct, "#d97706")}
+                       <div style="font-size:12px;font-weight:600;color:#d97706;">${pct(p.delaiConsommePct)}</div>
+                     </td>
+                   </tr>
+                 </table>
+                 <table cellpadding="0" cellspacing="0" style="width:100%;margin-top:8px;border-top:1px solid #f3f4f6;">
+                   ${fieldRow("Travaux / Prévisions :", p.resumeTravauxPrevisions)}
+                   ${fieldRow("Points bloquants :", p.pointsBloquantsResume)}
+                   ${fieldRow("Besoins matériels :", p.besoinsMateriel)}
+                   ${fieldRow("Besoins humains :", p.besoinsHumain)}
+                   ${fieldRow("Propositions :", p.propositionsAmelioration)}
+                 </table>
+               </td></tr>
+             </table>"""
+        }
+
+        val heureLine = if (data.heureDebut != null) {
+            val fin = if (data.heureFin != null) " — ${data.heureFin}" else ""
+            "<strong>Heure :</strong> ${data.heureDebut}$fin &nbsp;&nbsp;"
+        } else ""
+
+        val htmlBody = wrapHtml("""
+            <p>${htmlEscape(greeting)},</p>
+            <p style="margin:4px 0 16px;color:#6b7280;font-size:13px;">
+              Proc&egrave;s-verbal automatique &mdash; R&eacute;union hebdomadaire &mdash; <strong>${htmlEscape(dateFormatee)}</strong>
+            </p>
+
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-left:3px solid #FF6B35;border-radius:4px;margin:0 0 20px;font-size:13px;">
+              <tr><td style="padding:12px 16px;">
+                ${if (!data.lieu.isNullOrBlank()) "<strong>Lieu :</strong> ${htmlEscape(data.lieu!!)} &nbsp;&nbsp;" else ""}
+                $heureLine
+                <strong>${data.totalAffaires}</strong> affaire(s) au PV
+              </td></tr>
+              ${if (!data.ordreDuJour.isNullOrBlank()) """
+                <tr><td style="padding:8px 16px 12px;border-top:1px solid #e5e7eb;">
+                  <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Ordre du jour</div>
+                  <div style="font-size:13px;color:#374151;white-space:pre-line;">${htmlEscape(data.ordreDuJour!!)}</div>
+                </td></tr>""" else ""}
+            </table>
+
+            <p style="font-weight:700;font-size:13px;color:#1e3a5f;text-transform:uppercase;letter-spacing:.5px;margin:0 0 12px;">
+              Points par projet (${data.totalAffaires})
+            </p>
+
+            $htmlProjetCards
+
+            ${if (!data.divers.isNullOrBlank()) """
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border-left:3px solid #d97706;border-radius:4px;margin:16px 0;font-size:13px;">
+                <tr><td style="padding:10px 14px;">
+                  <div style="font-size:11px;color:#92400e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Divers</div>
+                  <div style="color:#374151;white-space:pre-line;">${htmlEscape(data.divers!!)}</div>
+                </td></tr>
+              </table>""" else ""}
+
+            ${buttonHtml("Voir le PV en ligne", reunionLink)}
+            <p style="text-align:center;margin-top:8px;">
+              <a href="$listeLink" style="color:#6b7280;font-size:12px;text-decoration:none;">Toutes les r&eacute;unions →</a>
+            </p>
+        """.trimIndent())
+
+        try {
+            sendGenericNotification(to, subject, plainBody, htmlBody, "pv hebdo")
+        } catch (e: Exception) {
+            logger.warn("Envoi PV hebdo échoué vers $to: ${e.message}")
+        }
+    }
+
     @Async
     fun sendWelcomeEmailAsync(to: String, prenom: String, temporaryPassword: String, sexe: Sexe? = null) {
         try { sendWelcomeEmail(to, prenom, temporaryPassword, sexe) } catch (e: Exception) {

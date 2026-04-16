@@ -82,7 +82,7 @@
     "statPagination": "Pagination",
     "paginationRange": "{{from}} – {{to}} sur {{total}}",
     "sectionTable": "Liste des réunions",
-    "newMeeting": "+ Nouvelle réunion",
+    "newMeeting": "Nouvelle réunion",
     "loading": "Chargement…",
     "emptyTitle": "Aucune réunion enregistrée",
     "emptyHint": "Créez une réunion hebdomadaire pour commencer à rédiger les PV",

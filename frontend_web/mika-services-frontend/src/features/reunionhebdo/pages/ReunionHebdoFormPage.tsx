@@ -89,6 +89,8 @@ function StyledInput(props: InputHTMLAttributes<HTMLInputElement>) {
         placeholder:text-gray-400 dark:placeholder:text-gray-500
         focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary
         hover:border-gray-300 dark:hover:border-gray-600
+        [&:user-invalid]:border-red-400 [&:user-invalid]:dark:border-red-500
+        [&:user-invalid]:focus:ring-red-400/40 [&:user-invalid]:focus:border-red-500
         transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
         ${className}
@@ -110,6 +112,8 @@ function StyledSelect(props: SelectHTMLAttributes<HTMLSelectElement>) {
         text-gray-900 dark:text-gray-100
         focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary
         hover:border-gray-300 dark:hover:border-gray-600
+        [&:user-invalid]:border-red-400 [&:user-invalid]:dark:border-red-500
+        [&:user-invalid]:focus:ring-red-400/40 [&:user-invalid]:focus:border-red-500
         transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 dark:disabled:bg-gray-700/40
         ${className}
@@ -141,6 +145,8 @@ function StyledTextarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
         placeholder:text-gray-400 dark:placeholder:text-gray-500
         focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary
         hover:border-gray-300 dark:hover:border-gray-600
+        [&:user-invalid]:border-red-400 [&:user-invalid]:dark:border-red-500
+        [&:user-invalid]:focus:ring-red-400/40 [&:user-invalid]:focus:border-red-500
         transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
         ${className}
@@ -298,13 +304,13 @@ function FormLoadingSkeleton({ title, subtitle }: { title: string; subtitle: str
       </div>
       <div className="flex flex-col xl:flex-row gap-6 flex-1">
         <div className="flex-1 space-y-4">
-          <div className="h-28 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 animate-pulse" />
-          <div className="h-44 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 animate-pulse" />
-          <div className="h-36 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 animate-pulse" />
+          <div className="h-28 bg-white dark:bg-gray-700/60 rounded-2xl border border-gray-100 dark:border-gray-600/60 animate-pulse" />
+          <div className="h-44 bg-white dark:bg-gray-700/60 rounded-2xl border border-gray-100 dark:border-gray-600/60 animate-pulse" />
+          <div className="h-36 bg-white dark:bg-gray-700/60 rounded-2xl border border-gray-100 dark:border-gray-600/60 animate-pulse" />
         </div>
         <div className="xl:w-72 space-y-4">
-          <div className="h-48 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 animate-pulse" />
-          <div className="h-40 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 animate-pulse" />
+          <div className="h-48 bg-white dark:bg-gray-700/60 rounded-2xl border border-gray-100 dark:border-gray-600/60 animate-pulse" />
+          <div className="h-40 bg-white dark:bg-gray-700/60 rounded-2xl border border-gray-100 dark:border-gray-600/60 animate-pulse" />
         </div>
       </div>
       <p className="text-center text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>
@@ -666,7 +672,10 @@ export const ReunionHebdoFormPage = () => {
                         )
                       })}
                     </StyledSelect>
-                    <Button type="button" variant="outline" size="sm" onClick={addOrdreDuJourFromList} disabled={!ordreDuJourSelect}>
+                    <Button type="button" variant="outline" size="sm" onClick={addOrdreDuJourFromList} disabled={!ordreDuJourSelect} className="inline-flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
                       {t('form.ordreDuJourAddFromList')}
                     </Button>
                   </div>
@@ -679,7 +688,10 @@ export const ReunionHebdoFormPage = () => {
                       placeholder={t('form.ordreDuJourCustomPlaceholder')}
                       className="flex-1 min-w-[200px]"
                     />
-                    <Button type="button" variant="outline" size="sm" onClick={addOrdreDuJourCustom} disabled={!ordreDuJourCustomInput.trim()}>
+                    <Button type="button" variant="outline" size="sm" onClick={addOrdreDuJourCustom} disabled={!ordreDuJourCustomInput.trim()} className="inline-flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
                       {t('form.ordreDuJourAddCustom')}
                     </Button>
                   </div>

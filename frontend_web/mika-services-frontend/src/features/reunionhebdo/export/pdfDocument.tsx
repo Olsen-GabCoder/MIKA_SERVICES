@@ -518,15 +518,15 @@ const s = StyleSheet.create({
   },
 
   // Points bloquants — largeurs spécifiques (contrainte 6)
-  pbTitre:  { width: 130, fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.text, lineHeight: 1.4 },
-  pbDesc:   { width: 180, fontSize: 8, color: C.text, lineHeight: 1.4, paddingLeft: 4 },
-  pbPrio:   { width: 80,  fontSize: 8, textAlign: 'center' },
-  pbStatut: { width: 70,  fontSize: 8, textAlign: 'center' },
+  pbTitre:  { width: 130, flexShrink: 0, fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.text, lineHeight: 1.4 },
+  pbDesc:   { flex: 1, fontSize: 8, color: C.text, lineHeight: 1.4, paddingLeft: 4 },
+  pbPrio:   { width: 70,  flexShrink: 0, fontSize: 8, textAlign: 'center' },
+  pbStatut: { width: 65,  flexShrink: 0, fontSize: 8, textAlign: 'center' },
 
-  pbTitreH:  { width: 130, fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.white },
-  pbDescH:   { width: 180, fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.white, paddingLeft: 4 },
-  pbPrioH:   { width: 80,  fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.white, textAlign: 'center' },
-  pbStatutH: { width: 70,  fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.white, textAlign: 'center' },
+  pbTitreH:  { width: 130, flexShrink: 0, fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.white },
+  pbDescH:   { flex: 1, fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.white, paddingLeft: 4 },
+  pbPrioH:   { width: 70,  flexShrink: 0, fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.white, textAlign: 'center' },
+  pbStatutH: { width: 65,  flexShrink: 0, fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.white, textAlign: 'center' },
 })
 
 // ─────────────────────────────────────────────────────────────
@@ -760,7 +760,7 @@ export function PVDocumentPdf({ payload }: { payload: PVDocumentPayload }) {
 
               {/* ── Titre projet (contrainte 5) ─────────────── */}
               <Text style={s.projTitle}>
-                {`${index + 3}. ${projet.nom}`}
+                {`${index + 1}. ${projet.nom}`}
                 {refProjet ? ` (réf. ${refProjet})` : ''}
               </Text>
 

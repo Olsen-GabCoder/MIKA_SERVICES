@@ -81,7 +81,7 @@ export default function FleetDonutChart({ data, total }: FleetDonutChartProps) {
               {chartData.map((entry: { color: string }, i: number) => (
                 <Cell key={i} fill={entry.color} />
               ))}
-            </Pie>
+            </PieAny>
           </PieChart>
         </ResponsiveContainer>
 

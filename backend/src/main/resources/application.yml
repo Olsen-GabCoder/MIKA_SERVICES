@@ -79,7 +79,6 @@ app:
     session-cleanup-cron: ${SESSION_CLEANUP_CRON:0 0 3 * * ?}
     password-reset-cleanup-cron: ${PASSWORD_RESET_CLEANUP_CRON:0 0 4 * * ?}
     digest-cron: ${DIGEST_CRON:0 0 * * * ?}
-    platform-status-cron: ${PLATFORM_STATUS_CRON:0 0 8 * * *}
     rappel-projet-mercredi: ${RAPPEL_PROJET_MERCREDI_CRON:0 0 8 * * WED}
     rappel-projet-jeudi: ${RAPPEL_PROJET_JEUDI_CRON:0 0 16 * * THU}
   rate-limit:

@@ -24,7 +24,7 @@ class ActiviteQuotidienneScheduler(
 ) {
     private val logger = LoggerFactory.getLogger(ActiviteQuotidienneScheduler::class.java)
 
-    @Scheduled(cron = "\${app.scheduler.activite-quotidienne-cron:0 30 18 * * *}", zone = "Africa/Libreville")
+    @Scheduled(cron = "0 30 18 * * *", zone = "Africa/Libreville")
     fun envoyerBilansQuotidiens() {
         logger.info("[ActiviteQuotidienneScheduler] Démarrage envoi bilans quotidiens")
         val today = LocalDate.now()

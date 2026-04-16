@@ -21,32 +21,31 @@ import java.util.Locale
 class RapportHebdoPdfGenerator {
 
     // ─── Couleurs ─────────────────────────────────────────────────
-    private val ORANGE     = java.awt.Color(255, 107, 53)
-    private val NAVY       = java.awt.Color(30, 58, 95)
-    private val GREEN      = java.awt.Color(22, 163, 74)
-    private val AMBER      = java.awt.Color(217, 119, 6)
-    private val RED        = java.awt.Color(185, 28, 28)
-    private val LIGHT_BG   = java.awt.Color(248, 250, 252)
-    private val ORANGE_BG  = java.awt.Color(255, 247, 237)
-    private val BORDER     = java.awt.Color(229, 231, 235)
-    private val TEXT_DARK  = java.awt.Color(17, 24, 39)
-    private val TEXT_GRAY  = java.awt.Color(107, 114, 128)
-    private val WHITE      = java.awt.Color(255, 255, 255)
-    private val BAR_EMPTY  = java.awt.Color(229, 231, 235)
+    private val ORANGE    = java.awt.Color(255, 107, 53)
+    private val NAVY      = java.awt.Color(30, 58, 95)
+    private val GREEN     = java.awt.Color(22, 163, 74)
+    private val AMBER     = java.awt.Color(217, 119, 6)
+    private val RED       = java.awt.Color(185, 28, 28)
+    private val LIGHT_BG  = java.awt.Color(248, 250, 252)
+    private val BORDER    = java.awt.Color(229, 231, 235)
+    private val TEXT_DARK = java.awt.Color(17, 24, 39)
+    private val TEXT_GRAY = java.awt.Color(107, 114, 128)
+    private val WHITE     = java.awt.Color(255, 255, 255)
+    private val BAR_EMPTY = java.awt.Color(229, 231, 235)
 
     // ─── Polices ──────────────────────────────────────────────────
-    private val fTitle   = FontFactory.getFont(FontFactory.HELVETICA_BOLD,  20f, NAVY)
-    private val fSub     = FontFactory.getFont(FontFactory.HELVETICA_BOLD,  11f, ORANGE)
-    private val fDate    = FontFactory.getFont(FontFactory.HELVETICA,        9f, TEXT_GRAY)
-    private val fSection = FontFactory.getFont(FontFactory.HELVETICA_BOLD,  10f, WHITE)
-    private val fProjet  = FontFactory.getFont(FontFactory.HELVETICA_BOLD,  11f, NAVY)
-    private val fCode    = FontFactory.getFont(FontFactory.HELVETICA,        9f, TEXT_GRAY)
-    private val fLabel   = FontFactory.getFont(FontFactory.HELVETICA_BOLD,   9f, TEXT_GRAY)
-    private val fValue   = FontFactory.getFont(FontFactory.HELVETICA,        9f, TEXT_DARK)
-    private val fPct     = FontFactory.getFont(FontFactory.HELVETICA_BOLD,   9f, TEXT_DARK)
-    private val fPbTitle = FontFactory.getFont(FontFactory.HELVETICA,        8f, TEXT_DARK)
-    private val fPbPrio  = FontFactory.getFont(FontFactory.HELVETICA_BOLD,   7f, WHITE)
-    private val fFooter  = FontFactory.getFont(FontFactory.HELVETICA,        8f, TEXT_GRAY)
+    private val fTitle   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20f, NAVY)
+    private val fSub     = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11f, ORANGE)
+    private val fDate    = FontFactory.getFont(FontFactory.HELVETICA,       9f, TEXT_GRAY)
+    private val fSection = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10f, WHITE)
+    private val fProjet  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11f, NAVY)
+    private val fCode    = FontFactory.getFont(FontFactory.HELVETICA,       9f, TEXT_GRAY)
+    private val fLabel   = FontFactory.getFont(FontFactory.HELVETICA_BOLD,  9f, TEXT_GRAY)
+    private val fValue   = FontFactory.getFont(FontFactory.HELVETICA,       9f, TEXT_DARK)
+    private val fPct     = FontFactory.getFont(FontFactory.HELVETICA_BOLD,  9f, TEXT_DARK)
+    private val fPbTitle = FontFactory.getFont(FontFactory.HELVETICA,       8f, TEXT_DARK)
+    private val fPbPrio  = FontFactory.getFont(FontFactory.HELVETICA_BOLD,  7f, WHITE)
+    private val fFooter  = FontFactory.getFont(FontFactory.HELVETICA,       8f, TEXT_GRAY)
 
     // ─── Point d'entrée ───────────────────────────────────────────
 
@@ -74,7 +73,6 @@ class RapportHebdoPdfGenerator {
         }
 
         addFooter(document, data)
-
         document.close()
         return baos.toByteArray()
     }
@@ -82,10 +80,9 @@ class RapportHebdoPdfGenerator {
     // ─── En-tête ──────────────────────────────────────────────────
 
     private fun addHeader(document: Document, data: RapportHebdoData) {
-        // Bande orange
+        // Bande orange top
         val accentTable = PdfPTable(1)
         accentTable.widthPercentage = 100f
-        accentTable.spacingAfter = 0f
         val accentCell = PdfPCell(Phrase(" "))
         accentCell.backgroundColor = ORANGE
         accentCell.fixedHeight = 5f
@@ -116,7 +113,7 @@ class RapportHebdoPdfGenerator {
         // Séparateur orange
         val sepTable = PdfPTable(1)
         sepTable.widthPercentage = 100f
-        sepTable.spacingAfter = 14f
+        sepTable.setSpacingAfter(14f)
         val sepCell = PdfPCell(Phrase(" "))
         sepCell.backgroundColor = ORANGE
         sepCell.fixedHeight = 2f
@@ -131,17 +128,15 @@ class RapportHebdoPdfGenerator {
         val table = PdfPTable(3)
         table.widthPercentage = 100f
         table.setWidths(floatArrayOf(1f, 1f, 1f))
-        table.spacingAfter = 18f
+        table.setSpacingAfter(18f)
 
         fun statCell(label: String, value: String, color: java.awt.Color) {
             val cell = PdfPCell()
             cell.backgroundColor = color
             cell.setPadding(10f)
             cell.border = PdfPCell.NO_BORDER
-
             val fVal = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18f, WHITE)
-            val fLab = FontFactory.getFont(FontFactory.HELVETICA, 8f, java.awt.Color(255, 255, 255, 180))
-
+            val fLab = FontFactory.getFont(FontFactory.HELVETICA, 8f, java.awt.Color(220, 220, 220))
             val p = Paragraph()
             p.add(Chunk(value, fVal))
             p.add(Chunk("\n$label", fLab))
@@ -162,9 +157,8 @@ class RapportHebdoPdfGenerator {
     private fun addSection(document: Document, titre: String, color: java.awt.Color, projets: List<ProjetRapportRow>) {
         val headerTable = PdfPTable(1)
         headerTable.widthPercentage = 100f
-        headerTable.spacingBefore = 10f
-        headerTable.spacingAfter = 6f
-
+        headerTable.setSpacingBefore(10f)
+        headerTable.setSpacingAfter(6f)
         val hCell = PdfPCell(Phrase(titre.uppercase(), fSection))
         hCell.backgroundColor = color
         hCell.setPadding(8f)
@@ -173,9 +167,7 @@ class RapportHebdoPdfGenerator {
         headerTable.addCell(hCell)
         document.add(headerTable)
 
-        projets.forEachIndexed { idx, projet ->
-            addProjetCard(document, projet, idx + 1)
-        }
+        projets.forEachIndexed { idx, projet -> addProjetCard(document, projet, idx + 1) }
     }
 
     // ─── Carte d'un projet ─────────────────────────────────────────
@@ -183,7 +175,6 @@ class RapportHebdoPdfGenerator {
     private fun addProjetCard(document: Document, p: ProjetRapportRow, num: Int) {
         val card = PdfPTable(1)
         card.widthPercentage = 100f
-        card.spacingAfter = 10f
 
         // ── Titre du projet ──
         val titleRow = PdfPTable(2)
@@ -196,7 +187,6 @@ class RapportHebdoPdfGenerator {
         nameCell.paddingLeft = 10f
         nameCell.border = Rectangle.BOTTOM
         nameCell.borderColor = BORDER
-
         val namePhrase = Phrase()
         namePhrase.add(Chunk("$num. ${p.nom}  ", fProjet))
         namePhrase.add(Chunk("(${p.codeProjet})", fCode))
@@ -208,7 +198,6 @@ class RapportHebdoPdfGenerator {
         }
         titleRow.addCell(nameCell)
 
-        // Colonne vide (espace pour équilibre visuel)
         val emptyCell = PdfPCell(Phrase(" "))
         emptyCell.backgroundColor = LIGHT_BG
         emptyCell.border = Rectangle.BOTTOM
@@ -218,21 +207,20 @@ class RapportHebdoPdfGenerator {
 
         val titleCell = PdfPCell(titleRow)
         titleCell.border = PdfPCell.NO_BORDER
-        titleCell.padding = 0f
+        titleCell.setPadding(0f)
         card.addCell(titleCell)
 
         // ── Barres d'avancement ──
         val avanTable = PdfPTable(3)
         avanTable.setWidths(floatArrayOf(1f, 1f, 1f))
         avanTable.widthPercentage = 100f
-
-        addAvancementCell(avanTable, "Avancement physique", p.avancementPhysiquePct, NAVY)
-        addAvancementCell(avanTable, "Avancement financier", p.avancementFinancierPct, ORANGE)
-        addAvancementCell(avanTable, "Délai consommé", p.delaiConsommePct, AMBER)
+        addAvancementCell(avanTable, "Avancement physique",  p.avancementPhysiquePct,   NAVY)
+        addAvancementCell(avanTable, "Avancement financier", p.avancementFinancierPct,  ORANGE)
+        addAvancementCell(avanTable, "Délai consommé",       p.delaiConsommePct,        AMBER)
 
         val avanContainer = PdfPCell(avanTable)
         avanContainer.border = PdfPCell.NO_BORDER
-        avanContainer.padding = 0f
+        avanContainer.setPadding(0f)
         card.addCell(avanContainer)
 
         // ── Champs texte ──
@@ -247,7 +235,6 @@ class RapportHebdoPdfGenerator {
             val fieldsTable = PdfPTable(2)
             fieldsTable.setWidths(floatArrayOf(30f, 70f))
             fieldsTable.widthPercentage = 100f
-
             fields.forEach { (label, value) ->
                 val lCell = PdfPCell(Phrase(label, fLabel))
                 lCell.setPadding(6f)
@@ -256,7 +243,6 @@ class RapportHebdoPdfGenerator {
                 lCell.border = Rectangle.BOTTOM + Rectangle.RIGHT
                 lCell.borderColor = BORDER
                 fieldsTable.addCell(lCell)
-
                 val vCell = PdfPCell(Phrase(value ?: "", fValue))
                 vCell.setPadding(6f)
                 vCell.backgroundColor = WHITE
@@ -264,10 +250,9 @@ class RapportHebdoPdfGenerator {
                 vCell.borderColor = BORDER
                 fieldsTable.addCell(vCell)
             }
-
             val fieldsContainer = PdfPCell(fieldsTable)
             fieldsContainer.border = PdfPCell.NO_BORDER
-            fieldsContainer.padding = 0f
+            fieldsContainer.setPadding(0f)
             card.addCell(fieldsContainer)
         }
 
@@ -302,21 +287,21 @@ class RapportHebdoPdfGenerator {
                 prioCell.verticalAlignment = Element.ALIGN_MIDDLE
                 pbRow.addCell(prioCell)
 
-                val titleCell = PdfPCell(Phrase(pb.titre, fPbTitle))
-                titleCell.setPadding(5f)
-                titleCell.border = PdfPCell.NO_BORDER
-                pbRow.addCell(titleCell)
+                val pbTitleCell = PdfPCell(Phrase(pb.titre, fPbTitle))
+                pbTitleCell.setPadding(5f)
+                pbTitleCell.border = PdfPCell.NO_BORDER
+                pbRow.addCell(pbTitleCell)
 
                 val rowCell = PdfPCell(pbRow)
                 rowCell.border = Rectangle.BOTTOM
                 rowCell.borderColor = BORDER
-                rowCell.padding = 0f
+                rowCell.setPadding(0f)
                 pbTable.addCell(rowCell)
             }
 
             val pbContainer = PdfPCell(pbTable)
             pbContainer.border = PdfPCell.NO_BORDER
-            pbContainer.padding = 0f
+            pbContainer.setPadding(0f)
             card.addCell(pbContainer)
         }
 
@@ -324,11 +309,11 @@ class RapportHebdoPdfGenerator {
         val outerCell = PdfPCell(card)
         outerCell.border = Rectangle.BOX
         outerCell.borderColor = BORDER
-        outerCell.padding = 0f
+        outerCell.setPadding(0f)
 
         val outerTable = PdfPTable(1)
         outerTable.widthPercentage = 100f
-        outerTable.spacingAfter = 10f
+        outerTable.setSpacingAfter(10f)
         outerTable.addCell(outerCell)
         document.add(outerTable)
     }
@@ -354,14 +339,10 @@ class RapportHebdoPdfGenerator {
         val pctInt = value?.toInt()?.coerceIn(0, 100) ?: 0
         val pctStr = value?.let { "${it.toPlainString()}%" } ?: "—"
 
-        // Barre de progression (table 2 colonnes : rempli + vide)
         if (value != null && pctInt > 0) {
             val barTable = PdfPTable(if (pctInt < 100) 2 else 1)
             barTable.widthPercentage = 100f
-            val emptyPct = 100 - pctInt
-            if (pctInt < 100) {
-                barTable.setWidths(floatArrayOf(pctInt.toFloat(), emptyPct.toFloat()))
-            }
+            if (pctInt < 100) barTable.setWidths(floatArrayOf(pctInt.toFloat(), (100 - pctInt).toFloat()))
 
             val filledCell = PdfPCell(Phrase(" "))
             filledCell.backgroundColor = color
@@ -402,7 +383,7 @@ class RapportHebdoPdfGenerator {
 
         val sepTable = PdfPTable(1)
         sepTable.widthPercentage = 100f
-        sepTable.spacingAfter = 8f
+        sepTable.setSpacingAfter(8f)
         val sepCell = PdfPCell(Phrase(" "))
         sepCell.backgroundColor = ORANGE
         sepCell.fixedHeight = 2f

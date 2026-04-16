@@ -90,8 +90,8 @@ function getSemaineCalendaireActuelle(): { week: number; year: number } {
   return { week: getSemaineCalendaireISO(now), year: now.getFullYear() }
 }
 
-const CARD = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm dark:shadow-none overflow-hidden'
-const CARD_HEADER = 'px-5 py-3 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide'
+const CARD = 'bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-md overflow-hidden transition-shadow hover:shadow-lg'
+const CARD_HEADER = 'px-5 py-3.5 border-b-2 border-gray-200 dark:border-gray-700 bg-gradient-to-r from-orange-50/60 to-white dark:from-gray-700/60 dark:to-gray-800 text-sm font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wide border-l-4 border-l-primary flex items-center gap-2'
 const CARD_BODY = 'p-5'
 const TABLE_WRAP = 'w-full min-w-0 overflow-x-auto'
 const TABLE_BASE = 'w-full text-sm border-collapse table-fixed'
@@ -247,8 +247,15 @@ export const ProjetDetailPage = () => {
       />
 
       {/* En-tête du projet */}
-      <header className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white shadow-lg mb-6 overflow-hidden">
-        <div className="px-6 py-6 md:py-8">
+      <header className="relative rounded-2xl overflow-hidden mb-6 shadow-xl">
+        {/* Fond dégradé */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-dark to-orange-700 dark:from-primary-dark dark:to-orange-900" />
+        {/* Cercles décoratifs */}
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/5 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 left-0 w-56 h-56 rounded-full bg-orange-300/10 blur-2xl pointer-events-none" />
+
+        <div className="relative px-6 py-7 md:py-9">
+          {/* Bouton retour */}
           <button
             onClick={() =>
               navigate('/projets', {
@@ -257,45 +264,144 @@ export const ProjetDetailPage = () => {
                   : undefined,
               })
             }
-            className="text-white/80 hover:text-white text-sm mb-4 flex items-center gap-1"
+            className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-5 transition-colors group"
           >
-            ← {t('detail.backToList')}
+            <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            {t('detail.backToList')}
           </button>
-          <p className="text-white/90 text-sm uppercase tracking-wider font-medium">
-            {t('detail.managerLabel')} : {projet.responsableProjet ? `${projet.responsableProjet.prenom} ${projet.responsableProjet.nom}` : '—'}
-          </p>
-          <h1 className="text-2xl md:text-3xl font-bold mt-1 leading-tight">
-            {projet.numeroMarche ? `${projet.numeroMarche} — ` : ''}{projet.nom}
-          </h1>
-          <p className="text-white/80 text-sm mt-2">
-            {t('detail.numeroMarcheIntitule')} : {projet.numeroMarche ? `${projet.numeroMarche} — ` : ''}{projet.nom}
-          </p>
-          <div className="flex flex-wrap items-center gap-3 mt-3">
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/20">
-              {t('detail.statutLabel')} : {t(`enums.statut.${projet.statut}`)}
-            </span>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/25">
-              {t('detail.weekLabel', { week: semaineCalendaire, year: anneeCalendaire })}
-            </span>
+
+          {/* Titre + statut */}
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              {/* Responsable avec avatar */}
+              {projet.responsableProjet && (
+                <div className="flex items-center gap-2 mb-2.5">
+                  <div className="w-7 h-7 rounded-full bg-white/25 flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 border border-white/30">
+                    {(projet.responsableProjet.prenom?.[0] ?? '') + (projet.responsableProjet.nom?.[0] ?? '')}
+                  </div>
+                  <p className="text-white/80 text-sm">{projet.responsableProjet.prenom} {projet.responsableProjet.nom}</p>
+                </div>
+              )}
+              <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight">
+                {projet.nom}
+              </h1>
+              {projet.numeroMarche && (
+                <p className="text-white/65 text-sm mt-1.5 font-mono tracking-wide">
+                  {t('detail.numeroMarcheIntitule')} : {projet.numeroMarche}
+                </p>
+              )}
+            </div>
+            <div className="flex-shrink-0 flex flex-col items-end gap-2">
+              <span className="px-4 py-1.5 rounded-full text-sm font-bold bg-white/20 text-white border border-white/30 backdrop-blur-sm">
+                {t(`enums.statut.${projet.statut}`)}
+              </span>
+              <span className="text-white/60 text-xs">
+                {t('detail.weekLabel', { week: semaineCalendaire, year: anneeCalendaire })}
+              </span>
+            </div>
           </div>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+
+          {/* KPI pills */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+            {[
+              {
+                label: t('detail.avancementPhysique'),
+                value: `${projet.avancementPhysiquePct ?? projet.avancementGlobal ?? 0} %`,
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                ),
+                highlight: false,
+              },
+              {
+                label: t('detail.montantMarche'),
+                value: formatMontant(projet.montantHT),
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ),
+                highlight: false,
+              },
+              {
+                label: t('detail.delai'),
+                value: delaiMois ? `${delaiMois} ${t('detail.months')}` : '—',
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ),
+                highlight: false,
+              },
+              {
+                label: t('detail.pointsBloquants'),
+                value: String(pointsBloquants.length),
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                ),
+                highlight: pointsBloquants.length > 0,
+              },
+            ].map((kpi) => (
+              <div key={kpi.label} className={`${kpi.highlight ? 'bg-red-400/25 border-red-300/40' : 'bg-white/15 border-white/20'} border rounded-xl px-4 py-3 backdrop-blur-sm`}>
+                <div className="flex items-center gap-1.5 text-white/70 mb-1">
+                  {kpi.icon}
+                  <p className="text-[11px] uppercase tracking-wider truncate">{kpi.label}</p>
+                </div>
+                <p className="text-white font-bold text-lg leading-tight">{kpi.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Barre de progression globale */}
+          <div className="mt-5">
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <span className="text-white/70 uppercase tracking-wide">Avancement global</span>
+              <span className="text-white font-bold">{projet.avancementGlobal ?? 0} %</span>
+            </div>
+            <div className="w-full h-2.5 rounded-full bg-white/20 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-white/85 transition-all duration-700 shadow-sm"
+                style={{ width: `${Math.min(projet.avancementGlobal ?? 0, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Boutons d'action */}
+          <div className="mt-5 flex flex-wrap gap-2.5">
             <button
               type="button"
               onClick={() => navigate(`/projets/${projet.id}/historique`)}
-              className="bg-white/20 hover:bg-white/30 text-white font-semibold px-5 py-2 rounded-lg transition"
+              className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/25 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200"
             >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               {t('historique.buttonLabel')}
             </button>
             <button
               type="button"
               onClick={() => setDownloadModalOpen(true)}
               disabled={exportingDocument}
-              className="bg-white/20 hover:bg-white/30 text-white font-semibold px-5 py-2 rounded-lg transition disabled:opacity-60"
+              className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/25 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 disabled:opacity-60"
             >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
               {exportingDocument ? t('detail.downloadGenerating') : t('detail.downloadDocument')}
             </button>
             {canEditProjet && (
-              <button onClick={() => navigate(`/projets/${projet.id}/edit`)} className="bg-white dark:bg-gray-100 text-primary hover:bg-white/90 dark:hover:bg-gray-200 font-semibold px-5 py-2 rounded-lg shadow">
+              <button
+                onClick={() => navigate(`/projets/${projet.id}/edit`)}
+                className="inline-flex items-center gap-2 bg-white text-primary hover:bg-white/90 text-sm font-bold px-4 py-2 rounded-xl shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
                 {t('detail.editProject')}
               </button>
             )}
@@ -608,19 +714,36 @@ export const ProjetDetailPage = () => {
                   <div>
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">{t('detail.pointsBloquants')}</h3>
                     {pointsBloquants.length > 0 ? (
-                      <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                        {pointsBloquants.map((pb) => (
-                          <li key={pb.id}>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">{pb.titre}</span>
-                            {pb.description && <span className="text-gray-600 dark:text-gray-400"> — {pb.description}</span>}
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {' '}(<span className={getPrioriteTextClass(pb.priorite)}>{t(`enums.priorite.${pb.priorite}`)}</span>, <span className={getStatutPointBloquantTextClass(pb.statut)}>{t(`enums.statutPointBloquant.${pb.statut}`)}</span>)
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="space-y-2">
+                        {pointsBloquants.map((pb) => {
+                          const isCritical = pb.priorite === 'CRITIQUE' || pb.priorite === 'URGENTE'
+                          const isResolved = pb.statut === 'RESOLU' || pb.statut === 'FERME'
+                          return (
+                            <div key={pb.id} className={`flex items-start gap-3 p-3 rounded-xl border ${isResolved ? 'bg-gray-50 dark:bg-gray-700/30 border-gray-200 dark:border-gray-600' : isCritical ? 'bg-red-50 dark:bg-red-900/15 border-red-200 dark:border-red-700/40' : 'bg-amber-50/60 dark:bg-amber-900/10 border-amber-200/60 dark:border-amber-700/30'}`}>
+                              <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${isResolved ? 'bg-gray-400' : isCritical ? 'bg-red-500' : 'bg-amber-500'}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{pb.titre}</p>
+                                {pb.description && <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{pb.description}</p>}
+                                <div className="flex flex-wrap gap-2 mt-1.5">
+                                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${isCritical ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'}`}>
+                                    {t(`enums.priorite.${pb.priorite}`)}
+                                  </span>
+                                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 ${getStatutPointBloquantTextClass(pb.statut)}`}>
+                                    {t(`enums.statutPointBloquant.${pb.statut}`)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
                     ) : (
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.noPointsBloquants')}</p>
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-sm">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {t('detail.noPointsBloquants')}
+                      </div>
                     )}
                   </div>
 
@@ -705,76 +828,160 @@ export const ProjetDetailPage = () => {
         <div className={CARD}>
           <h2 className={CARD_HEADER}>{t('detail.syntheseProjet')}</h2>
           <div className={CARD_BODY}>
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Avancement physique (indicateur principal, synchronisé avec la fiche projet) */}
-              {(() => {
-                const avancementPhysique = projet.avancementPhysiquePct ?? projet.avancementGlobal ?? 0
-                return (
-                  <div className="text-center py-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                    <div className="text-4xl font-bold text-primary">{avancementPhysique} %</div>
-                    <p className="text-xs text-gray-500 mt-1">{t('detail.avancementPhysique')}</p>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2 mx-auto max-w-[180px]">
-                      <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${Math.min(avancementPhysique, 100)}%` }} />
-                    </div>
+            {/* KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Avancement physique */}
+            {(() => {
+              const v = projet.avancementPhysiquePct ?? projet.avancementGlobal ?? 0
+              return (
+                <div className="bg-gradient-to-br from-primary/10 to-orange-50 dark:from-primary/20 dark:to-orange-900/20 border-2 border-primary/20 dark:border-primary/30 rounded-2xl p-5 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
                   </div>
-                )
-              })()}
-
-              {/* Informations du projet */}
-              <div className="lg:col-span-2">
-                <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  <dt className="text-gray-500 dark:text-gray-400">{t('detail.type')}</dt><dd className="font-medium text-gray-900 dark:text-gray-100">{getTypeProjetDisplay(getProjetTypes(projet), projet.typePersonnalise)}</dd>
-                  <dt className="text-gray-500">{t('detail.sousProjets')}</dt><dd className="font-medium">{projet.nombreSousProjets}</dd>
-                  <dt className="text-gray-500">{t('detail.pointsBloquantsOuverts')}</dt><dd className="font-semibold text-amber-600">{projet.nombrePointsBloquantsOuverts}</dd>
-                  <dt className="text-gray-500">{t('detail.delaiConsomme')}</dt><dd className="font-medium">{projet.delaiConsommePct != null ? `${projet.delaiConsommePct} %` : '—'}</dd>
-                  <dt className="text-gray-500">{t('detail.sourceFinancement')}</dt><dd className="font-medium truncate" title={projet.sourceFinancement?.replace(/_/g, ' ')}>{projet.sourceFinancement?.replace(/_/g, ' ') || '—'}</dd>
-                  <dt className="text-gray-500">{t('detail.partenairePrincipal')}</dt><dd className="font-medium truncate" title={projet.partenairePrincipal}>{projet.partenairePrincipal || '—'}</dd>
-                  {projet.createdAt && <><dt className="text-gray-500">{t('detail.createdAt')}</dt><dd className="font-medium">{formatDate(projet.createdAt)}</dd></>}
-                  {projet.updatedAt && <><dt className="text-gray-500">{t('detail.updatedAt')}</dt><dd className="font-medium">{formatDate(projet.updatedAt)}</dd></>}
-                </dl>
-              </div>
-
-              {/* Accès rapide */}
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 text-sm">{t('detail.accesRapide')}</h3>
-                <div className="flex flex-col gap-2">
-                  <Link to={`/budget?projetId=${projet.id}`} className="text-sm text-primary hover:underline">{t('detail.linkBudget')}</Link>
-                  <Link to={`/planning?projetId=${projet.id}`} className="text-sm text-primary hover:underline">{t('detail.linkPlanning')}</Link>
-                  <Link to={`/qualite?projetId=${projet.id}`} className="text-sm text-primary hover:underline">{t('detail.linkQualite')}</Link>
-                  <Link to={`/securite?projetId=${projet.id}`} className="text-sm text-primary hover:underline">{t('detail.linkSecurite')}</Link>
-                  <Link to={`/documents?projetId=${projet.id}`} className="text-sm text-primary hover:underline">{t('detail.linkDocuments')}</Link>
+                  <div className="text-3xl font-bold text-primary">{v}%</div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('detail.avancementPhysique')}</p>
+                  <div className="w-full bg-primary/15 rounded-full h-2 mt-3 overflow-hidden">
+                    <div className="bg-gradient-to-r from-primary to-orange-400 h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(v, 100)}%` }} />
+                  </div>
                 </div>
-              </div>
+              )
+            })()}
+            {/* Avancement financier */}
+            {(() => {
+              const v = projet.avancementFinancierPct ?? 0
+              return (
+                <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border-2 border-emerald-200/60 dark:border-emerald-700/40 rounded-2xl p-5 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{v}%</div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('detail.avancementFinancier') || 'Avancement financier'}</p>
+                  <div className="w-full bg-emerald-100 dark:bg-emerald-900/30 rounded-full h-2 mt-3 overflow-hidden">
+                    <div className="bg-gradient-to-r from-emerald-500 to-green-400 h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(v, 100)}%` }} />
+                  </div>
+                </div>
+              )
+            })()}
+            {/* Délai consommé */}
+            {(() => {
+              const v = projet.delaiConsommePct ?? 0
+              const isOverrun = v > 100
+              return (
+                <div className={`bg-gradient-to-br ${isOverrun ? 'from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 border-red-200/60 dark:border-red-700/40' : 'from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200/60 dark:border-blue-700/40'} border-2 rounded-2xl p-5 text-center`}>
+                  <div className={`w-10 h-10 rounded-xl ${isOverrun ? 'bg-red-100 dark:bg-red-900/30' : 'bg-blue-100 dark:bg-blue-900/30'} flex items-center justify-center mx-auto mb-3`}>
+                    <svg className={`w-5 h-5 ${isOverrun ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className={`text-3xl font-bold ${isOverrun ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>{v}%</div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('detail.delaiConsomme')}</p>
+                  <div className={`w-full ${isOverrun ? 'bg-red-100 dark:bg-red-900/30' : 'bg-blue-100 dark:bg-blue-900/30'} rounded-full h-2 mt-3 overflow-hidden`}>
+                    <div className={`${isOverrun ? 'bg-gradient-to-r from-red-500 to-rose-400' : 'bg-gradient-to-r from-blue-500 to-indigo-400'} h-full rounded-full transition-all duration-700`} style={{ width: `${Math.min(v, 100)}%` }} />
+                  </div>
+                </div>
+              )
+            })()}
+            {/* Points bloquants */}
+            {(() => {
+              const count = projet.nombrePointsBloquantsOuverts
+              const isAlert = count > 0
+              return (
+                <div className={`bg-gradient-to-br ${isAlert ? 'from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200/60 dark:border-amber-700/40' : 'from-gray-50 to-slate-50 dark:from-gray-700/30 dark:to-slate-700/20 border-gray-200 dark:border-gray-600'} border-2 rounded-2xl p-5 text-center`}>
+                  <div className={`w-10 h-10 rounded-xl ${isAlert ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-gray-700'} flex items-center justify-center mx-auto mb-3`}>
+                    <svg className={`w-5 h-5 ${isAlert ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div className={`text-3xl font-bold ${isAlert ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'}`}>{count}</div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">{t('detail.pointsBloquantsOuverts')}</p>
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">{isAlert ? 'À traiter' : 'Aucun blocage'}</p>
+                </div>
+              )
+            })()}
+          </div>
+
+          {/* Informations + Accès rapide */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Infos projet */}
+            <div className="lg:col-span-2">
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                <dt className="text-gray-500 dark:text-gray-400 font-medium">{t('detail.type')}</dt>
+                <dd className="font-semibold text-gray-900 dark:text-gray-100">{getTypeProjetDisplay(getProjetTypes(projet), projet.typePersonnalise)}</dd>
+                <dt className="text-gray-500 dark:text-gray-400 font-medium">{t('detail.sousProjets')}</dt>
+                <dd className="font-semibold text-gray-900 dark:text-gray-100">{projet.nombreSousProjets}</dd>
+                <dt className="text-gray-500 dark:text-gray-400 font-medium">{t('detail.sourceFinancement')}</dt>
+                <dd className="font-semibold text-gray-900 dark:text-gray-100 truncate">{projet.sourceFinancement?.replace(/_/g, ' ') || '—'}</dd>
+                <dt className="text-gray-500 dark:text-gray-400 font-medium">{t('detail.partenairePrincipal')}</dt>
+                <dd className="font-semibold text-gray-900 dark:text-gray-100 truncate">{projet.partenairePrincipal || '—'}</dd>
+                {projet.createdAt && <><dt className="text-gray-500 dark:text-gray-400 font-medium">{t('detail.createdAt')}</dt><dd className="font-semibold">{formatDate(projet.createdAt)}</dd></>}
+                {projet.updatedAt && <><dt className="text-gray-500 dark:text-gray-400 font-medium">{t('detail.updatedAt')}</dt><dd className="font-semibold">{formatDate(projet.updatedAt)}</dd></>}
+              </dl>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 pt-6 border-t border-gray-100">
-              {/* Client */}
-              {projet.client && (
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">{t('detail.client')}</h3>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{projet.client.nom}</p>
-                  <p className="text-xs text-gray-500">{projet.client.type.replace(/_/g, ' ')}</p>
-                  {projet.client.contactPrincipal && <p className="text-xs text-gray-600 mt-1">{t('detail.contact')} : {projet.client.contactPrincipal}</p>}
-                  {projet.client.telephoneContact && <p className="text-xs text-gray-600">{t('detail.phone')} : {projet.client.telephoneContact}</p>}
-                </div>
-              )}
-
-              {/* Chef de projet */}
-              {projet.responsableProjet && (
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">{t('detail.manager')}</h3>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{projet.responsableProjet.prenom} {projet.responsableProjet.nom}</p>
-                  <p className="text-xs text-gray-500">{projet.responsableProjet.email}</p>
-                </div>
-              )}
-
-              {/* Localisation */}
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 text-sm">{t('detail.localisation')}</h3>
-                <p className="text-sm text-gray-700">{[projet.province, projet.ville, projet.quartier].filter(Boolean).join(' · ') || '—'}</p>
+            {/* Accès rapide — pill buttons */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">{t('detail.accesRapide')}</h3>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { to: `/budget?projetId=${projet.id}`, label: t('detail.linkBudget'), color: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-700/40' },
+                  { to: `/planning?projetId=${projet.id}`, label: t('detail.linkPlanning'), color: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700/40' },
+                  { to: `/qualite?projetId=${projet.id}`, label: t('detail.linkQualite'), color: 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100 dark:bg-violet-900/20 dark:text-violet-400 dark:border-violet-700/40' },
+                  { to: `/securite?projetId=${projet.id}`, label: t('detail.linkSecurite'), color: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-700/40' },
+                  { to: `/documents?projetId=${projet.id}`, label: t('detail.linkDocuments'), color: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700/40' },
+                ].map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-150 ${link.color}`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
+
+          {/* Client + Chef de projet + Localisation */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6 pt-6 border-t-2 border-gray-100 dark:border-gray-700">
+            {projet.client && (
+              <div className="bg-gray-50 dark:bg-gray-700/40 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">{t('detail.client')}</p>
+                <p className="font-bold text-gray-900 dark:text-gray-100">{projet.client.nom}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{projet.client.type.replace(/_/g, ' ')}</p>
+                {projet.client.contactPrincipal && <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">{t('detail.contact')} : {projet.client.contactPrincipal}</p>}
+                {projet.client.telephoneContact && <p className="text-xs text-gray-600 dark:text-gray-400">{t('detail.phone')} : {projet.client.telephoneContact}</p>}
+              </div>
+            )}
+            {projet.responsableProjet && (
+              <div className="bg-gray-50 dark:bg-gray-700/40 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+                <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">{t('detail.manager')}</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-md">
+                    {(projet.responsableProjet.prenom?.[0] ?? '') + (projet.responsableProjet.nom?.[0] ?? '')}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 dark:text-gray-100 truncate">{projet.responsableProjet.prenom} {projet.responsableProjet.nom}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{projet.responsableProjet.email}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="bg-gray-50 dark:bg-gray-700/40 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
+              <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">{t('detail.localisation')}</p>
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{[projet.province, projet.ville, projet.quartier].filter(Boolean).join(' · ') || '—'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
         </div>
 
         {/* VUE STRATÉGIQUE - PLEINE LARGEUR */}

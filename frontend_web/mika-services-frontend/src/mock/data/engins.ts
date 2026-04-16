@@ -20,3 +20,17 @@ function pageResponse<T>(content: T[], page = 0, size = 20): PageResponse<T> {
 export function getMockEnginsPage(page = 0, size = 20): PageResponse<EnginSummary> {
   return pageResponse(mockEngins, page, size)
 }
+
+export function getMockEnginsSearchPage(q: string, page = 0, size = 20): PageResponse<EnginSummary> {
+  const t = q.trim().toLowerCase()
+  if (!t) return pageResponse(mockEngins, page, size)
+  const filtered = mockEngins.filter(
+    (e) =>
+      e.code.toLowerCase().includes(t) ||
+      e.nom.toLowerCase().includes(t) ||
+      e.type.toLowerCase().includes(t) ||
+      (e.marque?.toLowerCase().includes(t) ?? false) ||
+      (e.immatriculation?.toLowerCase().includes(t) ?? false)
+  )
+  return pageResponse(filtered, page, size)
+}

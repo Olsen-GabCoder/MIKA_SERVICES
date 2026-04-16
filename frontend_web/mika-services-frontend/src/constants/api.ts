@@ -1,4 +1,4 @@
-// En prod (ex. Railway), définir VITE_API_BASE_URL (ex. https://mikaservices-production.up.railway.app/api)
+// En prod (Render), définir VITE_API_BASE_URL (ex. https://mika-services-api.onrender.com/api)
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api'
 export const API_VERSION = 'v1'
 

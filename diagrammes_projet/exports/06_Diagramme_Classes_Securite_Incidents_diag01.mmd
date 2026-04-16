@@ -1,0 +1,133 @@
+classDiagram
+    direction TB
+
+    %% ══════════════ BASE ══════════════
+    class BaseEntity {
+        <<abstract>>
+        +Long id
+        +LocalDateTime createdAt
+        +LocalDateTime updatedAt
+        +String createdBy
+        +String updatedBy
+    }
+
+    %% ══════════════ ENUMS ══════════════
+    class TypeIncident {
+        <<enumeration>>
+        ACCIDENT_TRAVAIL
+        INCIDENT_SECURITE
+        INCENDIE
+        EFFONDREMENT
+        CHUTE
+        BLESSURE
+        DOMMAGE_MATERIEL
+        DOMMAGE_ENVIRONNEMENTAL
+        AUTRE
+    }
+
+    class GraviteIncident {
+        <<enumeration>>
+        MINEUR
+        MODERE
+        MAJEUR
+        CRITIQUE
+        FATAL
+    }
+
+    class StatutIncident {
+        <<enumeration>>
+        DECLARE
+        EN_INVESTIGATION
+        ANALYSE
+        ACTIONS_EN_COURS
+        CLOTURE
+    }
+
+    class StatutActionPrevention {
+        <<enumeration>>
+        PLANIFIEE
+        EN_COURS
+        REALISEE
+        VERIFIEE
+        ANNULEE
+    }
+
+    class NiveauRisque {
+        <<enumeration>>
+        FAIBLE
+        MODERE
+        ELEVE
+        CRITIQUE
+    }
+
+    %% ══════════════ ENTITÉS ══════════════
+    class Incident {
+        +String reference
+        +String titre
+        +String description
+        +TypeIncident typeIncident
+        +GraviteIncident gravite
+        +StatutIncident statut
+        +LocalDate dateIncident
+        +LocalTime heureIncident
+        +String lieu
+        +Integer nbBlesses
+        +Boolean arretTravail
+        +Integer nbJoursArret
+        +String causeIdentifiee
+        +String mesuresImmediates
+        +String analyseCause
+    }
+
+    class ActionPrevention {
+        +String titre
+        +String description
+        +StatutActionPrevention statut
+        +LocalDate dateEcheance
+        +LocalDate dateRealisation
+        +String commentaireVerification
+    }
+
+    class Risque {
+        +String titre
+        +String description
+        +NiveauRisque niveau
+        +Integer probabilite
+        +Integer impact
+        +String zoneConcernee
+        +String mesuresPrevention
+        +Boolean actif
+    }
+
+    %% Références externes (simplifiées)
+    class Projet {
+        +String codeProjet
+        +String nom
+    }
+
+    class User {
+        +String matricule
+        +String nom
+    }
+
+    %% ══════════════ HÉRITAGE ══════════════
+    BaseEntity <|-- Incident
+    BaseEntity <|-- ActionPrevention
+    BaseEntity <|-- Risque
+
+    %% ══════════════ RELATIONS ══════════════
+    Incident "n" --> "1" Projet : projet
+    Incident "n" --> "0..1" User : declarePar
+    Incident "1" --> "n" ActionPrevention : actionsPrevention
+
+    ActionPrevention "n" --> "0..1" Incident : incident
+    ActionPrevention "n" --> "0..1" User : responsable
+
+    Risque "n" --> "1" Projet : projet
+
+    %% ══════════════ ENUMS ══════════════
+    Incident --> TypeIncident
+    Incident --> GraviteIncident
+    Incident --> StatutIncident
+    ActionPrevention --> StatutActionPrevention
+    Risque --> NiveauRisque

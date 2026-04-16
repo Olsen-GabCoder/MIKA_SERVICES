@@ -1,6 +1,8 @@
 package com.mikaservices.platform.modules.materiel.service
 
+import com.mikaservices.platform.common.enums.StatutAffectation
 import com.mikaservices.platform.common.enums.StatutEngin
+import com.mikaservices.platform.common.enums.TypeEngin
 import com.mikaservices.platform.common.exception.ConflictException
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
 import com.mikaservices.platform.modules.materiel.dto.request.AffectationEnginRequest
@@ -47,9 +49,22 @@ class EnginService(
         return EnginMapper.toResponse(saved)
     }
 
+    /** Construit un index enginId → nom du chantier en cours, en un seul batch. */
+    private fun buildChantierIndex(enginIds: List<Long>): Map<Long, String> {
+        if (enginIds.isEmpty()) return emptyMap()
+        val affectations = affectationRepository.findByEnginIdInAndStatut(enginIds, StatutAffectation.EN_COURS)
+        return affectations.associate { it.engin.id!! to it.projet.nom }
+    }
+
     @Transactional(readOnly = true)
-    fun findAll(pageable: Pageable): Page<EnginSummaryResponse> {
-        return enginRepository.findByActifTrue(pageable).map { EnginMapper.toSummaryResponse(it) }
+    fun findAll(pageable: Pageable, statut: StatutEngin? = null, type: TypeEngin? = null): Page<EnginSummaryResponse> {
+        val page = if (statut == null && type == null) {
+            enginRepository.findByActifTrue(pageable)
+        } else {
+            enginRepository.findByFilters(statut, type, pageable)
+        }
+        val chantierIndex = buildChantierIndex(page.content.mapNotNull { it.id })
+        return page.map { EnginMapper.toSummaryResponse(it, chantierIndex[it.id]) }
     }
 
     @Transactional(readOnly = true)
@@ -59,7 +74,9 @@ class EnginService(
 
     @Transactional(readOnly = true)
     fun search(search: String, pageable: Pageable): Page<EnginSummaryResponse> {
-        return enginRepository.search(search, pageable).map { EnginMapper.toSummaryResponse(it) }
+        val page = enginRepository.search(search, pageable)
+        val chantierIndex = buildChantierIndex(page.content.mapNotNull { it.id })
+        return page.map { EnginMapper.toSummaryResponse(it, chantierIndex[it.id]) }
     }
 
     @Transactional(readOnly = true)

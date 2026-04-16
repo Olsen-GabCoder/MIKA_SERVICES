@@ -1,0 +1,322 @@
+classDiagram
+    direction TB
+
+    %% ══════════════ BASE ══════════════
+    class BaseEntity {
+        <<abstract>>
+        +Long id
+        +LocalDateTime createdAt
+        +LocalDateTime updatedAt
+        +String createdBy
+        +String updatedBy
+    }
+
+    %% ══════════════ ENUMS ══════════════
+    class StatutProjet {
+        <<enumeration>>
+        EN_ATTENTE
+        PLANIFIE
+        EN_COURS
+        SUSPENDU
+        TERMINE
+        ABANDONNE
+        RECEPTION_PROVISOIRE
+        RECEPTION_DEFINITIVE
+    }
+
+    class StatutSousProjet {
+        <<enumeration>>
+        PLANIFIE
+        EN_COURS
+        SUSPENDU
+        TERMINE
+        ABANDONNE
+    }
+
+    class TypeProjet {
+        <<enumeration>>
+        VOIRIE
+        ROUTE
+        CHAUSSEE
+        PONT
+        OUVRAGE_ART
+        BATIMENT
+        ASSAINISSEMENT
+        TERRASSEMENT
+        MIXTE
+        GENIE_CIVIL
+        REHABILITATION
+        AMENAGEMENT
+        AUTRE
+    }
+
+    class TypeTravaux {
+        <<enumeration>>
+        TERRASSEMENT
+        GROS_OEUVRE
+        SECOND_OEUVRE
+        VOIRIE
+        ASSAINISSEMENT
+        ELECTRICITE
+        PLOMBERIE
+        AUTRE
+    }
+
+    class TypeClient {
+        <<enumeration>>
+        ETAT
+        COLLECTIVITE
+        PRIVE
+        ONG
+        INTERNATIONAL
+        AUTRE
+    }
+
+    class TypePartenaire {
+        <<enumeration>>
+        SOUS_TRAITANT
+        FOURNISSEUR
+        BUREAU_ETUDES
+        LABORATOIRE
+        ASSUREUR
+        AUTRE
+    }
+
+    class SourceFinancement {
+        <<enumeration>>
+        BUDGET_ETAT
+        BANQUE_MONDIALE
+        BAD
+        BEI
+        PRIVE
+        MIXTE
+        AUTRE
+    }
+
+    class ConditionAcces {
+        <<enumeration>>
+        FACILE
+        DIFFICILE
+        TRES_DIFFICILE
+    }
+
+    class ZoneClimatique {
+        <<enumeration>>
+        EQUATORIALE
+        TROPICALE
+        SAHELIENNE
+        SEMI_ARIDE
+    }
+
+    class ModeSuiviMensuel {
+        <<enumeration>>
+        AUTO
+        MANUEL
+    }
+
+    class Priorite {
+        <<enumeration>>
+        BASSE
+        NORMALE
+        HAUTE
+        CRITIQUE
+        URGENT
+    }
+
+    class StatutPointBloquant {
+        <<enumeration>>
+        OUVERT
+        EN_COURS
+        RESOLU
+        FERME
+    }
+
+    class TypePrevision {
+        <<enumeration>>
+        TRAVAUX
+        APPROVISIONNEMENT
+        ETUDES
+        REUNIONS
+        AUTRE
+    }
+
+    class PhaseEtude {
+        <<enumeration>>
+        APS
+        APD
+        PRO
+        DCE
+        EXE
+    }
+
+    %% ══════════════ ENTITÉS ══════════════
+    class Projet {
+        +String codeProjet
+        +String numeroMarche
+        +String nom
+        +String description
+        +TypeProjet type
+        +Set~TypeProjet~ types
+        +String typePersonnalise
+        +StatutProjet statut
+        +SourceFinancement sourceFinancement
+        +String imputationBudgetaire
+        +String province
+        +String ville
+        +String quartier
+        +String adresse
+        +Double latitude
+        +Double longitude
+        +BigDecimal superficie
+        +ConditionAcces conditionAcces
+        +ZoneClimatique zoneClimatique
+        +Double distanceDepotKm
+        +Integer nombreOuvriersPrevu
+        +String horaireTravail
+        +BigDecimal montantHT
+        +BigDecimal montantTTC
+        +BigDecimal montantInitial
+        +BigDecimal montantRevise
+        +Integer delaiMois
+        +ModeSuiviMensuel modeSuiviMensuel
+        +LocalDate dateDebut
+        +LocalDate dateFin
+        +LocalDate dateDebutReel
+        +LocalDate dateFinReelle
+        +BigDecimal avancementGlobal
+        +BigDecimal avancementPhysiquePct
+        +BigDecimal avancementFinancierPct
+        +BigDecimal delaiConsommePct
+        +String besoinsMateriel
+        +String besoinsHumain
+        +String observations
+        +String propositionsAmelioration
+        +String partenairePrincipal
+        +Boolean actif
+    }
+
+    class Client {
+        +String code
+        +String nom
+        +TypeClient type
+        +String ministere
+        +String telephone
+        +String email
+        +String adresse
+        +String contactPrincipal
+        +String telephoneContact
+        +Boolean actif
+    }
+
+    class Partenaire {
+        +String code
+        +String nom
+        +TypePartenaire type
+        +String pays
+        +String telephone
+        +String email
+        +String adresse
+        +String contactPrincipal
+        +Boolean actif
+    }
+
+    class SousProjet {
+        +String code
+        +String nom
+        +String description
+        +TypeTravaux typeTravaux
+        +StatutSousProjet statut
+        +BigDecimal montantHT
+        +BigDecimal montantTTC
+        +Integer delaiMois
+        +LocalDate dateDebut
+        +LocalDate dateFin
+        +BigDecimal avancementPhysique
+    }
+
+    class PointBloquant {
+        +String titre
+        +String description
+        +Priorite priorite
+        +StatutPointBloquant statut
+        +LocalDate dateDetection
+        +LocalDate dateResolution
+        +String actionCorrective
+    }
+
+    class CAPrevisionnelRealise {
+        +Integer mois
+        +Integer annee
+        +BigDecimal caPrevisionnel
+        +BigDecimal caRealise
+        +BigDecimal ecart
+        +BigDecimal avancementCumule
+        +calculerEcart() BigDecimal
+    }
+
+    class RevisionBudget {
+        +BigDecimal ancienMontant
+        +BigDecimal nouveauMontant
+        +String motif
+        +LocalDate dateRevision
+    }
+
+    class Prevision {
+        +Integer semaine
+        +Integer annee
+        +String description
+        +TypePrevision type
+        +LocalDate dateDebut
+        +LocalDate dateFin
+        +Integer avancementPct
+    }
+
+    class AvancementEtudeProjet {
+        +PhaseEtude phase
+        +BigDecimal avancementPct
+        +LocalDate dateDepot
+        +String etatValidation
+    }
+
+    %% ══════════════ HÉRITAGE ══════════════
+    BaseEntity <|-- Projet
+    BaseEntity <|-- Client
+    BaseEntity <|-- Partenaire
+    BaseEntity <|-- SousProjet
+    BaseEntity <|-- PointBloquant
+    BaseEntity <|-- CAPrevisionnelRealise
+    BaseEntity <|-- RevisionBudget
+    BaseEntity <|-- Prevision
+    BaseEntity <|-- AvancementEtudeProjet
+
+    %% ══════════════ RELATIONS ══════════════
+    Projet "n" --> "0..1" Client : client
+    Projet "n" --> "n" Partenaire : projet_partenaires
+    Projet "1" --> "n" SousProjet : sousProjets
+    Projet "1" --> "n" PointBloquant : pointsBloquants
+    Projet "1" --> "n" CAPrevisionnelRealise : caPrevisionnelsRealises
+    Projet "1" --> "n" RevisionBudget : revisionsBudget
+    Projet "1" --> "n" Prevision : previsions
+    Projet "1" --> "n" AvancementEtudeProjet : avancementEtudes
+
+    SousProjet "n" --> "0..1" User : responsable
+    PointBloquant "n" --> "0..1" User : detectePar
+    PointBloquant "n" --> "0..1" User : assigneA
+    RevisionBudget "n" --> "0..1" User : validePar
+    Projet "n" --> "0..1" User : responsableProjet
+
+    %% ══════════════ ENUMS ══════════════
+    Projet --> StatutProjet
+    Projet --> TypeProjet
+    Projet --> SourceFinancement
+    Projet --> ConditionAcces
+    Projet --> ZoneClimatique
+    Projet --> ModeSuiviMensuel
+    SousProjet --> StatutSousProjet
+    SousProjet --> TypeTravaux
+    Client --> TypeClient
+    Partenaire --> TypePartenaire
+    PointBloquant --> Priorite
+    PointBloquant --> StatutPointBloquant
+    Prevision --> TypePrevision
+    AvancementEtudeProjet --> PhaseEtude

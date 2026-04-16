@@ -1,0 +1,108 @@
+classDiagram
+    direction TB
+
+    %% ══════════════ BASE ══════════════
+    class BaseEntity {
+        <<abstract>>
+        +Long id
+        +LocalDateTime createdAt
+        +LocalDateTime updatedAt
+        +String createdBy
+        +String updatedBy
+    }
+
+    %% ══════════════ ENUMS ══════════════
+    class TypeControle {
+        <<enumeration>>
+        VISUEL
+        DIMENSIONNEL
+        RESISTANCE
+        ETANCHEITE
+        ELECTRIQUE
+        CHIMIQUE
+        DOCUMENTAIRE
+        AUTRE
+    }
+
+    class StatutControleQualite {
+        <<enumeration>>
+        PLANIFIE
+        EN_COURS
+        CONFORME
+        NON_CONFORME
+        ANNULE
+    }
+
+    class GraviteNonConformite {
+        <<enumeration>>
+        MINEURE
+        MAJEURE
+        CRITIQUE
+        BLOQUANTE
+    }
+
+    class StatutNonConformite {
+        <<enumeration>>
+        OUVERTE
+        EN_TRAITEMENT
+        ACTION_CORRECTIVE
+        VERIFIEE
+        CLOTUREE
+    }
+
+    %% ══════════════ ENTITÉS ══════════════
+    class ControleQualite {
+        +String reference
+        +String titre
+        +String description
+        +TypeControle typeControle
+        +StatutControleQualite statut
+        +LocalDate datePlanifiee
+        +LocalDate dateRealisation
+        +String zoneControlee
+        +String criteresVerification
+        +String observations
+        +Integer noteGlobale
+    }
+
+    class NonConformite {
+        +String reference
+        +String titre
+        +String description
+        +GraviteNonConformite gravite
+        +StatutNonConformite statut
+        +String causeIdentifiee
+        +String actionCorrective
+        +LocalDate dateDetection
+        +LocalDate dateEcheanceCorrection
+        +LocalDate dateCloture
+        +String preuveCorrection
+    }
+
+    %% Références externes (simplifiées)
+    class Projet {
+        +String codeProjet
+        +String nom
+    }
+
+    class User {
+        +String matricule
+        +String nom
+    }
+
+    %% ══════════════ HÉRITAGE ══════════════
+    BaseEntity <|-- ControleQualite
+    BaseEntity <|-- NonConformite
+
+    %% ══════════════ RELATIONS ══════════════
+    ControleQualite "n" --> "1" Projet : projet
+    ControleQualite "n" --> "0..1" User : inspecteur
+    ControleQualite "1" --> "n" NonConformite : nonConformites
+
+    NonConformite "n" --> "0..1" User : responsableTraitement
+
+    %% ══════════════ ENUMS ══════════════
+    ControleQualite --> TypeControle
+    ControleQualite --> StatutControleQualite
+    NonConformite --> GraviteNonConformite
+    NonConformite --> StatutNonConformite

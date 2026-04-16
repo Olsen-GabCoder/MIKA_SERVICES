@@ -1,0 +1,305 @@
+# Diagramme de Classes — 05 · Matériel, Engins & Demandes de Matériel (DMA)
+
+```mermaid
+classDiagram
+    direction TB
+
+    %% ══════════════ BASE ══════════════
+    class BaseEntity {
+        <<abstract>>
+        +Long id
+        +LocalDateTime createdAt
+        +LocalDateTime updatedAt
+        +String createdBy
+        +String updatedBy
+    }
+
+    %% ══════════════ ENUMS ══════════════
+    class TypeEngin {
+        <<enumeration>>
+        PELLETEUSE
+        BULLDOZER
+        NIVELEUSE
+        COMPACTEUR
+        CAMION_BENNE
+        CAMION_CITERNE
+        GRUE
+        CHARGEUSE
+        RETROCHARGEUSE
+        BETONNIERE
+        FINISSEUR
+        GROUPE_ELECTROGENE
+        POMPE
+        FOREUSE
+        CONCASSEUR
+        AUTRE
+    }
+
+    class StatutEngin {
+        <<enumeration>>
+        DISPONIBLE
+        EN_ATTENTE_DEPART
+        EN_SERVICE
+        EN_MAINTENANCE
+        EN_PANNE
+        HORS_SERVICE
+        EN_TRANSIT
+    }
+
+    class TypeMateriau {
+        <<enumeration>>
+        GRANULAT
+        LIANT
+        ACIER
+        BOIS
+        BRIQUE
+        CIMENT
+        SABLE
+        GRAVIER
+        ENDUIT
+        PEINTURE
+        ELECTRICITE
+        PLOMBERIE
+        CARRELAGE
+        AUTRE
+    }
+
+    class Unite {
+        <<enumeration>>
+        M
+        M2
+        M3
+        KG
+        T
+        L
+        UNITE
+        ML
+        FORFAIT
+    }
+
+    class StatutAffectation {
+        <<enumeration>>
+        PLANIFIEE
+        EN_COURS
+        TERMINEE
+        ANNULEE
+    }
+
+    class StatutDemandeMateriel {
+        <<enumeration>>
+        SOUMISE
+        EN_VALIDATION_CHANTIER
+        EN_VALIDATION_PROJET
+        PRISE_EN_CHARGE
+        EN_ATTENTE_COMPLEMENT
+        EN_COMMANDE
+        LIVRE
+        REJETEE
+        CLOTUREE
+    }
+
+    class PrioriteDemandeMateriel {
+        <<enumeration>>
+        NORMALE
+        URGENTE
+    }
+
+    class StatutMouvementEngin {
+        <<enumeration>>
+        EN_ATTENTE_DEPART
+        EN_TRANSIT
+        RECU
+        ANNULE
+    }
+
+    class TypeMouvementEnginEvenement {
+        <<enumeration>>
+        DEPART_CONFIRME
+        RECEPTION_CONFIRMEE
+        ANNULATION
+        COMMENTAIRE
+    }
+
+    %% ══════════════ ENGINS ══════════════
+    class Engin {
+        +String code
+        +String nom
+        +TypeEngin type
+        +String marque
+        +String modele
+        +String immatriculation
+        +String numeroSerie
+        +Integer anneeFabrication
+        +LocalDate dateAcquisition
+        +BigDecimal valeurAcquisition
+        +Integer heuresCompteur
+        +StatutEngin statut
+        +String proprietaire
+        +Boolean estLocation
+        +BigDecimal coutLocationJournalier
+        +Boolean actif
+    }
+
+    class AffectationEnginChantier {
+        +LocalDate dateDebut
+        +LocalDate dateFin
+        +Integer heuresPrevues
+        +Integer heuresReelles
+        +StatutAffectation statut
+        +String observations
+    }
+
+    class MouvementEngin {
+        +StatutMouvementEngin statut
+        +LocalDateTime dateDemande
+        +LocalDateTime dateDepartConfirmee
+        +LocalDateTime dateReceptionConfirmee
+        +String commentaire
+    }
+
+    class MouvementEnginEvenement {
+        +TypeMouvementEnginEvenement typeEvenement
+        +LocalDateTime occurredAt
+        +String payloadJson
+    }
+
+    %% ══════════════ MATÉRIAUX ══════════════
+    class Materiau {
+        +String code
+        +String nom
+        +TypeMateriau type
+        +Unite unite
+        +String description
+        +BigDecimal prixUnitaire
+        +BigDecimal stockActuel
+        +BigDecimal stockMinimum
+        +String fournisseur
+        +Boolean actif
+        +isStockBas() Boolean
+    }
+
+    class AffectationMateriauChantier {
+        +BigDecimal quantiteAffectee
+        +Unite unite
+        +LocalDate dateAffectation
+        +String observations
+    }
+
+    %% ══════════════ DMA ══════════════
+    class DemandeMateriel {
+        +String reference
+        +StatutDemandeMateriel statut
+        +PrioriteDemandeMateriel priorite
+        +LocalDate dateSouhaitee
+        +String commentaire
+        +BigDecimal montantEstime
+    }
+
+    class DemandeMaterielLigne {
+        +String designation
+        +BigDecimal quantite
+        +String unite
+        +BigDecimal prixUnitaireEst
+        +String fournisseurSuggere
+    }
+
+    class DemandeMaterielHistorique {
+        +StatutDemandeMateriel deStatut
+        +StatutDemandeMateriel versStatut
+        +LocalDateTime dateTransition
+        +String commentaire
+    }
+
+    %% Références externes (simplifiées)
+    class Projet {
+        +String codeProjet
+        +String nom
+    }
+
+    class User {
+        +String matricule
+        +String nom
+    }
+
+    class Commande {
+        +String reference
+    }
+
+    %% ══════════════ HÉRITAGE ══════════════
+    BaseEntity <|-- Engin
+    BaseEntity <|-- AffectationEnginChantier
+    BaseEntity <|-- MouvementEngin
+    BaseEntity <|-- MouvementEnginEvenement
+    BaseEntity <|-- Materiau
+    BaseEntity <|-- AffectationMateriauChantier
+    BaseEntity <|-- DemandeMateriel
+    BaseEntity <|-- DemandeMaterielLigne
+    BaseEntity <|-- DemandeMaterielHistorique
+
+    %% ══════════════ RELATIONS ══════════════
+    AffectationEnginChantier "n" --> "1" Engin : engin
+    AffectationEnginChantier "n" --> "1" Projet : projet
+    AffectationEnginChantier "n" --> "0..1" MouvementEngin : mouvementEngin
+
+    MouvementEngin "n" --> "1" Engin : engin
+    MouvementEngin "n" --> "0..1" Projet : projetOrigine
+    MouvementEngin "n" --> "1" Projet : projetDestination
+    MouvementEngin "n" --> "1" User : initiateur
+    MouvementEnginEvenement "n" --> "1" MouvementEngin : mouvement
+    MouvementEnginEvenement "n" --> "1" User : auteur
+
+    AffectationMateriauChantier "n" --> "1" Materiau : materiau
+    AffectationMateriauChantier "n" --> "1" Projet : projet
+
+    DemandeMateriel "n" --> "1" Projet : projet
+    DemandeMateriel "n" --> "1" User : createur
+    DemandeMateriel "n" --> "0..1" Commande : commande
+    DemandeMateriel "1" --> "n" DemandeMaterielLigne : lignes
+    DemandeMateriel "1" --> "n" DemandeMaterielHistorique : historique
+
+    DemandeMaterielLigne "n" --> "0..1" Materiau : materiau
+    DemandeMaterielHistorique "n" --> "1" User : user
+
+    %% ══════════════ ENUMS ══════════════
+    Engin --> TypeEngin
+    Engin --> StatutEngin
+    Materiau --> TypeMateriau
+    Materiau --> Unite
+    AffectationEnginChantier --> StatutAffectation
+    AffectationMateriauChantier --> Unite
+    DemandeMateriel --> StatutDemandeMateriel
+    DemandeMateriel --> PrioriteDemandeMateriel
+    DemandeMaterielHistorique --> StatutDemandeMateriel
+    MouvementEngin --> StatutMouvementEngin
+    MouvementEnginEvenement --> TypeMouvementEnginEvenement
+```
+
+## Tables DB
+
+| Entité | Table |
+|--------|-------|
+| Engin | `engins` |
+| AffectationEnginChantier | `affectations_engin_projet` |
+| MouvementEngin | `mouvements_engin` |
+| MouvementEnginEvenement | `mouvements_engin_evenements` |
+| Materiau | `materiaux` |
+| AffectationMateriauChantier | `affectations_materiau_projet` |
+| DemandeMateriel | `demandes_materiel` |
+| DemandeMaterielLigne | `demandes_materiel_lignes` |
+| DemandeMaterielHistorique | `demandes_materiel_historique` |
+
+## Machine à états DMA
+
+```
+SOUMISE → EN_VALIDATION_CHANTIER → EN_VALIDATION_PROJET
+       → PRISE_EN_CHARGE → EN_ATTENTE_COMPLEMENT
+       → EN_COMMANDE → LIVRE → CLOTUREE
+       → REJETEE (depuis tout statut)
+```
+
+## Machine à états Mouvement Engin
+
+```
+EN_ATTENTE_DEPART → EN_TRANSIT → RECU
+                  → ANNULE (depuis tout statut)
+```

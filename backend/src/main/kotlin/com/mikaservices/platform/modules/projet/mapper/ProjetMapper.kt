@@ -58,9 +58,12 @@ object ProjetMapper {
         client = entity.client?.let { ClientMapper.toResponse(it) },
         sourceFinancement = entity.sourceFinancement,
         imputationBudgetaire = entity.imputationBudgetaire,
+        codeProjet = entity.codeProjet,
         province = entity.province,
         ville = entity.ville,
         quartier = entity.quartier,
+        latitude = entity.latitude,
+        longitude = entity.longitude,
         montantHT = entity.montantHT,
         montantTTC = entity.montantTTC,
         montantInitial = entity.montantInitial,
@@ -93,7 +96,7 @@ object ProjetMapper {
      * @param responsableFromFk Utilisateur chargé par [Projet.responsableProjetId] (liste filtrée) pour éviter
      * une association Hibernate incorrecte après jointures + distinct.
      */
-    fun toSummaryResponse(entity: Projet, responsableFromFk: User? = null): ProjetSummaryResponse {
+    fun toSummaryResponse(entity: Projet, responsableFromFk: User? = null, nombreEnginsAffectes: Int = 0): ProjetSummaryResponse {
         return try {
             val id = entity.id ?: throw IllegalStateException("Projet sans ID")
             val effectiveType = entity.type ?: TypeProjet.AUTRE
@@ -101,6 +104,7 @@ object ProjetMapper {
             val respId = entity.responsableProjetId ?: resp?.id
             ProjetSummaryResponse(
                 id = id,
+                codeProjet = entity.codeProjet,
                 numeroMarche = entity.numeroMarche,
                 nom = entity.nom ?: "",
                 type = effectiveType,
@@ -108,6 +112,10 @@ object ProjetMapper {
                 typePersonnalise = entity.typePersonnalise,
                 statut = entity.statut,
                 clientNom = entity.client?.nom,
+                province = entity.province,
+                ville = entity.ville,
+                latitude = entity.latitude,
+                longitude = entity.longitude,
                 montantHT = entity.montantHT,
                 avancementGlobal = entity.avancementGlobal ?: BigDecimal.ZERO,
                 dateDebut = entity.dateDebut,
@@ -117,7 +125,8 @@ object ProjetMapper {
                     val nom = it.nom ?: ""
                     "$prenom $nom".trim().ifBlank { null }
                 },
-                responsableProjetId = respId
+                responsableProjetId = respId,
+                nombreEnginsAffectes = nombreEnginsAffectes
             )
         } catch (e: Exception) {
             throw IllegalStateException("Erreur lors du mapping du projet ID=${entity.id}: ${e.message}", e)

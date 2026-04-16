@@ -12,6 +12,7 @@ import type { User } from '@/types'
 import type { ProjetCreateRequest, ProjetUpdateRequest, TypeProjet, StatutProjet, SourceFinancement, TypeClient, PhaseEtude, EtatValidationEtude, PointBloquant, Prevision, Priorite, StatutPointBloquant, TypePrevision, ModeSuiviMensuel } from '@/types/projet'
 import { useFormatNumber } from '@/hooks/useFormatNumber'
 import { canEditProjetEffective, hasGlobalAdminRoleEffective } from '@/utils/authRoles'
+import { GABON_PROVINCES, getVillesParProvince, findVille } from '@/constants/gabonGeo'
 
 /** Types de projet : chaque type est distinct (sans regroupement) + type personnalisé */
 const TYPE_OPTIONS: { value: TypeProjet; label: string }[] = [
@@ -518,6 +519,11 @@ export const ProjetFormPage = () => {
         clientId: projetDetail.client?.id,
         sourceFinancement: projetDetail.sourceFinancement || undefined,
         imputationBudgetaire: projetDetail.imputationBudgetaire || '',
+        province: projetDetail.province || '',
+        ville: projetDetail.ville || '',
+        quartier: projetDetail.quartier || '',
+        latitude: projetDetail.latitude ?? undefined,
+        longitude: projetDetail.longitude ?? undefined,
         montantHT: projetDetail.montantHT || undefined,
         montantTTC: projetDetail.montantTTC || undefined,
         montantInitial: projetDetail.montantInitial || undefined,
@@ -970,6 +976,105 @@ export const ProjetFormPage = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Localisation */}
+        <div className="mika-theme-card rounded-xl shadow-sm border p-6">
+          <h2 className="text-lg font-semibold mb-4">Localisation</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Province</label>
+              <select
+                name="province"
+                value={form.province || ''}
+                onChange={(e) => {
+                  const province = e.target.value
+                  setForm((prev) => ({ ...prev, province, ville: '', latitude: undefined, longitude: undefined }))
+                }}
+                disabled={readOnly}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100 disabled:bg-gray-100"
+              >
+                <option value="">— Sélectionner —</option>
+                {GABON_PROVINCES.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ville</label>
+              <select
+                name="ville"
+                value={form.ville || ''}
+                onChange={(e) => {
+                  const ville = e.target.value
+                  const geo = findVille(ville)
+                  setForm((prev) => ({
+                    ...prev,
+                    ville,
+                    latitude: geo?.latitude ?? prev.latitude,
+                    longitude: geo?.longitude ?? prev.longitude,
+                    province: geo?.province ?? prev.province,
+                  }))
+                }}
+                disabled={readOnly}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100 disabled:bg-gray-100"
+              >
+                <option value="">— Sélectionner —</option>
+                {(form.province ? getVillesParProvince(form.province) : []).map((v) => (
+                  <option key={v.nom} value={v.nom}>{v.nom}</option>
+                ))}
+              </select>
+              {!form.province && (
+                <p className="mt-1 text-xs text-gray-400">Sélectionnez d'abord une province</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Latitude</label>
+              <input
+                type="number"
+                step="0.0001"
+                name="latitude"
+                value={form.latitude ?? ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, latitude: e.target.value ? Number(e.target.value) : undefined }))}
+                disabled={readOnly}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100 disabled:bg-gray-100"
+                placeholder="Ex: 0.3924"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Longitude</label>
+              <input
+                type="number"
+                step="0.0001"
+                name="longitude"
+                value={form.longitude ?? ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, longitude: e.target.value ? Number(e.target.value) : undefined }))}
+                disabled={readOnly}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100 disabled:bg-gray-100"
+                placeholder="Ex: 9.4536"
+              />
+            </div>
+            <div className="md:col-span-2 lg:col-span-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quartier / Adresse</label>
+              <input
+                type="text"
+                name="quartier"
+                value={form.quartier || ''}
+                onChange={handleChange}
+                disabled={readOnly}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100 disabled:bg-gray-100"
+                placeholder="Ex: PK5, Akébé, Glass..."
+              />
+            </div>
+          </div>
+          {form.latitude != null && form.longitude != null && (
+            <div className="mt-3 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Projet géolocalisé ({form.latitude.toFixed(4)}, {form.longitude.toFixed(4)})
+            </div>
+          )}
         </div>
 
         {/* Financier */}

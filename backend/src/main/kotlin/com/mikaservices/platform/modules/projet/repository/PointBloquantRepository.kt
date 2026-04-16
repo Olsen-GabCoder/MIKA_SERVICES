@@ -5,6 +5,7 @@ import com.mikaservices.platform.common.enums.StatutPointBloquant
 import com.mikaservices.platform.modules.projet.entity.PointBloquant
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
@@ -17,4 +18,8 @@ interface PointBloquantRepository : JpaRepository<PointBloquant, Long> {
     fun findByPriorite(priorite: Priorite): List<PointBloquant>
     fun findByAssigneAId(userId: Long): List<PointBloquant>
     fun countByProjetIdAndStatut(projetId: Long, statut: StatutPointBloquant): Long
+
+    /** Charge en une seule requête tous les points bloquants actifs (statuts donnés) avec leur projet. */
+    @EntityGraph(attributePaths = ["projet"])
+    fun findByStatutIn(statuts: Collection<StatutPointBloquant>): List<PointBloquant>
 }

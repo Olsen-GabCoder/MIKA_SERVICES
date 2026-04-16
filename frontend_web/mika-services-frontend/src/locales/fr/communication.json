@@ -85,7 +85,20 @@
       "ECHEANCE": "Échéance",
       "STOCK_BAS": "Stock bas",
       "MESSAGE": "Message",
-      "SYSTEME": "Système"
+      "SYSTEME": "Système",
+      "DMA_SOUMISE": "DMA — soumise",
+      "DMA_VALIDEE_CHANTIER": "DMA — chantier",
+      "DMA_VALIDEE_PROJET": "DMA — projet",
+      "DMA_PRISE_EN_CHARGE": "DMA — logistique",
+      "DMA_COMPLEMENT_REQUIS": "DMA — complément",
+      "DMA_COMMANDEE": "DMA — commande",
+      "DMA_LIVREE": "DMA — livrée",
+      "DMA_REJETEE": "DMA — rejet",
+      "MOUVEMENT_ORDRE_CREE": "Mouvement — ordre",
+      "MOUVEMENT_DEPART_CONFIRME": "Mouvement — départ",
+      "MOUVEMENT_RECEPTION_CONFIRMEE": "Mouvement — réceptionné",
+      "MOUVEMENT_ANNULE": "Mouvement — annulé",
+      "RAPPEL_MAJ_PROJET": "Rappel réunion"
     }
   }
 }

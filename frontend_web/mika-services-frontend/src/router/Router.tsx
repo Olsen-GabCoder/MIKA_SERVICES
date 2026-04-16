@@ -18,7 +18,12 @@ const EquipeListPage = lazy(() => import('@/features/equipe/pages/EquipeListPage
 const EquipeFormPage = lazy(() => import('@/features/equipe/pages/EquipeFormPage').then(m => ({ default: m.EquipeFormPage })))
 const EquipeDetailPage = lazy(() => import('@/features/equipe/pages/EquipeDetailPage').then(m => ({ default: m.EquipeDetailPage })))
 const EnginListPage = lazy(() => import('@/features/materiel/pages/EnginListPage').then(m => ({ default: m.EnginListPage })))
+const EnginDetailPage = lazy(() => import('@/features/materiel/pages/EnginDetailPage').then(m => ({ default: m.EnginDetailPage })))
+const MouvementEnginListPage = lazy(() => import('@/features/materiel/pages/MouvementEnginListPage').then(m => ({ default: m.MouvementEnginListPage })))
 const MateriauListPage = lazy(() => import('@/features/materiel/pages/MateriauListPage').then(m => ({ default: m.MateriauListPage })))
+const DemandeMaterielListPage = lazy(() => import('@/features/materiel/pages/DemandeMaterielListPage').then(m => ({ default: m.DemandeMaterielListPage })))
+const DemandeMaterielFormPage = lazy(() => import('@/features/materiel/pages/DemandeMaterielFormPage').then(m => ({ default: m.DemandeMaterielFormPage })))
+const DemandeMaterielDetailPage = lazy(() => import('@/features/materiel/pages/DemandeMaterielDetailPage').then(m => ({ default: m.DemandeMaterielDetailPage })))
 const BudgetPage = lazy(() => import('@/features/budget/pages/BudgetPage').then(m => ({ default: m.BudgetPage })))
 const PlanningPage = lazy(() => import('@/features/planning/pages/PlanningPage'))
 const QualitePage = lazy(() => import('@/features/qualite/pages/QualitePage'))
@@ -153,6 +158,26 @@ const router = createBrowserRouter([
       {
         path: 'engins',
         element: <ProtectedRoute><L><EnginListPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'engins/:id',
+        element: <ProtectedRoute><L><EnginDetailPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'mouvements',
+        element: <ProtectedRoute><L><MouvementEnginListPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'dma',
+        element: <ProtectedRoute><L><DemandeMaterielListPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'dma/new',
+        element: <ProtectedRoute><L><DemandeMaterielFormPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'dma/:id',
+        element: <ProtectedRoute><L><DemandeMaterielDetailPage /></L></ProtectedRoute>,
       },
       {
         path: 'materiaux',

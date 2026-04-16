@@ -20,6 +20,19 @@ const typeColors: Record<TypeNotification, string> = {
   [TypeNotification.STOCK_BAS]: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200',
   [TypeNotification.MESSAGE]: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-200',
   [TypeNotification.SYSTEME]: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200',
+  [TypeNotification.DMA_SOUMISE]: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-200',
+  [TypeNotification.DMA_VALIDEE_CHANTIER]: 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200',
+  [TypeNotification.DMA_VALIDEE_PROJET]: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
+  [TypeNotification.DMA_PRISE_EN_CHARGE]: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200',
+  [TypeNotification.DMA_COMPLEMENT_REQUIS]: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200',
+  [TypeNotification.DMA_COMMANDEE]: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200',
+  [TypeNotification.DMA_LIVREE]: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200',
+  [TypeNotification.DMA_REJETEE]: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200',
+  [TypeNotification.MOUVEMENT_ORDRE_CREE]: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200',
+  [TypeNotification.MOUVEMENT_DEPART_CONFIRME]: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200',
+  [TypeNotification.MOUVEMENT_RECEPTION_CONFIRMEE]: 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200',
+  [TypeNotification.MOUVEMENT_ANNULE]: 'bg-gray-100 text-gray-700 dark:bg-gray-700/60 dark:text-gray-300',
+  [TypeNotification.RAPPEL_MAJ_PROJET]: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
 }
 
 export default function NotificationsPage() {
@@ -88,8 +101,8 @@ export default function NotificationsPage() {
                   {!notif.lu && <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[notif.typeNotification as TypeNotification]}`}>
-                        {t(`notifications.type.${notif.typeNotification}`)}
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[notif.typeNotification as TypeNotification] ?? typeColors[TypeNotification.INFO]}`}>
+                        {t(`notifications.type.${notif.typeNotification}`, { defaultValue: notif.typeNotification })}
                       </span>
                       <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(notif.dateCreation, { includeTime: true })}</span>
                     </div>

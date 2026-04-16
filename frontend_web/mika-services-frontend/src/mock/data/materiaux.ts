@@ -20,3 +20,17 @@ function pageResponse<T>(content: T[], page = 0, size = 20): PageResponse<T> {
 export function getMockMateriauxPage(page = 0, size = 20): PageResponse<MateriauSummary> {
   return pageResponse(mockMateriaux, page, size)
 }
+
+export function getMockMateriauxSearchPage(q: string, page = 0, size = 20): PageResponse<MateriauSummary> {
+  const t = q.trim().toLowerCase()
+  if (!t) return pageResponse(mockMateriaux, page, size)
+  const filtered = mockMateriaux.filter(
+    (m) =>
+      m.code.toLowerCase().includes(t) ||
+      m.nom.toLowerCase().includes(t) ||
+      m.type.toLowerCase().includes(t) ||
+      m.unite.toLowerCase().includes(t) ||
+      (m.fournisseur?.toLowerCase().includes(t) ?? false)
+  )
+  return pageResponse(filtered, page, size)
+}

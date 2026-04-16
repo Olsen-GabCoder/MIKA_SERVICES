@@ -1,0 +1,766 @@
+classDiagram
+    direction TB
+
+    %% ═══════════════════════════════════════════════════
+    %%   BASE
+    %% ═══════════════════════════════════════════════════
+    class BaseEntity {
+        <<abstract>>
+        +Long id
+        +LocalDateTime createdAt
+        +LocalDateTime updatedAt
+        +String createdBy
+        +String updatedBy
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   MODULE : UTILISATEURS & AUTH
+    %% ═══════════════════════════════════════════════════
+    class User {
+        +String matricule
+        +String nom
+        +String prenom
+        +String email
+        +Sexe sexe
+        +String motDePasse
+        +String telephone
+        +LocalDate dateNaissance
+        +String adresse
+        +String ville
+        +String province
+        +String numeroCNI
+        +LocalDate dateEmbauche
+        +String photo
+        +String ficheMission
+        +BigDecimal salaireMensuel
+        +TypeContrat typeContrat
+        +NiveauExperience niveauExperience
+        +Boolean actif
+        +LocalDateTime lastLogin
+        +Boolean totpEnabled
+        +Boolean mustChangePassword
+        +Integer failedLoginAttempts
+        +LocalDateTime lockoutUntil
+        +Boolean emailNotificationsEnabled
+        +Boolean inAppNotificationsEnabled
+    }
+
+    class Role {
+        +String code
+        +String nom
+        +String description
+        +NiveauHierarchique niveau
+        +Boolean actif
+    }
+
+    class Permission {
+        +String code
+        +String nom
+        +String module
+        +TypePermission type
+        +Boolean actif
+    }
+
+    class Departement {
+        +String code
+        +String nom
+        +TypeDepartement type
+        +Boolean actif
+    }
+
+    class Specialite {
+        +Long id
+        +String code
+        +String nom
+        +TypeSpecialite categorie
+        +Boolean actif
+    }
+
+    class Session {
+        +Long id
+        +String token
+        +String refreshToken
+        +String ipAddress
+        +String userAgent
+        +String deviceName
+        +LocalDateTime dateDebut
+        +LocalDateTime dateExpiration
+        +LocalDateTime lastActivity
+        +Boolean active
+    }
+
+    class PasswordResetToken {
+        +Long id
+        +String token
+        +LocalDateTime dateExpiration
+        +Boolean used
+    }
+
+    class AuditLog {
+        +Long id
+        +String action
+        +String module
+        +String details
+        +String ipAddress
+        +LocalDateTime createdAt
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   MODULE : PROJET
+    %% ═══════════════════════════════════════════════════
+    class Projet {
+        +String codeProjet
+        +String numeroMarche
+        +String nom
+        +String description
+        +TypeProjet type
+        +StatutProjet statut
+        +String province
+        +String ville
+        +Double latitude
+        +Double longitude
+        +BigDecimal montantHT
+        +BigDecimal montantTTC
+        +BigDecimal montantInitial
+        +BigDecimal montantRevise
+        +Integer delaiMois
+        +LocalDate dateDebut
+        +LocalDate dateFin
+        +LocalDate dateDebutReel
+        +LocalDate dateFinReelle
+        +BigDecimal avancementGlobal
+        +BigDecimal avancementPhysiquePct
+        +BigDecimal avancementFinancierPct
+        +SourceFinancement sourceFinancement
+        +ConditionAcces conditionAcces
+        +ZoneClimatique zoneClimatique
+        +ModeSuiviMensuel modeSuiviMensuel
+        +Boolean actif
+    }
+
+    class Client {
+        +String code
+        +String nom
+        +TypeClient type
+        +String ministere
+        +String telephone
+        +String email
+        +String contactPrincipal
+        +Boolean actif
+    }
+
+    class Partenaire {
+        +String code
+        +String nom
+        +TypePartenaire type
+        +String pays
+        +String telephone
+        +String email
+        +Boolean actif
+    }
+
+    class SousProjet {
+        +String code
+        +String nom
+        +TypeTravaux typeTravaux
+        +StatutSousProjet statut
+        +BigDecimal montantHT
+        +BigDecimal montantTTC
+        +Integer delaiMois
+        +LocalDate dateDebut
+        +LocalDate dateFin
+        +BigDecimal avancementPhysique
+    }
+
+    class PointBloquant {
+        +String titre
+        +String description
+        +Priorite priorite
+        +StatutPointBloquant statut
+        +LocalDate dateDetection
+        +LocalDate dateResolution
+        +String actionCorrective
+    }
+
+    class CAPrevisionnelRealise {
+        +Integer mois
+        +Integer annee
+        +BigDecimal caPrevisionnel
+        +BigDecimal caRealise
+        +BigDecimal ecart
+        +BigDecimal avancementCumule
+    }
+
+    class RevisionBudget {
+        +BigDecimal ancienMontant
+        +BigDecimal nouveauMontant
+        +String motif
+        +LocalDate dateRevision
+    }
+
+    class Prevision {
+        +Integer semaine
+        +Integer annee
+        +TypePrevision type
+        +LocalDate dateDebut
+        +LocalDate dateFin
+        +Integer avancementPct
+    }
+
+    class AvancementEtudeProjet {
+        +PhaseEtude phase
+        +BigDecimal avancementPct
+        +LocalDate dateDepot
+        +String etatValidation
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   MODULE : CHANTIER
+    %% ═══════════════════════════════════════════════════
+    class Equipe {
+        +String code
+        +String nom
+        +TypeEquipe type
+        +Integer effectif
+        +Boolean actif
+    }
+
+    class MembreEquipe {
+        +RoleDansEquipe role
+        +LocalDate dateAffectation
+        +LocalDate dateFin
+        +Boolean actif
+    }
+
+    class AffectationChantier {
+        +LocalDate dateDebut
+        +LocalDate dateFin
+        +StatutAffectation statut
+        +String observations
+    }
+
+    class InstallationChantier {
+        +TypeInstallation type
+        +String description
+        +LocalDate dateInstallation
+        +LocalDate dateRetrait
+        +StatutInstallation statut
+    }
+
+    class ZoneChantier {
+        +String code
+        +String nom
+        +TypeZone type
+        +Double latitude
+        +Double longitude
+        +BigDecimal superficie
+        +NiveauDanger niveauDanger
+        +Boolean actif
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   MODULE : MATÉRIEL & ENGINS
+    %% ═══════════════════════════════════════════════════
+    class Engin {
+        +String code
+        +String nom
+        +TypeEngin type
+        +String marque
+        +String modele
+        +String immatriculation
+        +String numeroSerie
+        +Integer anneeFabrication
+        +LocalDate dateAcquisition
+        +BigDecimal valeurAcquisition
+        +Integer heuresCompteur
+        +StatutEngin statut
+        +String proprietaire
+        +Boolean estLocation
+        +BigDecimal coutLocationJournalier
+        +Boolean actif
+    }
+
+    class Materiau {
+        +String code
+        +String nom
+        +TypeMateriau type
+        +Unite unite
+        +BigDecimal prixUnitaire
+        +BigDecimal stockActuel
+        +BigDecimal stockMinimum
+        +String fournisseur
+        +Boolean actif
+    }
+
+    class AffectationEnginChantier {
+        +LocalDate dateDebut
+        +LocalDate dateFin
+        +Integer heuresPrevues
+        +Integer heuresReelles
+        +StatutAffectation statut
+        +String observations
+    }
+
+    class AffectationMateriauChantier {
+        +BigDecimal quantiteAffectee
+        +Unite unite
+        +LocalDate dateAffectation
+        +String observations
+    }
+
+    class DemandeMateriel {
+        +String reference
+        +StatutDemandeMateriel statut
+        +PrioriteDemandeMateriel priorite
+        +LocalDate dateSouhaitee
+        +String commentaire
+        +BigDecimal montantEstime
+    }
+
+    class DemandeMaterielLigne {
+        +String designation
+        +BigDecimal quantite
+        +String unite
+        +BigDecimal prixUnitaireEst
+        +String fournisseurSuggere
+    }
+
+    class DemandeMaterielHistorique {
+        +StatutDemandeMateriel deStatut
+        +StatutDemandeMateriel versStatut
+        +LocalDateTime dateTransition
+        +String commentaire
+    }
+
+    class MouvementEngin {
+        +StatutMouvementEngin statut
+        +LocalDateTime dateDemande
+        +LocalDateTime dateDepartConfirmee
+        +LocalDateTime dateReceptionConfirmee
+        +String commentaire
+    }
+
+    class MouvementEnginEvenement {
+        +TypeMouvementEnginEvenement typeEvenement
+        +LocalDateTime occurredAt
+        +String payloadJson
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   MODULE : COMMUNICATION
+    %% ═══════════════════════════════════════════════════
+    class Message {
+        +String sujet
+        +String contenu
+        +LocalDateTime dateEnvoi
+        +Boolean lu
+        +LocalDateTime dateLecture
+    }
+
+    class Notification {
+        +String titre
+        +String contenu
+        +TypeNotification typeNotification
+        +String lien
+        +Boolean lu
+        +LocalDateTime dateCreation
+        +LocalDateTime dateLecture
+    }
+
+    class MessageMention {
+        +Long id
+    }
+
+    class MessagePieceJointe {
+        +String nomOriginal
+        +String nomStockage
+        +String cheminStockage
+        +String typeMime
+        +Long tailleOctets
+    }
+
+    class MessageSuppression {
+        +Long id
+        +LocalDateTime suppressedAt
+    }
+
+    class ConversationArchive {
+        +Long id
+        +Long peerUserId
+        +LocalDateTime archivedAt
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   MODULE : PLANNING
+    %% ═══════════════════════════════════════════════════
+    class Tache {
+        +String titre
+        +String description
+        +StatutTache statut
+        +Priorite priorite
+        +LocalDate dateDebut
+        +LocalDate dateFin
+        +LocalDate dateEcheance
+        +Integer pourcentageAvancement
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   MODULE : QUALITÉ
+    %% ═══════════════════════════════════════════════════
+    class ControleQualite {
+        +String reference
+        +String titre
+        +TypeControle typeControle
+        +StatutControleQualite statut
+        +LocalDate datePlanifiee
+        +LocalDate dateRealisation
+        +String zoneControlee
+        +Integer noteGlobale
+    }
+
+    class NonConformite {
+        +String reference
+        +String titre
+        +GraviteNonConformite gravite
+        +StatutNonConformite statut
+        +LocalDate dateDetection
+        +LocalDate dateEcheanceCorrection
+        +LocalDate dateCloture
+        +String actionCorrective
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   MODULE : SÉCURITÉ
+    %% ═══════════════════════════════════════════════════
+    class Incident {
+        +String reference
+        +String titre
+        +TypeIncident typeIncident
+        +GraviteIncident gravite
+        +StatutIncident statut
+        +LocalDate dateIncident
+        +LocalTime heureIncident
+        +String lieu
+        +Integer nbBlesses
+        +Boolean arretTravail
+        +Integer nbJoursArret
+    }
+
+    class ActionPrevention {
+        +String titre
+        +String description
+        +StatutActionPrevention statut
+        +LocalDate dateEcheance
+        +LocalDate dateRealisation
+    }
+
+    class Risque {
+        +String titre
+        +NiveauRisque niveau
+        +Integer probabilite
+        +Integer impact
+        +String zoneConcernee
+        +String mesuresPrevention
+        +Boolean actif
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   MODULE : BUDGET & FOURNISSEURS
+    %% ═══════════════════════════════════════════════════
+    class Depense {
+        +String reference
+        +String libelle
+        +TypeDepense type
+        +BigDecimal montant
+        +LocalDate dateDepense
+        +StatutDepense statut
+        +String fournisseur
+        +String numeroFacture
+    }
+
+    class Fournisseur {
+        +String code
+        +String nom
+        +String telephone
+        +String email
+        +String contactNom
+        +String specialite
+        +Integer noteEvaluation
+        +Boolean actif
+    }
+
+    class Commande {
+        +String reference
+        +String designation
+        +BigDecimal montantTotal
+        +StatutCommande statut
+        +LocalDate dateCommande
+        +LocalDate dateLivraisonPrevue
+        +LocalDate dateLivraisonEffective
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   MODULE : DOCUMENT
+    %% ═══════════════════════════════════════════════════
+    class Document {
+        +String nomFichier
+        +String nomOriginal
+        +String cheminStockage
+        +String typeMime
+        +Long tailleOctets
+        +TypeDocument typeDocument
+        +String description
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   MODULE : RÉUNION HEBDO
+    %% ═══════════════════════════════════════════════════
+    class ReunionHebdo {
+        +LocalDate dateReunion
+        +String lieu
+        +LocalTime heureDebut
+        +LocalTime heureFin
+        +String ordreDuJour
+        +StatutReunion statut
+        +String divers
+    }
+
+    class ParticipantReunion {
+        +String nomManuel
+        +String prenomManuel
+        +String initiales
+        +String telephone
+        +Boolean present
+    }
+
+    class PointProjetPV {
+        +BigDecimal avancementPhysiquePct
+        +BigDecimal avancementFinancierPct
+        +BigDecimal delaiConsommePct
+        +String resumeTravauxPrevisions
+        +String pointsBloquantsResume
+        +Integer ordreAffichage
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   MODULE : BARÈME
+    %% ═══════════════════════════════════════════════════
+    class CorpsEtatBareme {
+        +String code
+        +String libelle
+        +Integer ordreAffichage
+    }
+
+    class FournisseurBareme {
+        +String nom
+        +String contact
+    }
+
+    class LignePrixBareme {
+        +TypeLigneBareme type
+        +String reference
+        +String libelle
+        +String unite
+        +BigDecimal prixTtc
+        +String famille
+        +String categorie
+        +String depot
+        +BigDecimal quantite
+        +BigDecimal prixUnitaire
+        +BigDecimal somme
+        +BigDecimal debourse
+        +BigDecimal prixVente
+        +BigDecimal coefficientPv
+        +Integer ordreLigne
+        +Boolean prixEstime
+    }
+
+    class BaremeMatRefSequence {
+        +Integer annee
+        +Integer dernierNumero
+        +Long version
+    }
+
+    %% ═══════════════════════════════════════════════════
+    %%   HÉRITAGE (BaseEntity)
+    %% ═══════════════════════════════════════════════════
+    BaseEntity <|-- User
+    BaseEntity <|-- Role
+    BaseEntity <|-- Permission
+    BaseEntity <|-- Departement
+    BaseEntity <|-- Projet
+    BaseEntity <|-- Client
+    BaseEntity <|-- Partenaire
+    BaseEntity <|-- SousProjet
+    BaseEntity <|-- PointBloquant
+    BaseEntity <|-- CAPrevisionnelRealise
+    BaseEntity <|-- RevisionBudget
+    BaseEntity <|-- Prevision
+    BaseEntity <|-- AvancementEtudeProjet
+    BaseEntity <|-- Equipe
+    BaseEntity <|-- MembreEquipe
+    BaseEntity <|-- AffectationChantier
+    BaseEntity <|-- InstallationChantier
+    BaseEntity <|-- ZoneChantier
+    BaseEntity <|-- Engin
+    BaseEntity <|-- Materiau
+    BaseEntity <|-- AffectationEnginChantier
+    BaseEntity <|-- AffectationMateriauChantier
+    BaseEntity <|-- DemandeMateriel
+    BaseEntity <|-- DemandeMaterielLigne
+    BaseEntity <|-- DemandeMaterielHistorique
+    BaseEntity <|-- MouvementEngin
+    BaseEntity <|-- MouvementEnginEvenement
+    BaseEntity <|-- Message
+    BaseEntity <|-- Notification
+    BaseEntity <|-- MessagePieceJointe
+    BaseEntity <|-- Tache
+    BaseEntity <|-- ControleQualite
+    BaseEntity <|-- NonConformite
+    BaseEntity <|-- Incident
+    BaseEntity <|-- ActionPrevention
+    BaseEntity <|-- Risque
+    BaseEntity <|-- Depense
+    BaseEntity <|-- Fournisseur
+    BaseEntity <|-- Commande
+    BaseEntity <|-- Document
+    BaseEntity <|-- ReunionHebdo
+    BaseEntity <|-- ParticipantReunion
+    BaseEntity <|-- PointProjetPV
+    BaseEntity <|-- CorpsEtatBareme
+    BaseEntity <|-- FournisseurBareme
+    BaseEntity <|-- LignePrixBareme
+
+    %% ═══════════════════════════════════════════════════
+    %%   RELATIONS — MODULE UTILISATEURS
+    %% ═══════════════════════════════════════════════════
+    User "n" --> "0..1" User : superieurHierarchique
+    User "n" --> "n" Role : user_roles
+    User "n" --> "n" Departement : user_departements
+    User "n" --> "n" Specialite : user_specialites
+    Role "n" --> "n" Permission : role_permissions
+    Departement "n" --> "0..1" User : responsable
+    Session "n" --> "1" User : user
+    PasswordResetToken "n" --> "1" User : user
+    AuditLog "n" --> "0..1" User : user
+
+    %% ═══════════════════════════════════════════════════
+    %%   RELATIONS — MODULE PROJET
+    %% ═══════════════════════════════════════════════════
+    Projet "n" --> "0..1" Client : client
+    Projet "n" --> "0..1" User : responsableProjet
+    Projet "n" --> "n" Partenaire : projet_partenaires
+    Projet "1" --> "n" SousProjet : sousProjets
+    Projet "1" --> "n" PointBloquant : pointsBloquants
+    Projet "1" --> "n" CAPrevisionnelRealise : caPrevisionnelsRealises
+    Projet "1" --> "n" RevisionBudget : revisionsBudget
+    Projet "1" --> "n" Prevision : previsions
+    Projet "1" --> "n" AvancementEtudeProjet : avancementEtudes
+    SousProjet "n" --> "0..1" User : responsable
+    PointBloquant "n" --> "0..1" User : detectePar
+    PointBloquant "n" --> "0..1" User : assigneA
+    RevisionBudget "n" --> "0..1" User : validePar
+
+    %% ═══════════════════════════════════════════════════
+    %%   RELATIONS — MODULE CHANTIER
+    %% ═══════════════════════════════════════════════════
+    AffectationChantier "n" --> "1" Projet : projet
+    AffectationChantier "n" --> "1" Equipe : equipe
+    InstallationChantier "n" --> "1" Projet : projet
+    ZoneChantier "n" --> "1" Projet : projet
+    Equipe "1" --> "n" MembreEquipe : membres
+    Equipe "n" --> "0..1" User : chefEquipe
+    MembreEquipe "n" --> "1" User : user
+
+    %% ═══════════════════════════════════════════════════
+    %%   RELATIONS — MODULE MATÉRIEL & ENGINS
+    %% ═══════════════════════════════════════════════════
+    AffectationEnginChantier "n" --> "1" Engin : engin
+    AffectationEnginChantier "n" --> "1" Projet : projet
+    AffectationEnginChantier "n" --> "0..1" MouvementEngin : mouvementEngin
+    AffectationMateriauChantier "n" --> "1" Materiau : materiau
+    AffectationMateriauChantier "n" --> "1" Projet : projet
+    DemandeMateriel "n" --> "1" Projet : projet
+    DemandeMateriel "n" --> "1" User : createur
+    DemandeMateriel "n" --> "0..1" Commande : commande
+    DemandeMateriel "1" --> "n" DemandeMaterielLigne : lignes
+    DemandeMateriel "1" --> "n" DemandeMaterielHistorique : historique
+    DemandeMaterielLigne "n" --> "0..1" Materiau : materiau
+    DemandeMaterielHistorique "n" --> "1" User : user
+    MouvementEngin "n" --> "1" Engin : engin
+    MouvementEngin "n" --> "0..1" Projet : projetOrigine
+    MouvementEngin "n" --> "1" Projet : projetDestination
+    MouvementEngin "n" --> "1" User : initiateur
+    MouvementEnginEvenement "n" --> "1" MouvementEngin : mouvement
+    MouvementEnginEvenement "n" --> "1" User : auteur
+
+    %% ═══════════════════════════════════════════════════
+    %%   RELATIONS — MODULE COMMUNICATION
+    %% ═══════════════════════════════════════════════════
+    Message "n" --> "1" User : expediteur
+    Message "n" --> "1" User : destinataire
+    Message "n" --> "0..1" Message : parent
+    Notification "n" --> "1" User : destinataire
+    MessageMention "n" --> "1" Message : message
+    MessageMention "n" --> "1" User : user
+    MessagePieceJointe "n" --> "1" Message : message
+    MessageSuppression "n" --> "1" User : user
+    MessageSuppression "n" --> "1" Message : message
+    ConversationArchive "n" --> "1" User : user
+
+    %% ═══════════════════════════════════════════════════
+    %%   RELATIONS — MODULE PLANNING
+    %% ═══════════════════════════════════════════════════
+    Tache "n" --> "1" Projet : projet
+    Tache "n" --> "0..1" User : assigneA
+    Tache "n" --> "0..1" Tache : tacheParent
+
+    %% ═══════════════════════════════════════════════════
+    %%   RELATIONS — MODULE QUALITÉ
+    %% ═══════════════════════════════════════════════════
+    ControleQualite "n" --> "1" Projet : projet
+    ControleQualite "n" --> "0..1" User : inspecteur
+    ControleQualite "1" --> "n" NonConformite : nonConformites
+    NonConformite "n" --> "0..1" User : responsableTraitement
+
+    %% ═══════════════════════════════════════════════════
+    %%   RELATIONS — MODULE SÉCURITÉ
+    %% ═══════════════════════════════════════════════════
+    Incident "n" --> "1" Projet : projet
+    Incident "n" --> "0..1" User : declarePar
+    Incident "1" --> "n" ActionPrevention : actionsPrevention
+    ActionPrevention "n" --> "0..1" Incident : incident
+    ActionPrevention "n" --> "0..1" User : responsable
+    Risque "n" --> "1" Projet : projet
+
+    %% ═══════════════════════════════════════════════════
+    %%   RELATIONS — MODULE BUDGET & FOURNISSEURS
+    %% ═══════════════════════════════════════════════════
+    Depense "n" --> "1" Projet : projet
+    Depense "n" --> "0..1" User : validePar
+    Commande "n" --> "1" Fournisseur : fournisseur
+    Commande "n" --> "0..1" Projet : projet
+    Fournisseur "1" --> "n" Commande : commandes
+
+    %% ═══════════════════════════════════════════════════
+    %%   RELATIONS — MODULE DOCUMENT
+    %% ═══════════════════════════════════════════════════
+    Document "n" --> "0..1" Projet : projet
+    Document "n" --> "0..1" User : uploadePar
+
+    %% ═══════════════════════════════════════════════════
+    %%   RELATIONS — MODULE RÉUNION HEBDO
+    %% ═══════════════════════════════════════════════════
+    ReunionHebdo "n" --> "0..1" User : redacteur
+    ReunionHebdo "1" --> "n" ParticipantReunion : participants
+    ReunionHebdo "1" --> "n" PointProjetPV : pointsProjet
+    ParticipantReunion "n" --> "0..1" User : user
+    PointProjetPV "n" --> "1" Projet : projet
+
+    %% ═══════════════════════════════════════════════════
+    %%   RELATIONS — MODULE BARÈME
+    %% ═══════════════════════════════════════════════════
+    LignePrixBareme "n" --> "1" CorpsEtatBareme : corpsEtat
+    LignePrixBareme "n" --> "0..1" FournisseurBareme : fournisseurBareme
+    LignePrixBareme "n" --> "0..1" LignePrixBareme : parent
+    LignePrixBareme "1" --> "n" LignePrixBareme : enfants

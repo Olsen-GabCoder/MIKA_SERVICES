@@ -30,7 +30,7 @@ class MailConfigDiagnostic(
             val url = frontendBaseUrl.trim()
             val invalid = url.isBlank() || url.lowercase().contains("localhost") || (!url.startsWith("http://") && !url.startsWith("https://"))
             if (invalid) {
-                logger.warn("En production, définir FRONTEND_BASE_URL avec l'URL complète (ex. https://mika-services.up.railway.app) sur Railway. Sinon les liens dans les emails seront invalides et Brevo peut afficher « invalid URL: host missing ».")
+                logger.warn("En production, définir FRONTEND_BASE_URL avec l'URL complète du frontend Render (ex. https://mika-services-frontend.onrender.com). Sinon les liens dans les emails seront invalides et Brevo peut afficher « invalid URL: host missing ».")
             }
         }
         val envBrevo = System.getenv().keys.filter { it.uppercase().contains("BREVO") }.sorted()
@@ -51,7 +51,7 @@ class MailConfigDiagnostic(
         val configured = host.isNotBlank() && username.isNotBlank()
         if (configured) {
             logger.info("Mail SMTP config: host=$host, port=$port, username=$username (env chargé)")
-            logger.warn("Aucune clé API (Brevo/Resend) vue. Sur Railway: définir BREVO_API_KEY ou RESEND_API_KEY pour éviter timeout SMTP.")
+            logger.warn("Aucune clé API (Brevo/Resend) vue. Sur Render: définir BREVO_API_KEY ou RESEND_API_KEY pour éviter timeout SMTP.")
         } else {
             logger.warn(
                 "Mail non configuré. Définir BREVO_API_KEY (recommandé), ou RESEND_API_KEY, ou MAIL_HOST/MAIL_USERNAME/MAIL_PASSWORD."

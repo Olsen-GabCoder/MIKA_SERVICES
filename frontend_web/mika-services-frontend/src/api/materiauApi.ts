@@ -1,7 +1,7 @@
 import apiClient from './axios'
 import type { Materiau, MateriauSummary, MateriauCreateRequest, PageResponse } from '@/types/materiel'
 import { USE_MOCK, USE_MOCK_FALLBACK } from '@/config/mock'
-import { getMockMateriauxPage } from '@/mock/data/materiaux'
+import { getMockMateriauxPage, getMockMateriauxSearchPage } from '@/mock/data/materiaux'
 
 export const materiauApi = {
   create: async (data: MateriauCreateRequest): Promise<Materiau> => {
@@ -23,8 +23,14 @@ export const materiauApi = {
     return response.data
   },
   search: async (q: string, page = 0, size = 20): Promise<PageResponse<MateriauSummary>> => {
-    const response = await apiClient.get<PageResponse<MateriauSummary>>('/materiaux/search', { params: { q, page, size } })
-    return response.data
+    if (USE_MOCK) return Promise.resolve(getMockMateriauxSearchPage(q, page, size))
+    try {
+      const response = await apiClient.get<PageResponse<MateriauSummary>>('/materiaux/search', { params: { q, page, size } })
+      return response.data
+    } catch {
+      if (USE_MOCK_FALLBACK) return Promise.resolve(getMockMateriauxSearchPage(q, page, size))
+      throw new Error('Erreur recherche matériaux')
+    }
   },
   findStockBas: async (): Promise<MateriauSummary[]> => {
     const response = await apiClient.get<MateriauSummary[]>('/materiaux/stock-bas')

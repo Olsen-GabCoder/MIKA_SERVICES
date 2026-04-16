@@ -44,8 +44,9 @@ class Engin(
     @Column(name = "valeur_acquisition", precision = 20, scale = 2)
     var valeurAcquisition: BigDecimal? = null,
 
+    /** Nullable en base (ex. seed SQL sans colonne) ; l’API expose 0 par défaut via le mapper. */
     @Column(name = "heures_compteur")
-    var heuresCompteur: Int = 0,
+    var heuresCompteur: Int? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "statut", nullable = false, length = 20)

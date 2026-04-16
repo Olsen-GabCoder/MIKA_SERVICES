@@ -37,7 +37,9 @@ data class EnginSummaryResponse(
     val marque: String?,
     val immatriculation: String?,
     val statut: StatutEngin,
-    val estLocation: Boolean
+    val estLocation: Boolean,
+    /** Nom du chantier/projet actuel (affectation EN_COURS), null si aucun. */
+    val chantierActuel: String? = null
 )
 
 data class AffectationEnginResponse(

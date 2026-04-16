@@ -22,9 +22,150 @@
   to { transform: scaleX(1); transform-origin: left; }
 }
 
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-down {
+  from { opacity: 0; max-height: 0; }
+  to   { opacity: 1; max-height: 600px; }
+}
+
+/* ---- Markers carte projets : animations ---- */
+@keyframes marker-ping {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  75%  { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes marker-glow {
+  0%, 100% { box-shadow: 0 0 8px var(--glow-color, #3b82f6), 0 2px 4px rgba(0,0,0,0.3); }
+  50%      { box-shadow: 0 0 18px var(--glow-color, #3b82f6), 0 2px 6px rgba(0,0,0,0.3); }
+}
+
+/* ---- Scrollbar cachée (carousel) ---- */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ---- Dashboard matériel : animations ---- */
+@keyframes fade-slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes progress-grow {
+  from { width: 0; }
+  to   { width: var(--progress-target, 0%); }
+}
+
+.animate-fade-slide-up {
+  opacity: 0;
+  animation: fade-slide-up 0.5s ease-out forwards;
+}
+.animate-progress-grow {
+  width: 0;
+  animation: progress-grow 0.8s ease-out forwards;
+}
+
+/* ---- Pilotage cockpit : animations avancées ---- */
+@keyframes cockpit-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+@keyframes cockpit-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes cockpit-scale-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes cockpit-count-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+@keyframes cockpit-orbit {
+  from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+}
+@keyframes cockpit-gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-cockpit-glow {
+  animation: cockpit-glow 3s ease-in-out infinite;
+}
+.animate-cockpit-float {
+  animation: cockpit-float 4s ease-in-out infinite;
+}
+.animate-cockpit-scale-in {
+  opacity: 0;
+  animation: cockpit-scale-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-cockpit-count-pulse {
+  animation: cockpit-count-pulse 0.4s ease-out;
+}
+
+/* Cockpit KPI card — glass frost effect */
+.cockpit-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+html[data-theme="dark"] .cockpit-glass {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(100, 116, 139, 0.2);
+}
+
+/* Cockpit header gradient mesh */
+.cockpit-mesh-bg {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(232, 90, 42, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+}
+html[data-theme="dark"] .cockpit-mesh-bg {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(232, 90, 42, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+}
+
+/* ---- Tooltips carte projets ---- */
+.projet-tooltip {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  padding: 4px 10px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+  color: #1f2937 !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+}
+.projet-tooltip::before {
+  border-right-color: #e5e7eb !important;
+}
+html[data-theme="dark"] .projet-tooltip {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f3f4f6 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+}
+html[data-theme="dark"] .projet-tooltip::before {
+  border-right-color: #374151 !important;
+}
+
 .animate-fade-in-up {
   animation: fade-in-up 0.5s ease-out forwards;
   opacity: 0;
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+.animate-slide-down {
+  animation: slide-down 0.25s ease-out forwards;
+  overflow: hidden;
 }
 .animate-pulse-slow {
   animation: pulse-slow 2.5s ease-in-out infinite;

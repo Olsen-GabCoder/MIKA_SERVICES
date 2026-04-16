@@ -1,6 +1,41 @@
 {
+  "module": {
+    "tabsAria": "Equipment, Movements, DMA and Materials navigation",
+    "navEngins": "Equipment",
+    "navMouvements": "Movements",
+    "navDma": "DMA",
+    "navMateriaux": "Materials"
+  },
+  "list": {
+    "heroEngins": "Fleet overview, statuses and rental flag.",
+    "heroMateriau": "Stock levels, alert thresholds and suppliers at a glance.",
+    "filters": "Filters",
+    "active": "Active",
+    "reset": "Reset",
+    "searchLabel": "Search",
+    "searchPlaceholderEngins": "Code, name, type, brand, registration…",
+    "searchPlaceholderMateriau": "Code, name, type, unit, supplier…",
+    "tableTitleEngins": "Equipment list",
+    "tableTitleMateriau": "Materials list",
+    "statRecords": "Records",
+    "statPagination": "Pagination",
+    "statStockBas": "Low stock (page)",
+    "emptyNoResults": "No results",
+    "emptyNoResultsHint": "Clear or broaden your search to see more items.",
+    "resetFilters": "Reset filters",
+    "emptyNoDataEngins": "No equipment",
+    "emptyNoDataHintEngins": "Equipment will appear here once added to the fleet.",
+    "emptyNoDataMateriau": "No materials",
+    "emptyNoDataHintMateriau": "Materials and stock levels will appear here once created.",
+    "paginationRange": "{{from}} – {{to}} of {{total}}",
+    "paginationPrev": "Previous",
+    "paginationNext": "Next",
+    "perPage": "page",
+    "errorTitle": "Could not load data",
+    "loadingFooter": "Loading…"
+  },
   "materiau": {
-    "title": "Materials & Stock",
+    "title": "Materials & stock",
     "totalCount": "{{count}} material(s) in total",
     "loading": "Loading…",
     "empty": "No materials found",
@@ -17,16 +52,20 @@
     "alertStockBas": "Low stock",
     "alertOk": "OK",
     "actions": "Actions",
-    "delete": "Delete",
+    "delete": "Deactivate",
     "pageInfo": "Page {{current}} of {{total}}",
     "prev": "Previous",
     "next": "Next"
   },
   "engin": {
-    "title": "Equipment & Machinery",
+    "title": "Equipment & machinery",
     "totalCount": "{{count}} item(s) in total",
     "loading": "Loading…",
     "empty": "No equipment found",
+    "create": "New equipment",
+    "filterStatut": "Status",
+    "filterType": "Type",
+    "filterAll": "All",
     "columns": {
       "code": "Code",
       "nom": "Name",
@@ -42,14 +81,281 @@
       "EN_MAINTENANCE": "Under maintenance",
       "EN_PANNE": "Out of order",
       "HORS_SERVICE": "Out of service",
-      "EN_TRANSIT": "In transit"
+      "EN_TRANSIT": "In transit",
+      "EN_ATTENTE_DEPART": "Awaiting departure"
+    },
+    "type": {
+      "PELLETEUSE": "Excavator",
+      "BULLDOZER": "Bulldozer",
+      "NIVELEUSE": "Grader",
+      "COMPACTEUR": "Compactor",
+      "CAMION_BENNE": "Dump truck",
+      "CAMION_CITERNE": "Tank truck",
+      "GRUE": "Crane",
+      "CHARGEUSE": "Loader",
+      "RETROCHARGEUSE": "Backhoe loader",
+      "BETONNIERE": "Concrete mixer",
+      "FINISSEUR": "Paver",
+      "GROUPE_ELECTROGENE": "Generator",
+      "POMPE": "Pump",
+      "FOREUSE": "Drill",
+      "CONCASSEUR": "Crusher",
+      "AUTRE": "Other"
     },
     "yes": "Yes",
     "no": "No",
     "actions": "Actions",
-    "delete": "Delete",
+    "delete": "Deactivate",
     "pageInfo": "Page {{current}} of {{total}}",
     "prev": "Previous",
     "next": "Next"
+  },
+  "form": {
+    "titleCreate": "New equipment",
+    "titleEdit": "Edit equipment",
+    "code": "Code",
+    "nom": "Name",
+    "nomPlaceholder": "CAT 320 Excavator…",
+    "type": "Type",
+    "marque": "Brand",
+    "modele": "Model",
+    "immatriculation": "Registration",
+    "numeroSerie": "Serial number",
+    "anneeFabrication": "Year of manufacture",
+    "proprietaire": "Owner",
+    "estLocation": "Rental equipment",
+    "coutLocation": "Rental cost / day",
+    "cancel": "Cancel",
+    "create": "Create",
+    "update": "Save",
+    "saving": "Saving…",
+    "errorRequired": "Code and name are required.",
+    "errorGeneric": "An error occurred."
+  },
+  "detail": {
+    "infoTitle": "Information",
+    "mouvementsTitle": "Movement history",
+    "noMouvements": "No movements recorded.",
+    "depot": "Central depot",
+    "backToList": "Back to list",
+    "edit": "Edit",
+    "heuresCompteur": "Counter (h)",
+    "notFound": "Equipment not found."
+  },
+  "mouvement": {
+    "title": "Equipment movements",
+    "hero": "Real-time inter-site movement orders.",
+    "create": "New order",
+    "createTitle": "Create a movement order",
+    "createConfirm": "Create order",
+    "tableTitle": "Movement list",
+    "filterStatut": "Status",
+    "emptyNoData": "No movements",
+    "emptyNoDataHint": "Movement orders will appear here once created.",
+    "errorLoadData": "Unable to load data.",
+    "errorRequired": "Equipment and destination site are required.",
+    "errorSameProjet": "Origin and destination sites must be different.",
+    "noEnginDisponible": "No equipment available at the moment.",
+    "commentaire": "Comment / Notes",
+    "commentairePlaceholder": "Optional — equipment condition, special instructions…",
+    "depart": "Departure:",
+    "reception": "Reception:",
+    "terminal": "—",
+    "confirmDepart": "Confirm departure of the equipment from the source site?",
+    "confirmReception": "Confirm reception of the equipment at the destination site?",
+    "confirmAnnuler": "Cancel this movement order? The equipment will revert to its previous status.",
+    "col": {
+      "engin": "Equipment",
+      "origine": "Origin",
+      "destination": "Destination",
+      "statut": "Status",
+      "date": "Dates",
+      "initiateur": "Initiator"
+    },
+    "action": {
+      "confirmDepart": "Confirm departure",
+      "confirmReception": "Confirm reception",
+      "annuler": "Cancel"
+    },
+    "form": {
+      "engin": "Equipment",
+      "selectEngin": "Select equipment…",
+      "projetOrigine": "Origin site",
+      "projetDestination": "Destination site",
+      "selectProjet": "Select a site…",
+      "depotCentral": "Central depot (no site)",
+      "optionnel": "optional",
+      "origineHint": "Leave empty if the equipment departs from the central depot."
+    },
+    "statut": {
+      "EN_ATTENTE_DEPART": "Awaiting departure",
+      "EN_TRANSIT": "In transit",
+      "RECU": "Received",
+      "ANNULE": "Cancelled"
+    }
+  },
+  "dma": {
+    "title": "Material Requests",
+    "hero": "Track and manage procurement request workflows.",
+    "create": "New DMA",
+    "statut": {
+      "SOUMISE": "Submitted",
+      "EN_VALIDATION_CHANTIER": "Site validation",
+      "EN_VALIDATION_PROJET": "Project validation",
+      "PRISE_EN_CHARGE": "In progress",
+      "EN_ATTENTE_COMPLEMENT": "Awaiting info",
+      "EN_COMMANDE": "Ordered",
+      "LIVRE": "Delivered",
+      "REJETEE": "Rejected",
+      "CLOTUREE": "Closed"
+    },
+    "priorite": {
+      "NORMALE": "Normal",
+      "URGENTE": "Urgent"
+    },
+    "unite": {
+      "TONNE": "Tonne",
+      "M3": "m³",
+      "M2": "m²",
+      "SAC": "Bag",
+      "UNITE": "Unit"
+    },
+    "col": {
+      "reference": "Reference",
+      "projet": "Project",
+      "statut": "Status",
+      "priorite": "Priority",
+      "dateSouhaitee": "Desired date",
+      "createur": "Requester",
+      "montant": "Est. amount",
+      "actions": "Actions"
+    },
+    "empty": "No material requests",
+    "emptyHint": "DMA requests will appear here once created.",
+    "filterStatut": "Status",
+    "filterAll": "All",
+    "filterPriorite": "Priority",
+    "form": {
+      "titleCreate": "New Material Request",
+      "sectionHeader": "Request header",
+      "projet": "Site / Project",
+      "selectProjet": "Select a project…",
+      "priorite": "Priority",
+      "dateSouhaitee": "Desired delivery date",
+      "commentaire": "Comment",
+      "commentairePlaceholder": "Details about the request, context…",
+      "lignes": "Requested items",
+      "addLigne": "Add item",
+      "ligne": "Item",
+      "removeLigne": "Remove",
+      "col": {
+        "designation": "Description",
+        "designationPlaceholder": "Item description…",
+        "materiau": "Material (stock)",
+        "materiauNone": "None (out-of-stock)",
+        "quantite": "Quantity",
+        "unite": "Unit",
+        "prixUnitaireEst": "Est. unit price",
+        "fournisseurSuggere": "Suggested supplier",
+        "fournisseurPlaceholder": "Optional…"
+      },
+      "submit": "Submit request",
+      "submitting": "Submitting…",
+      "cancel": "Cancel",
+      "errorProjetRequired": "Project is required.",
+      "errorLigneRequired": "At least one item is required.",
+      "errorDesignationRequired": "Description is required on all items.",
+      "errorQuantiteRequired": "Quantity must be greater than 0 on all items.",
+      "errorGeneric": "An error occurred during submission."
+    },
+    "detail": {
+      "backToList": "Back to DMA",
+      "notFound": "Request not found.",
+      "infoTitle": "Information",
+      "reference": "Reference",
+      "projet": "Project",
+      "createur": "Requester",
+      "priorite": "Priority",
+      "dateSouhaitee": "Desired date",
+      "montantEstime": "Estimated amount",
+      "commande": "Linked order",
+      "commentaire": "Comment",
+      "lignesTitle": "Requested items",
+      "noLignes": "No items.",
+      "historiqueTitle": "History",
+      "noHistorique": "No history.",
+      "metaTitle": "Meta",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "col": {
+        "designation": "Description",
+        "materiau": "Material",
+        "quantite": "Qty",
+        "unite": "Unit",
+        "prixUnit": "Unit price",
+        "fournisseur": "Supplier"
+      }
+    },
+    "action": {
+      "commentaire": "Comment",
+      "commentairePlaceholder": "Justification, observations…",
+      "cancel": "Cancel",
+      "processing": "Processing…",
+      "valider_chantier": {
+        "title": "Site-level approval",
+        "confirm": "Confirm site-level approval of this request?",
+        "btn": "Approve (site)"
+      },
+      "refuser_chantier": {
+        "title": "Site-level rejection",
+        "confirm": "Reject this request at the site level?",
+        "btn": "Reject (site)"
+      },
+      "valider_projet": {
+        "title": "Project-level approval",
+        "confirm": "Confirm project-level approval of this request?",
+        "btn": "Approve (project)"
+      },
+      "refuser_projet": {
+        "title": "Project-level rejection",
+        "confirm": "Reject this request at the project level?",
+        "btn": "Reject (project)"
+      },
+      "prendre_en_charge": {
+        "title": "Take ownership",
+        "confirm": "Take ownership of this request for processing?",
+        "btn": "Take ownership"
+      },
+      "demander_complement": {
+        "title": "Request additional info",
+        "confirm": "Ask the requester for additional information?",
+        "btn": "Request info"
+      },
+      "completer": {
+        "title": "Complete request",
+        "confirm": "Mark the request as completed and send it back for processing?",
+        "btn": "Complete"
+      },
+      "commander": {
+        "title": "Place order",
+        "confirm": "Confirm placing an order for this request?",
+        "btn": "Order"
+      },
+      "livrer": {
+        "title": "Confirm delivery",
+        "confirm": "Mark this request as delivered?",
+        "btn": "Deliver"
+      },
+      "cloturer": {
+        "title": "Close request",
+        "confirm": "Permanently close this material request?",
+        "btn": "Close"
+      },
+      "rejeter": {
+        "title": "Reject request",
+        "confirm": "Permanently reject this request? A comment is required.",
+        "btn": "Reject"
+      }
+    }
   }
 }

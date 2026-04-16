@@ -117,6 +117,31 @@ class DataInitializer(
             createPermissionIfNotExists("REUNION_HEBDO_CREATE", "Créer une réunion hebdo", "REUNION_HEBDO", TypePermission.CREATE),
             createPermissionIfNotExists("REUNION_HEBDO_UPDATE", "Modifier une réunion hebdo", "REUNION_HEBDO", TypePermission.UPDATE),
             createPermissionIfNotExists("REUNION_HEBDO_DELETE", "Supprimer une réunion hebdo", "REUNION_HEBDO", TypePermission.DELETE),
+
+            // Module Engins & mouvements (spec MIKA Engins / DMA)
+            createPermissionIfNotExists("ENGIN_VIEW", "Consulter le parc et le détail des engins", "ENGIN", TypePermission.READ),
+            createPermissionIfNotExists("ENGIN_MANAGE", "Créer, modifier, désactiver un engin", "ENGIN", TypePermission.ADMIN),
+            createPermissionIfNotExists("MOUVEMENT_CREATE", "Créer un ordre de mouvement inter-chantiers", "MOUVEMENT", TypePermission.CREATE),
+            createPermissionIfNotExists(
+                "MOUVEMENT_CONFIRM_DEPART",
+                "Confirmer le départ d'un engin (chantier source)",
+                "MOUVEMENT",
+                TypePermission.VALIDATE
+            ),
+            createPermissionIfNotExists(
+                "MOUVEMENT_CONFIRM_RECEPTION",
+                "Confirmer la réception d'un engin (chantier destination)",
+                "MOUVEMENT",
+                TypePermission.VALIDATE
+            ),
+
+            // Module DMA (Demandes de matériel)
+            createPermissionIfNotExists("DMA_CREATE", "Soumettre une demande de matériel (terrain)", "DMA", TypePermission.CREATE),
+            createPermissionIfNotExists("DMA_VALIDATE_CHANTIER", "Valider ou rejeter une DMA au niveau chantier", "DMA", TypePermission.VALIDATE),
+            createPermissionIfNotExists("DMA_VALIDATE_PROJET", "Valider ou rejeter une DMA au niveau projet", "DMA", TypePermission.VALIDATE),
+            createPermissionIfNotExists("DMA_PROCESS", "Prendre en charge, commander, livrer une DMA", "DMA", TypePermission.UPDATE),
+            createPermissionIfNotExists("DMA_CLOSE", "Clôturer une DMA après livraison", "DMA", TypePermission.UPDATE),
+            createPermissionIfNotExists("DMA_VIEW_ALL", "Voir toutes les DMA (tous chantiers)", "DMA", TypePermission.READ),
         )
         
         logger.info("${permissions.size} permissions initialisées")
@@ -141,6 +166,18 @@ class DataInitializer(
             permissionRepository.save(permission)
             logger.debug("Permission créée: $code")
             permission
+        }
+    }
+
+    /** Ajoute à un rôle existant les permissions listées (idempotent). */
+    private fun mergePermissionsIntoRole(roleCode: String, permissionCodes: Collection<String>) {
+        val role = roleRepository.findByCodeWithPermissions(roleCode).orElse(null) ?: return
+        val want = permissionRepository.findAll().filter { it.code in permissionCodes.toSet() }.toSet()
+        val missing = want.filter { p -> role.permissions.none { it.id == p.id } }
+        if (missing.isNotEmpty()) {
+            role.permissions.addAll(missing)
+            roleRepository.save(role)
+            logger.info("Rôle $roleCode : ${missing.size} permission(s) ajoutée(s) (${missing.joinToString { it.code }})")
         }
     }
     
@@ -183,6 +220,7 @@ class DataInitializer(
             logger.info("Rôle ADMIN créé avec ${adminPermissions.size} permissions")
             role
         }
+        mergePermissionsIntoRole("ADMIN", setOf("ENGIN_MANAGE", "DMA_VIEW_ALL"))
         
         // Rôle USER standard
         roleRepository.findByCode("USER").orElseGet {
@@ -201,19 +239,24 @@ class DataInitializer(
             logger.info("Rôle USER créé avec ${userPermissions.size} permissions")
             role
         }
+        mergePermissionsIntoRole("USER", setOf("DMA_CREATE"))
 
+        val chefProjetPermissionCodes = setOf(
+            "PROJET_READ", "PROJET_UPDATE", "PROJET_CREATE",
+            "CHANTIER_READ", "CHANTIER_UPDATE", "CHANTIER_CREATE",
+            "EQUIPE_READ", "EQUIPE_UPDATE", "EQUIPE_CREATE",
+            "QUALITE_READ", "QUALITE_UPDATE", "QUALITE_CREATE",
+            "BUDGET_READ", "BUDGET_UPDATE",
+            "DOCUMENT_READ", "DOCUMENT_UPDATE", "DOCUMENT_CREATE",
+            "PLANNING_READ", "PLANNING_UPDATE", "PLANNING_CREATE",
+            "REUNION_HEBDO_READ", "REUNION_HEBDO_UPDATE", "REUNION_HEBDO_CREATE",
+            "ENGIN_VIEW",
+            "MOUVEMENT_CONFIRM_DEPART",
+            "MOUVEMENT_CONFIRM_RECEPTION",
+            "DMA_VALIDATE_PROJET",
+        )
         // Rôle CHEF_PROJET : modification des projets dont il est responsable (vérification métier dans les services)
-        roleRepository.findByCode("CHEF_PROJET").orElseGet {
-            val chefProjetPermissionCodes = setOf(
-                "PROJET_READ", "PROJET_UPDATE", "PROJET_CREATE",
-                "CHANTIER_READ", "CHANTIER_UPDATE", "CHANTIER_CREATE",
-                "EQUIPE_READ", "EQUIPE_UPDATE", "EQUIPE_CREATE",
-                "QUALITE_READ", "QUALITE_UPDATE", "QUALITE_CREATE",
-                "BUDGET_READ", "BUDGET_UPDATE",
-                "DOCUMENT_READ", "DOCUMENT_UPDATE", "DOCUMENT_CREATE",
-                "PLANNING_READ", "PLANNING_UPDATE", "PLANNING_CREATE",
-                "REUNION_HEBDO_READ", "REUNION_HEBDO_UPDATE", "REUNION_HEBDO_CREATE"
-            )
+        roleRepository.findByCodeWithPermissions("CHEF_PROJET").orElseGet {
             val chefProjetPermissions = permissionRepository.findAll()
                 .filter { it.code in chefProjetPermissionCodes }
                 .toSet()
@@ -229,6 +272,52 @@ class DataInitializer(
             logger.info("Rôle CHEF_PROJET créé avec ${chefProjetPermissions.size} permissions")
             role
         }
+        mergePermissionsIntoRole("CHEF_PROJET", chefProjetPermissionCodes)
+
+        val logistiquePermissionCodes = setOf(
+            "ENGIN_VIEW",
+            "ENGIN_MANAGE",
+            "MOUVEMENT_CREATE",
+            "MOUVEMENT_CONFIRM_DEPART",
+            "MOUVEMENT_CONFIRM_RECEPTION",
+            "DMA_PROCESS",
+            "DMA_CLOSE",
+            "DMA_VIEW_ALL",
+        )
+        roleRepository.findByCodeWithPermissions("LOGISTIQUE").orElseGet {
+            val role = Role(
+                code = "LOGISTIQUE",
+                nom = "Logistique",
+                description = "Pilote du parc engins, mouvements inter-chantiers et traitement des DMA",
+                niveau = NiveauHierarchique.CADRE_SUPERIEUR,
+                actif = true
+            )
+            roleRepository.save(role)
+            logger.info("Rôle LOGISTIQUE créé")
+            role
+        }
+        mergePermissionsIntoRole("LOGISTIQUE", logistiquePermissionCodes)
+
+        val chefChantierPermissionCodes = setOf(
+            "ENGIN_VIEW",
+            "MOUVEMENT_CONFIRM_DEPART",
+            "MOUVEMENT_CONFIRM_RECEPTION",
+            "DMA_CREATE",
+            "DMA_VALIDATE_CHANTIER",
+        )
+        roleRepository.findByCodeWithPermissions("CHEF_CHANTIER").orElseGet {
+            val role = Role(
+                code = "CHEF_CHANTIER",
+                nom = "Chef de chantier",
+                description = "Chantiers assignés : saisie DMA, validation chantier, confirmation mouvements d'engins",
+                niveau = NiveauHierarchique.CADRE_MOYEN,
+                actif = true
+            )
+            roleRepository.save(role)
+            logger.info("Rôle CHEF_CHANTIER créé")
+            role
+        }
+        mergePermissionsIntoRole("CHEF_CHANTIER", chefChantierPermissionCodes)
     }
     
     private fun initAdminUser() {

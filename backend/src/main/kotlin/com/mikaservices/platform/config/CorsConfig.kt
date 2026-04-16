@@ -51,10 +51,10 @@ class CorsConfig {
             }
         }
         
-        // En prod, autoriser tous les sous-domaines Railway (*.up.railway.app) si aucune origine HTTPS n'a été configurée
+        // En prod, autoriser tous les sous-domaines Render (*.onrender.com) si aucune origine HTTPS n'a été configurée
         val hasHttpsOrigin = origins.any { it.startsWith("https://") }
         if (!hasHttpsOrigin) {
-            origins.add("https://*.up.railway.app")
+            origins.add("https://*.onrender.com")
         }
         
         configuration.allowedOriginPatterns = origins

@@ -27,6 +27,8 @@ data class ProjetUpdateRequest(
     val province: String? = null,
     val ville: String? = null,
     val quartier: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val montantHT: BigDecimal? = null,
     val montantTTC: BigDecimal? = null,
     val montantInitial: BigDecimal? = null,

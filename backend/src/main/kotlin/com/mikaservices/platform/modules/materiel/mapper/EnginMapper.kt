@@ -13,16 +13,17 @@ object EnginMapper {
         marque = entity.marque, modele = entity.modele, immatriculation = entity.immatriculation,
         numeroSerie = entity.numeroSerie, anneeFabrication = entity.anneeFabrication,
         dateAcquisition = entity.dateAcquisition, valeurAcquisition = entity.valeurAcquisition,
-        heuresCompteur = entity.heuresCompteur, statut = entity.statut,
+        heuresCompteur = entity.heuresCompteur ?: 0, statut = entity.statut,
         proprietaire = entity.proprietaire, estLocation = entity.estLocation,
         coutLocationJournalier = entity.coutLocationJournalier,
         actif = entity.actif, createdAt = entity.createdAt, updatedAt = entity.updatedAt
     )
 
-    fun toSummaryResponse(entity: Engin): EnginSummaryResponse = EnginSummaryResponse(
+    fun toSummaryResponse(entity: Engin, chantierActuel: String? = null): EnginSummaryResponse = EnginSummaryResponse(
         id = entity.id!!, code = entity.code, nom = entity.nom, type = entity.type,
         marque = entity.marque, immatriculation = entity.immatriculation,
-        statut = entity.statut, estLocation = entity.estLocation
+        statut = entity.statut, estLocation = entity.estLocation,
+        chantierActuel = chantierActuel
     )
 
     fun toAffectationResponse(entity: AffectationEnginChantier): AffectationEnginResponse = AffectationEnginResponse(

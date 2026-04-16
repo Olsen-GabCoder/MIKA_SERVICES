@@ -37,7 +37,12 @@ class AffectationEnginChantier(
     var statut: StatutAffectation = StatutAffectation.PLANIFIEE,
 
     @Column(name = "observations", columnDefinition = "TEXT")
-    var observations: String? = null
+    var observations: String? = null,
+
+    /** Renseigné lorsque l'affectation est clôturée dans le cadre d'un ordre de mouvement. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mouvement_engin_id")
+    var mouvementEngin: MouvementEngin? = null,
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

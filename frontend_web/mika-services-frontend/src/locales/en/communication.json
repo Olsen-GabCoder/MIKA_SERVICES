@@ -85,7 +85,20 @@
       "ECHEANCE": "Due date",
       "STOCK_BAS": "Low stock",
       "MESSAGE": "Message",
-      "SYSTEME": "System"
+      "SYSTEME": "System",
+      "DMA_SOUMISE": "DMA — submitted",
+      "DMA_VALIDEE_CHANTIER": "DMA — site",
+      "DMA_VALIDEE_PROJET": "DMA — project",
+      "DMA_PRISE_EN_CHARGE": "DMA — logistics",
+      "DMA_COMPLEMENT_REQUIS": "DMA — more info",
+      "DMA_COMMANDEE": "DMA — ordered",
+      "DMA_LIVREE": "DMA — delivered",
+      "DMA_REJETEE": "DMA — rejected",
+      "MOUVEMENT_ORDRE_CREE": "Movement — order",
+      "MOUVEMENT_DEPART_CONFIRME": "Movement — departed",
+      "MOUVEMENT_RECEPTION_CONFIRMEE": "Movement — received",
+      "MOUVEMENT_ANNULE": "Movement — cancelled",
+      "RAPPEL_MAJ_PROJET": "Meeting reminder"
     }
   }
 }

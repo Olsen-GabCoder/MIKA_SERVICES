@@ -20,9 +20,12 @@ data class ProjetResponse(
     val client: ClientResponse?,
     val sourceFinancement: SourceFinancement?,
     val imputationBudgetaire: String?,
+    val codeProjet: String?,
     val province: String?,
     val ville: String?,
     val quartier: String?,
+    val latitude: Double?,
+    val longitude: Double?,
     val montantHT: BigDecimal?,
     val montantTTC: BigDecimal?,
     val montantInitial: BigDecimal?,
@@ -53,6 +56,7 @@ data class ProjetResponse(
 
 data class ProjetSummaryResponse(
     val id: Long,
+    val codeProjet: String? = null,
     val numeroMarche: String? = null,
     val nom: String,
     val type: TypeProjet,
@@ -60,13 +64,19 @@ data class ProjetSummaryResponse(
     val typePersonnalise: String? = null,
     val statut: StatutProjet,
     val clientNom: String?,
+    val province: String? = null,
+    val ville: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val montantHT: BigDecimal?,
     val avancementGlobal: BigDecimal,
     val dateDebut: LocalDate?,
     val dateFin: LocalDate?,
     val responsableNom: String?,
     /** ID du chef de projet (pour droits UI liste) */
-    val responsableProjetId: Long? = null
+    val responsableProjetId: Long? = null,
+    /** Nombre d'engins affectés au projet */
+    val nombreEnginsAffectes: Int = 0
 )
 
 data class ProjetUserSummary(

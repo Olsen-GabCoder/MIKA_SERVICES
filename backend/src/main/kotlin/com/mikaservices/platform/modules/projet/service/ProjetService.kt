@@ -38,6 +38,7 @@ import com.mikaservices.platform.modules.planning.dto.request.TacheCreateRequest
 import com.mikaservices.platform.modules.planning.service.PlanningService
 import com.mikaservices.platform.modules.projet.repository.PrevisionRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
+import com.mikaservices.platform.modules.materiel.repository.AffectationEnginChantierRepository
 import com.mikaservices.platform.modules.reunionhebdo.repository.PointProjetPVRepository
 import com.mikaservices.platform.modules.user.entity.User
 import com.mikaservices.platform.modules.user.repository.UserRepository
@@ -70,7 +71,8 @@ class ProjetService(
     private val previsionRepository: PrevisionRepository,
     private val pointProjetPVRepository: PointProjetPVRepository,
     private val currentUserService: CurrentUserService,
-    private val planningService: PlanningService
+    private val planningService: PlanningService,
+    private val affectationEnginRepository: AffectationEnginChantierRepository
 ) {
     private val logger = LoggerFactory.getLogger(ProjetService::class.java)
 
@@ -85,7 +87,8 @@ class ProjetService(
         val byFk = responsablesByProjetFk(page.content)
         return page.map { p ->
             val fk = p.responsableProjetId
-            ProjetMapper.toSummaryResponse(p, fk?.let { byFk[it] })
+            val enginCount = p.id?.let { affectationEnginRepository.countByProjetId(it).toInt() } ?: 0
+            ProjetMapper.toSummaryResponse(p, fk?.let { byFk[it] }, enginCount)
         }
     }
 
@@ -94,7 +97,8 @@ class ProjetService(
         val byFk = responsablesByProjetFk(projets)
         return projets.map { p ->
             val fk = p.responsableProjetId
-            ProjetMapper.toSummaryResponse(p, fk?.let { byFk[it] })
+            val enginCount = p.id?.let { affectationEnginRepository.countByProjetId(it).toInt() } ?: 0
+            ProjetMapper.toSummaryResponse(p, fk?.let { byFk[it] }, enginCount)
         }
     }
 
@@ -146,6 +150,8 @@ class ProjetService(
             province = request.province,
             ville = request.ville,
             quartier = request.quartier,
+            latitude = request.latitude,
+            longitude = request.longitude,
             montantHT = request.montantHT,
             montantTTC = request.montantTTC,
             montantInitial = request.montantInitial,
@@ -308,6 +314,8 @@ class ProjetService(
         request.province?.let { projet.province = it }
         request.ville?.let { projet.ville = it }
         request.quartier?.let { projet.quartier = it }
+        request.latitude?.let { projet.latitude = it }
+        request.longitude?.let { projet.longitude = it }
         request.montantHT?.let { projet.montantHT = it }
         request.montantTTC?.let { projet.montantTTC = it }
         request.montantInitial?.let { projet.montantInitial = it }

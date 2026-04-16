@@ -3,7 +3,7 @@
 # selon la base réellement utilisée. Laisser ce fichier agnostique au moteur SQL.
 app:
   mail:
-    frontend-base-url: ${FRONTEND_BASE_URL:https://mika-services.up.railway.app}
+    frontend-base-url: ${FRONTEND_BASE_URL:}
   auth:
     refresh-cookie:
       secure: true

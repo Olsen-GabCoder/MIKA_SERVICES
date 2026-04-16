@@ -17,6 +17,11 @@ spring:
     password: ${DATABASE_PASSWORD:}
     driver-class-name: ${DATABASE_DRIVER_CLASS_NAME:com.mysql.cj.jdbc.Driver}
 
+  jpa:
+    properties:
+      hibernate:
+        default_batch_fetch_size: 32
+
   # SMTP (variables d'environnement ou depuis .env)
   mail:
     host: ${MAIL_HOST:localhost}
@@ -35,7 +40,7 @@ spring:
           timeout: 15000
           writetimeout: 15000
 
-# Configuration serveur (PORT injecté par Railway en prod)
+# Configuration serveur (PORT injecté par Render en prod)
 server:
   port: ${PORT:9090}
   servlet:
@@ -64,9 +69,9 @@ app:
     api-key: ${METEO_API_KEY:}
     default-city: ${METEO_DEFAULT_CITY:Libreville}
   mail:
-    frontend-base-url: ${FRONTEND_BASE_URL:https://mika-services.up.railway.app}
+    frontend-base-url: ${FRONTEND_BASE_URL:}
     from: ${MAIL_FROM:noreply@mikaservices.com}
-    # Priorité : Brevo > Resend > SMTP (toutes API en HTTPS, pas de blocage Railway)
+    # Priorité : Brevo > Resend > SMTP (toutes API en HTTPS, pas de blocage réseau Render)
     brevo-api-key: ${BREVO_API_KEY:}
     resend-api-key: ${RESEND_API_KEY:}
     notify-on-login: ${MAIL_NOTIFY_ON_LOGIN:true}
@@ -74,6 +79,9 @@ app:
     session-cleanup-cron: ${SESSION_CLEANUP_CRON:0 0 3 * * ?}
     password-reset-cleanup-cron: ${PASSWORD_RESET_CLEANUP_CRON:0 0 4 * * ?}
     digest-cron: ${DIGEST_CRON:0 0 * * * ?}
+    platform-status-cron: ${PLATFORM_STATUS_CRON:0 0 8 * * *}
+    rappel-projet-mercredi: ${RAPPEL_PROJET_MERCREDI_CRON:0 0 8 * * WED}
+    rappel-projet-jeudi: ${RAPPEL_PROJET_JEUDI_CRON:0 0 16 * * THU}
   rate-limit:
     login-max-attempts: ${LOGIN_RATE_LIMIT_MAX:5}
     login-window-minutes: ${LOGIN_RATE_LIMIT_WINDOW_MINUTES:1}

@@ -18,9 +18,14 @@ const initialState: MateriauState = {
   totalElements: 0, totalPages: 0, currentPage: 0, loading: false, error: null,
 }
 
-export const fetchMateriaux = createAsyncThunk('materiau/fetchAll', async ({ page = 0, size = 20 }: { page?: number; size?: number } = {}) => {
-  return await materiauApi.findAll(page, size)
-})
+export const fetchMateriaux = createAsyncThunk(
+  'materiau/fetchAll',
+  async ({ page = 0, size = 20, q }: { page?: number; size?: number; q?: string } = {}) => {
+    const trimmed = q?.trim()
+    if (trimmed) return await materiauApi.search(trimmed, page, size)
+    return await materiauApi.findAll(page, size)
+  }
+)
 
 export const fetchMateriauById = createAsyncThunk('materiau/fetchById', async (id: number) => { return await materiauApi.findById(id) })
 

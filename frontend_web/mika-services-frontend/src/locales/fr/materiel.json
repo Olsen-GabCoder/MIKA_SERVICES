@@ -1,6 +1,41 @@
 {
+  "module": {
+    "tabsAria": "Navigation Engins, Mouvements, DMA et Matériaux",
+    "navEngins": "Engins",
+    "navMouvements": "Mouvements",
+    "navDma": "DMA",
+    "navMateriaux": "Matériaux"
+  },
+  "list": {
+    "heroEngins": "Pilotage du parc engins, statuts et location.",
+    "heroMateriau": "Stocks, seuils d'alerte et fournisseurs en un coup d'œil.",
+    "filters": "Filtres",
+    "active": "Actif",
+    "reset": "Réinitialiser",
+    "searchLabel": "Recherche",
+    "searchPlaceholderEngins": "Code, nom, type, marque, immatriculation…",
+    "searchPlaceholderMateriau": "Code, nom, type, unité, fournisseur…",
+    "tableTitleEngins": "Liste des engins",
+    "tableTitleMateriau": "Liste des matériaux",
+    "statRecords": "Enregistrements",
+    "statPagination": "Pagination",
+    "statStockBas": "Stock bas (page)",
+    "emptyNoResults": "Aucun résultat",
+    "emptyNoResultsHint": "Élargissez ou effacez la recherche pour voir plus d’éléments.",
+    "resetFilters": "Réinitialiser les filtres",
+    "emptyNoDataEngins": "Aucun engin",
+    "emptyNoDataHintEngins": "Les engins apparaîtront ici une fois enregistrés dans le parc.",
+    "emptyNoDataMateriau": "Aucun matériau",
+    "emptyNoDataHintMateriau": "Les matériaux et stocks apparaîtront ici une fois créés.",
+    "paginationRange": "{{from}} – {{to}} sur {{total}}",
+    "paginationPrev": "Précédent",
+    "paginationNext": "Suivant",
+    "perPage": "page",
+    "errorTitle": "Impossible de charger les données",
+    "loadingFooter": "Chargement…"
+  },
   "materiau": {
-    "title": "Matériaux & Stocks",
+    "title": "Matériaux & stocks",
     "totalCount": "{{count}} matériau(x) au total",
     "loading": "Chargement…",
     "empty": "Aucun matériau trouvé",
@@ -9,24 +44,28 @@
       "nom": "Nom",
       "type": "Type",
       "unite": "Unité",
-      "stockActuel": "Stock Actuel",
-      "stockMin": "Stock Min.",
+      "stockActuel": "Stock actuel",
+      "stockMin": "Stock min.",
       "alerte": "Alerte",
       "fournisseur": "Fournisseur"
     },
     "alertStockBas": "Stock bas",
     "alertOk": "OK",
     "actions": "Actions",
-    "delete": "Supprimer",
+    "delete": "Désactiver",
     "pageInfo": "Page {{current}} sur {{total}}",
     "prev": "Précédent",
     "next": "Suivant"
   },
   "engin": {
-    "title": "Engins & Matériel",
+    "title": "Engins & matériel",
     "totalCount": "{{count}} engin(s) au total",
     "loading": "Chargement…",
     "empty": "Aucun engin trouvé",
+    "create": "Nouvel engin",
+    "filterStatut": "Statut",
+    "filterType": "Type",
+    "filterAll": "Tous",
     "columns": {
       "code": "Code",
       "nom": "Nom",
@@ -42,14 +81,281 @@
       "EN_MAINTENANCE": "En maintenance",
       "EN_PANNE": "En panne",
       "HORS_SERVICE": "Hors service",
-      "EN_TRANSIT": "En transit"
+      "EN_TRANSIT": "En transit",
+      "EN_ATTENTE_DEPART": "En attente départ"
+    },
+    "type": {
+      "PELLETEUSE": "Pelleteuse",
+      "BULLDOZER": "Bulldozer",
+      "NIVELEUSE": "Niveleuse",
+      "COMPACTEUR": "Compacteur",
+      "CAMION_BENNE": "Camion benne",
+      "CAMION_CITERNE": "Camion citerne",
+      "GRUE": "Grue",
+      "CHARGEUSE": "Chargeuse",
+      "RETROCHARGEUSE": "Rétro-chargeuse",
+      "BETONNIERE": "Bétonnière",
+      "FINISSEUR": "Finisseur",
+      "GROUPE_ELECTROGENE": "Groupe électrogène",
+      "POMPE": "Pompe",
+      "FOREUSE": "Foreuse",
+      "CONCASSEUR": "Concasseur",
+      "AUTRE": "Autre"
     },
     "yes": "Oui",
     "no": "Non",
     "actions": "Actions",
-    "delete": "Supprimer",
+    "delete": "Désactiver",
     "pageInfo": "Page {{current}} sur {{total}}",
     "prev": "Précédent",
     "next": "Suivant"
+  },
+  "form": {
+    "titleCreate": "Nouvel engin",
+    "titleEdit": "Modifier l'engin",
+    "code": "Code",
+    "nom": "Nom",
+    "nomPlaceholder": "Pelleteuse CAT 320…",
+    "type": "Type",
+    "marque": "Marque",
+    "modele": "Modèle",
+    "immatriculation": "Immatriculation",
+    "numeroSerie": "N° de série",
+    "anneeFabrication": "Année de fabrication",
+    "proprietaire": "Propriétaire",
+    "estLocation": "Engin de location",
+    "coutLocation": "Coût de location / jour",
+    "cancel": "Annuler",
+    "create": "Créer",
+    "update": "Enregistrer",
+    "saving": "Enregistrement…",
+    "errorRequired": "Le code et le nom sont obligatoires.",
+    "errorGeneric": "Une erreur est survenue."
+  },
+  "detail": {
+    "infoTitle": "Informations",
+    "mouvementsTitle": "Historique des mouvements",
+    "noMouvements": "Aucun mouvement enregistré.",
+    "depot": "Dépôt central",
+    "backToList": "Retour à la liste",
+    "edit": "Modifier",
+    "heuresCompteur": "Compteur (h)",
+    "notFound": "Engin introuvable."
+  },
+  "mouvement": {
+    "title": "Mouvements d'engins",
+    "hero": "Ordres de déplacement inter-chantiers en temps réel.",
+    "create": "Nouvel ordre",
+    "createTitle": "Créer un ordre de mouvement",
+    "createConfirm": "Créer l'ordre",
+    "tableTitle": "Liste des mouvements",
+    "filterStatut": "Statut",
+    "emptyNoData": "Aucun mouvement",
+    "emptyNoDataHint": "Les ordres de déplacement apparaîtront ici une fois créés.",
+    "errorLoadData": "Impossible de charger les données.",
+    "errorRequired": "L'engin et le chantier de destination sont obligatoires.",
+    "errorSameProjet": "Le chantier d'origine et de destination doivent être distincts.",
+    "noEnginDisponible": "Aucun engin disponible pour le moment.",
+    "commentaire": "Commentaire / Observations",
+    "commentairePlaceholder": "Optionnel — état de l'engin, instructions particulières…",
+    "depart": "Départ :",
+    "reception": "Réception :",
+    "terminal": "—",
+    "confirmDepart": "Confirmer le départ de l'engin depuis le chantier source ?",
+    "confirmReception": "Confirmer la réception de l'engin sur le chantier destination ?",
+    "confirmAnnuler": "Annuler cet ordre de mouvement ? L'engin retrouvera son statut précédent.",
+    "col": {
+      "engin": "Engin",
+      "origine": "Origine",
+      "destination": "Destination",
+      "statut": "Statut",
+      "date": "Dates",
+      "initiateur": "Initiateur"
+    },
+    "action": {
+      "confirmDepart": "Confirmer départ",
+      "confirmReception": "Confirmer réception",
+      "annuler": "Annuler"
+    },
+    "form": {
+      "engin": "Engin",
+      "selectEngin": "Sélectionner un engin…",
+      "projetOrigine": "Chantier d'origine",
+      "projetDestination": "Chantier de destination",
+      "selectProjet": "Sélectionner un chantier…",
+      "depotCentral": "Dépôt central (aucun chantier)",
+      "optionnel": "optionnel",
+      "origineHint": "Laisser vide si l'engin part du dépôt central."
+    },
+    "statut": {
+      "EN_ATTENTE_DEPART": "En attente départ",
+      "EN_TRANSIT": "En transit",
+      "RECU": "Réceptionné",
+      "ANNULE": "Annulé"
+    }
+  },
+  "dma": {
+    "title": "Demandes de matériel",
+    "hero": "Suivi et workflow des demandes d'approvisionnement.",
+    "create": "Nouvelle DMA",
+    "statut": {
+      "SOUMISE": "Soumise",
+      "EN_VALIDATION_CHANTIER": "Val. chantier",
+      "EN_VALIDATION_PROJET": "Val. projet",
+      "PRISE_EN_CHARGE": "Prise en charge",
+      "EN_ATTENTE_COMPLEMENT": "Complément requis",
+      "EN_COMMANDE": "En commande",
+      "LIVRE": "Livré",
+      "REJETEE": "Rejetée",
+      "CLOTUREE": "Clôturée"
+    },
+    "priorite": {
+      "NORMALE": "Normale",
+      "URGENTE": "Urgente"
+    },
+    "unite": {
+      "TONNE": "Tonne",
+      "M3": "m³",
+      "M2": "m²",
+      "SAC": "Sac",
+      "UNITE": "Unité"
+    },
+    "col": {
+      "reference": "Référence",
+      "projet": "Projet",
+      "statut": "Statut",
+      "priorite": "Priorité",
+      "dateSouhaitee": "Date souhaitée",
+      "createur": "Créateur",
+      "montant": "Montant estimé",
+      "actions": "Actions"
+    },
+    "empty": "Aucune demande de matériel",
+    "emptyHint": "Les DMA apparaîtront ici une fois créées.",
+    "filterStatut": "Statut",
+    "filterAll": "Tous",
+    "filterPriorite": "Priorité",
+    "form": {
+      "titleCreate": "Nouvelle demande de matériel",
+      "sectionHeader": "En-tête de la demande",
+      "projet": "Chantier / Projet",
+      "selectProjet": "Sélectionner un projet…",
+      "priorite": "Priorité",
+      "dateSouhaitee": "Date souhaitée",
+      "commentaire": "Commentaire",
+      "commentairePlaceholder": "Précisions sur la demande, contexte…",
+      "lignes": "Articles demandés",
+      "addLigne": "Ajouter un article",
+      "ligne": "Article",
+      "removeLigne": "Supprimer",
+      "col": {
+        "designation": "Désignation",
+        "designationPlaceholder": "Description de l'article…",
+        "materiau": "Matériau (stock)",
+        "materiauNone": "Aucun (hors stock)",
+        "quantite": "Quantité",
+        "unite": "Unité",
+        "prixUnitaireEst": "Prix unit. estimé",
+        "fournisseurSuggere": "Fournisseur suggéré",
+        "fournisseurPlaceholder": "Optionnel…"
+      },
+      "submit": "Soumettre la demande",
+      "submitting": "Soumission…",
+      "cancel": "Annuler",
+      "errorProjetRequired": "Le projet est obligatoire.",
+      "errorLigneRequired": "Au moins un article est requis.",
+      "errorDesignationRequired": "La désignation est obligatoire sur tous les articles.",
+      "errorQuantiteRequired": "La quantité doit être supérieure à 0 sur tous les articles.",
+      "errorGeneric": "Une erreur est survenue lors de la soumission."
+    },
+    "detail": {
+      "backToList": "Retour aux DMA",
+      "notFound": "Demande introuvable.",
+      "infoTitle": "Informations",
+      "reference": "Référence",
+      "projet": "Projet",
+      "createur": "Créateur",
+      "priorite": "Priorité",
+      "dateSouhaitee": "Date souhaitée",
+      "montantEstime": "Montant estimé",
+      "commande": "Commande liée",
+      "commentaire": "Commentaire",
+      "lignesTitle": "Articles demandés",
+      "noLignes": "Aucun article.",
+      "historiqueTitle": "Historique",
+      "noHistorique": "Aucun historique.",
+      "metaTitle": "Méta",
+      "createdAt": "Créé le",
+      "updatedAt": "Modifié le",
+      "col": {
+        "designation": "Désignation",
+        "materiau": "Matériau",
+        "quantite": "Qté",
+        "unite": "Unité",
+        "prixUnit": "Prix unit.",
+        "fournisseur": "Fournisseur"
+      }
+    },
+    "action": {
+      "commentaire": "Commentaire",
+      "commentairePlaceholder": "Justification, observations…",
+      "cancel": "Annuler",
+      "processing": "Traitement…",
+      "valider_chantier": {
+        "title": "Valider au niveau chantier",
+        "confirm": "Confirmer la validation chantier de cette demande ?",
+        "btn": "Valider (chantier)"
+      },
+      "refuser_chantier": {
+        "title": "Refuser au niveau chantier",
+        "confirm": "Refuser cette demande au niveau du chantier ?",
+        "btn": "Refuser (chantier)"
+      },
+      "valider_projet": {
+        "title": "Valider au niveau projet",
+        "confirm": "Confirmer la validation projet de cette demande ?",
+        "btn": "Valider (projet)"
+      },
+      "refuser_projet": {
+        "title": "Refuser au niveau projet",
+        "confirm": "Refuser cette demande au niveau du projet ?",
+        "btn": "Refuser (projet)"
+      },
+      "prendre_en_charge": {
+        "title": "Prendre en charge",
+        "confirm": "Prendre en charge cette demande pour traitement ?",
+        "btn": "Prendre en charge"
+      },
+      "demander_complement": {
+        "title": "Demander un complément",
+        "confirm": "Demander un complément d'information au demandeur ?",
+        "btn": "Demander complément"
+      },
+      "completer": {
+        "title": "Compléter la demande",
+        "confirm": "Marquer la demande comme complétée et renvoyer en traitement ?",
+        "btn": "Compléter"
+      },
+      "commander": {
+        "title": "Passer en commande",
+        "confirm": "Confirmer le passage en commande de cette demande ?",
+        "btn": "Commander"
+      },
+      "livrer": {
+        "title": "Confirmer la livraison",
+        "confirm": "Marquer cette demande comme livrée ?",
+        "btn": "Livrer"
+      },
+      "cloturer": {
+        "title": "Clôturer la demande",
+        "confirm": "Clôturer définitivement cette demande de matériel ?",
+        "btn": "Clôturer"
+      },
+      "rejeter": {
+        "title": "Rejeter la demande",
+        "confirm": "Rejeter définitivement cette demande ? Un commentaire est obligatoire.",
+        "btn": "Rejeter"
+      }
+    }
   }
 }

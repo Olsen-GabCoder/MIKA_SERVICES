@@ -104,6 +104,7 @@ export interface Partenaire {
 
 export interface Projet {
   id: number
+  codeProjet?: string
   numeroMarche?: string
   nom: string
   description?: string
@@ -118,6 +119,8 @@ export interface Projet {
   province?: string
   ville?: string
   quartier?: string
+  latitude?: number
+  longitude?: number
   montantHT?: number
   montantTTC?: number
   montantInitial?: number
@@ -150,12 +153,17 @@ export interface Projet {
 
 export interface ProjetSummary {
   id: number
+  codeProjet?: string
   nom: string
   types?: TypeProjet[]
   type?: TypeProjet
   typePersonnalise?: string
   statut: StatutProjet
   clientNom?: string
+  province?: string
+  ville?: string
+  latitude?: number
+  longitude?: number
   montantHT?: number
   avancementGlobal: number
   dateDebut?: string
@@ -163,6 +171,8 @@ export interface ProjetSummary {
   responsableNom?: string
   /** Aligné API : pour masquer édition / désactivation si non autorisé */
   responsableProjetId?: number
+  /** Nombre d'engins affectés au projet */
+  nombreEnginsAffectes?: number
 }
 
 export interface SousProjet {
@@ -284,6 +294,8 @@ export interface ProjetCreateRequest {
   province?: string
   ville?: string
   quartier?: string
+  latitude?: number
+  longitude?: number
   montantHT?: number
   montantTTC?: number
   montantInitial?: number
@@ -320,6 +332,8 @@ export interface ProjetUpdateRequest {
   province?: string
   ville?: string
   quartier?: string
+  latitude?: number
+  longitude?: number
   montantHT?: number
   montantTTC?: number
   montantInitial?: number

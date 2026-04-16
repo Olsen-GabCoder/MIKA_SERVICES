@@ -6,6 +6,8 @@ import userReducer from './slices/userSlice'
 import projetReducer from './slices/projetSlice'
 import equipeReducer from './slices/equipeSlice'
 import enginReducer from './slices/enginSlice'
+import mouvementEnginReducer from './slices/mouvementEnginSlice'
+import demandeMaterielReducer from './slices/demandeMaterielSlice'
 import materiauReducer from './slices/materiauSlice'
 import budgetReducer from './slices/budgetSlice'
 import planningReducer from './slices/planningSlice'
@@ -24,6 +26,8 @@ export const store = configureStore({
     projet: projetReducer,
     equipe: equipeReducer,
     engin: enginReducer,
+    mouvementEngin: mouvementEnginReducer,
+    demandeMateriel: demandeMaterielReducer,
     materiau: materiauReducer,
     budget: budgetReducer,
     planning: planningReducer,

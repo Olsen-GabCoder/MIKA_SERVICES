@@ -20,19 +20,16 @@ class EmailService(
     @Value("\${app.mail.from:noreply@mikaservices.com}") private val from: String,
     @Value("\${app.mail.brevo-api-key:}") private val brevoApiKey: String,
     @Value("\${app.mail.resend-api-key:}") private val resendApiKey: String,
-    @Value("\${app.mail.frontend-base-url:https://mika-services.up.railway.app}") private val frontendBaseUrl: String
+    @Value("\${app.mail.frontend-base-url:}") private val frontendBaseUrl: String
 ) {
     private val logger = LoggerFactory.getLogger(EmailService::class.java)
 
-    companion object {
-        private const val PROD_URL = "https://mika-services.up.railway.app"
-        private const val LOGO_URL = "$PROD_URL/Logo_mika_services.png"
+    private val appBaseUrl: String get() = frontendBaseUrl.trimEnd('/').ifBlank {
+        logger.warn("FRONTEND_BASE_URL non configuré — les liens dans les emails seront invalides. Définir cette variable sur Render.")
+        ""
     }
 
-    private val appBaseUrl: String get() {
-        val url = frontendBaseUrl.trimEnd('/')
-        return if (url.isBlank()) PROD_URL else url
-    }
+    private val logoUrl: String get() = "$appBaseUrl/Logo_mika_services.png"
 
     private fun link(path: String): String = "$appBaseUrl$path"
 
@@ -80,7 +77,7 @@ class EmailService(
                 $content
               </td></tr>
               <tr><td style="padding:20px 32px;border-top:1px solid #eee;text-align:center;">
-                <img src="$LOGO_URL" alt="MIKA Services" style="max-width:120px;height:auto;margin-bottom:8px;" />
+                <img src="$logoUrl" alt="MIKA Services" style="max-width:120px;height:auto;margin-bottom:8px;" />
                 <p style="margin:0;color:#999;font-size:11px;">L'&eacute;quipe MIKA Services &mdash; <a href="$appBaseUrl" style="color:#FF6B35;text-decoration:none;">Acc&eacute;der &agrave; la plateforme</a></p>
               </td></tr>
             </table>
@@ -345,6 +342,249 @@ class EmailService(
             markSent(to, "message")
         } catch (e: Exception) {
             logger.warn("Envoi email nouveau message échoué vers $to: ${e.message}")
+        }
+    }
+
+    /**
+     * Rapport quotidien de l'état de la plateforme — envoyé chaque jour à 09h00 à tous les utilisateurs actifs.
+     * Contient : résumé global, projets actifs avec avancement, points bloquants ouverts par projet.
+     */
+    fun sendPlatformStatusEmail(
+        to: String,
+        prenom: String,
+        sexe: Sexe? = null,
+        data: PlatformStatusEmailData
+    ) {
+        if (data.totalProjets == 0) return
+        val greeting = salut(sexe, prenom)
+        val plateformeLink = link("/projets")
+        val dateFormatee = data.date.let {
+            val jour = when (it.dayOfWeek.value) {
+                1 -> "lundi"; 2 -> "mardi"; 3 -> "mercredi"; 4 -> "jeudi"
+                5 -> "vendredi"; 6 -> "samedi"; else -> "dimanche"
+            }
+            "$jour ${it.dayOfMonth} ${when (it.monthValue) {
+                1->"janvier"; 2->"février"; 3->"mars"; 4->"avril"; 5->"mai"; 6->"juin"
+                7->"juillet"; 8->"août"; 9->"septembre"; 10->"octobre"; 11->"novembre"; else->"décembre"
+            }} ${it.year}"
+        }
+
+        val subject = "MIKA Services — Tableau de bord du $dateFormatee"
+
+        // ── Plain text ──────────────────────────────────────────────
+        val plainBody = buildString {
+            appendLine(greeting)
+            appendLine()
+            appendLine("TABLEAU DE BORD — $dateFormatee".uppercase())
+            appendLine("${"─".repeat(50)}")
+            appendLine("Projets actifs : ${data.totalProjets}")
+            appendLine("Points bloquants ouverts : ${data.totalPointsBloquants} (dont ${data.totalPointsCritiques} critique(s)/urgent(s))")
+            appendLine()
+
+            fun appendSection(titre: String, projets: List<ProjetEmailRow>) {
+                if (projets.isEmpty()) return
+                appendLine("$titre (${projets.size})")
+                appendLine("${"─".repeat(40)}")
+                projets.forEach { p ->
+                    val phys = p.avancementPhysique?.let { "${it.toInt()}%" } ?: "—"
+                    val fin  = p.avancementFinancier?.let { "${it.toInt()}%" } ?: "—"
+                    appendLine("• ${p.nom}")
+                    appendLine("  Responsable : ${p.responsableNom ?: "Non assigné"}")
+                    appendLine("  Avancement  : $phys physique | $fin financier")
+                    if (p.pointsBloquants.isEmpty()) {
+                        appendLine("  Aucun point bloquant ouvert")
+                    } else {
+                        p.pointsBloquants.forEach { pb ->
+                            appendLine("  ⚠ ${pb.titre} — ${pb.priorite} — depuis le ${pb.dateDetection}")
+                        }
+                    }
+                    appendLine()
+                }
+            }
+
+            appendSection("PROJETS EN COURS", data.projetsEnCours)
+            appendSection("PROJETS PLANIFIÉS", data.projetsPlanifies)
+            appendSection("PROJETS EN RÉCEPTION PROVISOIRE", data.projetsReceptionProvisoire)
+            appendLine("— L'équipe MIKA Services")
+            appendLine(plateformeLink)
+        }
+
+        // ── HTML ────────────────────────────────────────────────────
+        fun prioriteBadge(p: com.mikaservices.platform.common.enums.Priorite): String {
+            val (bg, fg, label) = when (p) {
+                com.mikaservices.platform.common.enums.Priorite.CRITIQUE -> Triple("#b91c1c", "#fff", "CRITIQUE")
+                com.mikaservices.platform.common.enums.Priorite.URGENTE  -> Triple("#c2410c", "#fff", "URGENTE")
+                com.mikaservices.platform.common.enums.Priorite.HAUTE    -> Triple("#d97706", "#fff", "HAUTE")
+                com.mikaservices.platform.common.enums.Priorite.NORMALE  -> Triple("#6b7280", "#fff", "NORMALE")
+                com.mikaservices.platform.common.enums.Priorite.BASSE    -> Triple("#9ca3af", "#fff", "BASSE")
+            }
+            return """<span style="background:$bg;color:$fg;font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.5px;">$label</span>"""
+        }
+
+        fun avancementBar(pct: BigDecimal?, color: String): String {
+            val v = pct?.toInt()?.coerceIn(0, 100) ?: 0
+            return """<div style="background:#e5e7eb;border-radius:4px;height:6px;width:100%;margin:2px 0;">
+              <div style="background:$color;width:$v%;height:6px;border-radius:4px;"></div>
+            </div>"""
+        }
+
+        fun sectionHtml(titre: String, couleurBadge: String, projets: List<ProjetEmailRow>): String {
+            if (projets.isEmpty()) return ""
+            val rows = projets.joinToString("") { p ->
+                val phys = p.avancementPhysique?.toInt() ?: 0
+                val fin  = p.avancementFinancier?.toInt() ?: 0
+                val projetLink = link("/projets/${p.id}")
+                val pbHtml = if (p.pointsBloquants.isEmpty()) {
+                    """<p style="margin:6px 0 0;font-size:12px;color:#16a34a;">✓ Aucun point bloquant ouvert</p>"""
+                } else {
+                    p.pointsBloquants.joinToString("") { pb ->
+                        """<p style="margin:4px 0 0;font-size:12px;color:#374151;">
+                            ⚠&nbsp;${htmlEscape(pb.titre)}&nbsp;&nbsp;${prioriteBadge(pb.priorite)}&nbsp;
+                            <span style="color:#9ca3af;font-size:11px;">depuis le ${pb.dateDetection}</span>
+                           </p>"""
+                    }
+                }
+                """
+                <tr><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td><a href="$projetLink" style="font-weight:700;color:#1e3a5f;text-decoration:none;font-size:14px;">${htmlEscape(p.nom)}</a></td>
+                      <td style="text-align:right;white-space:nowrap;">
+                        <a href="$projetLink" style="font-size:11px;color:#FF6B35;text-decoration:none;">Voir →</a>
+                      </td>
+                    </tr>
+                    <tr><td colspan="2" style="font-size:12px;color:#6b7280;padding-top:2px;">
+                      Responsable : ${htmlEscape(p.responsableNom ?: "Non assigné")}
+                    </td></tr>
+                    <tr><td colspan="2" style="padding-top:6px;">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td width="48%" style="font-size:11px;color:#6b7280;">Physique : <strong>$phys%</strong></td>
+                          <td width="4%"></td>
+                          <td width="48%" style="font-size:11px;color:#6b7280;">Financier : <strong>$fin%</strong></td>
+                        </tr>
+                        <tr>
+                          <td>${avancementBar(p.avancementPhysique, "#2E5266")}</td>
+                          <td></td>
+                          <td>${avancementBar(p.avancementFinancier, "#FF6B35")}</td>
+                        </tr>
+                      </table>
+                    </td></tr>
+                    <tr><td colspan="2">$pbHtml</td></tr>
+                  </table>
+                </td></tr>"""
+            }
+            return """
+            <p style="margin:20px 0 6px;font-weight:700;font-size:13px;color:#1e3a5f;text-transform:uppercase;letter-spacing:.5px;">
+              <span style="display:inline-block;width:10px;height:10px;background:$couleurBadge;border-radius:50%;margin-right:6px;"></span>
+              $titre&nbsp;&nbsp;<span style="font-weight:400;color:#6b7280;">(${projets.size})</span>
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">$rows</table>"""
+        }
+
+        val htmlBody = wrapHtml("""
+            <p>${htmlEscape(greeting)},</p>
+            <p style="margin:4px 0 16px;color:#6b7280;font-size:13px;">Tableau de bord MIKA Services &mdash; <strong>$dateFormatee</strong></p>
+
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-left:3px solid #2E5266;border-radius:4px;margin:0 0 8px;">
+              <tr>
+                <td style="padding:12px 16px;font-size:13px;">
+                  <strong style="color:#1e3a5f;">${data.totalProjets}</strong> projet(s) actif(s)
+                  &nbsp;|&nbsp;
+                  <strong style="color:#374151;">${data.totalPointsBloquants}</strong> point(s) bloquant(s) ouvert(s)
+                  ${if (data.totalPointsCritiques > 0) "&nbsp;|&nbsp;<strong style=\"color:#b91c1c;\">${data.totalPointsCritiques} critique(s)/urgent(s)</strong>" else ""}
+                </td>
+              </tr>
+            </table>
+
+            ${sectionHtml("Projets en cours", "#16a34a", data.projetsEnCours)}
+            ${sectionHtml("Projets planifiés", "#2563eb", data.projetsPlanifies)}
+            ${sectionHtml("Réception provisoire", "#d97706", data.projetsReceptionProvisoire)}
+
+            ${buttonHtml("Acc&eacute;der &agrave; la plateforme", plateformeLink)}
+        """.trimIndent())
+
+        try {
+            sendGenericNotification(to, subject, plainBody, htmlBody, "rapport plateforme quotidien")
+        } catch (e: Exception) {
+            logger.warn("Envoi rapport plateforme échoué vers $to: ${e.message}")
+        }
+    }
+
+    /**
+     * Rappel hebdomadaire envoyé aux chefs de projet pour mettre à jour leurs projets
+     * avant la réunion du vendredi.
+     *
+     * @param projets liste de paires (nomProjet, idProjet) à mettre à jour
+     * @param jourReunion ex. "vendredi" ou "demain (vendredi)"
+     */
+    fun sendRappelMajProjetEmail(
+        to: String,
+        prenom: String,
+        projets: List<Pair<String, Long>>,
+        jourReunion: String,
+        sexe: Sexe? = null
+    ) {
+        if (projets.isEmpty()) return
+        val greeting = salut(sexe, prenom)
+        val projetsLink = link("/projets")
+        val subject = "MIKA Services — Rappel : mise à jour de vos projets avant la réunion"
+        val projectCount = projets.size
+
+        val plainProjetList = projets.joinToString("\n") { (nom, id) ->
+            "  • $nom — ${link("/projets/$id")}"
+        }
+        val plainBody = """
+            $greeting,
+
+            La réunion hebdomadaire a lieu $jourReunion. Merci de mettre à jour vos projets avant cette date.
+
+            Vous avez $projectCount projet(s) à actualiser :
+            $plainProjetList
+
+            Pensez à renseigner :
+              - L'avancement physique (%)
+              - L'avancement financier (%)
+              - Les points bloquants éventuels
+              - Les besoins en matériel et en personnel
+
+            Accéder à mes projets : $projetsLink
+
+            — L'équipe MIKA Services
+        """.trimIndent()
+
+        val htmlProjetRows = projets.joinToString("") { (nom, id) ->
+            val projetLink = link("/projets/$id")
+            """<tr><td style="padding:6px 0;border-bottom:1px solid #eee;">
+                <a href="$projetLink" style="color:#2E5266;font-weight:600;text-decoration:none;">${htmlEscape(nom)}</a>
+               </td>
+               <td style="padding:6px 0 6px 12px;border-bottom:1px solid #eee;text-align:right;">
+                <a href="$projetLink" style="color:#FF6B35;font-size:12px;text-decoration:none;">Mettre à jour →</a>
+               </td></tr>"""
+        }
+
+        val htmlBody = wrapHtml("""
+            <p>${htmlEscape(greeting)},</p>
+            <p>La <strong>r&eacute;union hebdomadaire</strong> a lieu <strong>${htmlEscape(jourReunion)}</strong>.<br>
+               Merci de mettre &agrave; jour vos projets avant cette &eacute;ch&eacute;ance.</p>
+            <p style="margin:16px 0 8px;font-weight:600;color:#333;">Vos projets &agrave; actualiser ($projectCount) :</p>
+            <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:14px;">
+              $htmlProjetRows
+            </table>
+            <p style="margin:16px 0 6px;font-size:13px;color:#555;">Pour chaque projet, pensez &agrave; renseigner :</p>
+            <ul style="padding-left:20px;color:#555;font-size:13px;margin:0 0 16px;">
+              <li>L'avancement physique (%)</li>
+              <li>L'avancement financier (%)</li>
+              <li>Les points bloquants &eacute;ventuels</li>
+              <li>Les besoins en mat&eacute;riel et en personnel</li>
+            </ul>
+            ${buttonHtml("Acc&eacute;der &agrave; mes projets", projetsLink)}
+        """.trimIndent())
+
+        try {
+            sendGenericNotification(to, subject, plainBody, htmlBody, "rappel MAJ projet")
+        } catch (e: Exception) {
+            logger.warn("Envoi rappel MAJ projet échoué vers $to: ${e.message}")
         }
     }
 

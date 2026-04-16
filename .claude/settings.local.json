@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E '\\\\.\\(sql|xml|yml|yaml\\)$')",
+      "Bash(ls:*)",
+      "Bash(npm install:*)",
+      "Bash(find /c/Projet_Mika_Services -name *hantier* -type f)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(where playwright:*)",
+      "Bash(where puppeteer:*)",
+      "Bash(where chrome:*)",
+      "Bash(where chromium:*)",
+      "Bash(where \"C:/Program Files/Google/Chrome/Application/chrome.exe\")"
+    ]
+  }
+}

@@ -9,8 +9,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { enginApi } from '@/api/enginApi'
-import type { AffectationEnginResponse, EnginSummary } from '@/types/materiel'
-import type { ChantierMapData } from '../map/ChantierMap'
+import type { EnginSummary } from '@/types/materiel'
+import type { ChantierMapData, ChantierAffectationRef } from '../map/ChantierMap'
 import type { ChantierHealthStatus } from '../map/chantierMarker'
 import EnginMiniCard from './EnginMiniCard'
 
@@ -29,7 +29,7 @@ const HEALTH_CONFIG: Record<ChantierHealthStatus, { label: string; dot: string; 
 }
 
 interface EnginWithDetails {
-  affectation: AffectationEnginResponse
+  affectation: ChantierAffectationRef
   engin: EnginSummary | null
 }
 
@@ -40,7 +40,7 @@ export default function ChantierSidePanel({ chantier, onClose }: ChantierSidePan
   const [enginDetails, setEnginDetails] = useState<EnginWithDetails[]>([])
   const [loadingEngins, setLoadingEngins] = useState(false)
 
-  const loadEnginDetails = useCallback(async (affectations: AffectationEnginResponse[]) => {
+  const loadEnginDetails = useCallback(async (affectations: ChantierAffectationRef[]) => {
     if (affectations.length === 0) {
       setEnginDetails([])
       return
@@ -124,7 +124,7 @@ export default function ChantierSidePanel({ chantier, onClose }: ChantierSidePan
             {hc.label}
           </span>
           <span className="text-sm text-gray-500 dark:text-gray-400">
-            {chantier.enginCount} engin{chantier.enginCount > 1 ? 's' : ''}
+            {chantier.affectations.length} engin{chantier.affectations.length > 1 ? 's' : ''}
           </span>
         </div>
       </div>
@@ -141,7 +141,7 @@ export default function ChantierSidePanel({ chantier, onClose }: ChantierSidePan
               <div
                 key={b.statut}
                 className={`${b.color} transition-all`}
-                style={{ width: `${(b.count / chantier.enginCount) * 100}%` }}
+                style={{ width: `${(b.count / chantier.affectations.length) * 100}%` }}
                 title={`${b.statut.replace(/_/g, ' ')} : ${b.count}`}
               />
             ))}

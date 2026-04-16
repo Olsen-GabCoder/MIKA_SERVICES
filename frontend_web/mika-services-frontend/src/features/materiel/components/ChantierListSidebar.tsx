@@ -239,7 +239,7 @@ export default function ChantierListSidebar({
                       ? 'bg-primary/20 text-primary-light'
                       : 'bg-white/[0.06] text-gray-400'
                   }`}>
-                    {ch.enginCount}
+                    {ch.affectations.length}
                   </span>
                   <button
                     type="button"

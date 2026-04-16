@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { useConfirm } from '@/contexts/ConfirmContext'
 import { PageContainer } from '@/components/layout/PageContainer'
 import {
   fetchMouvements,
@@ -91,7 +90,6 @@ type PendingAction = { type: 'depart' | 'reception' | 'annuler'; mouvementId: nu
 export function MouvementEnginListPage() {
   const { t, i18n } = useTranslation('materiel')
   const dispatch = useAppDispatch()
-  const _confirm = useConfirm()
   const { mouvements, totalElements, totalPages, currentPage, loading, actionLoading, error } = useAppSelector((s) => s.mouvementEngin)
 
   const [filterStatut, setFilterStatut] = useState<StatutMouvementEngin | ''>('')

@@ -195,8 +195,8 @@ export function DemandeMaterielFormPage() {
   }
 
   // --- Submit ---
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
+  async function handleSubmit(e?: FormEvent) {
+    e?.preventDefault()
     setError(null)
 
     if (!projetId) { setError('Le projet / N° d\'affaires est obligatoire.'); return }

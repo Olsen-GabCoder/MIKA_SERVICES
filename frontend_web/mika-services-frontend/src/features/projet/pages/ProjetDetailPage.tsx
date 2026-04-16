@@ -319,20 +319,6 @@ export const ProjetDetailPage = () => {
             </div>
           </div>
 
-          {/* Barre de progression globale */}
-          <div className="mt-6">
-            <div className="flex items-center justify-between text-xs mb-2">
-              <span className="text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Avancement global</span>
-              <span className="text-primary dark:text-orange-400 font-bold text-base">{projet.avancementGlobal ?? 0} %</span>
-            </div>
-            <div className="w-full h-3 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-primary to-orange-400 transition-all duration-700 shadow-sm"
-                style={{ width: `${Math.min(projet.avancementGlobal ?? 0, 100)}%` }}
-              />
-            </div>
-          </div>
-
           {/* KPI pills */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
             {[

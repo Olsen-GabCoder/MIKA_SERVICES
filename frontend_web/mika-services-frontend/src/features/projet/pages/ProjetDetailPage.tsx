@@ -402,16 +402,57 @@ export const ProjetDetailPage = () => {
         <section className={CARD}>
           <h2 className={CARD_HEADER}>{t('detail.section1')}</h2>
           <div className={CARD_BODY}>
-            <div className={TABLE_WRAP}>
-              <table className={TABLE_BASE} style={{ tableLayout: 'fixed' }}>
-                <colgroup><col style={{ width: '25%' }} /><col style={{ width: '75%' }} /></colgroup>
-                <tbody>
-                  <tr><td className={`${TD_BASE} text-gray-600 dark:text-gray-400`}>{t('detail.montantMarche')}</td><td className={`${TD_BASE} font-semibold text-gray-900 dark:text-gray-100`}>{formatMontant(projet.montantHT)} HT</td></tr>
-                  <tr><td className={`${TD_BASE} text-gray-600 dark:text-gray-400`}>{t('detail.delai')}</td><td className={`${TD_BASE} font-semibold text-gray-900 dark:text-gray-100`}>{delaiMois != null ? `${delaiMois} ${t('detail.months')}` : '—'}</td></tr>
-                  <tr><td className={`${TD_BASE} text-gray-600 dark:text-gray-400`}>{t('detail.dateDebut')}</td><td className={`${TD_BASE} font-semibold text-gray-900 dark:text-gray-100`}>{formatDate(projet.dateDebut)}</td></tr>
-                  <tr><td className={`${TD_BASE} text-gray-600 dark:text-gray-400`}>{t('detail.dateFin')}</td><td className={`${TD_BASE} font-semibold text-gray-900 dark:text-gray-100`}>{formatDate(projet.dateFin)}</td></tr>
-                </tbody>
-              </table>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                {
+                  label: t('detail.montantMarche'),
+                  value: projet.montantHT != null ? `${formatMontant(projet.montantHT)} HT` : '—',
+                  icon: (
+                    <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ),
+                  accent: 'border-l-emerald-400',
+                },
+                {
+                  label: t('detail.delai'),
+                  value: delaiMois != null ? `${delaiMois} ${t('detail.months')}` : '—',
+                  icon: (
+                    <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ),
+                  accent: 'border-l-blue-400',
+                },
+                {
+                  label: t('detail.dateDebut'),
+                  value: formatDate(projet.dateDebut),
+                  icon: (
+                    <svg className="w-5 h-5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  ),
+                  accent: 'border-l-violet-400',
+                },
+                {
+                  label: t('detail.dateFin'),
+                  value: formatDate(projet.dateFin),
+                  icon: (
+                    <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ),
+                  accent: 'border-l-primary',
+                },
+              ].map((item) => (
+                <div key={item.label} className={`flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 border-l-4 ${item.accent}`}>
+                  <div className="flex-shrink-0">{item.icon}</div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">{item.label}</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{item.value}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>

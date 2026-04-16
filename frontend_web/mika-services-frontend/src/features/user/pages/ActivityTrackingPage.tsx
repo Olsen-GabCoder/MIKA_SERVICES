@@ -283,7 +283,7 @@ export const ActivityTrackingPage = () => {
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 mb-6">
           {KPI_CONFIG.map((cfg, i) => {
-            const value = (stats as Record<string, number>)[cfg.key] ?? 0
+            const value = (stats as unknown as Record<string, number>)[cfg.key] ?? 0
             const isFirst = i === 0
             const barOf = i === 0 ? undefined : i === 3 ? totalUsers : totalToday
             const changePct = isFirst ? pctChange(totalToday, totalYesterday) : null

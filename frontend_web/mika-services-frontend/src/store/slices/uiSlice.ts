@@ -111,10 +111,10 @@ function getStoredDefaultHomePath(): string {
 }
 
 function getStoredTheme(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'dark'
+  if (typeof window === 'undefined') return 'light'
   const stored = localStorage.getItem(THEME_KEY)
   if (stored === 'dark' || stored === 'light') return stored
-  return 'dark'
+  return 'light'
 }
 
 function getStoredSidebarCollapsed(): boolean {

@@ -12,7 +12,7 @@
       (function() {
         var key = 'mika-theme';
         var stored = typeof localStorage !== 'undefined' && (localStorage.getItem(key) === 'dark' || localStorage.getItem(key) === 'light')
-          ? localStorage.getItem(key) : 'dark';
+          ? localStorage.getItem(key) : 'light';
         var html = document.documentElement;
         html.setAttribute('data-theme', stored);
         if (stored === 'dark') html.classList.add('dark'); else html.classList.remove('dark');

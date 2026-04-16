@@ -667,7 +667,7 @@ class EmailService(
         nom: String,
         sexe: Sexe?,
         actionsAujourdhui: Map<String, Long>,
-        dayIndex: Int = 0
+        dayOfWeek: java.time.DayOfWeek = java.time.LocalDate.now().dayOfWeek
     ) {
         val dashboardLink = link("/")
         val projetsLink   = link("/projets")
@@ -683,50 +683,184 @@ class EmailService(
             Sexe.FEMME -> "Madame $nom"
             null       -> prenom
         }
+        val dateFormatee = java.time.LocalDate.now()
+            .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
 
-        // ── Messages absence d'activité (rotation selon dayIndex) ──
-        val messagesAbsence = listOf(
-            "Nous avons remarqué que vous n'avez pas encore visité votre espace de gestion de chantiers aujourd'hui. " +
-            "Vos projets évoluent chaque jour — un coup d'œil rapide suffit pour rester informé et garder le cap.",
-            "Votre tableau de bord MIKA Services n'attend que vous. " +
-            "Chaque jour sans visite, c'est une opportunité manquée de détecter un point bloquant ou de valider un avancement.",
-            "Aujourd'hui encore, vos chantiers ont avancé — mais votre espace de gestion n'a pas été consulté. " +
-            "Prenez quelques minutes pour faire le point : vos équipes et vos projets vous attendent.",
-            "La gestion de projets efficace repose sur un suivi quotidien. " +
-            "Votre espace MIKA Services regroupe toutes les informations essentielles sur vos chantiers en temps réel.",
-            "Un bon gestionnaire sait que le suivi régulier évite les mauvaises surprises. " +
-            "Votre plateforme de gestion de chantiers vous attend — faites le point ce soir avant la fin de journée."
-        )
-        val messageAbsence = messagesAbsence[dayIndex % messagesAbsence.size]
+        // ══════════════════════════════════════════════════════════════
+        // MESSAGES ABSENCE — 1 par jour de la semaine, ton professionnel
+        // ══════════════════════════════════════════════════════════════
+        data class AbsenceMsg(val sujet: String, val icone: String, val corps: String, val action: List<String>)
 
+        val absenceData: AbsenceMsg = when (dayOfWeek) {
+            java.time.DayOfWeek.MONDAY -> AbsenceMsg(
+                sujet  = "MIKA Services — Démarrez la semaine du bon pied",
+                icone  = "🗓️",
+                corps  = "Le lundi est le jour idéal pour planifier et prendre de l'avance sur vos chantiers. " +
+                         "Vous n'avez pas encore consulté votre espace de gestion aujourd'hui. " +
+                         "Une semaine bien commencée est une semaine maîtrisée — vos projets n'attendent que vous.",
+                action = listOf(
+                    "Planifier les priorités de la semaine",
+                    "Vérifier les délais critiques de vos projets",
+                    "Lire les messages et notifications en attente",
+                    "Mettre à jour les avancements depuis vendredi"
+                )
+            )
+            java.time.DayOfWeek.TUESDAY -> AbsenceMsg(
+                sujet  = "MIKA Services — Vos chantiers évoluent, suivez-les",
+                icone  = "📊",
+                corps  = "En milieu de semaine, le rythme des chantiers s'intensifie. " +
+                         "Votre espace de gestion MIKA Services n'a pas été consulté ce mardi. " +
+                         "C'est le bon moment pour vérifier que tout avance selon le plan et anticiper d'éventuels blocages.",
+                action = listOf(
+                    "Consulter les avancements physiques et financiers",
+                    "Vérifier si de nouveaux points bloquants ont été signalés",
+                    "Répondre aux messages de votre équipe",
+                    "Valider les mises à jour soumises par vos chefs de projet"
+                )
+            )
+            java.time.DayOfWeek.WEDNESDAY -> AbsenceMsg(
+                sujet  = "MIKA Services — Préparez la réunion de demain",
+                icone  = "📋",
+                corps  = "La réunion hebdomadaire a lieu demain jeudi. " +
+                         "Vous n'avez pas encore visité votre espace de gestion ce mercredi. " +
+                         "Pour aborder la réunion avec tous les éléments en main, " +
+                         "prenez quelques minutes ce soir pour consulter l'état de vos projets.",
+                action = listOf(
+                    "Mettre à jour les avancements avant la réunion de demain",
+                    "Renseigner vos besoins en matériel et en personnel",
+                    "Signaler les points bloquants nécessitant une discussion",
+                    "Préparer vos propositions d'amélioration"
+                )
+            )
+            java.time.DayOfWeek.THURSDAY -> AbsenceMsg(
+                sujet  = "MIKA Services — Jour de réunion : faites le point",
+                icone  = "🤝",
+                corps  = "C'est jeudi, jour de la réunion hebdomadaire MIKA Services. " +
+                         "Votre espace de gestion n'a pas été consulté aujourd'hui. " +
+                         "Les décisions prises en réunion méritent d'être suivies d'actions concrètes — " +
+                         "votre tableau de bord est l'outil central pour piloter ces actions.",
+                action = listOf(
+                    "Prendre connaissance des décisions de la réunion",
+                    "Mettre à jour les projets discutés aujourd'hui",
+                    "Ouvrir les points bloquants identifiés en séance",
+                    "Planifier les actions correctives validées"
+                )
+            )
+            java.time.DayOfWeek.FRIDAY -> AbsenceMsg(
+                sujet  = "MIKA Services — Bilan de semaine avant le week-end",
+                icone  = "✅",
+                corps  = "Avant d'entamer votre week-end, votre espace de gestion de chantiers mérite un dernier passage. " +
+                         "Vous n'avez pas consulté MIKA Services ce vendredi. " +
+                         "Une clôture de semaine propre, c'est un lundi serein : " +
+                         "mettez à jour vos projets ce soir pour reprendre en confiance la semaine prochaine.",
+                action = listOf(
+                    "Clôturer les actions de la semaine",
+                    "Mettre à jour les avancements des projets en cours",
+                    "Signaler tout problème survenu cette semaine",
+                    "Préparer les priorités pour lundi prochain"
+                )
+            )
+            java.time.DayOfWeek.SATURDAY -> AbsenceMsg(
+                sujet  = "MIKA Services — Un point rapide ce week-end",
+                icone  = "🏗️",
+                corps  = "Même le week-end, vos chantiers continuent d'évoluer. " +
+                         "Si vous avez quelques minutes, votre tableau de bord MIKA Services est accessible à tout moment. " +
+                         "Un bref passage vous permettra de rester informé et de démarrer lundi matin avec une longueur d'avance.",
+                action = listOf(
+                    "Consulter les dernières mises à jour de vos projets",
+                    "Vérifier les urgences éventuelles signalées",
+                    "Préparer mentalement les priorités de la semaine à venir"
+                )
+            )
+            java.time.DayOfWeek.SUNDAY -> AbsenceMsg(
+                sujet  = "MIKA Services — Préparez votre lundi dès aujourd'hui",
+                icone  = "🎯",
+                corps  = "Le dimanche est le bon moment pour prendre du recul et préparer sereinement la semaine à venir. " +
+                         "Votre espace MIKA Services vous permet de visualiser en un coup d'œil l'état de tous vos projets. " +
+                         "Quelques minutes ce soir pour demain matin — vos équipes vous en remercieront.",
+                action = listOf(
+                    "Faire le point sur l'avancement global de vos chantiers",
+                    "Anticiper les difficultés de la semaine à venir",
+                    "Identifier les projets nécessitant une attention prioritaire",
+                    "Préparer votre agenda de suivi pour lundi"
+                )
+            )
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // MESSAGES ACTIVITÉ — selon le niveau d'implication
+        // ══════════════════════════════════════════════════════════════
+        data class ActiveMsg(val badge: String, val badgeColor: String, val corps: String, val complement: String)
+
+        val activeData: ActiveMsg = when {
+            totalActions >= 50 -> ActiveMsg(
+                badge       = "Engagement exceptionnel",
+                badgeColor  = "#7c3aed",
+                corps       = "Votre implication sur la plateforme MIKA Services aujourd'hui est remarquable. " +
+                              "Avec $totalActions actions effectuées, vous démontrez un engagement fort dans le suivi de vos chantiers. " +
+                              "C'est ce type de pilotage rigoureux qui fait la différence sur le terrain.",
+                complement  = "Votre niveau d'activité vous place parmi les membres les plus investis de la plateforme."
+            )
+            totalActions >= 20 -> ActiveMsg(
+                badge       = "Excellente journée",
+                badgeColor  = "#059669",
+                corps       = "Très bonne journée de travail sur MIKA Services. " +
+                              "Vos $totalActions actions aujourd'hui témoignent d'un suivi sérieux et régulier de vos projets. " +
+                              "Continuez à maintenir ce rythme — c'est le gage d'une gestion de chantiers efficace.",
+                complement  = "Un suivi aussi régulier permet d'anticiper les problèmes avant qu'ils ne deviennent critiques."
+            )
+            totalActions >= 6 -> ActiveMsg(
+                badge       = "Bonne journée",
+                badgeColor  = "#2563eb",
+                corps       = "Merci pour votre passage sur MIKA Services aujourd'hui. " +
+                              "Vous avez effectué $totalActions actions — votre présence régulière sur la plateforme " +
+                              "contribue directement à la qualité du suivi de vos chantiers.",
+                complement  = "Chaque visite compte. La régularité est la clé d'une gestion de projet maîtrisée."
+            )
+            else -> ActiveMsg(
+                badge       = "Début de journée",
+                badgeColor  = "#d97706",
+                corps       = "Vous avez effectué quelques actions sur MIKA Services aujourd'hui — c'est un bon début. " +
+                              "N'hésitez pas à explorer davantage votre tableau de bord : " +
+                              "vos projets contiennent peut-être des informations importantes qui nécessitent votre attention.",
+                complement  = "Prenez l'habitude de consulter l'ensemble de vos chantiers à chaque connexion."
+            )
+        }
+
+        // ── Sujet ───────────────────────────────────────────────────
         val subject = if (hasActivity)
-            "MIKA Services — Votre bilan d'activité du ${java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))}"
+            "MIKA Services — Votre bilan d'activité du $dateFormatee"
         else
-            "MIKA Services — Votre espace de gestion vous attend"
+            absenceData.sujet
 
         // ── Plain text ──────────────────────────────────────────────
         val plainBody = if (hasActivity) {
             """
             Bonsoir $civilite,
 
-            Voici votre bilan d'activité MIKA Services pour aujourd'hui :
+            ${activeData.corps}
 
+            Votre récapitulatif du $dateFormatee :
             • Connexions         : $logins
             • Pages consultées   : $pageViews
             • Autres actions     : $autresActions
             • Total              : $totalActions actions
 
-            Merci pour votre implication. Continuez comme ça !
+            ${activeData.complement}
 
             Accéder à la plateforme : $dashboardLink
 
             — L'équipe MIKA Services
             """.trimIndent()
         } else {
+            val actionsTexte = absenceData.action.joinToString("\n") { "• $it" }
             """
             Bonsoir $civilite,
 
-            $messageAbsence
+            ${absenceData.corps}
+
+            Ce que vous pouvez faire maintenant :
+            $actionsTexte
 
             Accéder à mes projets : $projetsLink
 
@@ -746,74 +880,74 @@ class EmailService(
         """.trimIndent()
 
         val htmlBody = if (hasActivity) {
+            val scoreColor = when {
+                totalActions >= 50 -> "#7c3aed"
+                totalActions >= 20 -> "#059669"
+                totalActions >= 6  -> "#2563eb"
+                else               -> "#d97706"
+            }
+            val actionsListHtml = absenceData.action.joinToString("") {
+                "<li>${htmlEscape(it)}</li>"
+            }
             wrapHtml("""
-                <!-- Bandeau supérieur -->
-                <div style="background:linear-gradient(135deg,#1e3a5f 0%,#2E5266 100%);margin:-28px -32px 24px;padding:28px 32px 24px;border-radius:0;">
-                  <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#FF6B35;text-transform:uppercase;letter-spacing:1px;">Bilan du jour</p>
+                <div style="background:linear-gradient(135deg,#1e3a5f 0%,#2E5266 100%);margin:-28px -32px 24px;padding:28px 32px 24px;">
+                  <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#FF6B35;text-transform:uppercase;letter-spacing:1px;">Bilan d'activit&eacute; &mdash; $dateFormatee</p>
                   <h1 style="margin:0;font-size:22px;font-weight:800;color:#ffffff;">Bonsoir, ${htmlEscape(civilite)}</h1>
                 </div>
 
-                <!-- Message principal -->
-                <p style="font-size:15px;color:#374151;line-height:1.7;margin-bottom:20px;">
-                  Vous avez &eacute;t&eacute; <strong style="color:#1e3a5f;">actif aujourd'hui</strong> sur votre espace MIKA Services.
-                  Voici votre r&eacute;capitulatif d'activit&eacute; :
+                <span style="display:inline-block;background:${activeData.badgeColor};color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.5px;margin-bottom:16px;">${activeData.badge}</span>
+
+                <p style="font-size:15px;color:#374151;line-height:1.8;margin-bottom:20px;">
+                  ${htmlEscape(activeData.corps)}
                 </p>
 
-                <!-- Cartes stats -->
-                <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0;margin-bottom:24px;">
+                <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0;margin-bottom:20px;">
                   <tr>
-                    ${statCard(logins,        "Connexion(s)",       "#16a34a", "🔐")}
-                    ${statCard(pageViews,      "Page(s) visit&eacute;e(s)", "#7c3aed", "📋")}
-                    ${statCard(autresActions,  "Autre(s) action(s)", "#FF6B35", "⚡")}
+                    ${statCard(logins,       "Connexion(s)",              "#16a34a", "🔐")}
+                    ${statCard(pageViews,    "Page(s) visit&eacute;e(s)", "#7c3aed", "📋")}
+                    ${statCard(autresActions,"Autre(s) action(s)",        "#FF6B35", "⚡")}
                   </tr>
                 </table>
 
-                <!-- Score total -->
-                <div style="background:linear-gradient(135deg,#fff7ed,#fff3e0);border:1px solid #fed7aa;border-radius:10px;padding:16px 20px;margin-bottom:24px;text-align:center;">
-                  <p style="margin:0;font-size:13px;color:#92400e;font-weight:500;">Score d'implication du jour</p>
-                  <p style="margin:4px 0 0;font-size:32px;font-weight:900;color:#FF6B35;">$totalActions <span style="font-size:16px;font-weight:600;">actions</span></p>
+                <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;border-radius:10px;padding:14px 20px;margin-bottom:20px;text-align:center;">
+                  <p style="margin:0;font-size:12px;color:#0369a1;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Score d'implication du jour</p>
+                  <p style="margin:6px 0 0;font-size:36px;font-weight:900;color:$scoreColor;line-height:1;">$totalActions <span style="font-size:16px;font-weight:600;color:#6b7280;">actions</span></p>
                 </div>
 
-                <!-- Message encourageant -->
-                <p style="font-size:13px;color:#6b7280;line-height:1.6;margin-bottom:20px;padding:12px 16px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:0 6px 6px 0;">
-                  &#10003;&nbsp; Merci pour votre implication. Un suivi r&eacute;gulier garantit la r&eacute;ussite de vos projets. Rendez-vous demain !
+                <p style="font-size:13px;color:#6b7280;line-height:1.7;margin-bottom:20px;padding:12px 16px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:0 6px 6px 0;">
+                  &#10003;&nbsp; ${htmlEscape(activeData.complement)}
                 </p>
 
                 ${buttonHtml("Acc&eacute;der &agrave; mon tableau de bord", dashboardLink)}
             """.trimIndent())
         } else {
+            val actionsListHtml = absenceData.action.joinToString("") { "<li>${htmlEscape(it)}</li>" }
             wrapHtml("""
-                <!-- Bandeau supérieur -->
-                <div style="background:linear-gradient(135deg,#1e3a5f 0%,#2E5266 100%);margin:-28px -32px 24px;padding:28px 32px 24px;border-radius:0;">
-                  <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#FF6B35;text-transform:uppercase;letter-spacing:1px;">Rappel quotidien</p>
+                <div style="background:linear-gradient(135deg,#1e3a5f 0%,#2E5266 100%);margin:-28px -32px 24px;padding:28px 32px 24px;">
+                  <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#FF6B35;text-transform:uppercase;letter-spacing:1px;">Rappel &mdash; $dateFormatee</p>
                   <h1 style="margin:0;font-size:22px;font-weight:800;color:#ffffff;">Bonsoir, ${htmlEscape(civilite)}</h1>
                 </div>
 
-                <!-- Icône absence -->
                 <div style="text-align:center;margin:8px 0 20px;">
-                  <div style="display:inline-block;background:#fef3c7;border-radius:50%;width:64px;height:64px;line-height:64px;font-size:28px;">📋</div>
+                  <div style="display:inline-block;background:#fef3c7;border-radius:50%;width:64px;height:64px;line-height:64px;font-size:28px;">${absenceData.icone}</div>
                 </div>
 
-                <!-- Message -->
-                <p style="font-size:15px;color:#374151;line-height:1.8;margin-bottom:16px;">
-                  ${htmlEscape(messageAbsence)}
+                <p style="font-size:15px;color:#374151;line-height:1.8;margin-bottom:20px;">
+                  ${htmlEscape(absenceData.corps)}
                 </p>
 
-                <!-- Liste de rappel -->
                 <div style="background:#f8fafc;border-radius:10px;padding:16px 20px;margin-bottom:24px;border-left:3px solid #FF6B35;">
-                  <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#1e3a5f;">Ce que vous pouvez faire en 5 minutes :</p>
-                  <ul style="margin:0;padding-left:18px;color:#4b5563;font-size:13px;line-height:2;">
-                    <li>Consulter l'avancement de vos projets</li>
-                    <li>V&eacute;rifier les points bloquants ouverts</li>
-                    <li>Lire les derniers messages de votre &eacute;quipe</li>
-                    <li>Valider les mises &agrave; jour en attente</li>
+                  <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#1e3a5f;">Ce que vous pouvez faire maintenant :</p>
+                  <ul style="margin:0;padding-left:18px;color:#4b5563;font-size:13px;line-height:2.1;">
+                    $actionsListHtml
                   </ul>
                 </div>
 
                 ${buttonHtml("Acc&eacute;der &agrave; mes projets maintenant", projetsLink)}
 
-                <p style="font-size:12px;color:#9ca3af;text-align:center;margin-top:16px;">
-                  Ce rappel est envoy&eacute; quotidiennement &agrave; tous les membres actifs de MIKA Services.
+                <p style="font-size:12px;color:#9ca3af;text-align:center;margin-top:16px;line-height:1.6;">
+                  Ce message est envoy&eacute; chaque soir &agrave; tous les membres actifs de MIKA Services.<br>
+                  G&eacute;rez vos pr&eacute;f&eacute;rences de notification depuis votre profil.
                 </p>
             """.trimIndent())
         }

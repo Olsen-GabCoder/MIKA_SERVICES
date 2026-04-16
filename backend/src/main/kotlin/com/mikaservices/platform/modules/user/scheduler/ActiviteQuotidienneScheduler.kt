@@ -28,8 +28,7 @@ class ActiviteQuotidienneScheduler(
     fun envoyerBilansQuotidiens() {
         logger.info("[ActiviteQuotidienneScheduler] Démarrage envoi bilans quotidiens")
         val today = LocalDate.now()
-        // dayIndex permet de varier les messages d'absence chaque jour
-        val dayIndex = today.dayOfYear
+        val dayOfWeek = today.dayOfWeek
 
         val utilisateurs = userRepository.findByActifTrue()
             .filter { it.emailNotificationsEnabled }
@@ -52,7 +51,7 @@ class ActiviteQuotidienneScheduler(
                     nom               = user.nom,
                     sexe              = user.sexe,
                     actionsAujourdhui = actionsAujourdhui,
-                    dayIndex          = dayIndex
+                    dayOfWeek         = dayOfWeek
                 )
                 nbEnvoyes++
             } catch (e: Exception) {

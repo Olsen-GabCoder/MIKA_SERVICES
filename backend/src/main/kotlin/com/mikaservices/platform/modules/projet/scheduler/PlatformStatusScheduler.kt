@@ -49,7 +49,7 @@ class PlatformStatusScheduler(
         StatutPointBloquant.ESCALADE
     )
 
-    @Scheduled(cron = "0 30 9 * * *")
+    @Scheduled(cron = "0 50 9 * * *", zone = "Africa/Libreville")
     fun envoyerRapportQuotidien() {
         logger.info("[PlatformStatusScheduler] Démarrage du rapport quotidien plateforme")
         try {

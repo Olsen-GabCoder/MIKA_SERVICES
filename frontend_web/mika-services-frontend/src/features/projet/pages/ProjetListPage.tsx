@@ -320,54 +320,84 @@ export const ProjetListPage = () => {
 
   const listSubtitle = t('list.subtitleAll')
 
+  // Statuts dot colors pour le nouveau design
+  const STATUT_DOT: Record<string, string> = {
+    EN_ATTENTE: 'bg-gray-400',
+    PLANIFIE: 'bg-blue-500',
+    EN_COURS: 'bg-emerald-500',
+    SUSPENDU: 'bg-amber-500',
+    TERMINE: 'bg-violet-500',
+    ABANDONNE: 'bg-red-500',
+    RECEPTION_PROVISOIRE: 'bg-indigo-500',
+    RECEPTION_DEFINITIVE: 'bg-teal-500',
+  }
+
   return (
-    <PageContainer size="full" className="h-full flex flex-col min-h-0 bg-gray-50/80 dark:bg-gray-900/80">
-      {/* Zone fixe : première carte (header) + carte portefeuille (KPIs) — ne défilent pas */}
-      <div className="shrink-0 space-y-6">
-        {/* Première carte : header avec gradient */}
-        <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white shadow-lg overflow-hidden">
-          <div className="px-6 py-6 md:py-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold">{t('list.pageTitle')}</h1>
-                <p className="text-white/90 text-sm mt-1 font-medium">{listSubtitle}</p>
-                <p className="text-white/80 text-sm mt-1">
-                  {t('list.projectsTotal', { count: totalElements })} · {t('list.pageInfo', { current: currentPage + 1, total: totalPages || 1 })}
-                </p>
-              </div>
-              {isAdmin && (
-                <button
-                  onClick={() => navigate('/projets/nouveau')}
-                  className="bg-white dark:bg-gray-100 text-primary hover:bg-white/90 dark:hover:bg-gray-200 font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  {t('list.newProject')}
-                </button>
-              )}
+    <PageContainer size="full" className="h-full flex flex-col min-h-0 bg-gray-50 dark:bg-gray-950">
+
+      {/* ── HEADER SLIM ── */}
+      <div className="shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-white dark:text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
             </div>
+            <div>
+              <h1 className="text-base font-bold text-gray-900 dark:text-white leading-none">{t('list.pageTitle')}</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{listSubtitle}</p>
+            </div>
+            {totalElements > 0 && (
+              <span className="ml-1 px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs font-semibold tabular-nums">
+                {totalElements}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {projets.length > 0 && (
+              <button
+                onClick={exportListToExcel}
+                title={t('list.exportExcelTitle')}
+                className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={() => navigate('/projets/nouveau')}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                {t('list.newProject')}
+              </button>
+            )}
           </div>
         </div>
-
       </div>
 
-      {/* Zone défilable : filtres + liste + pagination — scroll sur toute la page */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
-      {error && (
-        <div className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-200 flex justify-between items-center">
-          <span>{error === 'offline_no_cache' ? t('common:error.offlineNoCache') : error}</span>
-          <button type="button" onClick={() => dispatch(clearError())} className="text-red-600 dark:text-red-400 hover:underline text-sm">
-            {t('common:close')}
-          </button>
-        </div>
-      )}
-      {/* Barre de recherche et filtres */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-3 mb-4">
-          <div className="flex-1 relative">
-            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      {/* ── ZONE DÉFILABLE ── */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-3">
+
+        {/* Erreur */}
+        {error && (
+          <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm flex justify-between items-center">
+            <span>{error === 'offline_no_cache' ? t('common:error.offlineNoCache') : error}</span>
+            <button type="button" onClick={() => dispatch(clearError())} className="text-red-500 hover:text-red-700 ml-4 flex-shrink-0">✕</button>
+          </div>
+        )}
+
+        {/* ── BARRE RECHERCHE + FILTRES ── */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+          {/* Ligne recherche */}
+          <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 dark:border-gray-800">
+            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
               type="text"
@@ -375,369 +405,306 @@ export const ProjetListPage = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition-all"
+              className="flex-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none"
             />
-          </div>
-          <button
-            onClick={handleSearch}
-            className="bg-gray-800 hover:bg-gray-900 text-white px-8 py-2.5 rounded-lg font-medium transition-all hover:shadow-md flex items-center justify-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            {t('list.search')}
-          </button>
-          {searchQuery && (
+            {searchQuery && (
+              <button
+                onClick={() => { setSearchQuery(''); dispatch(fetchProjets({ page: 0, size: pageSize, ...buildListQueryFilters(), ...sortParams() })) }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 text-xs"
+              >✕</button>
+            )}
             <button
-              onClick={() => {
-                setSearchQuery('')
-                dispatch(fetchProjets({ page: 0, size: pageSize, ...buildListQueryFilters(), ...sortParams() }))
-              }}
-              className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2.5 rounded-lg font-medium transition-all"
+              onClick={handleSearch}
+              className="px-3 py-1 rounded-md bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors flex-shrink-0"
             >
-              {t('list.clear')}
+              {t('list.search')}
             </button>
-          )}
-        </div>
+          </div>
 
-        {/* Filtres par critères */}
-        <div className="border-t border-gray-100 dark:border-gray-600 pt-4">
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">{t('list.filtersLabel')}</p>
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-end gap-3">
-            <div className="min-w-0">
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{t('list.status')}</label>
-              <select
-                value={filters.statut ?? ''}
-                onChange={(e) => setFilters((f) => ({ ...f, statut: (e.target.value || undefined) as StatutProjet | undefined }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-              >
-                <option value="">{t('list.all')}</option>
-                {STATUT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="min-w-0">
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{t('list.type')}</label>
-              <select
-                value={filters.type ?? ''}
-                onChange={(e) => setFilters((f) => ({ ...f, type: (e.target.value || undefined) as TypeProjet | undefined }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-              >
-                <option value="">{t('list.all')}</option>
-                {TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="min-w-0">
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{t('list.client')}</label>
-              <select
-                value={filters.clientId ?? ''}
-                onChange={(e) => setFilters((f) => ({ ...f, clientId: e.target.value ? Number(e.target.value) : undefined }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-              >
-                <option value="">{t('list.all')}</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nom}</option>
-                ))}
-              </select>
-            </div>
-            <div className="min-w-0">
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{t('list.manager')}</label>
-              <select
-                value={filters.responsableId ?? ''}
-                onChange={(e) => setFilters((f) => ({ ...f, responsableId: e.target.value ? Number(e.target.value) : undefined }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-              >
-                <option value="">{t('list.all')}</option>
-                {chefUsers.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.nom} {u.prenom ?? ''}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Filtres inline */}
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2.5">
+            <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mr-1">{t('list.filtersLabel')}</span>
+            <select
+              value={filters.statut ?? ''}
+              onChange={(e) => setFilters((f) => ({ ...f, statut: (e.target.value || undefined) as StatutProjet | undefined }))}
+              className="px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent text-xs text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent dark:bg-gray-800 cursor-pointer"
+            >
+              <option value="">{t('list.status')} — {t('list.all')}</option>
+              {STATUT_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+            <select
+              value={filters.type ?? ''}
+              onChange={(e) => setFilters((f) => ({ ...f, type: (e.target.value || undefined) as TypeProjet | undefined }))}
+              className="px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent text-xs text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent dark:bg-gray-800 cursor-pointer"
+            >
+              <option value="">{t('list.type')} — {t('list.all')}</option>
+              {TYPE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+            <select
+              value={filters.clientId ?? ''}
+              onChange={(e) => setFilters((f) => ({ ...f, clientId: e.target.value ? Number(e.target.value) : undefined }))}
+              className="px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent text-xs text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent dark:bg-gray-800 cursor-pointer"
+            >
+              <option value="">{t('list.client')} — {t('list.all')}</option>
+              {clients.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+            </select>
+            <select
+              value={filters.responsableId ?? ''}
+              onChange={(e) => setFilters((f) => ({ ...f, responsableId: e.target.value ? Number(e.target.value) : undefined }))}
+              className="px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent text-xs text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:border-transparent dark:bg-gray-800 cursor-pointer"
+            >
+              <option value="">{t('list.manager')} — {t('list.all')}</option>
+              {chefUsers.map((u) => <option key={u.id} value={u.id}>{u.nom} {u.prenom ?? ''}</option>)}
+            </select>
             <button
               onClick={applyFilters}
-              className="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg font-medium text-sm transition-all"
+              className="px-3 py-1 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors"
             >
               {t('list.applyFilters')}
             </button>
-            <button
-              onClick={resetFilters}
-              className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-5 py-2 rounded-lg font-medium text-sm transition-all"
-            >
-              {t('list.reset')}
-            </button>
-            {projets.length > 0 && (
+            {hasActiveFilters && (
               <button
-                onClick={exportListToExcel}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2"
-                title={t('list.exportExcelTitle')}
+                onClick={resetFilters}
+                className="px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                {t('list.exportExcel')}
+                {t('list.reset')}
               </button>
             )}
           </div>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 overflow-hidden">
-          <div className="overflow-x-auto">
+        {/* ── CONTENU : loading / vide / tableau ── */}
+        {loading ? (
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                <tr>
-                  {SORTABLE_COLUMNS.map(({ label }) => (
-                    <th key={label} className="px-6 py-4 text-left text-xs font-semibold text-gray-400 dark:text-gray-400 uppercase tracking-wider">
-                      {label}
-                    </th>
-                  ))}
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider w-24">
-                    {t('list.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-600">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-6 py-4">
+              <tbody>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="border-b border-gray-100 dark:border-gray-800 animate-pulse">
+                    <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-600" />
-                        <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-48" />
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800" />
+                        <div className="h-3.5 bg-gray-100 dark:bg-gray-800 rounded-full w-52" />
                       </div>
                     </td>
-                    <td className="px-6 py-4"><div className="h-6 bg-gray-200 dark:bg-gray-600 rounded w-20" /></td>
-                    <td className="px-6 py-4"><div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-32" /></td>
-                    <td className="px-6 py-4"><div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-24" /></td>
-                    <td className="px-6 py-4"><div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-16 mx-auto" /></td>
-                    <td className="px-6 py-4"><div className="h-6 bg-gray-200 dark:bg-gray-600 rounded w-20" /></td>
-                    <td className="px-6 py-4"><div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-28" /></td>
-                    <td className="px-6 py-4"><div className="h-8 bg-gray-200 dark:bg-gray-600 rounded w-20 mx-auto" /></td>
+                    <td className="px-4 py-3.5"><div className="h-5 bg-gray-100 dark:bg-gray-800 rounded-full w-16" /></td>
+                    <td className="px-4 py-3.5"><div className="h-3 bg-gray-100 dark:bg-gray-800 rounded-full w-28" /></td>
+                    <td className="px-4 py-3.5"><div className="h-3 bg-gray-100 dark:bg-gray-800 rounded-full w-20" /></td>
+                    <td className="px-4 py-3.5"><div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full w-24" /></td>
+                    <td className="px-4 py-3.5"><div className="h-5 bg-gray-100 dark:bg-gray-800 rounded-full w-20" /></td>
+                    <td className="px-4 py-3.5"><div className="h-3 bg-gray-100 dark:bg-gray-800 rounded-full w-24" /></td>
+                    <td className="px-4 py-3.5"><div className="h-6 bg-gray-100 dark:bg-gray-800 rounded-lg w-16 ml-auto" /></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="px-6 py-3 text-sm text-gray-400 dark:text-gray-500">{t('list.loading')}</p>
-        </div>
-      ) : projets.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-12">
-          <div className="text-center text-gray-500 dark:text-gray-400">
-            <svg className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+        ) : projets.length === 0 ? (
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 py-20 text-center">
+            <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               {hasActiveFilters ? t('list.emptyNoResults') : t('list.emptyNoProjects')}
             </p>
-            <p className="text-sm mt-2 dark:text-gray-300">
-              {hasActiveFilters
-                ? t('list.emptyNoResultsHint')
-                : isAdmin
-                  ? t('list.emptyNoProjectsHintAdmin')
-                  : t('list.emptyNoProjectsHintUser')}
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 max-w-xs mx-auto">
+              {hasActiveFilters ? t('list.emptyNoResultsHint') : isAdmin ? t('list.emptyNoProjectsHintAdmin') : t('list.emptyNoProjectsHintUser')}
             </p>
           </div>
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 overflow-hidden">
-          {/* Tableau : visible à partir de md */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full" role="table">
-              <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                <tr>
-                  {SORTABLE_COLUMNS.map(({ key, label, align = 'left', title }) => (
-                    <th
-                      key={key}
-                      scope="col"
-                      title={title}
-                      className={`px-6 py-4 text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
-                        align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
-                      }`}
-                      onClick={() => handleSort(key)}
-                      aria-sort={sortBy === key ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        {label}
-                        {sortBy === key && (
-                          <span className="text-primary" aria-hidden>
-                            {sortDir === 'asc' ? '↑' : '↓'}
-                          </span>
-                        )}
-                      </span>
+        ) : (
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+
+            {/* Tableau desktop */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full" role="table">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-gray-800">
+                    {SORTABLE_COLUMNS.map(({ key, label, align = 'left', title }) => (
+                      <th
+                        key={key}
+                        scope="col"
+                        title={title}
+                        onClick={() => handleSort(key)}
+                        aria-sort={sortBy === key ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
+                        className={`px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-300 transition-colors ${
+                          align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
+                        }`}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          {label}
+                          {sortBy === key ? (
+                            <span className="text-gray-700 dark:text-gray-300">{sortDir === 'asc' ? '↑' : '↓'}</span>
+                          ) : (
+                            <span className="text-gray-300 dark:text-gray-600">↕</span>
+                          )}
+                        </span>
+                      </th>
+                    ))}
+                    <th scope="col" className="px-4 py-3 text-right text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                      {t('list.actions')}
                     </th>
-                  ))}
-                  <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                    {t('list.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-600">
-                {projets.map((projet) => (
-                  <tr
-                    key={projet.id}
-                    role="button"
-                    tabIndex={0}
-                    className="mika-tile hover:bg-gray-50 dark:hover:bg-gray-700/70 cursor-pointer transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
-                    aria-label={t('list.openDetail', { name: projet.nom })}
-                    onClick={() => openProjetDetail(projet)}
-                    onKeyDown={(e) => handleRowKeyDown(e, projet)}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                          <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                          </svg>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{projet.nom}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200">
-                        {getTypeDisplay(projet)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 font-medium">{projet.clientNom || '—'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 font-semibold tabular-nums">{formatMontant(projet.montantHT)}</td>
-                    <td className="px-6 py-4" title={t('list.columns.avancementGlobalTitle')}>
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="w-full max-w-[120px] bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
-                          <div 
-                            className="bg-gradient-to-r from-primary to-primary-dark rounded-full h-2 transition-all duration-500" 
-                            style={{ width: `${Math.min(projet.avancementGlobal, 100)}%` }} 
-                          />
-                        </div>
-                        <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 tabular-nums" aria-hidden>{projet.avancementGlobal} %</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${STATUT_LABELS[projet.statut]?.color || 'bg-gray-100 text-gray-800'}`}>
-                        {STATUT_LABELS[projet.statut]?.label || projet.statut}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{projet.responsableNom || '—'}</td>
-                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                      {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) ||
-                      canDeleteProjetEffective(currentUser, accessToken) ? (
-                        <div className="flex items-center justify-center gap-2">
-                          {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) && (
-                            <button
-                              onClick={() => navigate(`/projets/${projet.id}/edit`)}
-                              className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors"
-                              title={t('list.edit')}
-                              aria-label={t('list.editProject', { name: projet.nom })}
-                            >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                              {t('list.edit')}
-                            </button>
-                          )}
-                          {canDeleteProjetEffective(currentUser, accessToken) && (
-                            <button
-                              onClick={() => handleDelete(projet.id, projet.nom)}
-                              className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium transition-colors"
-                              title={t('list.delete')}
-                              aria-label={t('list.deleteProject', { name: projet.nom })}
-                            >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                              {t('list.delete')}
-                            </button>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 dark:text-gray-500 text-sm text-center block">—</span>
-                      )}
-                    </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {projets.map((projet) => (
+                    <tr
+                      key={projet.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openProjetDetail(projet)}
+                      onKeyDown={(e) => handleRowKeyDown(e, projet)}
+                      aria-label={t('list.openDetail', { name: projet.nom })}
+                      className="border-b border-gray-50 dark:border-gray-800/60 hover:bg-gray-50 dark:hover:bg-gray-800/40 cursor-pointer transition-colors duration-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gray-900 dark:focus:ring-white group"
+                    >
+                      {/* Nom */}
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors">
+                            <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate max-w-[220px]">
+                            {projet.nom}
+                          </span>
+                        </div>
+                      </td>
+                      {/* Type */}
+                      <td className="px-4 py-3.5">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                          {getTypeDisplay(projet)}
+                        </span>
+                      </td>
+                      {/* Client */}
+                      <td className="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-400 truncate max-w-[160px]">
+                        {projet.clientNom || '—'}
+                      </td>
+                      {/* Montant */}
+                      <td className="px-4 py-3.5 text-sm font-mono font-medium text-gray-900 dark:text-gray-100 tabular-nums whitespace-nowrap">
+                        {formatMontant(projet.montantHT)}
+                      </td>
+                      {/* Avancement */}
+                      <td className="px-4 py-3.5 text-center" title={t('list.columns.avancementGlobalTitle')}>
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="w-20 h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gray-800 dark:bg-gray-200 transition-all duration-500"
+                              style={{ width: `${Math.min(projet.avancementGlobal, 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 tabular-nums">
+                            {projet.avancementGlobal}%
+                          </span>
+                        </div>
+                      </td>
+                      {/* Statut */}
+                      <td className="px-4 py-3.5">
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${STATUT_DOT[projet.statut] ?? 'bg-gray-400'}`} />
+                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                            {STATUT_LABELS[projet.statut]?.label || projet.statut}
+                          </span>
+                        </span>
+                      </td>
+                      {/* Responsable */}
+                      <td className="px-4 py-3.5 text-sm text-gray-500 dark:text-gray-400 truncate max-w-[140px]">
+                        {projet.responsableNom || '—'}
+                      </td>
+                      {/* Actions */}
+                      <td className="px-4 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                        {(canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) ||
+                          canDeleteProjetEffective(currentUser, accessToken)) ? (
+                          <div className="flex items-center justify-end gap-1">
+                            {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) && (
+                              <button
+                                onClick={() => navigate(`/projets/${projet.id}/edit`)}
+                                title={t('list.edit')}
+                                aria-label={t('list.editProject', { name: projet.nom })}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                            )}
+                            {canDeleteProjetEffective(currentUser, accessToken) && (
+                              <button
+                                onClick={() => handleDelete(projet.id, projet.nom)}
+                                title={t('list.delete')}
+                                aria-label={t('list.deleteProject', { name: projet.nom })}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-300 dark:text-gray-600 text-sm">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-          {/* Cartes : visible sur petits écrans (responsive, étape 8) */}
-          <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-600">
-            {projets.map((projet) => (
-              <article
-                key={projet.id}
-                role="button"
-                tabIndex={0}
-                className="mika-tile p-4 hover:bg-gray-50 dark:hover:bg-gray-700/70 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset cursor-pointer transition-colors"
-                aria-label={t('list.openDetail', { name: projet.nom })}
-                onClick={() => openProjetDetail(projet)}
-                onKeyDown={(e) => handleRowKeyDown(e, projet)}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{projet.nom}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                      {getTypeDisplay(projet)} · {projet.clientNom || '—'}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full ${STATUT_LABELS[projet.statut]?.color || 'bg-gray-100 text-gray-800'}`}>
-                        {STATUT_LABELS[projet.statut]?.label || projet.statut}
-                      </span>
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{projet.avancementGlobal} %</span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400 tabular-nums">{formatMontant(projet.montantHT)}</span>
+            {/* Cartes mobile */}
+            <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+              {projets.map((projet) => (
+                <article
+                  key={projet.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openProjetDetail(projet)}
+                  onKeyDown={(e) => handleRowKeyDown(e, projet)}
+                  aria-label={t('list.openDetail', { name: projet.nom })}
+                  className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gray-900"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('list.managerShort')} : {projet.responsableNom || '—'}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{projet.nom}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{getTypeDisplay(projet)} · {projet.clientNom || '—'}</p>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${STATUT_DOT[projet.statut] ?? 'bg-gray-400'}`} />
+                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{STATUT_LABELS[projet.statut]?.label || projet.statut}</span>
+                        </span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{projet.avancementGlobal}%</span>
+                        <span className="text-xs font-mono text-gray-600 dark:text-gray-400 tabular-nums">{formatMontant(projet.montantHT)}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                {(canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) ||
-                  canDeleteProjetEffective(currentUser, accessToken)) && (
-                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-600 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                    {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) && (
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/projets/${projet.id}/edit`)}
-                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
-                        aria-label={t('list.editProject', { name: projet.nom })}
-                      >
-                        {t('list.edit')}
-                      </button>
-                    )}
-                    {canDeleteProjetEffective(currentUser, accessToken) && (
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(projet.id, projet.nom)}
-                        className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
-                        aria-label={t('list.deleteProject', { name: projet.nom })}
-                      >
-                        {t('list.delete')}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
+                  {(canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) ||
+                    canDeleteProjetEffective(currentUser, accessToken)) && (
+                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3" onClick={(e) => e.stopPropagation()}>
+                      {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) && (
+                        <button type="button" onClick={() => navigate(`/projets/${projet.id}/edit`)} className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                          {t('list.edit')}
+                        </button>
+                      )}
+                      {canDeleteProjetEffective(currentUser, accessToken) && (
+                        <button type="button" onClick={() => handleDelete(projet.id, projet.nom)} className="text-xs font-medium text-red-600 dark:text-red-400">
+                          {t('list.delete')}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
 
-          <p className="px-6 py-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700/50">
-            {t('list.avancementHint')}
-          </p>
-
-          {/* Pagination */}
-          <div className="flex flex-wrap items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-600 gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                {paginationRange}
-              </span>
-              <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <span>{t('list.pagination.show')}</span>
+            {/* ── PAGINATION ── */}
+            <div className="flex flex-wrap items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800 gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{paginationRange}</span>
                 <select
                   value={pageSize}
                   onChange={(e) => {
@@ -747,39 +714,33 @@ export const ProjetListPage = () => {
                     if (searchQuery.trim()) dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
                     else dispatch(fetchProjets(params))
                   }}
-                  className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                  className="px-2 py-1 rounded-md border border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 bg-transparent dark:bg-gray-800 focus:ring-2 focus:ring-gray-900 focus:border-transparent cursor-pointer"
                 >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
+                  {[10, 20, 25, 50, 100].map((n) => <option key={n} value={n}>{n} / page</option>)}
                 </select>
-                <span>{t('list.pagination.perPage')}</span>
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 0}
-                className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors dark:bg-gray-700 dark:text-gray-100"
-              >
-                {t('list.pagination.prev')}
-              </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300 px-2">
-                {t('list.pageInfo', { current: currentPage + 1, total: totalPages || 1 })}
-              </span>
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage >= (totalPages || 1) - 1}
-                className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors dark:bg-gray-700 dark:text-gray-100"
-              >
-                {t('list.pagination.next')}
-              </button>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 0}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  {t('list.pagination.prev')}
+                </button>
+                <span className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+                  {currentPage + 1} / {totalPages || 1}
+                </span>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= (totalPages || 1) - 1}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  {t('list.pagination.next')}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </PageContainer>
   )

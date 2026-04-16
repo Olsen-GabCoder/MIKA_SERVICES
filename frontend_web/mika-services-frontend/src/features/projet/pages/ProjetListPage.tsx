@@ -425,9 +425,9 @@ export const ProjetListPage = () => {
         )}
 
         {/* ══ RECHERCHE + FILTRES ══ */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-md focus-within:border-primary/50 dark:focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/10 transition-all duration-300 overflow-hidden">
           {/* Barre de recherche */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-800/80">
+          <div className="flex items-center gap-3 px-5 py-4 border-b-2 border-gray-200 dark:border-gray-700">
             <div className="w-9 h-9 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
               <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -515,9 +515,9 @@ export const ProjetListPage = () => {
 
         {/* ══ TABLEAU / LOADING / VIDE ══ */}
         {loading ? (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-md overflow-hidden">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800/60 animate-pulse">
+              <div key={i} className="flex items-center gap-4 px-6 py-4 border-b-2 border-gray-200 dark:border-gray-700 animate-pulse">
                 <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex-shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="h-3.5 bg-gray-100 dark:bg-gray-800 rounded-full w-3/5" />
@@ -530,7 +530,7 @@ export const ProjetListPage = () => {
             ))}
           </div>
         ) : projets.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm py-24 text-center">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-md py-24 text-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/10 to-orange-100 dark:from-primary/20 dark:to-orange-900/20 flex items-center justify-center mx-auto mb-5 shadow-sm">
               <svg className="w-8 h-8 text-primary/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -544,13 +544,13 @@ export const ProjetListPage = () => {
             </p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-md overflow-hidden">
 
             {/* ── Tableau desktop ── */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full" role="table">
                 <thead>
-                  <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-800/40">
+                  <tr className="border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/40">
                     {SORTABLE_COLUMNS.map(({ key, label, align = 'left', title }) => (
                       <th
                         key={key}
@@ -577,7 +577,7 @@ export const ProjetListPage = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-gray-800/60">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {projets.map((projet) => (
                     <tr
                       key={projet.id}
@@ -692,7 +692,7 @@ export const ProjetListPage = () => {
             </div>
 
             {/* ── Cartes mobile ── */}
-            <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="md:hidden divide-y-2 divide-gray-200 dark:divide-gray-700">
               {projets.map((projet) => (
                 <article
                   key={projet.id}

@@ -4,6 +4,7 @@ import com.mikaservices.platform.modules.projet.scheduler.PlatformStatusSchedule
 import com.mikaservices.platform.modules.projet.scheduler.ProjetRappelScheduler
 import com.mikaservices.platform.modules.rapport.scheduler.RapportHebdoScheduler
 import com.mikaservices.platform.modules.reunionhebdo.scheduler.ReunionHebdoPVScheduler
+import com.mikaservices.platform.modules.user.scheduler.ActiviteQuotidienneScheduler
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -31,6 +32,7 @@ class SchedulerAdminController(
     private val projetRappelScheduler: ProjetRappelScheduler,
     private val reunionHebdoPVScheduler: ReunionHebdoPVScheduler,
     private val rapportHebdoScheduler: RapportHebdoScheduler,
+    private val activiteQuotidienneScheduler: ActiviteQuotidienneScheduler,
 ) {
     private val logger = LoggerFactory.getLogger(SchedulerAdminController::class.java)
 
@@ -78,6 +80,18 @@ class SchedulerAdminController(
             ResponseEntity.ok(mapOf("status" to "ok", "message" to "Rapport hebdomadaire PDF déclenché — vérifiez les logs et votre boîte mail."))
         } catch (e: Exception) {
             logger.error("[SchedulerAdmin] Erreur rapport hebdo: ${e.message}", e)
+            ResponseEntity.internalServerError().body(mapOf("status" to "error", "message" to (e.message ?: "Erreur inconnue")))
+        }
+    }
+
+    @PostMapping("/activite-quotidienne")
+    fun triggerActiviteQuotidienne(): ResponseEntity<Map<String, String>> {
+        logger.info("[SchedulerAdmin] Déclenchement manuel des bilans quotidiens d'activité")
+        return try {
+            activiteQuotidienneScheduler.envoyerBilansQuotidiens()
+            ResponseEntity.ok(mapOf("status" to "ok", "message" to "Bilans d'activité déclenchés — vérifiez les logs et les boîtes mail."))
+        } catch (e: Exception) {
+            logger.error("[SchedulerAdmin] Erreur bilans activité: ${e.message}", e)
             ResponseEntity.internalServerError().body(mapOf("status" to "error", "message" to (e.message ?: "Erreur inconnue")))
         }
     }

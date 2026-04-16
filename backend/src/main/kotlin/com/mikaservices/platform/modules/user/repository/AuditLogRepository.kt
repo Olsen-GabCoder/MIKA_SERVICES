@@ -90,6 +90,9 @@ interface AuditLogRepository : JpaRepository<AuditLog, Long> {
     @Query("SELECT a.action, COUNT(a) FROM AuditLog a WHERE a.createdAt >= :since GROUP BY a.action ORDER BY COUNT(a) DESC")
     fun countActionBreakdownSince(since: LocalDateTime): List<Array<Any>>
 
+    @Query("SELECT a.action, COUNT(a) FROM AuditLog a WHERE a.user.id = :userId AND a.createdAt >= :since GROUP BY a.action ORDER BY COUNT(a) DESC")
+    fun countActionBreakdownForUserSince(userId: Long, since: LocalDateTime): List<Array<Any>>
+
     fun findByUser_IdAndModuleAndActionOrderByCreatedAtDesc(userId: Long, module: String, action: String, pageable: Pageable): Page<AuditLog>
 
     @Modifying

@@ -141,6 +141,14 @@ class AuditLogService(
         )
     }
 
+    /** Retourne le décompte d'actions effectuées par un utilisateur depuis minuit aujourd'hui. */
+    @Transactional(readOnly = true)
+    fun getTodayActivityForUser(userId: Long): Map<String, Long> {
+        val startOfToday = java.time.LocalDate.now().atStartOfDay()
+        return auditLogRepository.countActionBreakdownForUserSince(userId, startOfToday)
+            .associate { (it[0] as String) to (it[1] as Long) }
+    }
+
     @Transactional(readOnly = true)
     fun getFilterOptions(): Map<String, List<String>> {
         return mapOf(

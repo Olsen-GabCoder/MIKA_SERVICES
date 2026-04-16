@@ -659,6 +659,172 @@ class EmailService(
         }
     }
 
+    // ─── Email d'activité quotidienne ────────────────────────────
+
+    fun sendDailyActivityEmail(
+        to: String,
+        prenom: String,
+        nom: String,
+        sexe: Sexe?,
+        actionsAujourdhui: Map<String, Long>,
+        dayIndex: Int = 0
+    ) {
+        val dashboardLink = link("/")
+        val projetsLink   = link("/projets")
+        val hasActivity   = actionsAujourdhui.values.sum() > 0
+
+        val totalActions  = actionsAujourdhui.values.sum()
+        val logins        = actionsAujourdhui["LOGIN"] ?: 0L
+        val pageViews     = actionsAujourdhui["PAGE_VIEW"] ?: 0L
+        val autresActions = totalActions - logins - pageViews
+
+        val civilite = when (sexe) {
+            Sexe.HOMME -> "Monsieur $nom"
+            Sexe.FEMME -> "Madame $nom"
+            null       -> prenom
+        }
+
+        // ── Messages absence d'activité (rotation selon dayIndex) ──
+        val messagesAbsence = listOf(
+            "Nous avons remarqué que vous n'avez pas encore visité votre espace de gestion de chantiers aujourd'hui. " +
+            "Vos projets évoluent chaque jour — un coup d'œil rapide suffit pour rester informé et garder le cap.",
+            "Votre tableau de bord MIKA Services n'attend que vous. " +
+            "Chaque jour sans visite, c'est une opportunité manquée de détecter un point bloquant ou de valider un avancement.",
+            "Aujourd'hui encore, vos chantiers ont avancé — mais votre espace de gestion n'a pas été consulté. " +
+            "Prenez quelques minutes pour faire le point : vos équipes et vos projets vous attendent.",
+            "La gestion de projets efficace repose sur un suivi quotidien. " +
+            "Votre espace MIKA Services regroupe toutes les informations essentielles sur vos chantiers en temps réel.",
+            "Un bon gestionnaire sait que le suivi régulier évite les mauvaises surprises. " +
+            "Votre plateforme de gestion de chantiers vous attend — faites le point ce soir avant la fin de journée."
+        )
+        val messageAbsence = messagesAbsence[dayIndex % messagesAbsence.size]
+
+        val subject = if (hasActivity)
+            "MIKA Services — Votre bilan d'activité du ${java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))}"
+        else
+            "MIKA Services — Votre espace de gestion vous attend"
+
+        // ── Plain text ──────────────────────────────────────────────
+        val plainBody = if (hasActivity) {
+            """
+            Bonsoir $civilite,
+
+            Voici votre bilan d'activité MIKA Services pour aujourd'hui :
+
+            • Connexions         : $logins
+            • Pages consultées   : $pageViews
+            • Autres actions     : $autresActions
+            • Total              : $totalActions actions
+
+            Merci pour votre implication. Continuez comme ça !
+
+            Accéder à la plateforme : $dashboardLink
+
+            — L'équipe MIKA Services
+            """.trimIndent()
+        } else {
+            """
+            Bonsoir $civilite,
+
+            $messageAbsence
+
+            Accéder à mes projets : $projetsLink
+
+            — L'équipe MIKA Services
+            """.trimIndent()
+        }
+
+        // ── HTML ────────────────────────────────────────────────────
+        fun statCard(value: Long, label: String, color: String, icon: String): String = """
+            <td style="width:33%;padding:0 6px;text-align:center;">
+              <div style="background:#f8fafc;border-radius:10px;padding:16px 8px;border-top:3px solid $color;">
+                <div style="font-size:26px;margin-bottom:4px;">$icon</div>
+                <div style="font-size:24px;font-weight:800;color:$color;line-height:1;">$value</div>
+                <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:500;">$label</div>
+              </div>
+            </td>
+        """.trimIndent()
+
+        val htmlBody = if (hasActivity) {
+            wrapHtml("""
+                <!-- Bandeau supérieur -->
+                <div style="background:linear-gradient(135deg,#1e3a5f 0%,#2E5266 100%);margin:-28px -32px 24px;padding:28px 32px 24px;border-radius:0;">
+                  <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#FF6B35;text-transform:uppercase;letter-spacing:1px;">Bilan du jour</p>
+                  <h1 style="margin:0;font-size:22px;font-weight:800;color:#ffffff;">Bonsoir, ${htmlEscape(civilite)}</h1>
+                </div>
+
+                <!-- Message principal -->
+                <p style="font-size:15px;color:#374151;line-height:1.7;margin-bottom:20px;">
+                  Vous avez &eacute;t&eacute; <strong style="color:#1e3a5f;">actif aujourd'hui</strong> sur votre espace MIKA Services.
+                  Voici votre r&eacute;capitulatif d'activit&eacute; :
+                </p>
+
+                <!-- Cartes stats -->
+                <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0;margin-bottom:24px;">
+                  <tr>
+                    ${statCard(logins,        "Connexion(s)",       "#16a34a", "🔐")}
+                    ${statCard(pageViews,      "Page(s) visit&eacute;e(s)", "#7c3aed", "📋")}
+                    ${statCard(autresActions,  "Autre(s) action(s)", "#FF6B35", "⚡")}
+                  </tr>
+                </table>
+
+                <!-- Score total -->
+                <div style="background:linear-gradient(135deg,#fff7ed,#fff3e0);border:1px solid #fed7aa;border-radius:10px;padding:16px 20px;margin-bottom:24px;text-align:center;">
+                  <p style="margin:0;font-size:13px;color:#92400e;font-weight:500;">Score d'implication du jour</p>
+                  <p style="margin:4px 0 0;font-size:32px;font-weight:900;color:#FF6B35;">$totalActions <span style="font-size:16px;font-weight:600;">actions</span></p>
+                </div>
+
+                <!-- Message encourageant -->
+                <p style="font-size:13px;color:#6b7280;line-height:1.6;margin-bottom:20px;padding:12px 16px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:0 6px 6px 0;">
+                  &#10003;&nbsp; Merci pour votre implication. Un suivi r&eacute;gulier garantit la r&eacute;ussite de vos projets. Rendez-vous demain !
+                </p>
+
+                ${buttonHtml("Acc&eacute;der &agrave; mon tableau de bord", dashboardLink)}
+            """.trimIndent())
+        } else {
+            wrapHtml("""
+                <!-- Bandeau supérieur -->
+                <div style="background:linear-gradient(135deg,#1e3a5f 0%,#2E5266 100%);margin:-28px -32px 24px;padding:28px 32px 24px;border-radius:0;">
+                  <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#FF6B35;text-transform:uppercase;letter-spacing:1px;">Rappel quotidien</p>
+                  <h1 style="margin:0;font-size:22px;font-weight:800;color:#ffffff;">Bonsoir, ${htmlEscape(civilite)}</h1>
+                </div>
+
+                <!-- Icône absence -->
+                <div style="text-align:center;margin:8px 0 20px;">
+                  <div style="display:inline-block;background:#fef3c7;border-radius:50%;width:64px;height:64px;line-height:64px;font-size:28px;">📋</div>
+                </div>
+
+                <!-- Message -->
+                <p style="font-size:15px;color:#374151;line-height:1.8;margin-bottom:16px;">
+                  ${htmlEscape(messageAbsence)}
+                </p>
+
+                <!-- Liste de rappel -->
+                <div style="background:#f8fafc;border-radius:10px;padding:16px 20px;margin-bottom:24px;border-left:3px solid #FF6B35;">
+                  <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#1e3a5f;">Ce que vous pouvez faire en 5 minutes :</p>
+                  <ul style="margin:0;padding-left:18px;color:#4b5563;font-size:13px;line-height:2;">
+                    <li>Consulter l'avancement de vos projets</li>
+                    <li>V&eacute;rifier les points bloquants ouverts</li>
+                    <li>Lire les derniers messages de votre &eacute;quipe</li>
+                    <li>Valider les mises &agrave; jour en attente</li>
+                  </ul>
+                </div>
+
+                ${buttonHtml("Acc&eacute;der &agrave; mes projets maintenant", projetsLink)}
+
+                <p style="font-size:12px;color:#9ca3af;text-align:center;margin-top:16px;">
+                  Ce rappel est envoy&eacute; quotidiennement &agrave; tous les membres actifs de MIKA Services.
+                </p>
+            """.trimIndent())
+        }
+
+        try {
+            sendGenericNotification(to, subject, plainBody, htmlBody, "activite quotidienne")
+        } catch (e: Exception) {
+            logger.warn("Envoi activité quotidienne échoué vers $to: ${e.message}")
+        }
+    }
+
     // ─── Helpers user-agent ───────────────────────────────────────
 
     private fun parseUserAgentShort(ua: String): String {

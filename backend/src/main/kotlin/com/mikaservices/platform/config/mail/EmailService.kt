@@ -719,31 +719,31 @@ class EmailService(
                 )
             )
             java.time.DayOfWeek.WEDNESDAY -> AbsenceMsg(
-                sujet  = "MIKA Services — Préparez la réunion de demain",
+                sujet  = "MIKA Services — Cap sur la fin de semaine",
                 icone  = "📋",
-                corps  = "La réunion hebdomadaire a lieu demain jeudi. " +
+                corps  = "À mi-semaine, c'est le bon moment pour faire le point sur vos chantiers. " +
                          "Vous n'avez pas encore visité votre espace de gestion ce mercredi. " +
-                         "Pour aborder la réunion avec tous les éléments en main, " +
-                         "prenez quelques minutes ce soir pour consulter l'état de vos projets.",
+                         "Prenez quelques minutes pour mettre à jour vos projets et anticiper " +
+                         "les actions prioritaires des deux prochains jours.",
                 action = listOf(
-                    "Mettre à jour les avancements avant la réunion de demain",
+                    "Mettre à jour les avancements physiques et financiers",
                     "Renseigner vos besoins en matériel et en personnel",
-                    "Signaler les points bloquants nécessitant une discussion",
+                    "Signaler les points bloquants récents",
                     "Préparer vos propositions d'amélioration"
                 )
             )
             java.time.DayOfWeek.THURSDAY -> AbsenceMsg(
-                sujet  = "MIKA Services — Jour de réunion : faites le point",
-                icone  = "🤝",
-                corps  = "C'est jeudi, jour de la réunion hebdomadaire MIKA Services. " +
-                         "Votre espace de gestion n'a pas été consulté aujourd'hui. " +
-                         "Les décisions prises en réunion méritent d'être suivies d'actions concrètes — " +
-                         "votre tableau de bord est l'outil central pour piloter ces actions.",
+                sujet  = "MIKA Services — Vos projets ont besoin de vous ce jeudi",
+                icone  = "🏗️",
+                corps  = "En cette fin de semaine de travail, vos chantiers continuent d'avancer. " +
+                         "Votre espace de gestion MIKA Services n'a pas été consulté aujourd'hui. " +
+                         "Quelques minutes suffisent pour garder une vision claire de l'état de vos projets " +
+                         "et anticiper sereinement les prochaines étapes.",
                 action = listOf(
-                    "Prendre connaissance des décisions de la réunion",
-                    "Mettre à jour les projets discutés aujourd'hui",
-                    "Ouvrir les points bloquants identifiés en séance",
-                    "Planifier les actions correctives validées"
+                    "Consulter l'avancement de vos projets en cours",
+                    "Vérifier les points bloquants ouverts nécessitant une action",
+                    "Mettre à jour les indicateurs d'avancement physique et financier",
+                    "Planifier les actions prioritaires pour demain"
                 )
             )
             java.time.DayOfWeek.FRIDAY -> AbsenceMsg(

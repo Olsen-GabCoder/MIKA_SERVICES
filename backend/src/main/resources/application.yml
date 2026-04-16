@@ -82,7 +82,7 @@ app:
     rappel-projet-mercredi: ${RAPPEL_PROJET_MERCREDI_CRON:0 0 8 * * WED}
     rappel-projet-jeudi: ${RAPPEL_PROJET_JEUDI_CRON:0 0 16 * * THU}
     pv-hebdo-jeudi: ${PV_HEBDO_JEUDI_CRON:0 15 13 * * *}
-    rapport-hebdo-jeudi: ${RAPPORT_HEBDO_JEUDI_CRON:0 15 15 * * *}
+    rapport-hebdo-jeudi: ${RAPPORT_HEBDO_JEUDI_CRON:0 0 18 * * THU}
   rate-limit:
     login-max-attempts: ${LOGIN_RATE_LIMIT_MAX:5}
     login-window-minutes: ${LOGIN_RATE_LIMIT_WINDOW_MINUTES:1}

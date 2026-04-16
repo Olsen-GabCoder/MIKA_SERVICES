@@ -68,10 +68,7 @@ class RapportHebdoScheduler(
             val pdfBytes = pdfGenerator.generate(data)
             logger.info("[RapportHebdoScheduler] PDF généré (${pdfBytes.size / 1024} Ko) — ${data.totalProjets} projet(s)")
 
-            // TODO TEST — retirer ce filtre après validation
-            val TEST_EMAIL = "olsenkampala@gmail.com"
             val destinataires = userRepository.findByActifTrue()
-                .filter { it.email.equals(TEST_EMAIL, ignoreCase = true) }
 
             if (destinataires.isEmpty()) {
                 logger.info("[RapportHebdoScheduler] Aucun destinataire — rapport ignoré.")

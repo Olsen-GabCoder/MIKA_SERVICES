@@ -207,7 +207,8 @@ class ProjetExportService(
         addSectionTitle(doc, "Synthèse projet")
         addParagraph(doc, "Type(s) : ${projet.types.joinToString(" | ") { it.name.replace("_", " ") }} | Sous-projets : ${projet.nombreSousProjets} | Points bloquants ouverts : ${projet.nombrePointsBloquantsOuverts} | Délai consommé : ${projet.delaiConsommePct?.toString() ?: "—"} % | Partenaire principal : ${fmt(projet.partenairePrincipal)}")
         rapport?.let {
-            addParagraph(doc, "Indicateurs : Tâches en retard : ${it.planning.tachesEnRetard} | Risques critiques : ${it.securite.risquesCritiques} | Budget (écart) : ${fmtMontant(it.budget.ecart)}")
+            // TODO QSHE v2 — indicateur risques critiques retiré lors du nettoyage #0, à reconstruire au livrable #4
+            addParagraph(doc, "Indicateurs : Tâches en retard : ${it.planning.tachesEnRetard} | Budget (écart) : ${fmtMontant(it.budget.ecart)}")
         }
         addEmptyParagraph(doc)
 

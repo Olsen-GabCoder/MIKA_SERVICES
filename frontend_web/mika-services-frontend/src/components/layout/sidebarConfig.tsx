@@ -10,6 +10,12 @@ export interface SidebarItem {
   badgeKey?: BadgeKey
 }
 
+export interface SidebarGroup {
+  label: string
+  icon: ReactNode
+  children: SidebarItem[]
+}
+
 const iconClass = 'w-5 h-5 shrink-0'
 
 /** Clés i18n (namespace layout) pour les labels du menu. */
@@ -22,8 +28,6 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   { to: '/materiaux', label: 'sidebar.materiaux', icon: <CubeIcon className={iconClass} /> },
   { to: '/budget', label: 'sidebar.budget', icon: <BudgetIcon className={iconClass} /> },
   { to: '/planning', label: 'sidebar.planning', icon: <CalendarIcon className={iconClass} /> },
-  { to: '/qualite', label: 'sidebar.qualite', icon: <QualiteIcon className={iconClass} /> },
-  { to: '/securite', label: 'sidebar.securite', icon: <ShieldIcon className={iconClass} /> },
   { to: '/messagerie', label: 'sidebar.messagerie', icon: <MailIcon className={iconClass} />, badgeKey: 'messages' },
   { to: '/notifications', label: 'sidebar.notifications', icon: <BellIcon className={iconClass} />, badgeKey: 'notifications' },
 
@@ -145,4 +149,87 @@ function ActivityIcon({ className }: { className?: string }) {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
     </svg>
   )
+}
+function QsheIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+  )
+}
+function IncidentIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+  )
+}
+
+function EnvIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  )
+}
+function CertIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+    </svg>
+  )
+}
+function TopoIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+    </svg>
+  )
+}
+function BeakerIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+    </svg>
+  )
+}
+function ChecklistIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+    </svg>
+  )
+}
+
+/** Groupe Qualité dépliable dans la sidebar */
+export const QUALITE_GROUP: SidebarGroup = {
+  label: 'qualite:sidebar.group',
+  icon: <QualiteIcon className={iconClass} />,
+  children: [
+    { to: '/qualite/synthese', label: 'qualite:sidebar.synthese', icon: <DashboardIcon className={iconClass} /> },
+    { to: '/qualite/receptions', label: 'qualite:sidebar.receptions', icon: <ChecklistIcon className={iconClass} /> },
+    { to: '/qualite/essais-labo', label: 'qualite:sidebar.essaisLabo', icon: <BeakerIcon className={iconClass} /> },
+    { to: '/qualite/levees-topo', label: 'qualite:sidebar.leveeTopo', icon: <TopoIcon className={iconClass} /> },
+    { to: '/qualite/agrements', label: 'qualite:sidebar.agrements', icon: <DocumentIcon className={iconClass} /> },
+    { to: '/qualite/evenements', label: 'qualite:sidebar.ncRcPpi', icon: <IncidentIcon className={iconClass} /> },
+    { to: '/qualite/documents', label: 'qualite:sidebar.documents', icon: <DocumentIcon className={iconClass} /> },
+  ],
+}
+
+/** Groupe SHE (Sécurité, Hygiène, Environnement) dépliable dans la sidebar */
+export const SHE_GROUP: SidebarGroup = {
+  label: 'qshe:sidebar.groupShe',
+  icon: <QsheIcon className={iconClass} />,
+  children: [
+    { to: '/qshe/dashboard', label: 'qshe:sidebar.dashboard', icon: <DashboardIcon className={iconClass} /> },
+    { to: '/qshe/incidents', label: 'qshe:sidebar.incidents', icon: <IncidentIcon className={iconClass} /> },
+    { to: '/qshe/inspections', label: 'qshe:sidebar.inspections', icon: <ChecklistIcon className={iconClass} /> },
+    { to: '/qshe/risques', label: 'qshe:sidebar.risques', icon: <ShieldIcon className={iconClass} /> },
+    { to: '/qshe/formations', label: 'qshe:sidebar.formations', icon: <CertIcon className={iconClass} /> },
+    { to: '/qshe/epi', label: 'qshe:sidebar.epi', icon: <ShieldIcon className={iconClass} /> },
+    { to: '/qshe/causeries', label: 'qshe:sidebar.causeries', icon: <ReunionIcon className={iconClass} /> },
+    { to: '/qshe/permis', label: 'qshe:sidebar.permis', icon: <DocumentIcon className={iconClass} /> },
+    { to: '/qshe/environnement', label: 'qshe:sidebar.environnement', icon: <EnvIcon className={iconClass} /> },
+    { to: '/qshe/produits-chimiques', label: 'qshe:sidebar.fds', icon: <CubeIcon className={iconClass} /> },
+  ],
 }

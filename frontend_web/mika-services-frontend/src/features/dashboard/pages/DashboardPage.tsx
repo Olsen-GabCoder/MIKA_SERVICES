@@ -177,10 +177,8 @@ export default function DashboardPage() {
     const a: { type: 'danger' | 'warning' | 'info'; text: string }[] = []
     if (dashboard.projets.enRetard       > 0) a.push({ type: 'danger',  text: t('db.alerts.projectsDelayed',  { count: dashboard.projets.enRetard }) })
     if (dashboard.planning.tachesEnRetard > 0) a.push({ type: 'danger',  text: t('db.alerts.tasksDelayed',    { count: dashboard.planning.tachesEnRetard }) })
-    if (dashboard.securite.incidentsGraves > 0) a.push({ type: 'danger', text: t('db.alerts.seriousIncidents', { count: dashboard.securite.incidentsGraves }) })
-    if (dashboard.securite.risquesCritiques > 0) a.push({ type: 'warning', text: t('db.alerts.criticalRisks', { count: dashboard.securite.risquesCritiques }) })
+    // TODO QSHE v2 — alertes securite/qualite retirées lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE)
     if (dashboard.materiel.materiauxStockBas > 0) a.push({ type: 'warning', text: t('db.alerts.materialsLow', { count: dashboard.materiel.materiauxStockBas }) })
-    if (dashboard.qualite.ncOuvertes > 0) a.push({ type: 'info', text: t('db.alerts.ncOpen', { count: dashboard.qualite.ncOuvertes }) })
     return a
   }, [dashboard, t])
 
@@ -189,7 +187,7 @@ export default function DashboardPage() {
     return [
       { name: t('db.radial.budget'),   value: Math.min(dashboard.budget.tauxConsommation,   100), fill: C.accent    },
       { name: t('db.radial.progress'), value: Math.min(dashboard.planning.tauxAvancement,   100), fill: C.secondary },
-      { name: t('db.radial.quality'),  value: Math.min(dashboard.qualite.tauxConformite,     100), fill: C.green     },
+      // TODO QSHE v2 — radial qualite retiré lors du nettoyage #0, à reconstruire au livrable #4
     ]
   }, [dashboard, t])
 
@@ -234,20 +232,14 @@ export default function DashboardPage() {
     ...w,
     displayLabel: w.isCurrent ? `${w.label} ★` : w.label,
   }))
-  const qualityDonut = [
-    { name: t('db.charts.compliant'),    value: Math.round((d.qualite.controlesTotal * d.qualite.tauxConformite)        / 100), color: C.green },
-    { name: t('db.charts.nonCompliant'), value: Math.round((d.qualite.controlesTotal * (100 - d.qualite.tauxConformite))/ 100), color: C.red   },
-  ]
+  // TODO QSHE v2 — qualityDonut retiré lors du nettoyage #0, à reconstruire au livrable #4
+  const qualityDonut: { name: string; value: number; color: string }[] = []
   const sitesBars = [
     { name: t('db.charts.active'),    value: d.chantiers.actifs,   fill: C.blue  },
     { name: t('db.charts.completed'), value: d.chantiers.termines, fill: C.green },
   ]
-  const safetyBars = [
-    { name: t('db.safety.totalIncidents'), value: d.securite.incidentsTotal,   fill: C.gold },
-    { name: t('db.safety.serious'),        value: d.securite.incidentsGraves,  fill: C.red  },
-    { name: t('db.safety.criticalRisks'),  value: d.securite.risquesCritiques, fill: C.rose },
-    { name: t('db.safety.daysStopped'),    value: d.securite.joursArretTotal,  fill: C.gray },
-  ]
+  // TODO QSHE v2 — safetyBars retiré lors du nettoyage #0, à reconstruire au livrable #4
+  const safetyBars: { name: string; value: number; fill: string }[] = []
   const equipDonut = [
     { name: t('db.charts.available'), value: d.materiel.enginsDisponibles, color: C.green },
     { name: t('db.charts.inUse'),     value: d.materiel.enginsTotal - d.materiel.enginsDisponibles, color: C.blue },
@@ -259,7 +251,8 @@ export default function DashboardPage() {
 
   /* ── KPI accent helper ── */
   const budgetAccent = d.budget.tauxConsommation > 90 ? C.red : d.budget.tauxConsommation > 70 ? C.gold : C.green
-  const qualAccent   = d.qualite.tauxConformite >= 80 ? C.green : C.gold
+  // TODO QSHE v2 — qualAccent retiré lors du nettoyage #0, à reconstruire au livrable #4
+  const qualAccent   = C.green
 
   return (
     <PageContainer size="full" className="w-full pb-10 space-y-0">
@@ -339,11 +332,7 @@ export default function DashboardPage() {
           sub={`${fmtS(d.budget.depensesTotales)} / ${fmtS(d.budget.budgetTotalPrevu)}`}
           progress={d.budget.tauxConsommation}
           onClick={() => navigate('/budget')} icon="💰" />
-        <GlassKpi
-          accent={qualAccent} label={t('db.kpi.qualityRate')} value={`${d.qualite.tauxConformite}%`}
-          sub={`${d.qualite.controlesTotal} ${t('db.kpi.controls')} · ${d.qualite.ncOuvertes} NC`}
-          progress={d.qualite.tauxConformite}
-          onClick={() => navigate('/qualite')} icon="✅" />
+        {/* TODO QSHE v2 — KPI qualite retiré lors du nettoyage #0, à reconstruire au livrable #4 */}
       </div>
 
       {/* ════════════════════════════════════════════════════════════
@@ -589,41 +578,7 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        {/* Quality donut */}
-        <Card title={t('db.charts.qualityTitle')} subtitle={`${d.qualite.controlesTotal} ${t('db.kpi.controls')}`}>
-          <div className="relative">
-            <ResponsiveContainer width="100%" height={140}>
-              <PieChart>
-                <defs>
-                  <linearGradient id="gQualGreen" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor={C.green} stopOpacity={1}   />
-                    <stop offset="100%" stopColor={C.teal} stopOpacity={0.9} />
-                  </linearGradient>
-                </defs>
-                <Pie data={qualityDonut} cx="50%" cy="50%" innerRadius={38} outerRadius={58}
-                  paddingAngle={3} dataKey="value" startAngle={90} endAngle={-270}>
-                  <Cell fill="url(#gQualGreen)" stroke="none" />
-                  <Cell fill={C.red} stroke="none" opacity={0.8} />
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className={`text-xl font-extrabold ${d.qualite.tauxConformite >= 80 ? 'text-green-600' : d.qualite.tauxConformite >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
-                {d.qualite.tauxConformite}%
-              </span>
-            </div>
-          </div>
-          <div className="flex gap-3 justify-center text-xs mt-2">
-            {qualityDonut.map(e => (
-              <div key={e.name} className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ background: e.color }} />
-                <span className="text-gray-500 dark:text-gray-400">{e.name}</span>
-                <span className="font-bold text-gray-700 dark:text-gray-200">{e.value}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
+        {/* TODO QSHE v2 — Quality donut chart retiré lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE) */}
 
         {/* Sites bar */}
         <Card title={t('db.charts.sitesTitle')} subtitle={`${d.chantiers.total} ${t('db.charts.totalSites')}`}>
@@ -746,28 +701,7 @@ export default function DashboardPage() {
           ROW 5 — SAFETY + EQUIPMENT + BUDGET BREAKDOWN
       ════════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-        {/* Safety horizontal bar */}
-        <Card title={t('db.safety.title')} subtitle={`${d.securite.incidentsTotal} ${t('db.charts.incidentsReported')}`}>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={safetyBars} layout="vertical" margin={{ top: 4, right: 20, left: 0, bottom: 4 }}>
-              <defs>
-                {safetyBars.map((e, i) => (
-                  <linearGradient key={i} id={`gSafe-${i}`} x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%"   stopColor={e.fill} stopOpacity={0.7} />
-                    <stop offset="100%" stopColor={e.fill} stopOpacity={1}   />
-                  </linearGradient>
-                ))}
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-              <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 9.5, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                {safetyBars.map((_, i) => <Cell key={i} fill={`url(#gSafe-${i})`} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+        {/* TODO QSHE v2 — Safety chart retiré lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE) */}
 
         {/* Equipment donut */}
         <Card title={t('db.equipment.title')} subtitle={`${d.materiel.enginsTotal} ${t('db.charts.units')}`}>
@@ -871,8 +805,9 @@ export default function DashboardPage() {
             {[
               { k: 'projets',    p: '/projets',    i: '📋' }, { k: 'planning',  p: '/planning',  i: '📅' },
               { k: 'budget',     p: '/budget',     i: '💰' }, { k: 'engins',    p: '/engins',    i: '🚜' },
-              { k: 'materiaux',  p: '/materiaux',  i: '🧱' }, { k: 'qualite',   p: '/qualite',   i: '✅' },
-              { k: 'securite',   p: '/securite',   i: '🛡️' }, { k: 'messagerie',p: '/messagerie',i: '💬' },
+              { k: 'materiaux',  p: '/materiaux',  i: '🧱' },
+              // TODO QSHE v2 — liens qualite/securite retirés lors du nettoyage #0, à reconstruire au livrable #3
+              { k: 'messagerie',p: '/messagerie',i: '💬' },
               { k: 'equipes',    p: '/equipes',    i: '👷' }, { k: 'documents', p: '/documents', i: '📁' },
             ].map(x => (
               <button key={x.p} onClick={() => navigate(x.p)}
@@ -896,7 +831,8 @@ export default function DashboardPage() {
 function ProjetReportBlock({ report, fmt, fmtS, t }: {
   report: ProjetReport; fmt: (v: number) => string; fmtS: (v: number) => string; t: (k: string) => string
 }) {
-  const b = report.budget, p = report.planning, q = report.qualite, s = report.securite
+  const b = report.budget, p = report.planning
+  // TODO QSHE v2 — q (qualite) et s (securite) retirés lors du nettoyage #0, à reconstruire au livrable #4
   const budgetBars = [
     { name: t('db.report.consumed'),  value: Number(b.depensesTotales),                                                fill: C.accent },
     { name: t('db.report.remaining'), value: Math.max(0, Number(b.budgetTotalPrevu) - Number(b.depensesTotales)), fill: C.gray   },
@@ -961,20 +897,7 @@ function ProjetReportBlock({ report, fmt, fmtS, t }: {
           </ResponsiveContainer>
         </div>
 
-        {/* Quality + Safety */}
-        <div className="space-y-3">
-          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">{t('db.report.qualitySafety')}</p>
-          <StatRow label={t('db.kpi.qualityRate')} value={`${q.tauxConformite}%`}
-            color={q.tauxConformite >= 80 ? 'green' : q.tauxConformite >= 60 ? 'amber' : 'red'}
-            progress={q.tauxConformite} />
-          <StatRow label={t('db.safety.totalIncidents')} value={s.incidentsTotal} progress={Math.min(s.incidentsTotal * 5, 100)} color="slate" />
-          {(q.ncOuvertes > 0 || s.risquesCritiques > 0) && (
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {q.ncOuvertes     > 0 && <Chip color="red"  >{q.ncOuvertes} NC</Chip>}
-              {s.risquesCritiques > 0 && <Chip color="amber">{s.risquesCritiques} {t('db.safety.criticalRisks')}</Chip>}
-            </div>
-          )}
-        </div>
+        {/* TODO QSHE v2 — Quality + Safety section retirée lors du nettoyage #0, à reconstruire au livrable #4 */}
       </div>
     </Card>
   )

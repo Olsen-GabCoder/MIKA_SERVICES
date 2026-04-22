@@ -11,7 +11,18 @@
       "Bash(where puppeteer:*)",
       "Bash(where chrome:*)",
       "Bash(where chromium:*)",
-      "Bash(where \"C:/Program Files/Google/Chrome/Application/chrome.exe\")"
+      "Bash(where \"C:/Program Files/Google/Chrome/Application/chrome.exe\")",
+      "Bash(timeout 50 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev)",
+      "Bash(timeout 60 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev -DskipTests)",
+      "Bash(timeout 50 java -jar target/*.jar --spring.profiles.active=dev)",
+      "Bash(./mvnw package:*)",
+      "Bash(cd:*)",
+      "Bash(mv /c/Projet_Mika_Services/backend/src/main/kotlin/com/mikaservices/platform/modules/qshe/enum /c/Projet_Mika_Services/backend/src/main/kotlin/com/mikaservices/platform/modules/qshe/enums)",
+      "Bash(sed -i 's/package com.mikaservices.platform.modules.qshe.`enum`/package com.mikaservices.platform.modules.qshe.enums/' TypeIncident.kt GraviteIncident.kt StatutIncident.kt LocalisationCorporelle.kt)",
+      "Bash(mysql -u root --password=\"\" mika_services_dev 2)",
+      "Bash(1:*)",
+      "Bash(grep -r TypePermission /c/Projet_Mika_Services/backend/src/main/kotlin/com/mikaservices/platform --include=*.kt)",
+      "Bash(find C:/Projet_Mika_Services/backend/src/test -type f -name *.kt)"
     ]
   }
 }

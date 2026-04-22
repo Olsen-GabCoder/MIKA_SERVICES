@@ -6,7 +6,8 @@ import { toggleSidebar, toggleTheme, setLocale, closeMobileMenu } from '@/store/
 import type { Locale } from '../../i18n'
 import { logoutUser } from '@/store/slices/authSlice'
 import { userApi } from '@/api/userApi'
-import { SIDEBAR_ITEMS } from './sidebarConfig'
+import { SIDEBAR_ITEMS, QUALITE_GROUP, SHE_GROUP } from './sidebarConfig'
+import type { SidebarGroup } from './sidebarConfig'
 import type { User } from '@/types'
 
 /** Affiche le drapeau (png ou svg) ou l’emoji en secours si l’image ne charge pas. */
@@ -47,6 +48,73 @@ function getInitials(u: User): string {
   return '?'
 }
 
+/** Groupe QSHE depliable dans la sidebar */
+function QsheGroupNav({ group, linkClass, effectiveCollapsed, onNavClick, t }: {
+  group: SidebarGroup
+  linkClass: (path: string) => string
+  effectiveCollapsed: boolean
+  onNavClick: () => void
+  t: (key: string) => string
+}) {
+  const location = useLocation()
+  const isActive = group.children.some(c => location.pathname.startsWith(c.to))
+  const storageKey = `mika-sidebar-${group.label.replace(/[^a-zA-Z]/g, '-')}`
+  const [open, setOpen] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const stored = localStorage.getItem(storageKey)
+    return stored !== null ? stored === 'true' : true
+  })
+
+  const toggle = () => {
+    const next = !open
+    setOpen(next)
+    localStorage.setItem(storageKey, String(next))
+  }
+
+  if (effectiveCollapsed) {
+    // En mode collapsed, afficher juste l'icone du groupe
+    return (
+      <div className="mt-3 pt-3 border-t border-white/10">
+        <div className="flex justify-center">
+          <button onClick={toggle} className="p-2 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition" title={t(group.label)}>
+            <span className="[&>svg]:w-6 [&>svg]:h-6">{group.icon}</span>
+          </button>
+        </div>
+        {open && group.children.map(item => (
+          <Link key={item.to} to={item.to} className={linkClass(item.to)} title={t(item.label)} onClick={onNavClick}>
+            <span className="flex-shrink-0 [&>svg]:w-6 [&>svg]:h-6">{item.icon}</span>
+          </Link>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-white/10">
+      <button onClick={toggle}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${isActive ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}>
+        <span className="[&>svg]:w-6 [&>svg]:h-6 shrink-0">{group.icon}</span>
+        <span className="truncate">{t(group.label)}</span>
+        <svg className={`w-4 h-4 ml-auto shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <ul className="mt-1 ml-4 space-y-0.5">
+          {group.children.map(item => (
+            <li key={item.to}>
+              <Link to={item.to} className={linkClass(item.to)} onClick={onNavClick}>
+                <span className="flex-shrink-0 [&>svg]:w-5 [&>svg]:h-5">{item.icon}</span>
+                <span className="truncate">{t(item.label)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 export const Sidebar = () => {
   const { t } = useTranslation('layout')
   const location = useLocation()
@@ -76,7 +144,18 @@ export const Sidebar = () => {
     const code = role.code?.toUpperCase()
     if (code === 'ADMIN' || code === 'SUPER_ADMIN') return t('roles.admin')
     if (code === 'CHEF_PROJET') return t('roles.chefDeProjet')
+    if (code === 'CHEF_CHANTIER') return t('roles.chefChantier')
     if (code === 'MANAGER') return t('roles.manager')
+    const roleI18nMap: Record<string, string> = {
+      DIRECTEUR_TECHNIQUE: 'roles.directeurTechnique',
+      RESPONSABLE_QUALITE: 'roles.responsableQualite',
+      INGENIEUR_QUALITE: 'roles.ingenieurQualite',
+      CONTROLEUR_TECHNIQUE: 'roles.controleurTechnique',
+      ASSISTANT_QUALITE: 'roles.assistantQualite',
+      TECHNICIEN_LABORATOIRE: 'roles.technicienLaboratoire',
+      TECHNICIEN_TOPOGRAPHIE: 'roles.technicienTopographie',
+    }
+    if (code && roleI18nMap[code]) return t(roleI18nMap[code])
     return role.nom || t('roles.employe')
   }
 
@@ -231,6 +310,11 @@ export const Sidebar = () => {
             )
           })}
         </ul>
+
+        {/* Groupe Qualité dépliable */}
+        <QsheGroupNav group={QUALITE_GROUP} linkClass={linkClass} effectiveCollapsed={effectiveCollapsed} onNavClick={handleNavClick} t={t} />
+        {/* Groupe SHE dépliable */}
+        <QsheGroupNav group={SHE_GROUP} linkClass={linkClass} effectiveCollapsed={effectiveCollapsed} onNavClick={handleNavClick} t={t} />
 
         {/* Section Paramètres : lien Paramètres + mode sombre */}
         <div className={`mt-6 pt-4 border-t border-white/10 ${effectiveCollapsed ? 'px-0' : 'px-2'}`}>

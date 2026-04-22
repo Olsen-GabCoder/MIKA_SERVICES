@@ -1,0 +1,30 @@
+package com.mikaservices.platform.modules.qshe.enums
+
+enum class LocalisationCorporelle {
+    TETE,
+    VISAGE,
+    YEUX,
+    COU,
+    EPAULE_DROITE,
+    EPAULE_GAUCHE,
+    BRAS_DROIT,
+    BRAS_GAUCHE,
+    MAIN_DROITE,
+    MAIN_GAUCHE,
+    DOIGT,
+    THORAX,
+    ABDOMEN,
+    DOS_COLONNE,
+    BASSIN,
+    CUISSE_DROITE,
+    CUISSE_GAUCHE,
+    GENOU_DROIT,
+    GENOU_GAUCHE,
+    JAMBE_DROITE,
+    JAMBE_GAUCHE,
+    PIED_DROIT,
+    PIED_GAUCHE,
+    ORGANES_INTERNES,
+    MULTIPLE,
+    NON_PRECISE
+}

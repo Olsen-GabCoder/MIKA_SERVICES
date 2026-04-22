@@ -1,0 +1,198 @@
+{
+  "sidebar": {
+    "group": "QSHE",
+    "groupQualite": "Qualité",
+    "groupShe": "SHE",
+    "incidents": "Incidents & AT",
+    "dashboard": "Tableau de bord",
+    "inspections": "Inspections",
+    "controles": "Contrôles qualité",
+    "nc": "Non-conformités",
+    "risques": "Risques",
+    "actions": "Actions (CAPA)",
+    "formations": "Formations & habilitations",
+    "epi": "EPI",
+    "causeries": "Causeries sécurité",
+    "permis": "Permis de travail",
+    "environnement": "Suivi environnemental",
+    "fds": "Produits chimiques (FDS)"
+  },
+  "incidents": {
+    "title": "Incidents & Accidents du travail",
+    "subtitle": "Déclaration, investigation et suivi des incidents QSHE",
+    "selectProject": "Sélectionner un projet",
+    "chooseProject": "— Choisir un projet —",
+    "declareIncident": "Déclarer un incident",
+    "loading": "Chargement des incidents...",
+    "empty": "Aucun incident déclaré sur ce projet.",
+    "noProject": "Sélectionnez un projet pour voir les incidents.",
+    "kpi": {
+      "total": "Total incidents",
+      "graves": "Graves / Mortels",
+      "cnssRetard": "CNSS en retard",
+      "tauxCloture": "Taux clôture"
+    },
+    "filters": {
+      "all": "Tous",
+      "byStatus": "Par statut",
+      "byType": "Par type",
+      "byGravity": "Par gravité"
+    },
+    "detail": {
+      "general": "Général",
+      "victimes": "Victimes",
+      "temoins": "Témoins",
+      "actions": "Actions CAPA",
+      "piecesJointes": "Pièces jointes",
+      "circonstances": "Circonstances",
+      "causes": "Causes",
+      "reglementaire": "Déclarations réglementaires"
+    },
+    "form": {
+      "title": "Déclarer un incident",
+      "editTitle": "Modifier l'incident",
+      "titre": "Titre *",
+      "type": "Type d'incident *",
+      "gravite": "Gravité *",
+      "date": "Date de l'incident *",
+      "heure": "Heure",
+      "lieu": "Lieu",
+      "zone": "Zone du chantier",
+      "description": "Description",
+      "circonstances": "Description des circonstances",
+      "activite": "Activité en cours",
+      "equipement": "Équipement impliqué",
+      "epiPortes": "EPI portés",
+      "causeImmediate": "Cause immédiate",
+      "causeRacine": "Cause racine",
+      "mesures": "Mesures conservatoires prises",
+      "sousProjet": "Sous-projet / Chantier",
+      "cancel": "Annuler",
+      "submit": "Déclarer",
+      "save": "Enregistrer"
+    },
+    "victime": {
+      "add": "Ajouter une victime",
+      "nom": "Nom *",
+      "prenom": "Prénom *",
+      "poste": "Poste",
+      "entreprise": "Entreprise",
+      "natureLesion": "Nature de la lésion",
+      "localisation": "Localisation corporelle",
+      "arretTravail": "Arrêt de travail",
+      "nbJours": "Nombre de jours",
+      "hospitalisation": "Hospitalisation"
+    },
+    "temoin": {
+      "add": "Ajouter un témoin",
+      "nom": "Nom *",
+      "prenom": "Prénom",
+      "telephone": "Téléphone",
+      "email": "Email",
+      "entreprise": "Entreprise",
+      "temoignage": "Témoignage"
+    },
+    "cnss": {
+      "enRetard": "Déclaration CNSS en retard",
+      "echeance": "Échéance CNSS",
+      "declaree": "Déclarée à la CNSS",
+      "nonDeclaree": "Non déclarée"
+    },
+    "delete": "Supprimer",
+    "confirm": {
+      "delete": "Êtes-vous sûr de vouloir supprimer cet incident ?"
+    }
+  },
+  "typeIncident": {
+    "ACCIDENT_TRAVAIL": "Accident du travail",
+    "PRESQU_ACCIDENT": "Presqu'accident",
+    "INCIDENT_ENVIRONNEMENTAL": "Incident environnemental",
+    "PREMIER_SECOURS": "Premier secours",
+    "DOMMAGE_MATERIEL": "Dommage matériel",
+    "MALADIE_PROFESSIONNELLE": "Maladie professionnelle"
+  },
+  "graviteIncident": {
+    "MINEURE": "Mineure",
+    "LEGERE": "Légère",
+    "GRAVE": "Grave",
+    "MORTELLE": "Mortelle"
+  },
+  "statutIncident": {
+    "BROUILLON": "Brouillon",
+    "DECLARE": "Déclaré",
+    "EN_INVESTIGATION": "En investigation",
+    "INVESTIGATION_TERMINEE": "Investigation terminée",
+    "CLOTURE": "Clôturé"
+  },
+  "localisationCorporelle": {
+    "TETE": "Tête",
+    "VISAGE": "Visage",
+    "YEUX": "Yeux",
+    "COU": "Cou",
+    "EPAULE_DROITE": "Épaule droite",
+    "EPAULE_GAUCHE": "Épaule gauche",
+    "BRAS_DROIT": "Bras droit",
+    "BRAS_GAUCHE": "Bras gauche",
+    "MAIN_DROITE": "Main droite",
+    "MAIN_GAUCHE": "Main gauche",
+    "DOIGT": "Doigt",
+    "THORAX": "Thorax",
+    "ABDOMEN": "Abdomen",
+    "DOS_COLONNE": "Dos / Colonne",
+    "BASSIN": "Bassin",
+    "CUISSE_DROITE": "Cuisse droite",
+    "CUISSE_GAUCHE": "Cuisse gauche",
+    "GENOU_DROIT": "Genou droit",
+    "GENOU_GAUCHE": "Genou gauche",
+    "JAMBE_DROITE": "Jambe droite",
+    "JAMBE_GAUCHE": "Jambe gauche",
+    "PIED_DROIT": "Pied droit",
+    "PIED_GAUCHE": "Pied gauche",
+    "ORGANES_INTERNES": "Organes internes",
+    "MULTIPLE": "Multiple",
+    "NON_PRECISE": "Non précisé"
+  },
+  "inspections": {
+    "title": "Inspections sécurité",
+    "subtitle": "Checklists, audits et visites de chantier",
+    "createInspection": "Nouvelle inspection",
+    "loading": "Chargement...",
+    "empty": "Aucune inspection sur ce projet.",
+    "score": "Score",
+    "items": "points",
+    "conformes": "conformes",
+    "nonConformes": "non conformes",
+    "form": {
+      "titre": "Titre *",
+      "type": "Type d'inspection *",
+      "template": "Modèle de checklist",
+      "noTemplate": "Sans modèle",
+      "inspecteur": "Inspecteur",
+      "datePlanifiee": "Date planifiée",
+      "zone": "Zone inspectée",
+      "cancel": "Annuler",
+      "submit": "Créer"
+    }
+  },
+  "typeInspection": {
+    "QUOTIDIENNE": "Quotidienne",
+    "HEBDOMADAIRE": "Hebdomadaire",
+    "MENSUELLE": "Mensuelle",
+    "INOPINEE": "Inopinée",
+    "VIC": "VIC (visite commune)",
+    "AUDIT_INTERNE": "Audit interne",
+    "AUDIT_EXTERNE": "Audit externe"
+  },
+  "statutInspection": {
+    "PLANIFIEE": "Planifiée",
+    "EN_COURS": "En cours",
+    "TERMINEE": "Terminée",
+    "ANNULEE": "Annulée"
+  },
+  "resultatItem": {
+    "CONFORME": "Conforme",
+    "NON_CONFORME": "Non conforme",
+    "NON_APPLICABLE": "N/A",
+    "NON_VERIFIE": "Non vérifié"
+  }
+}

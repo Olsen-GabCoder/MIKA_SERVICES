@@ -1,0 +1,15 @@
+{
+  "suiviMensuel": null,
+  "previsions": null,
+  "pointsBloquants": null,
+  "avancementEtudes": null,
+  "avancementPhysiquePct": null,
+  "avancementFinancierPct": null,
+  "delaiConsommePct": null,
+  "besoinsMateriel": null,
+  "besoinsHumain": null,
+  "observations": null,
+  "propositionsAmelioration": null,
+  "avertissements": ["Le contenu ne semble pas lié au projet", "Aucune donnée de suivi de chantier extractible"],
+  "champsExtraits": []
+}

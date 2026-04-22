@@ -1,6 +1,7 @@
 package com.mikaservices.platform.common.exception
 
 import com.mikaservices.platform.common.constants.ApiConstants
+import com.mikaservices.platform.common.exception.AnthropicException
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
@@ -220,6 +221,27 @@ class GlobalExceptionHandler {
             path = request.requestURI
         )
         return ResponseEntity(apiError, HttpStatus.NOT_FOUND)
+    }
+
+    @ExceptionHandler(AnthropicException::class)
+    fun handleAnthropicException(
+        ex: AnthropicException,
+        request: HttpServletRequest
+    ): ResponseEntity<ApiError> {
+        logger.error("Anthropic API error [{}]: {}", ex.errorCode, ex.message)
+        val httpStatus = when (ex.statusCode) {
+            429 -> HttpStatus.TOO_MANY_REQUESTS
+            503, 529 -> HttpStatus.SERVICE_UNAVAILABLE
+            504 -> HttpStatus.GATEWAY_TIMEOUT
+            else -> HttpStatus.BAD_GATEWAY
+        }
+        val apiError = ApiError(
+            status = httpStatus.value(),
+            error = ex.errorCode,
+            message = ex.message ?: "Erreur du service IA",
+            path = request.requestURI
+        )
+        return ResponseEntity(apiError, httpStatus)
     }
 
     @ExceptionHandler(Exception::class)

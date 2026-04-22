@@ -6,6 +6,7 @@ export function getRoleLabel(user: User): string {
   const code = role.code?.toUpperCase()
   if (code === 'ADMIN' || code === 'SUPER_ADMIN') return 'Admin'
   if (code === 'CHEF_PROJET') return 'Chef de projet'
+  if (code === 'CHEF_CHANTIER') return 'Chef de chantier'
   if (code === 'MANAGER') return 'Manager'
   return role.nom || 'Employé'
 }

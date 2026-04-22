@@ -1,0 +1,198 @@
+{
+  "sidebar": {
+    "group": "QSHE",
+    "groupQualite": "Quality",
+    "groupShe": "SHE",
+    "incidents": "Incidents & WA",
+    "dashboard": "Dashboard",
+    "inspections": "Inspections",
+    "controles": "Quality controls",
+    "nc": "Non-conformities",
+    "risques": "Risks",
+    "actions": "Actions (CAPA)",
+    "formations": "Training & certifications",
+    "epi": "PPE",
+    "causeries": "Toolbox talks",
+    "permis": "Work permits",
+    "environnement": "Environmental monitoring",
+    "fds": "Chemical products (SDS)"
+  },
+  "incidents": {
+    "title": "Incidents & Workplace Accidents",
+    "subtitle": "Declaration, investigation and tracking of QSHE incidents",
+    "selectProject": "Select a project",
+    "chooseProject": "— Choose a project —",
+    "declareIncident": "Report an incident",
+    "loading": "Loading incidents...",
+    "empty": "No incidents reported on this project.",
+    "noProject": "Select a project to view incidents.",
+    "kpi": {
+      "total": "Total incidents",
+      "graves": "Serious / Fatal",
+      "cnssRetard": "CNSS overdue",
+      "tauxCloture": "Closure rate"
+    },
+    "filters": {
+      "all": "All",
+      "byStatus": "By status",
+      "byType": "By type",
+      "byGravity": "By severity"
+    },
+    "detail": {
+      "general": "General",
+      "victimes": "Victims",
+      "temoins": "Witnesses",
+      "actions": "CAPA actions",
+      "piecesJointes": "Attachments",
+      "circonstances": "Circumstances",
+      "causes": "Causes",
+      "reglementaire": "Regulatory declarations"
+    },
+    "form": {
+      "title": "Report an incident",
+      "editTitle": "Edit incident",
+      "titre": "Title *",
+      "type": "Incident type *",
+      "gravite": "Severity *",
+      "date": "Incident date *",
+      "heure": "Time",
+      "lieu": "Location",
+      "zone": "Site zone",
+      "description": "Description",
+      "circonstances": "Circumstances description",
+      "activite": "Activity in progress",
+      "equipement": "Equipment involved",
+      "epiPortes": "PPE worn",
+      "causeImmediate": "Immediate cause",
+      "causeRacine": "Root cause",
+      "mesures": "Immediate measures taken",
+      "sousProjet": "Sub-project / Site",
+      "cancel": "Cancel",
+      "submit": "Report",
+      "save": "Save"
+    },
+    "victime": {
+      "add": "Add a victim",
+      "nom": "Last name *",
+      "prenom": "First name *",
+      "poste": "Position",
+      "entreprise": "Company",
+      "natureLesion": "Nature of injury",
+      "localisation": "Body location",
+      "arretTravail": "Work stoppage",
+      "nbJours": "Number of days",
+      "hospitalisation": "Hospitalization"
+    },
+    "temoin": {
+      "add": "Add a witness",
+      "nom": "Last name *",
+      "prenom": "First name",
+      "telephone": "Phone",
+      "email": "Email",
+      "entreprise": "Company",
+      "temoignage": "Testimony"
+    },
+    "cnss": {
+      "enRetard": "CNSS declaration overdue",
+      "echeance": "CNSS deadline",
+      "declaree": "Declared to CNSS",
+      "nonDeclaree": "Not declared"
+    },
+    "delete": "Delete",
+    "confirm": {
+      "delete": "Are you sure you want to delete this incident?"
+    }
+  },
+  "typeIncident": {
+    "ACCIDENT_TRAVAIL": "Workplace accident",
+    "PRESQU_ACCIDENT": "Near miss",
+    "INCIDENT_ENVIRONNEMENTAL": "Environmental incident",
+    "PREMIER_SECOURS": "First aid",
+    "DOMMAGE_MATERIEL": "Property damage",
+    "MALADIE_PROFESSIONNELLE": "Occupational disease"
+  },
+  "graviteIncident": {
+    "MINEURE": "Minor",
+    "LEGERE": "Slight",
+    "GRAVE": "Serious",
+    "MORTELLE": "Fatal"
+  },
+  "statutIncident": {
+    "BROUILLON": "Draft",
+    "DECLARE": "Reported",
+    "EN_INVESTIGATION": "Under investigation",
+    "INVESTIGATION_TERMINEE": "Investigation complete",
+    "CLOTURE": "Closed"
+  },
+  "localisationCorporelle": {
+    "TETE": "Head",
+    "VISAGE": "Face",
+    "YEUX": "Eyes",
+    "COU": "Neck",
+    "EPAULE_DROITE": "Right shoulder",
+    "EPAULE_GAUCHE": "Left shoulder",
+    "BRAS_DROIT": "Right arm",
+    "BRAS_GAUCHE": "Left arm",
+    "MAIN_DROITE": "Right hand",
+    "MAIN_GAUCHE": "Left hand",
+    "DOIGT": "Finger",
+    "THORAX": "Chest",
+    "ABDOMEN": "Abdomen",
+    "DOS_COLONNE": "Back / Spine",
+    "BASSIN": "Pelvis",
+    "CUISSE_DROITE": "Right thigh",
+    "CUISSE_GAUCHE": "Left thigh",
+    "GENOU_DROIT": "Right knee",
+    "GENOU_GAUCHE": "Left knee",
+    "JAMBE_DROITE": "Right leg",
+    "JAMBE_GAUCHE": "Left leg",
+    "PIED_DROIT": "Right foot",
+    "PIED_GAUCHE": "Left foot",
+    "ORGANES_INTERNES": "Internal organs",
+    "MULTIPLE": "Multiple",
+    "NON_PRECISE": "Not specified"
+  },
+  "inspections": {
+    "title": "Safety inspections",
+    "subtitle": "Checklists, audits and site visits",
+    "createInspection": "New inspection",
+    "loading": "Loading...",
+    "empty": "No inspections on this project.",
+    "score": "Score",
+    "items": "items",
+    "conformes": "compliant",
+    "nonConformes": "non-compliant",
+    "form": {
+      "titre": "Title *",
+      "type": "Inspection type *",
+      "template": "Checklist template",
+      "noTemplate": "No template",
+      "inspecteur": "Inspector",
+      "datePlanifiee": "Planned date",
+      "zone": "Inspected zone",
+      "cancel": "Cancel",
+      "submit": "Create"
+    }
+  },
+  "typeInspection": {
+    "QUOTIDIENNE": "Daily",
+    "HEBDOMADAIRE": "Weekly",
+    "MENSUELLE": "Monthly",
+    "INOPINEE": "Unannounced",
+    "VIC": "Joint inspection (VIC)",
+    "AUDIT_INTERNE": "Internal audit",
+    "AUDIT_EXTERNE": "External audit"
+  },
+  "statutInspection": {
+    "PLANIFIEE": "Planned",
+    "EN_COURS": "In progress",
+    "TERMINEE": "Completed",
+    "ANNULEE": "Cancelled"
+  },
+  "resultatItem": {
+    "CONFORME": "Compliant",
+    "NON_CONFORME": "Non-compliant",
+    "NON_APPLICABLE": "N/A",
+    "NON_VERIFIE": "Not checked"
+  }
+}

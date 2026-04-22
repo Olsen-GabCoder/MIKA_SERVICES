@@ -142,6 +142,10 @@ class DataInitializer(
             createPermissionIfNotExists("DMA_PROCESS", "Prendre en charge, commander, livrer une DMA", "DMA", TypePermission.UPDATE),
             createPermissionIfNotExists("DMA_CLOSE", "Clôturer une DMA après livraison", "DMA", TypePermission.UPDATE),
             createPermissionIfNotExists("DMA_VIEW_ALL", "Voir toutes les DMA (tous chantiers)", "DMA", TypePermission.READ),
+
+            // Module Qualité v2 — permissions spécifiques
+            createPermissionIfNotExists("QUALITE_SIGN", "Signer une section de fiche NC/RC/PPI", "QUALITE", TypePermission.VALIDATE),
+            createPermissionIfNotExists("QUALITE_CONFIG", "Configurer les référentiels qualité (templates, documents)", "QUALITE", TypePermission.ADMIN),
         )
         
         logger.info("${permissions.size} permissions initialisées")
@@ -318,6 +322,124 @@ class DataInitializer(
             role
         }
         mergePermissionsIntoRole("CHEF_CHANTIER", chefChantierPermissionCodes)
+
+        // ── Rôles Qualité v2 ──────────────────────────────────────────────
+        // Permissions communes à tous les rôles Qualité
+        val qualiteBasePermissionCodes = setOf(
+            "QUALITE_READ", "QUALITE_CREATE", "QUALITE_UPDATE", "QUALITE_SIGN",
+            "PROJET_READ"
+        )
+
+        // DIRECTEUR_TECHNIQUE — Direction, signature collégiale section 6
+        roleRepository.findByCode("DIRECTEUR_TECHNIQUE").orElseGet {
+            val role = Role(
+                code = "DIRECTEUR_TECHNIQUE",
+                nom = "Directeur Technique",
+                description = "Signature collégiale section 6 des fiches NC/RC/PPI",
+                niveau = NiveauHierarchique.DIRECTION,
+                actif = true
+            )
+            roleRepository.save(role)
+            logger.info("Rôle DIRECTEUR_TECHNIQUE créé")
+            role
+        }
+        mergePermissionsIntoRole("DIRECTEUR_TECHNIQUE", qualiteBasePermissionCodes)
+
+        // RESPONSABLE_QUALITE — Cadre supérieur, pilote le module
+        val rqPermissionCodes = qualiteBasePermissionCodes + setOf(
+            "QUALITE_DELETE", "QUALITE_CONFIG"
+        )
+        roleRepository.findByCode("RESPONSABLE_QUALITE").orElseGet {
+            val role = Role(
+                code = "RESPONSABLE_QUALITE",
+                nom = "Responsable Qualité",
+                description = "Pilote le module Qualité, signe sections 4, 5, 6 et 7",
+                niveau = NiveauHierarchique.CADRE_SUPERIEUR,
+                actif = true
+            )
+            roleRepository.save(role)
+            logger.info("Rôle RESPONSABLE_QUALITE créé")
+            role
+        }
+        mergePermissionsIntoRole("RESPONSABLE_QUALITE", rqPermissionCodes)
+
+        // INGENIEUR_QUALITE — Cadre moyen, détection + proposition traitement + vérification
+        roleRepository.findByCode("INGENIEUR_QUALITE").orElseGet {
+            val role = Role(
+                code = "INGENIEUR_QUALITE",
+                nom = "Ingénieur Qualité",
+                description = "Détection NC, proposition de traitement, vérification",
+                niveau = NiveauHierarchique.CADRE_MOYEN,
+                actif = true
+            )
+            roleRepository.save(role)
+            logger.info("Rôle INGENIEUR_QUALITE créé")
+            role
+        }
+        mergePermissionsIntoRole("INGENIEUR_QUALITE", qualiteBasePermissionCodes)
+
+        // CONTROLEUR_TECHNIQUE — Cadre moyen, vérification section 4 + collégiale section 6
+        roleRepository.findByCode("CONTROLEUR_TECHNIQUE").orElseGet {
+            val role = Role(
+                code = "CONTROLEUR_TECHNIQUE",
+                nom = "Contrôleur Technique",
+                description = "Vérification du traitement (section 4), signature collégiale section 6",
+                niveau = NiveauHierarchique.CADRE_MOYEN,
+                actif = true
+            )
+            roleRepository.save(role)
+            logger.info("Rôle CONTROLEUR_TECHNIQUE créé")
+            role
+        }
+        mergePermissionsIntoRole("CONTROLEUR_TECHNIQUE", qualiteBasePermissionCodes)
+
+        // ASSISTANT_QUALITE — Agent de maîtrise, détection terrain + aide saisie
+        roleRepository.findByCode("ASSISTANT_QUALITE").orElseGet {
+            val role = Role(
+                code = "ASSISTANT_QUALITE",
+                nom = "Assistant Qualité",
+                description = "Détection terrain des NC, aide à la saisie",
+                niveau = NiveauHierarchique.AGENT_MAITRISE,
+                actif = true
+            )
+            roleRepository.save(role)
+            logger.info("Rôle ASSISTANT_QUALITE créé")
+            role
+        }
+        mergePermissionsIntoRole("ASSISTANT_QUALITE", qualiteBasePermissionCodes)
+
+        // TECHNICIEN_LABORATOIRE — Agent de maîtrise, essais labo béton
+        roleRepository.findByCode("TECHNICIEN_LABORATOIRE").orElseGet {
+            val role = Role(
+                code = "TECHNICIEN_LABORATOIRE",
+                nom = "Technicien Laboratoire Qualité",
+                description = "Saisie des essais laboratoire béton (slump, prélèvements, coulage)",
+                niveau = NiveauHierarchique.AGENT_MAITRISE,
+                actif = true
+            )
+            roleRepository.save(role)
+            logger.info("Rôle TECHNICIEN_LABORATOIRE créé")
+            role
+        }
+        mergePermissionsIntoRole("TECHNICIEN_LABORATOIRE", qualiteBasePermissionCodes)
+
+        // TECHNICIEN_TOPOGRAPHIE — Agent de maîtrise, levée topographique
+        roleRepository.findByCode("TECHNICIEN_TOPOGRAPHIE").orElseGet {
+            val role = Role(
+                code = "TECHNICIEN_TOPOGRAPHIE",
+                nom = "Technicien Topographie",
+                description = "Saisie des données de levée topographique (profils implantés, réceptionnés)",
+                niveau = NiveauHierarchique.AGENT_MAITRISE,
+                actif = true
+            )
+            roleRepository.save(role)
+            logger.info("Rôle TECHNICIEN_TOPOGRAPHIE créé")
+            role
+        }
+        mergePermissionsIntoRole("TECHNICIEN_TOPOGRAPHIE", qualiteBasePermissionCodes)
+
+        // CHEF_CHANTIER : ajout permission QUALITE_SIGN (rôle CC dans le workflow section 6)
+        mergePermissionsIntoRole("CHEF_CHANTIER", setOf("QUALITE_READ", "QUALITE_CREATE", "QUALITE_SIGN"))
     }
     
     private fun initAdminUser() {

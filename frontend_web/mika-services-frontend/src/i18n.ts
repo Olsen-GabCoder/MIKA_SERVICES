@@ -12,8 +12,8 @@ import frMateriel from './locales/fr/materiel.json'
 import frCommunication from './locales/fr/communication.json'
 import frBudget from './locales/fr/budget.json'
 import frPlanning from './locales/fr/planning.json'
+import frQshe from './locales/fr/qshe.json'
 import frQualite from './locales/fr/qualite.json'
-import frSecurite from './locales/fr/securite.json'
 import frReporting from './locales/fr/reporting.json'
 import frDocument from './locales/fr/document.json'
 import frFournisseur from './locales/fr/fournisseur.json'
@@ -30,8 +30,8 @@ import enMateriel from './locales/en/materiel.json'
 import enCommunication from './locales/en/communication.json'
 import enBudget from './locales/en/budget.json'
 import enPlanning from './locales/en/planning.json'
+import enQshe from './locales/en/qshe.json'
 import enQualite from './locales/en/qualite.json'
-import enSecurite from './locales/en/securite.json'
 import enReporting from './locales/en/reporting.json'
 import enDocument from './locales/en/document.json'
 import enFournisseur from './locales/en/fournisseur.json'
@@ -63,8 +63,8 @@ const resources = {
     communication: frCommunication as Record<string, unknown>,
     budget: frBudget as Record<string, unknown>,
     planning: frPlanning as Record<string, unknown>,
+    qshe: frQshe as Record<string, unknown>,
     qualite: frQualite as Record<string, unknown>,
-    securite: frSecurite as Record<string, unknown>,
     reporting: frReporting as Record<string, unknown>,
     document: frDocument as Record<string, unknown>,
     fournisseur: frFournisseur as Record<string, unknown>,
@@ -83,8 +83,8 @@ const resources = {
     communication: enCommunication as Record<string, unknown>,
     budget: enBudget as Record<string, unknown>,
     planning: enPlanning as Record<string, unknown>,
+    qshe: enQshe as Record<string, unknown>,
     qualite: enQualite as Record<string, unknown>,
-    securite: enSecurite as Record<string, unknown>,
     reporting: enReporting as Record<string, unknown>,
     document: enDocument as Record<string, unknown>,
     fournisseur: enFournisseur as Record<string, unknown>,
@@ -101,7 +101,7 @@ export const i18nReady = i18n.use(initReactI18next).init({
   lng: initialLocale,
   fallbackLng: 'fr',
   defaultNS: 'common',
-  ns: ['common', 'layout', 'auth', 'user', 'projet', 'equipe', 'reunionHebdo', 'materiel', 'communication', 'budget', 'planning', 'qualite', 'securite', 'reporting', 'document', 'fournisseur', 'bareme', 'parametres'],
+  ns: ['common', 'layout', 'auth', 'user', 'projet', 'equipe', 'reunionHebdo', 'materiel', 'communication', 'budget', 'planning', 'qshe', 'qualite', 'reporting', 'document', 'fournisseur', 'bareme', 'parametres'],
   interpolation: {
     escapeValue: false,
   },

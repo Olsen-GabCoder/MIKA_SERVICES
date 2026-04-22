@@ -1,7 +1,7 @@
 package com.mikaservices.platform.modules.chantier.entity
 
 import com.mikaservices.platform.common.entity.BaseEntity
-import com.mikaservices.platform.common.enums.NiveauDanger
+import com.mikaservices.platform.common.enums.NiveauRisque
 import com.mikaservices.platform.common.enums.TypeZone
 import com.mikaservices.platform.modules.projet.entity.Projet
 import jakarta.persistence.*
@@ -41,7 +41,7 @@ class ZoneChantier(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "niveau_danger", length = 20)
-    var niveauDanger: NiveauDanger = NiveauDanger.FAIBLE,
+    var niveauDanger: NiveauRisque = NiveauRisque.FAIBLE,
 
     @Column(name = "actif", nullable = false)
     var actif: Boolean = true

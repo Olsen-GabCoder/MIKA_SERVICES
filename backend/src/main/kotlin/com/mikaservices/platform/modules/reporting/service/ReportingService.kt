@@ -10,11 +10,8 @@ import com.mikaservices.platform.modules.planning.repository.TacheRepository
 import com.mikaservices.platform.modules.projet.repository.PrevisionRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
 import com.mikaservices.platform.modules.projet.repository.SousProjetRepository
-import com.mikaservices.platform.modules.qualite.repository.ControleQualiteRepository
-import com.mikaservices.platform.modules.qualite.repository.NonConformiteRepository
 import com.mikaservices.platform.modules.reporting.dto.response.*
-import com.mikaservices.platform.modules.securite.repository.IncidentRepository
-import com.mikaservices.platform.modules.securite.repository.RisqueRepository
+// TODO QSHE v2 — imports securite/qualite repositories retirés lors du nettoyage #0, à recâbler au livrable #4 (dashboard QSHE)
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -31,10 +28,7 @@ class ReportingService(
     private val depenseRepository: DepenseRepository,
     private val tacheRepository: TacheRepository,
     private val previsionRepository: PrevisionRepository,
-    private val controleQualiteRepository: ControleQualiteRepository,
-    private val nonConformiteRepository: NonConformiteRepository,
-    private val incidentRepository: IncidentRepository,
-    private val risqueRepository: RisqueRepository,
+    // TODO QSHE v2 — repositories securite/qualite retirés lors du nettoyage #0, à recâbler au livrable #4 (dashboard QSHE)
     private val enginRepository: EnginRepository,
     private val materiauRepository: MateriauRepository,
     private val sousProjetRepository: SousProjetRepository
@@ -46,8 +40,9 @@ class ReportingService(
             chantiers = getChantierStats(),
             budget = getGlobalBudgetStats(),
             planning = getGlobalPlanningStats(),
-            qualite = getGlobalQualiteStats(),
-            securite = getGlobalSecuriteStats(),
+            // TODO QSHE v2 — stats qualite/securite retirées lors du nettoyage #0, à reconstruire au livrable #4
+            qualite = null,
+            securite = null,
             materiel = getMaterielStats(),
             weeklyProgress = getWeeklyProgressStats()
         )
@@ -74,19 +69,7 @@ class ReportingService(
         val tachesEnCours = tacheRepository.countByProjetIdAndStatut(projetId, StatutTache.EN_COURS)
         val tauxAvancement = if (tachesTotal > 0) (tachesTerminees.toDouble() / tachesTotal * 100) else 0.0
 
-        val controlesConformes = controleQualiteRepository.countByProjetIdAndStatut(projetId, StatutControleQualite.CONFORME)
-        val controlesNonConformes = controleQualiteRepository.countByProjetIdAndStatut(projetId, StatutControleQualite.NON_CONFORME)
-        val controlesTotal = controlesConformes + controlesNonConformes +
-                controleQualiteRepository.countByProjetIdAndStatut(projetId, StatutControleQualite.PLANIFIE) +
-                controleQualiteRepository.countByProjetIdAndStatut(projetId, StatutControleQualite.EN_COURS)
-        val controlesTermines = controlesConformes + controlesNonConformes
-        val tauxConformite = if (controlesTermines > 0) (controlesConformes.toDouble() / controlesTermines * 100) else 0.0
-
-        val ncOuvertes = nonConformiteRepository.countOuvertesParProjet(projetId)
-        val incidentsTotal = incidentRepository.countByProjetId(projetId)
-        val incidentsGraves = incidentRepository.countGravesParProjet(projetId)
-        val joursArret = incidentRepository.sumJoursArretParProjet(projetId) ?: 0L
-        val risquesCritiques = risqueRepository.countCritiquesParProjet(projetId)
+        // TODO QSHE v2 — stats qualite/securite par projet retirées lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE)
 
         val today = LocalDate.now()
         val tachesEnRetard = tacheRepository.findByProjetIdAndStatut(projetId, StatutTache.EN_COURS).count { t ->
@@ -99,8 +82,9 @@ class ReportingService(
             statut = projet.statut.name,
             budget = BudgetStats(budgetPrevu, depenses, ecart, round(tauxConso * 100.0) / 100.0),
             planning = PlanningStats(tachesTotal, tachesTerminees, tachesEnCours, tachesEnRetard, round(tauxAvancement * 100.0) / 100.0),
-            qualite = QualiteStats(controlesTotal, Math.round(tauxConformite * 100.0) / 100.0, ncOuvertes),
-            securite = SecuriteStats(incidentsTotal, incidentsGraves, joursArret, risquesCritiques),
+            // TODO QSHE v2 — qualite/securite retirés lors du nettoyage #0, à reconstruire au livrable #4
+            qualite = null,
+            securite = null,
             nbChantiers = 0L,
             nbSousProjets = sousProjetRepository.findByProjetId(projet.id!!).size.toLong()
         )
@@ -174,23 +158,7 @@ class ReportingService(
         return PlanningStats(total, terminees, enCours, enRetard, round(tauxAvancement * 100.0) / 100.0)
     }
 
-    private fun getGlobalQualiteStats(): QualiteStats {
-        val all = controleQualiteRepository.findAll()
-        val conformes = all.count { it.statut == StatutControleQualite.CONFORME }.toLong()
-        val nonConformes = all.count { it.statut == StatutControleQualite.NON_CONFORME }.toLong()
-        val termines = conformes + nonConformes
-        val tauxConformite = if (termines > 0) (conformes.toDouble() / termines * 100) else 0.0
-        val ncOuvertes = nonConformiteRepository.findAll().count { it.statut != StatutNonConformite.CLOTUREE }.toLong()
-        return QualiteStats(all.size.toLong(), round(tauxConformite * 100.0) / 100.0, ncOuvertes)
-    }
-
-    private fun getGlobalSecuriteStats(): SecuriteStats {
-        val allIncidents = incidentRepository.findAll()
-        val graves = allIncidents.count { it.gravite in listOf(GraviteIncident.GRAVE, GraviteIncident.TRES_GRAVE, GraviteIncident.MORTEL) }.toLong()
-        val joursArret = allIncidents.sumOf { it.nbJoursArret }.toLong()
-        val risquesCritiques = risqueRepository.findAll().count { it.niveau in listOf(NiveauRisque.ELEVE, NiveauRisque.CRITIQUE) && it.actif }.toLong()
-        return SecuriteStats(allIncidents.size.toLong(), graves, joursArret, risquesCritiques)
-    }
+    // TODO QSHE v2 — getGlobalQualiteStats() et getGlobalSecuriteStats() retirés lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE)
 
     private fun getMaterielStats(): MaterielStats {
         val engins = enginRepository.findAll()

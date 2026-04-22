@@ -1,0 +1,21 @@
+{
+  "suiviMensuel": null,
+  "previsions": [
+    { "description": "Réception acier", "type": "APPROVISIONNEMENT", "semaine": 17, "annee": 2026, "avancementPct": null },
+    { "description": "Démarrage ferraillage", "type": "PRODUCTION", "semaine": 17, "annee": 2026, "avancementPct": null }
+  ],
+  "pointsBloquants": [
+    { "titre": "Retard livraison acier", "description": null, "priorite": "CRITIQUE", "actionCorrective": null },
+    { "titre": "Panne du compacteur", "description": "En panne depuis hier", "priorite": "HAUTE", "actionCorrective": null }
+  ],
+  "avancementEtudes": null,
+  "avancementPhysiquePct": 45.0,
+  "avancementFinancierPct": null,
+  "delaiConsommePct": null,
+  "besoinsMateriel": null,
+  "besoinsHumain": null,
+  "observations": null,
+  "propositionsAmelioration": null,
+  "avertissements": ["Aucun CA mentionné"],
+  "champsExtraits": ["previsions", "pointsBloquants", "avancementPhysiquePct"]
+}

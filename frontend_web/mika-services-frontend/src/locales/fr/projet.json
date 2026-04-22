@@ -592,7 +592,12 @@
     "monthsShort_8": "Sept",
     "monthsShort_9": "Oct",
     "monthsShort_10": "Nov",
-    "monthsShort_11": "Déc"
+    "monthsShort_11": "Déc",
+    "avancementFinancier": "Avancement financier",
+    "enRetard": "En retard",
+    "addLocalisation": "Ajouter la localisation",
+    "progressComparaison": "Avancement physique vs délai consommé",
+    "localisationAbsente": "Localisation non renseignée"
   },
   "historique": {
     "title": "Historique du projet",

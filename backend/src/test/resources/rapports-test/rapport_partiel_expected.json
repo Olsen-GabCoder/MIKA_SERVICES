@@ -1,0 +1,21 @@
+{
+  "suiviMensuel": null,
+  "previsions": [
+    { "description": "Coulage dalle niveau 2", "type": "PRODUCTION", "semaine": 17, "annee": 2026, "avancementPct": 30 },
+    { "description": "Livraison menuiseries aluminium", "type": "APPROVISIONNEMENT", "semaine": 17, "annee": 2026, "avancementPct": null }
+  ],
+  "pointsBloquants": [
+    { "titre": "Sous-traitant électricité absent", "description": "Absent depuis 3 jours", "priorite": "URGENTE", "actionCorrective": "Recherche remplaçant" },
+    { "titre": "Permis de voirie en attente à la mairie", "description": null, "priorite": "NORMALE", "actionCorrective": null }
+  ],
+  "avancementEtudes": null,
+  "avancementPhysiquePct": null,
+  "avancementFinancierPct": null,
+  "delaiConsommePct": null,
+  "besoinsMateriel": null,
+  "besoinsHumain": null,
+  "observations": null,
+  "propositionsAmelioration": null,
+  "avertissements": ["Aucun CA mentionné dans le rapport"],
+  "champsExtraits": ["previsions", "pointsBloquants"]
+}

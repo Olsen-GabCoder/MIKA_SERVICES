@@ -26,8 +26,24 @@ const DemandeMaterielFormPage = lazy(() => import('@/features/materiel/pages/Dem
 const DemandeMaterielDetailPage = lazy(() => import('@/features/materiel/pages/DemandeMaterielDetailPage').then(m => ({ default: m.DemandeMaterielDetailPage })))
 const BudgetPage = lazy(() => import('@/features/budget/pages/BudgetPage').then(m => ({ default: m.BudgetPage })))
 const PlanningPage = lazy(() => import('@/features/planning/pages/PlanningPage'))
-const QualitePage = lazy(() => import('@/features/qualite/pages/QualitePage'))
-const SecuritePage = lazy(() => import('@/features/securite/pages/SecuritePage'))
+const QualiteReceptionsPage = lazy(() => import('@/features/qualite/pages/ReceptionsTravauxPage'))
+const QualiteEssaisLaboPage = lazy(() => import('@/features/qualite/pages/EssaisLaboBetonPage'))
+const QualiteLeveeTopoPage = lazy(() => import('@/features/qualite/pages/LeveeTopoPage'))
+const QualiteAgrementsPage = lazy(() => import('@/features/qualite/pages/AgrementsPage'))
+const QualiteEvenementsPage = lazy(() => import('@/features/qualite/pages/EvenementsPage'))
+const QualiteEvenementDetailPage = lazy(() => import('@/features/qualite/pages/EvenementDetailPage'))
+const QualiteDocumentsPage = lazy(() => import('@/features/qualite/pages/DocumentsQualitePage'))
+const QualiteSynthesePage = lazy(() => import('@/features/qualite/pages/SyntheseMensuellePage'))
+const QsheIncidentsPage = lazy(() => import('@/features/qshe/pages/IncidentsPage'))
+const QsheDashboardPage = lazy(() => import('@/features/qshe/pages/QsheDashboardPage'))
+const QsheInspectionsPage = lazy(() => import('@/features/qshe/pages/InspectionsPage'))
+const QsheRisquesPage = lazy(() => import('@/features/qshe/pages/RisquesPage'))
+const QsheFormationsPage = lazy(() => import('@/features/qshe/pages/FormationsPage'))
+const QsheEpiPage = lazy(() => import('@/features/qshe/pages/EpiPage'))
+const QsheCauseriesPage = lazy(() => import('@/features/qshe/pages/CauseriesPage'))
+const QshePermisPage = lazy(() => import('@/features/qshe/pages/PermisPage'))
+const QsheEnvPage = lazy(() => import('@/features/qshe/pages/EnvironnementPage'))
+const QsheFdsPage = lazy(() => import('@/features/qshe/pages/ProduitsChimiquesPage'))
 const MessageriePage = lazy(() => import('@/features/communication/pages/MessageriePage'))
 const NotificationsPage = lazy(() => import('@/features/communication/pages/NotificationsPage'))
 const DocumentPage = lazy(() => import('@/features/document/pages/DocumentPage'))
@@ -192,12 +208,80 @@ const router = createBrowserRouter([
         element: <ProtectedRoute><L><PlanningPage /></L></ProtectedRoute>,
       },
       {
-        path: 'qualite',
-        element: <ProtectedRoute><L><QualitePage /></L></ProtectedRoute>,
+        path: 'qualite/receptions',
+        element: <ProtectedRoute><L><QualiteReceptionsPage /></L></ProtectedRoute>,
       },
       {
-        path: 'securite',
-        element: <ProtectedRoute><L><SecuritePage /></L></ProtectedRoute>,
+        path: 'qualite/essais-labo',
+        element: <ProtectedRoute><L><QualiteEssaisLaboPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qualite/levees-topo',
+        element: <ProtectedRoute><L><QualiteLeveeTopoPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qualite/agrements',
+        element: <ProtectedRoute><L><QualiteAgrementsPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qualite/evenements',
+        element: <ProtectedRoute><L><QualiteEvenementsPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qualite/evenements/:id',
+        element: <ProtectedRoute><L><QualiteEvenementDetailPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qualite/synthese',
+        element: <ProtectedRoute><L><QualiteSynthesePage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qualite/documents',
+        element: <ProtectedRoute><L><QualiteDocumentsPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qshe',
+        element: <ProtectedRoute><L><QsheDashboardPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qshe/dashboard',
+        element: <ProtectedRoute><L><QsheDashboardPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qshe/incidents',
+        element: <ProtectedRoute><L><QsheIncidentsPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qshe/inspections',
+        element: <ProtectedRoute><L><QsheInspectionsPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qshe/risques',
+        element: <ProtectedRoute><L><QsheRisquesPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qshe/formations',
+        element: <ProtectedRoute><L><QsheFormationsPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qshe/epi',
+        element: <ProtectedRoute><L><QsheEpiPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qshe/causeries',
+        element: <ProtectedRoute><L><QsheCauseriesPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qshe/permis',
+        element: <ProtectedRoute><L><QshePermisPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qshe/environnement',
+        element: <ProtectedRoute><L><QsheEnvPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'qshe/produits-chimiques',
+        element: <ProtectedRoute><L><QsheFdsPage /></L></ProtectedRoute>,
       },
       {
         path: 'messagerie',

@@ -1,0 +1,27 @@
+{
+  "suiviMensuel": [
+    { "mois": 4, "annee": 2026, "caPrevisionnel": 450000, "caRealise": 380000 }
+  ],
+  "previsions": [
+    { "description": "Réception acier", "type": "APPROVISIONNEMENT", "semaine": 17, "annee": 2026, "avancementPct": null },
+    { "description": "Démarrage ferraillage bâtiment B", "type": "PRODUCTION", "semaine": 17, "annee": 2026, "avancementPct": null },
+    { "description": "Maintenance compacteur CAT 320", "type": "MATERIEL", "semaine": 17, "annee": 2026, "avancementPct": null }
+  ],
+  "pointsBloquants": [
+    { "titre": "Retard livraison ciment Lafarge", "description": "3 jours de retard", "priorite": "CRITIQUE", "actionCorrective": "relance fournisseur + commande alternative" },
+    { "titre": "Panne compacteur", "description": "Panne depuis lundi", "priorite": "HAUTE", "actionCorrective": "technicien prévu jeudi" }
+  ],
+  "avancementEtudes": [
+    { "phase": "APD", "avancementPct": 85, "etatValidation": "VALIDE" },
+    { "phase": "EXE", "avancementPct": 40, "etatValidation": "EN_COURS" }
+  ],
+  "avancementPhysiquePct": 42.0,
+  "avancementFinancierPct": 38.0,
+  "delaiConsommePct": 55.0,
+  "besoinsMateriel": "Niveleuse • Camion 10T",
+  "besoinsHumain": "Conducteur de travaux • Topographe",
+  "observations": "Météo défavorable lundi et mardi, reprise mercredi. Le rendement global reste satisfaisant malgré les intempéries.",
+  "propositionsAmelioration": "Prévoir un stock tampon ciment de 2 jours pour absorber les retards fournisseur.",
+  "avertissements": [],
+  "champsExtraits": ["suiviMensuel", "previsions", "pointsBloquants", "avancementEtudes", "avancementPhysiquePct", "avancementFinancierPct", "delaiConsommePct", "besoinsMateriel", "besoinsHumain", "observations", "propositionsAmelioration"]
+}

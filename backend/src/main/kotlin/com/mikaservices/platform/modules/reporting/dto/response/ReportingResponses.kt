@@ -7,8 +7,9 @@ data class GlobalDashboardResponse(
     val chantiers: ChantierStats,
     val budget: BudgetStats,
     val planning: PlanningStats,
-    val qualite: QualiteStats,
-    val securite: SecuriteStats,
+    // TODO QSHE v2 — champs qualite/securite retirés lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE)
+    val qualite: QualiteStats? = null,
+    val securite: SecuriteStats? = null,
     val materiel: MaterielStats,
     val weeklyProgress: WeeklyProgressStats
 )
@@ -44,17 +45,18 @@ data class PlanningStats(
     val tauxAvancement: Double
 )
 
+// TODO QSHE v2 — QualiteStats et SecuriteStats retirés lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE)
 data class QualiteStats(
-    val controlesTotal: Long,
-    val tauxConformite: Double,
-    val ncOuvertes: Long
+    val controlesTotal: Long = 0,
+    val tauxConformite: Double = 0.0,
+    val ncOuvertes: Long = 0
 )
 
 data class SecuriteStats(
-    val incidentsTotal: Long,
-    val incidentsGraves: Long,
-    val joursArretTotal: Long,
-    val risquesCritiques: Long
+    val incidentsTotal: Long = 0,
+    val incidentsGraves: Long = 0,
+    val joursArretTotal: Long = 0,
+    val risquesCritiques: Long = 0
 )
 
 data class MaterielStats(
@@ -69,8 +71,9 @@ data class ProjetReportResponse(
     val statut: String,
     val budget: BudgetStats,
     val planning: PlanningStats,
-    val qualite: QualiteStats,
-    val securite: SecuriteStats,
+    // TODO QSHE v2 — champs qualite/securite retirés lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE)
+    val qualite: QualiteStats? = null,
+    val securite: SecuriteStats? = null,
     val nbChantiers: Long,
     val nbSousProjets: Long
 )

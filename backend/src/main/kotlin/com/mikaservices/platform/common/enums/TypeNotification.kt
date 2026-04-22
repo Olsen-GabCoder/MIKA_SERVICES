@@ -28,4 +28,14 @@ enum class TypeNotification {
 
     /** Rappels automatiques hebdomadaires */
     RAPPEL_MAJ_PROJET,
+
+    /** QSHE — notifications ajoutées au livrable #14 */
+    QSHE_INCIDENT_GRAVE,
+    QSHE_CNSS_EN_RETARD,
+    QSHE_INSPECTION_TERMINEE,
+    QSHE_ACTION_EN_RETARD,
+    QSHE_CERTIFICATION_EXPIRE,
+    QSHE_PERMIS_EXPIRE,
+    QSHE_EPI_STOCK_BAS,
+    QSHE_DEPASSEMENT_ENVIRONNEMENTAL,
 }

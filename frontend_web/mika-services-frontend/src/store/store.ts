@@ -11,8 +11,19 @@ import demandeMaterielReducer from './slices/demandeMaterielSlice'
 import materiauReducer from './slices/materiauSlice'
 import budgetReducer from './slices/budgetSlice'
 import planningReducer from './slices/planningSlice'
-import qualiteReducer from './slices/qualiteSlice'
-import securiteReducer from './slices/securiteSlice'
+import qsheIncidentReducer from './slices/qsheIncidentSlice'
+import qsheInspectionReducer from './slices/qsheInspectionSlice'
+import qsheRisqueReducer from './slices/qsheRisqueSlice'
+import qsheCertificationReducer from './slices/qsheCertificationSlice'
+import qsheEpiReducer from './slices/qsheEpiSlice'
+import qsheCauserieReducer from './slices/qsheCauserieSlice'
+import qshePermisReducer from './slices/qshePermisSlice'
+import qualiteReceptionReducer from './slices/qualiteReceptionSlice'
+import qualiteEssaiLaboReducer from './slices/qualiteEssaiLaboSlice'
+import qualiteLeveeTopoReducer from './slices/qualiteLeveeTopoSlice'
+import qualiteAgrementReducer from './slices/qualiteAgrementSlice'
+import qualiteEvenementReducer from './slices/qualiteEvenementSlice'
+import qualiteDocumentReducer from './slices/qualiteDocumentSlice'
 import communicationReducer from './slices/communicationSlice'
 import reportingReducer from './slices/reportingSlice'
 import documentReducer from './slices/documentSlice'
@@ -31,8 +42,19 @@ export const store = configureStore({
     materiau: materiauReducer,
     budget: budgetReducer,
     planning: planningReducer,
-    qualite: qualiteReducer,
-    securite: securiteReducer,
+    qsheIncident: qsheIncidentReducer,
+    qsheInspection: qsheInspectionReducer,
+    qsheRisque: qsheRisqueReducer,
+    qsheCertification: qsheCertificationReducer,
+    qsheEpi: qsheEpiReducer,
+    qsheCauserie: qsheCauserieReducer,
+    qshePermis: qshePermisReducer,
+    qualiteReception: qualiteReceptionReducer,
+    qualiteEssaiLabo: qualiteEssaiLaboReducer,
+    qualiteLeveeTopo: qualiteLeveeTopoReducer,
+    qualiteAgrement: qualiteAgrementReducer,
+    qualiteEvenement: qualiteEvenementReducer,
+    qualiteDocument: qualiteDocumentReducer,
     communication: communicationReducer,
     reporting: reportingReducer,
     document: documentReducer,

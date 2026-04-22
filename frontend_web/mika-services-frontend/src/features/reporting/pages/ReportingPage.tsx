@@ -199,17 +199,7 @@ export default function ReportingPage() {
                 }
                 accent="secondary"
               />
-              <KPICard
-                title={t('qualityCompliance')}
-                value={`${d.qualite.tauxConformite}%`}
-                subtitle={`${d.qualite.controlesTotal} ${t('controls')}`}
-                detail={
-                  d.qualite.ncOuvertes > 0 ? (
-                    <span className="text-red-600 dark:text-red-400">{d.qualite.ncOuvertes} {t('ncOpen')}</span>
-                  ) : undefined
-                }
-                accent={d.qualite.tauxConformite >= 80 ? 'success' : d.qualite.tauxConformite >= 60 ? 'warning' : 'danger'}
-              />
+              {/* TODO QSHE v2 — KPI qualite retiré lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE) */}
             </div>
           </section>
 
@@ -289,39 +279,7 @@ export default function ReportingPage() {
               </div>
             </ChartCard>
 
-            <ChartCard title={t('qualityComplianceChart')} subtitle={t('compliantVsNonCompliant')}>
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={[
-                        {
-                          name: t('compliant'),
-                          value: Math.round((d.qualite.controlesTotal * d.qualite.tauxConformite) / 100),
-                          color: CHART_COLORS.success,
-                        },
-                        {
-                          name: t('nonCompliant'),
-                          value: Math.round((d.qualite.controlesTotal * (100 - d.qualite.tauxConformite)) / 100),
-                          color: CHART_COLORS.danger,
-                        },
-                      ]}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      <Cell fill={CHART_COLORS.success} />
-                      <Cell fill={CHART_COLORS.danger} />
-                    </Pie>
-                    <Tooltip formatter={(value: number | undefined) => [value ?? 0, t('controls')]} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </ChartCard>
+            {/* TODO QSHE v2 — Quality compliance chart retiré lors du nettoyage #0, à reconstruire au livrable #4 */}
           </section>
 
           {/* Répartition détaillée par statut + indicateurs radiaux */}
@@ -372,7 +330,7 @@ export default function ReportingPage() {
                     data={[
                       { name: t('budget'), value: Math.min(d.budget.tauxConsommation, 100), fill: CHART_COLORS.primary },
                       { name: t('progress'), value: Math.min(d.planning.tauxAvancement, 100), fill: CHART_COLORS.secondary },
-                      { name: t('compliance'), value: Math.min(d.qualite.tauxConformite, 100), fill: CHART_COLORS.success },
+                      // TODO QSHE v2 — radial qualite retiré lors du nettoyage #0, à reconstruire au livrable #4
                     ]}
                     startAngle={180}
                     endAngle={0}
@@ -408,23 +366,7 @@ export default function ReportingPage() {
                   </ResponsiveContainer>
                 </div>
               </ChartCard>
-              <KPICard
-                title={t('safety')}
-                value={d.securite.incidentsTotal}
-                subtitle={t('incidentsReported')}
-                detail={
-                  <>
-                    {d.securite.incidentsGraves > 0 && <span className="text-red-600 dark:text-red-400">{d.securite.incidentsGraves} {t('serious')}</span>}
-                    {d.securite.joursArretTotal > 0 && (
-                      <span className="text-orange-600 dark:text-orange-400">{d.securite.joursArretTotal} {t('daysOff')}</span>
-                    )}
-                    {d.securite.risquesCritiques > 0 && (
-                      <span className="text-red-600 dark:text-red-400">{d.securite.risquesCritiques} {t('criticalRisks')}</span>
-                    )}
-                  </>
-                }
-                accent="warning"
-              />
+              {/* TODO QSHE v2 — KPI securite retiré lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE) */}
               <KPICard
                 title={t('equipment')}
                 value={d.materiel.enginsTotal}
@@ -478,8 +420,7 @@ function ProjetReportSection({ report }: { report: ProjetReport }) {
   const { t } = useTranslation('reporting')
   const b = report.budget
   const p = report.planning
-  const q = report.qualite
-  const s = report.securite
+  // TODO QSHE v2 — q (qualite) et s (securite) retirés lors du nettoyage #0, à reconstruire au livrable #4
 
   return (
     <section className="space-y-6">
@@ -557,34 +498,7 @@ function ProjetReportSection({ report }: { report: ProjetReport }) {
             </div>
           </ChartCard>
 
-          <ChartCard title={t('qualityAndSafety')}>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-xl bg-green-50/80 dark:bg-green-900/30 px-4 py-3">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('compliance')}</span>
-                <span
-                  className={`text-lg font-bold ${
-                    q.tauxConformite >= 80 ? 'text-green-600 dark:text-green-400' : q.tauxConformite >= 60 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'
-                  }`}
-                >
-                  {q.tauxConformite}%
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-xl bg-slate-50/80 dark:bg-gray-700/80 px-4 py-3">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('incidents')}</span>
-                <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{s.incidentsTotal}</span>
-              </div>
-              {(q.ncOuvertes > 0 || s.risquesCritiques > 0) && (
-                <div className="flex flex-wrap gap-2 text-xs">
-                  {q.ncOuvertes > 0 && (
-                    <span className="rounded-full bg-red-50 dark:bg-red-900/50 px-2 py-1 text-red-700 dark:text-red-200">{q.ncOuvertes} {t('ncOpen')}</span>
-                  )}
-                  {s.risquesCritiques > 0 && (
-                    <span className="rounded-full bg-amber-50 dark:bg-amber-900/50 px-2 py-1 text-amber-700 dark:text-amber-200">{s.risquesCritiques} {t('criticalRisks')}</span>
-                  )}
-                </div>
-              )}
-            </div>
-          </ChartCard>
+          {/* TODO QSHE v2 — Quality & Safety chart retiré lors du nettoyage #0, à reconstruire au livrable #4 */}
         </div>
       </div>
     </section>

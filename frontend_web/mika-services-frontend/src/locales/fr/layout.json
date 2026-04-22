@@ -40,7 +40,15 @@
     "admin": "Admin",
     "chefDeProjet": "Chef de projet",
     "manager": "Manager",
-    "employe": "Employé"
+    "employe": "Employé",
+    "directeurTechnique": "Directeur Technique",
+    "responsableQualite": "Responsable Qualité",
+    "ingenieurQualite": "Ingénieur Qualité",
+    "controleurTechnique": "Contrôleur Technique",
+    "assistantQualite": "Assistant Qualité",
+    "technicienLaboratoire": "Technicien Laboratoire",
+    "technicienTopographie": "Technicien Topographie",
+    "chefChantier": "Chef de chantier"
   },
   "header": {
     "tagline": "Plateforme de gestion",

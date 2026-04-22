@@ -40,7 +40,15 @@
     "admin": "Admin",
     "chefDeProjet": "Project manager",
     "manager": "Manager",
-    "employe": "Employee"
+    "employe": "Employee",
+    "directeurTechnique": "Technical Director",
+    "responsableQualite": "Quality Manager",
+    "ingenieurQualite": "Quality Engineer",
+    "controleurTechnique": "Technical Controller",
+    "assistantQualite": "Quality Assistant",
+    "technicienLaboratoire": "Laboratory Technician",
+    "technicienTopographie": "Survey Technician",
+    "chefChantier": "Site Manager"
   },
   "header": {
     "tagline": "Management platform",

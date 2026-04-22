@@ -1,0 +1,15 @@
+{
+  "suiviMensuel": null,
+  "previsions": null,
+  "pointsBloquants": null,
+  "avancementEtudes": null,
+  "avancementPhysiquePct": 50.0,
+  "avancementFinancierPct": null,
+  "delaiConsommePct": null,
+  "besoinsMateriel": null,
+  "besoinsHumain": null,
+  "observations": null,
+  "propositionsAmelioration": null,
+  "avertissements": ["Information trop vague, aucun point bloquant ou prévision extractible"],
+  "champsExtraits": ["avancementPhysiquePct"]
+}

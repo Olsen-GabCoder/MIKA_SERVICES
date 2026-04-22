@@ -1,0 +1,20 @@
+{
+  "suiviMensuel": null,
+  "previsions": [
+    { "description": "Démarrage fondations mur de soutènement", "type": "PRODUCTION", "semaine": 17, "annee": 2026, "avancementPct": null },
+    { "description": "Réception ferraillage", "type": "APPROVISIONNEMENT", "semaine": 17, "annee": 2026, "avancementPct": null }
+  ],
+  "pointsBloquants": [
+    { "titre": "Panne groupe électrogène", "description": "Tombé en panne hier soir, impossible de couler sans vibration", "priorite": "HAUTE", "actionCorrective": "Prestataire maintenance prévu demain matin" }
+  ],
+  "avancementEtudes": null,
+  "avancementPhysiquePct": 60.0,
+  "avancementFinancierPct": null,
+  "delaiConsommePct": null,
+  "besoinsMateriel": "Camion-benne",
+  "besoinsHumain": "Chef d'équipe",
+  "observations": null,
+  "propositionsAmelioration": null,
+  "avertissements": ["Aucun CA mentionné"],
+  "champsExtraits": ["previsions", "pointsBloquants", "avancementPhysiquePct", "besoinsMateriel", "besoinsHumain"]
+}

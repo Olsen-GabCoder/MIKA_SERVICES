@@ -1,21 +1,24 @@
-export enum NatureReception {
-  TOPOGRAPHIE = 'TOPOGRAPHIE',
-  GEOTECHNIQUE_LABORATOIRE = 'GEOTECHNIQUE_LABORATOIRE',
-  OUVRAGE = 'OUVRAGE',
-}
+export const NatureReception = {
+  TOPOGRAPHIE: 'TOPOGRAPHIE',
+  GEOTECHNIQUE_LABORATOIRE: 'GEOTECHNIQUE_LABORATOIRE',
+  OUVRAGE: 'OUVRAGE',
+} as const
+export type NatureReception = (typeof NatureReception)[keyof typeof NatureReception]
 
-export enum SousTypeReception {
-  TERRASSEMENT = 'TERRASSEMENT',
-  GENIE_CIVIL = 'GENIE_CIVIL',
-}
+export const SousTypeReception = {
+  TERRASSEMENT: 'TERRASSEMENT',
+  GENIE_CIVIL: 'GENIE_CIVIL',
+} as const
+export type SousTypeReception = (typeof SousTypeReception)[keyof typeof SousTypeReception]
 
-export enum StatutReception {
-  ETABLIE = 'ETABLIE',
-  EN_ATTENTE_MDC = 'EN_ATTENTE_MDC',
-  ACCORDEE_SANS_RESERVE = 'ACCORDEE_SANS_RESERVE',
-  ACCORDEE_AVEC_RESERVE = 'ACCORDEE_AVEC_RESERVE',
-  REJETEE = 'REJETEE',
-}
+export const StatutReception = {
+  ETABLIE: 'ETABLIE',
+  EN_ATTENTE_MDC: 'EN_ATTENTE_MDC',
+  ACCORDEE_SANS_RESERVE: 'ACCORDEE_SANS_RESERVE',
+  ACCORDEE_AVEC_RESERVE: 'ACCORDEE_AVEC_RESERVE',
+  REJETEE: 'REJETEE',
+} as const
+export type StatutReception = (typeof StatutReception)[keyof typeof StatutReception]
 
 export interface DemandeReceptionResponse {
   id: number

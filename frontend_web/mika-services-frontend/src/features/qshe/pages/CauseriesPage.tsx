@@ -14,7 +14,7 @@ export default function CauseriesPage() {
   const { t } = useTranslation('qshe')
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
-  const { causeries, summary, loading, totalPages, currentPage } = useAppSelector(s => s.qsheCauserie)
+  const { causeries, summary, loading, totalPages } = useAppSelector(s => s.qsheCauserie)
   const projets = useAppSelector(s => s.projet.projets)
 
   const [projetId, setProjetId] = useState<number | null>(null)

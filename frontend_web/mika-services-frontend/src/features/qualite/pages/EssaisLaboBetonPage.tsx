@@ -20,7 +20,7 @@ export default function EssaisLaboBetonPage() {
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
 
-  const { essais, totalPages, currentPage, loading } = useAppSelector(s => s.qualiteEssaiLabo)
+  const { essais, totalPages, loading } = useAppSelector(s => s.qualiteEssaiLabo)
   const projets = useAppSelector(s => s.projet.projets)
 
   const [projetId, setProjetId] = useState<number | null>(null)

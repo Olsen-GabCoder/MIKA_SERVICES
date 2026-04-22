@@ -25,7 +25,7 @@ export default function AgrementsPage() {
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
 
-  const { agrements, totalPages, currentPage, loading } = useAppSelector(s => s.qualiteAgrement)
+  const { agrements, totalPages, loading } = useAppSelector(s => s.qualiteAgrement)
   const projets = useAppSelector(s => s.projet.projets)
 
   const [projetId, setProjetId] = useState<number | null>(null)

@@ -31,7 +31,7 @@ export default function InspectionsPage() {
   const { t } = useTranslation('qshe')
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
-  const { inspections, templates, loading, totalPages, currentPage } = useAppSelector(s => s.qsheInspection)
+  const { inspections, templates, loading, totalPages } = useAppSelector(s => s.qsheInspection)
   const projets = useAppSelector(s => s.projet.projets)
 
   const [projetId, setProjetId] = useState<number | null>(null)

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
-import { fetchLevees, fetchLeveesByProjet, createLevee, updateLevee, deleteLevee } from '@/store/slices/qualiteLeveeTopoSlice'
+import { fetchLevees, createLevee, updateLevee, deleteLevee } from '@/store/slices/qualiteLeveeTopoSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import type { LeveeTopoResponse } from '@/types/qualiteLeveeTopo'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -20,7 +20,7 @@ export default function LeveeTopoPage() {
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
 
-  const { levees, totalPages, currentPage, loading } = useAppSelector(s => s.qualiteLeveeTopo)
+  const { levees, totalPages, loading } = useAppSelector(s => s.qualiteLeveeTopo)
   const projets = useAppSelector(s => s.projet.projets)
 
   const [projetId, setProjetId] = useState<number | null>(null)

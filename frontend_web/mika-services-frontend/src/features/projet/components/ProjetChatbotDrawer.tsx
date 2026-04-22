@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { useTranslation } from 'react-i18next'
 import { useAppSelector } from '@/store/hooks'
 import { rapportAnalyseApi } from '@/api/rapportAnalyseApi'
 import type { RapportAnalyseResponse } from '@/types/rapportAnalyse'
@@ -262,7 +261,6 @@ const PROGRESS_MESSAGES = [
 
 // ── Main Component ───────────────────────────────────────────────────────────
 export function ProjetChatbotDrawer({ isOpen, onClose, projetId, projetNom, messages, setMessages }: Props) {
-  const { t } = useTranslation('projet')
   const currentUser = useAppSelector((state) => state.auth.user)
   const [inputText, setInputText] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)

@@ -34,7 +34,7 @@ export default function IncidentsPage() {
   const { t } = useTranslation('qshe')
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
-  const { incidents, summary, loading, totalPages, currentPage } = useAppSelector(s => s.qsheIncident)
+  const { incidents, summary, loading, totalPages } = useAppSelector(s => s.qsheIncident)
   const projets = useAppSelector(s => s.projet.projets)
   const userRoles: string[] = useAppSelector((s: any) => s.auth.user?.roles?.map((r: any) => r.code ?? r) ?? [])
 

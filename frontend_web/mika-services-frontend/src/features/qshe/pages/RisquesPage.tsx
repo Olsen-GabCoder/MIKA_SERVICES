@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { fetchRisquesByProjet, createRisque, deleteRisque, fetchRisqueSummary } from '@/store/slices/qsheRisqueSlice'
-import { CategorieRisque, NiveauRisque } from '@/types/qsheRisque'
+import { CategorieRisque } from '@/types/qsheRisque'
 import type { RisqueCreateRequest, RisqueResponse } from '@/types/qsheRisque'
 import { PageContainer } from '@/components/layout/PageContainer'
 
@@ -22,7 +22,7 @@ export default function RisquesPage() {
   const { t } = useTranslation('qshe')
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
-  const { risques, summary, loading, totalPages, currentPage } = useAppSelector(s => s.qsheRisque)
+  const { risques, summary, loading, totalPages } = useAppSelector(s => s.qsheRisque)
   const projets = useAppSelector(s => s.projet.projets)
 
   const [projetId, setProjetId] = useState<number | null>(null)

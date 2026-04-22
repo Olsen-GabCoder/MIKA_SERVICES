@@ -40,7 +40,7 @@ export default function EvenementsPage() {
   const navigate = useNavigate()
   const confirm = useConfirm()
 
-  const { evenements, stats, totalPages, currentPage, loading } = useAppSelector(s => s.qualiteEvenement)
+  const { evenements, stats, totalPages, loading } = useAppSelector(s => s.qualiteEvenement)
   const projets = useAppSelector(s => s.projet.projets)
 
   const [projetId, setProjetId] = useState<number | null>(null)

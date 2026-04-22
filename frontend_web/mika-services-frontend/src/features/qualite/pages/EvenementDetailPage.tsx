@@ -6,7 +6,7 @@ import { fetchEvenementById, setCurrent } from '@/store/slices/qualiteEvenementS
 import { qualiteEvenementApi } from '@/api/qualiteEvenementApi'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { NumeroSection, RoleCollegial } from '@/types/qualiteEvenement'
-import type { SectionResponse, EvenementQualiteResponse } from '@/types/qualiteEvenement'
+import type { SectionResponse } from '@/types/qualiteEvenement'
 
 const CARD = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm overflow-hidden'
 const BODY = 'p-4 sm:p-5'

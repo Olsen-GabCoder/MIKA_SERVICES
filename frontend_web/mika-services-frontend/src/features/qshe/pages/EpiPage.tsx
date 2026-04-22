@@ -22,7 +22,7 @@ export default function EpiPage() {
   const { t } = useTranslation('qshe')
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
-  const { epis, summary, loading, totalPages, currentPage } = useAppSelector(s => s.qsheEpi)
+  const { epis, summary, loading, totalPages } = useAppSelector(s => s.qsheEpi)
 
   const [showForm, setShowForm] = useState(false)
   const [page, setPage] = useState(0)

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { projetApi, pointBloquantApi } from '@/api/projetApi'
-import type { RapportAnalyseResponse, SuiviMensuelExtrait, PrevisionExtraite, PointBloquantExtrait, AvancementEtudeExtrait, DoublonCA, DoublonPrevision, DoublonPB } from '@/types/rapportAnalyse'
+import type { RapportAnalyseResponse, SuiviMensuelExtrait, PrevisionExtraite, PointBloquantExtrait, AvancementEtudeExtrait } from '@/types/rapportAnalyse'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Props {

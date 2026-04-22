@@ -24,7 +24,7 @@ export default function PermisPage() {
   const { t } = useTranslation('qshe')
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
-  const { permis, summary, loading, totalPages, currentPage } = useAppSelector(s => s.qshePermis)
+  const { permis, summary, loading, totalPages } = useAppSelector(s => s.qshePermis)
   const projets = useAppSelector(s => s.projet.projets)
 
   const [projetId, setProjetId] = useState<number | null>(null)

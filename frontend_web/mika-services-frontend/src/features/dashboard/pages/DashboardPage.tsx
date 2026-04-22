@@ -232,14 +232,10 @@ export default function DashboardPage() {
     ...w,
     displayLabel: w.isCurrent ? `${w.label} ★` : w.label,
   }))
-  // TODO QSHE v2 — qualityDonut retiré lors du nettoyage #0, à reconstruire au livrable #4
-  const qualityDonut: { name: string; value: number; color: string }[] = []
   const sitesBars = [
     { name: t('db.charts.active'),    value: d.chantiers.actifs,   fill: C.blue  },
     { name: t('db.charts.completed'), value: d.chantiers.termines, fill: C.green },
   ]
-  // TODO QSHE v2 — safetyBars retiré lors du nettoyage #0, à reconstruire au livrable #4
-  const safetyBars: { name: string; value: number; fill: string }[] = []
   const equipDonut = [
     { name: t('db.charts.available'), value: d.materiel.enginsDisponibles, color: C.green },
     { name: t('db.charts.inUse'),     value: d.materiel.enginsTotal - d.materiel.enginsDisponibles, color: C.blue },
@@ -251,9 +247,6 @@ export default function DashboardPage() {
 
   /* ── KPI accent helper ── */
   const budgetAccent = d.budget.tauxConsommation > 90 ? C.red : d.budget.tauxConsommation > 70 ? C.gold : C.green
-  // TODO QSHE v2 — qualAccent retiré lors du nettoyage #0, à reconstruire au livrable #4
-  const qualAccent   = C.green
-
   return (
     <PageContainer size="full" className="w-full pb-10 space-y-0">
 
@@ -1008,17 +1001,3 @@ function Chip({ children, color }: { children: React.ReactNode; color: string })
   )
 }
 
-function StatRow({ label, value, color, progress }: { label: string; value: React.ReactNode; color: string; progress: number }) {
-  const colorMap: Record<string, string> = {
-    green: C.green, amber: C.gold, red: C.red, slate: C.slate, blue: C.blue,
-  }
-  return (
-    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-4 py-3 space-y-1.5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-600 dark:text-gray-300">{label}</span>
-        <span className="text-sm font-extrabold" style={{ color: colorMap[color] ?? C.slate }}>{value}</span>
-      </div>
-      <MiniBar value={progress} color={colorMap[color] ?? C.slate} />
-    </div>
-  )
-}

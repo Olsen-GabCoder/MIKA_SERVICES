@@ -148,10 +148,9 @@ export default function DocumentsQualitePage() {
 
   const handleDelete = async (id: number) => {
     const ok = await confirm({
-      title: t('documents.confirmDeleteTitle'),
-      message: t('documents.confirmDelete'),
-      confirmLabel: t('documents.delete'),
-      variant: 'danger',
+      titleKey: 'documents.confirmDeleteTitle',
+      messageKey: 'documents.confirmDelete',
+      ns: 'qualite',
     })
     if (!ok) return
     await dispatch(deleteDocument(id)); loadData()

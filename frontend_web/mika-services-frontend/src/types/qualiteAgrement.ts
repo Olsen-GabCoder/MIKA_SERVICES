@@ -1,11 +1,12 @@
-export enum StatutAgrement {
-  PREVU_AU_MARCHE = 'PREVU_AU_MARCHE',
-  ETABLI = 'ETABLI',
-  EN_ATTENTE_MDC = 'EN_ATTENTE_MDC',
-  ACCORDE_SANS_RESERVE = 'ACCORDE_SANS_RESERVE',
-  ACCORDE_AVEC_RESERVE = 'ACCORDE_AVEC_RESERVE',
-  REJETE = 'REJETE',
-}
+export const StatutAgrement = {
+  PREVU_AU_MARCHE: 'PREVU_AU_MARCHE',
+  ETABLI: 'ETABLI',
+  EN_ATTENTE_MDC: 'EN_ATTENTE_MDC',
+  ACCORDE_SANS_RESERVE: 'ACCORDE_SANS_RESERVE',
+  ACCORDE_AVEC_RESERVE: 'ACCORDE_AVEC_RESERVE',
+  REJETE: 'REJETE',
+} as const
+export type StatutAgrement = (typeof StatutAgrement)[keyof typeof StatutAgrement]
 
 export interface AgrementMarcheResponse {
   id: number

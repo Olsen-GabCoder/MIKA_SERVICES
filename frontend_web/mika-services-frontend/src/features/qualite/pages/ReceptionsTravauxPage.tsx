@@ -11,7 +11,6 @@ import { fetchProjets } from '@/store/slices/projetSlice'
 import {
   NatureReception,
   SousTypeReception,
-  StatutReception,
 } from '@/types/qualiteReception'
 import type { DemandeReceptionCreateRequest } from '@/types/qualiteReception'
 

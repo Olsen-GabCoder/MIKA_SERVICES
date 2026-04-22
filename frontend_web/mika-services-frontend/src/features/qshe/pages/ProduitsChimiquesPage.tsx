@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useConfirm } from '@/contexts/ConfirmContext'
 import { qsheEnvApi } from '@/api/qsheEnvironnementApi'
 import type { ProduitChimiqueResponse, ProduitChimiqueCreateRequest } from '@/types/qsheEnvironnement'
 import { PageContainer } from '@/components/layout/PageContainer'
 
 const CARD = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm overflow-hidden'
-const BODY = 'p-4 sm:p-5'
 
 export default function ProduitsChimiquesPage() {
-  const confirm = useConfirm()
   const [produits, setProduits] = useState<ProduitChimiqueResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)

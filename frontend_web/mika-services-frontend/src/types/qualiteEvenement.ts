@@ -1,51 +1,58 @@
-export enum TypeEvenement {
-  NC = 'NC',
-  RC = 'RC',
-  PPI = 'PPI',
-}
+export const TypeEvenement = {
+  NC: 'NC',
+  RC: 'RC',
+  PPI: 'PPI',
+} as const
+export type TypeEvenement = (typeof TypeEvenement)[keyof typeof TypeEvenement]
 
-export enum CategorieEvenement {
-  QUALITE = 'QUALITE',
-  SECURITE = 'SECURITE',
-  ENVIRONNEMENT = 'ENVIRONNEMENT',
-}
+export const CategorieEvenement = {
+  QUALITE: 'QUALITE',
+  SECURITE: 'SECURITE',
+  ENVIRONNEMENT: 'ENVIRONNEMENT',
+} as const
+export type CategorieEvenement = (typeof CategorieEvenement)[keyof typeof CategorieEvenement]
 
-export enum OrigineEvenement {
-  TRAVAUX = 'TRAVAUX',
-  RECEPTION_PRODUITS = 'RECEPTION_PRODUITS',
-  ETUDE = 'ETUDE',
-}
+export const OrigineEvenement = {
+  TRAVAUX: 'TRAVAUX',
+  RECEPTION_PRODUITS: 'RECEPTION_PRODUITS',
+  ETUDE: 'ETUDE',
+} as const
+export type OrigineEvenement = (typeof OrigineEvenement)[keyof typeof OrigineEvenement]
 
-export enum StatutEvenement {
-  BROUILLON = 'BROUILLON',
-  DETECTEE = 'DETECTEE',
-  EN_TRAITEMENT = 'EN_TRAITEMENT',
-  EN_VERIFICATION = 'EN_VERIFICATION',
-  LEVEE = 'LEVEE',
-  ANALYSEE = 'ANALYSEE',
-  CLOTUREE = 'CLOTUREE',
-}
+export const StatutEvenement = {
+  BROUILLON: 'BROUILLON',
+  DETECTEE: 'DETECTEE',
+  EN_TRAITEMENT: 'EN_TRAITEMENT',
+  EN_VERIFICATION: 'EN_VERIFICATION',
+  LEVEE: 'LEVEE',
+  ANALYSEE: 'ANALYSEE',
+  CLOTUREE: 'CLOTUREE',
+} as const
+export type StatutEvenement = (typeof StatutEvenement)[keyof typeof StatutEvenement]
 
-export enum NumeroSection {
-  SECTION_1 = 'SECTION_1',
-  SECTION_2 = 'SECTION_2',
-  SECTION_4 = 'SECTION_4',
-  SECTION_5 = 'SECTION_5',
-  SECTION_6 = 'SECTION_6',
-  SECTION_7 = 'SECTION_7',
-}
+export const NumeroSection = {
+  SECTION_1: 'SECTION_1',
+  SECTION_2: 'SECTION_2',
+  SECTION_4: 'SECTION_4',
+  SECTION_5: 'SECTION_5',
+  SECTION_6: 'SECTION_6',
+  SECTION_7: 'SECTION_7',
+} as const
+export type NumeroSection = (typeof NumeroSection)[keyof typeof NumeroSection]
 
-export enum ChoixTraitement {
-  CORRECTION = 'CORRECTION',
-  DEROGATION = 'DEROGATION',
-}
+export const ChoixTraitement = {
+  CORRECTION: 'CORRECTION',
+  DEROGATION: 'DEROGATION',
+} as const
+export type ChoixTraitement = (typeof ChoixTraitement)[keyof typeof ChoixTraitement]
 
-export enum RoleCollegial {
-  DT = 'DT',
-  RQ = 'RQ',
-  CT = 'CT',
-  CC = 'CC',
-}
+export const RoleCollegial = {
+  DT: 'DT',
+  RQ: 'RQ',
+  CT: 'CT',
+  CC: 'CC',
+} as const
+export type RoleCollegial = (typeof RoleCollegial)[keyof typeof RoleCollegial]
 
 export interface EvenementQualiteListResponse {
   id: number

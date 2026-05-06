@@ -518,132 +518,125 @@ export const ProjetDqePage = () => {
               }`}
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              {/* ── Header du chapitre ─────────────────────────────────────── */}
+              {/* ── Header du chapitre — style DQE officiel ────────────────── */}
               <div
-                className={`px-6 py-5 flex items-center gap-4 cursor-pointer select-none transition-colors duration-200 ${
-                  isOpen ? 'bg-gradient-to-r from-primary/[0.03] to-transparent dark:from-primary/[0.05]' : 'hover:bg-gray-50/50 dark:hover:bg-gray-800/30'
+                className={`cursor-pointer select-none transition-colors duration-200 ${
+                  isOpen ? '' : 'hover:bg-gray-50/50 dark:hover:bg-gray-800/30'
                 }`}
                 onClick={() => !isEditing && toggleChapitre(chap.id)}
               >
-                <IconChevron open={isOpen} />
+                {/* Bandeau titre chapitre */}
+                <div className={`px-6 py-4 flex items-center gap-4 ${
+                  isOpen
+                    ? 'bg-gradient-to-r from-secondary/90 to-secondary dark:from-secondary dark:to-secondary/80'
+                    : 'bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-800/60'
+                } transition-colors duration-300`}>
+                  <IconChevron open={isOpen} />
 
-                {isEditing ? (
-                  <div className="flex flex-1 flex-col md:flex-row gap-3 items-end" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      value={editChapitreForm.numero}
-                      onChange={(e) => setEditChapitreForm({ ...editChapitreForm, numero: e.target.value })}
-                      className="w-24 border-2 border-primary/30 rounded-lg px-3 py-1.5 text-sm font-semibold bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/30 outline-none"
-                    />
-                    <input
-                      value={editChapitreForm.designation}
-                      onChange={(e) => setEditChapitreForm({ ...editChapitreForm, designation: e.target.value })}
-                      className="flex-1 border-2 border-primary/30 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/30 outline-none"
-                    />
-                    <div className="flex gap-1.5">
-                      <button onClick={() => handleUpdateChapitre(chap.id)} disabled={saving} className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 rounded-lg transition-colors"><IconCheck /></button>
-                      <button onClick={() => setEditingChapitreId(null)} className="p-2 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"><IconX /></button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Badge numero */}
-                    <div className="flex-shrink-0 min-w-[48px] h-10 px-3 bg-gradient-to-br from-primary/10 to-orange-100 dark:from-primary/20 dark:to-orange-900/20 rounded-xl flex items-center justify-center">
-                      <span className="text-sm font-black text-primary whitespace-nowrap">{chap.numero}</span>
-                    </div>
-
-                    {/* Titre du chapitre */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm lg:text-base font-bold text-gray-900 dark:text-white truncate">
-                        {chap.designation}
-                      </h3>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                        {chap.nombreLignes} poste{chap.nombreLignes > 1 ? 's' : ''}
-                      </p>
-                    </div>
-
-                    {/* Metriques du chapitre */}
-                    <div className="hidden md:flex items-center gap-5 flex-shrink-0">
-                      <div className="text-right">
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Montant</p>
-                        <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{formatMontant(chap.montantTotal)}</p>
+                  {isEditing ? (
+                    <div className="flex flex-1 flex-col md:flex-row gap-3 items-end" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        value={editChapitreForm.numero}
+                        onChange={(e) => setEditChapitreForm({ ...editChapitreForm, numero: e.target.value })}
+                        className="w-32 border-2 border-white/30 rounded-lg px-3 py-1.5 text-sm font-bold bg-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-white/40 outline-none"
+                        placeholder="N. chapitre"
+                      />
+                      <input
+                        value={editChapitreForm.designation}
+                        onChange={(e) => setEditChapitreForm({ ...editChapitreForm, designation: e.target.value })}
+                        className="flex-1 border-2 border-white/30 rounded-lg px-3 py-1.5 text-sm bg-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-white/40 outline-none"
+                        placeholder="Designation"
+                      />
+                      <div className="flex gap-1.5">
+                        <button onClick={() => handleUpdateChapitre(chap.id)} disabled={saving} className="p-2 bg-white/20 text-white hover:bg-white/30 rounded-lg transition-colors"><IconCheck /></button>
+                        <button onClick={() => setEditingChapitreId(null)} className="p-2 bg-white/10 text-white/70 hover:bg-white/20 hover:text-white rounded-lg transition-colors"><IconX /></button>
                       </div>
-                      <div className="w-px h-8 bg-gray-100 dark:bg-gray-800" />
-                      <div className="text-center min-w-[80px]">
-                        <span className={`inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-full ring-1 ring-inset ${progressBadgeClass(chap.avancementPct)}`}>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`text-sm lg:text-[15px] font-black uppercase tracking-wide truncate ${
+                          isOpen ? 'text-white' : 'text-gray-800 dark:text-white'
+                        }`}>
+                          Chapitre {chap.numero} — {chap.designation}
+                        </h3>
+                      </div>
+
+                      {/* Resume compact */}
+                      <div className={`hidden md:flex items-center gap-4 flex-shrink-0 text-sm ${
+                        isOpen ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
+                      }`}>
+                        <span className="font-bold">{formatMontant(chap.montantTotal)}</span>
+                        <span className="text-xs">|</span>
+                        <span className="font-bold">{chap.nombreLignes} postes</span>
+                        <span className="text-xs">|</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-bold rounded-full ${
+                          isOpen
+                            ? 'bg-white/20 text-white'
+                            : `ring-1 ring-inset ${progressBadgeClass(chap.avancementPct)}`
+                        }`}>
                           {chap.avancementPct}%
                         </span>
                       </div>
-                    </div>
 
-                    {/* Actions */}
-                    {canEdit && (
-                      <div className="flex gap-1 flex-shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => { setEditingChapitreId(chap.id); setEditChapitreForm({ numero: chap.numero, designation: chap.designation }) }}
-                          className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all duration-200"
-                          title="Modifier"
-                        >
-                          <IconEdit />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteChapitre(chap)}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
-                          title="Supprimer"
-                        >
-                          <IconTrash />
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
+                      {/* Actions */}
+                      {canEdit && (
+                        <div className="flex gap-1 flex-shrink-0 ml-1" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => { setEditingChapitreId(chap.id); setEditChapitreForm({ numero: chap.numero, designation: chap.designation }) }}
+                            className={`p-2 rounded-lg transition-all duration-200 ${isOpen ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-gray-400 hover:text-primary hover:bg-primary/5'}`}
+                            title="Modifier"
+                          >
+                            <IconEdit />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteChapitre(chap)}
+                            className={`p-2 rounded-lg transition-all duration-200 ${isOpen ? 'text-white/60 hover:text-red-300 hover:bg-red-500/20' : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
+                            title="Supprimer"
+                          >
+                            <IconTrash />
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
 
-              {/* ── Corps du chapitre (lignes) ─────────────────────────────── */}
-              <div className={`transition-all duration-300 ease-out overflow-hidden ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                <div className="px-6 pb-6 pt-2">
-                  {/* Mini barre d'avancement du chapitre */}
-                  <div className="flex items-center gap-3 mb-5 px-1">
-                    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-700 ${progressColor(chap.avancementPct)}`}
-                        style={{ width: `${Math.min(100, chap.avancementPct)}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 min-w-[60px] text-right">
-                      {formatMontant(chap.montantExecute)} exec.
-                    </span>
-                  </div>
-
+              {/* ── Corps du chapitre — tableau DQE ───────────────────────── */}
+              <div className={`transition-all duration-300 ease-out overflow-hidden ${isOpen ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="px-0 pb-0">
                   {/* Tableau des lignes */}
                   {chap.lignes.length > 0 ? (
-                    <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                    <div className="overflow-hidden">
                       <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <table className="w-full border-collapse">
+                          {/* Header colonnes DQE */}
                           <thead>
-                            <tr className="bg-gradient-to-r from-gray-50 to-gray-50/50 dark:from-gray-800/80 dark:to-gray-800/40 border-b border-gray-100 dark:border-gray-800">
-                              <th className="py-3.5 px-5 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400" style={{ width: '80px' }}>N.</th>
-                              <th className="py-3.5 px-5 text-left text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">Designation</th>
-                              <th className="py-3.5 px-5 text-center text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400" style={{ width: '70px' }}>Unite</th>
-                              <th className="py-3.5 px-5 text-right text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400" style={{ width: '100px' }}>Quantite</th>
-                              <th className="py-3.5 px-5 text-right text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400" style={{ width: '120px' }}>P.U.</th>
-                              <th className="py-3.5 px-5 text-right text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400" style={{ width: '140px' }}>Montant</th>
-                              <th className="py-3.5 px-5 text-center text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400" style={{ width: '150px' }}>Avancement</th>
-                              {canEdit && <th className="py-3.5 px-3" style={{ width: '80px' }}></th>}
+                            <tr className="bg-gray-50 dark:bg-gray-800/80 border-b-2 border-gray-200 dark:border-gray-700">
+                              <th className="py-3 px-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-600 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700" style={{ width: '90px' }}>N. Prix</th>
+                              <th className="py-3 px-4 text-left text-[11px] font-black uppercase tracking-wider text-gray-600 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700">Designation</th>
+                              <th className="py-3 px-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-600 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700" style={{ width: '70px' }}>Unite</th>
+                              <th className="py-3 px-4 text-right text-[11px] font-black uppercase tracking-wider text-gray-600 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700" style={{ width: '100px' }}>Quantite</th>
+                              <th className="py-3 px-4 text-right text-[11px] font-black uppercase tracking-wider text-gray-600 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700" style={{ width: '130px' }}>Prix Unit.</th>
+                              <th className="py-3 px-4 text-right text-[11px] font-black uppercase tracking-wider text-gray-600 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700" style={{ width: '150px' }}>Prix Total</th>
+                              <th className="py-3 px-4 text-center text-[11px] font-black uppercase tracking-wider text-gray-600 dark:text-gray-300" style={{ width: '150px' }}>Avancement</th>
+                              {canEdit && <th className="py-3 px-3 border-l border-gray-200 dark:border-gray-700" style={{ width: '80px' }}></th>}
                             </tr>
                           </thead>
                           <tbody>
                             {paginatedLignes.map((ligne, lIdx) => {
                               if (editingLigneId === ligne.id) {
                                 return (
-                                  <tr key={ligne.id} className="bg-primary/[0.03] dark:bg-primary/[0.05]">
-                                    <td className="py-3 px-4"><input value={editLigneForm.numeroPoste} onChange={(e) => setEditLigneForm({ ...editLigneForm, numeroPoste: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2.5 py-2 text-sm bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-3 px-4"><input value={editLigneForm.designation} onChange={(e) => setEditLigneForm({ ...editLigneForm, designation: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2.5 py-2 text-sm bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-3 px-4"><input value={editLigneForm.unite} onChange={(e) => setEditLigneForm({ ...editLigneForm, unite: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2.5 py-2 text-sm text-center bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-3 px-4"><input type="number" value={editLigneForm.quantite} onChange={(e) => setEditLigneForm({ ...editLigneForm, quantite: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2.5 py-2 text-sm text-right bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-3 px-4"><input type="number" value={editLigneForm.prixUnitaire} onChange={(e) => setEditLigneForm({ ...editLigneForm, prixUnitaire: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2.5 py-2 text-sm text-right bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-3 px-4"><input type="number" value={editLigneForm.montantTotal} onChange={(e) => setEditLigneForm({ ...editLigneForm, montantTotal: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2.5 py-2 text-sm text-right bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-3 px-4"><input type="number" min="0" max="100" value={editLigneForm.avancementPct} onChange={(e) => setEditLigneForm({ ...editLigneForm, avancementPct: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2.5 py-2 text-sm text-center bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-3 px-3">
+                                  <tr key={ligne.id} className="bg-primary/[0.04] dark:bg-primary/[0.06]">
+                                    <td className="py-3 px-3 border-r border-gray-100 dark:border-gray-800"><input value={editLigneForm.numeroPoste} onChange={(e) => setEditLigneForm({ ...editLigneForm, numeroPoste: e.target.value })} className="w-full border-2 border-primary/30 rounded-lg px-2.5 py-2 text-sm bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
+                                    <td className="py-3 px-3 border-r border-gray-100 dark:border-gray-800"><input value={editLigneForm.designation} onChange={(e) => setEditLigneForm({ ...editLigneForm, designation: e.target.value })} className="w-full border-2 border-primary/30 rounded-lg px-2.5 py-2 text-sm bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
+                                    <td className="py-3 px-3 border-r border-gray-100 dark:border-gray-800"><input value={editLigneForm.unite} onChange={(e) => setEditLigneForm({ ...editLigneForm, unite: e.target.value })} className="w-full border-2 border-primary/30 rounded-lg px-2.5 py-2 text-sm text-center bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
+                                    <td className="py-3 px-3 border-r border-gray-100 dark:border-gray-800"><input type="number" value={editLigneForm.quantite} onChange={(e) => setEditLigneForm({ ...editLigneForm, quantite: e.target.value })} className="w-full border-2 border-primary/30 rounded-lg px-2.5 py-2 text-sm text-right bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
+                                    <td className="py-3 px-3 border-r border-gray-100 dark:border-gray-800"><input type="number" value={editLigneForm.prixUnitaire} onChange={(e) => setEditLigneForm({ ...editLigneForm, prixUnitaire: e.target.value })} className="w-full border-2 border-primary/30 rounded-lg px-2.5 py-2 text-sm text-right bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
+                                    <td className="py-3 px-3 border-r border-gray-100 dark:border-gray-800"><input type="number" value={editLigneForm.montantTotal} onChange={(e) => setEditLigneForm({ ...editLigneForm, montantTotal: e.target.value })} className="w-full border-2 border-primary/30 rounded-lg px-2.5 py-2 text-sm text-right bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
+                                    <td className="py-3 px-3"><input type="number" min="0" max="100" value={editLigneForm.avancementPct} onChange={(e) => setEditLigneForm({ ...editLigneForm, avancementPct: e.target.value })} className="w-full border-2 border-primary/30 rounded-lg px-2.5 py-2 text-sm text-center bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
+                                    <td className="py-3 px-3 border-l border-gray-100 dark:border-gray-800">
                                       <div className="flex gap-1.5 justify-center">
                                         <button onClick={() => handleUpdateLigne(ligne.id)} disabled={saving} className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg transition-colors"><IconCheck /></button>
                                         <button onClick={() => setEditingLigneId(null)} className="p-2 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 rounded-lg transition-colors"><IconX /></button>
@@ -656,41 +649,41 @@ export const ProjetDqePage = () => {
                               return (
                                 <tr
                                   key={ligne.id}
-                                  className={`group transition-colors duration-150 ${
+                                  className={`group transition-colors duration-150 border-b border-gray-100 dark:border-gray-800/60 ${
                                     lIdx % 2 === 0
                                       ? 'bg-white dark:bg-gray-900'
-                                      : 'bg-gray-50/60 dark:bg-gray-800/20'
-                                  } hover:bg-primary/[0.03] dark:hover:bg-primary/[0.04]`}
+                                      : 'bg-gray-50/40 dark:bg-gray-800/10'
+                                  } hover:bg-blue-50/40 dark:hover:bg-blue-900/5`}
                                 >
-                                  <td className="py-4 px-5">
-                                    <span className="font-mono text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-md">
-                                      {ligne.numeroPoste || '-'}
+                                  <td className="py-3.5 px-4 border-r border-gray-100 dark:border-gray-800/60">
+                                    <span className="font-mono text-[13px] font-bold text-secondary dark:text-secondary-light">
+                                      {ligne.numeroPoste || ''}
                                     </span>
                                   </td>
-                                  <td className="py-4 px-5">
-                                    <span className="text-[13px] font-medium text-gray-800 dark:text-gray-200">{ligne.designation}</span>
+                                  <td className="py-3.5 px-4 border-r border-gray-100 dark:border-gray-800/60">
+                                    <span className="text-[13px] text-gray-800 dark:text-gray-200">{ligne.designation}</span>
                                   </td>
-                                  <td className="py-4 px-5 text-center">
-                                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{ligne.unite || '-'}</span>
+                                  <td className="py-3.5 px-4 text-center border-r border-gray-100 dark:border-gray-800/60">
+                                    <span className="text-[13px] text-gray-500 dark:text-gray-400">{ligne.unite || ''}</span>
                                   </td>
-                                  <td className="py-4 px-5 text-right">
-                                    <span className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 font-mono">
-                                      {ligne.quantite != null ? ligne.quantite.toLocaleString('fr-FR') : '-'}
+                                  <td className="py-3.5 px-4 text-right border-r border-gray-100 dark:border-gray-800/60">
+                                    <span className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 tabular-nums">
+                                      {ligne.quantite != null ? ligne.quantite.toLocaleString('fr-FR') : ''}
                                     </span>
                                   </td>
-                                  <td className="py-4 px-5 text-right">
-                                    <span className="text-[13px] text-gray-600 dark:text-gray-400">
-                                      {ligne.prixUnitaire != null ? formatMontant(ligne.prixUnitaire) : '-'}
+                                  <td className="py-3.5 px-4 text-right border-r border-gray-100 dark:border-gray-800/60">
+                                    <span className="text-[13px] text-gray-600 dark:text-gray-400 tabular-nums">
+                                      {ligne.prixUnitaire != null ? formatMontant(ligne.prixUnitaire) : ''}
                                     </span>
                                   </td>
-                                  <td className="py-4 px-5 text-right">
-                                    <span className="text-[13px] font-bold text-gray-900 dark:text-white">
-                                      {ligne.montantTotal != null ? formatMontant(ligne.montantTotal) : '-'}
+                                  <td className="py-3.5 px-4 text-right border-r border-gray-100 dark:border-gray-800/60">
+                                    <span className="text-[13px] font-bold text-gray-900 dark:text-white tabular-nums">
+                                      {ligne.montantTotal != null ? formatMontant(ligne.montantTotal) : ''}
                                     </span>
                                   </td>
-                                  <td className="py-4 px-5">
-                                    <div className="flex items-center gap-2.5">
-                                      <div className="flex-1 h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                  <td className="py-3.5 px-4">
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                                         <div
                                           className={`h-full rounded-full transition-all duration-500 ${progressColor(ligne.avancementPct)}`}
                                           style={{ width: `${Math.min(100, ligne.avancementPct)}%` }}
@@ -702,7 +695,7 @@ export const ProjetDqePage = () => {
                                     </div>
                                   </td>
                                   {canEdit && (
-                                    <td className="py-4 px-3">
+                                    <td className="py-3.5 px-3 border-l border-gray-100 dark:border-gray-800/60">
                                       <div className="flex gap-1 justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                         <button onClick={() => { setEditingLigneId(ligne.id); setEditLigneForm(ligneToForm(ligne)) }} className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all" title="Modifier"><IconEdit /></button>
                                         <button onClick={() => handleDeleteLigne(ligne)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Supprimer"><IconTrash /></button>
@@ -716,21 +709,21 @@ export const ProjetDqePage = () => {
 
                           {/* Sous-total du chapitre */}
                           <tfoot>
-                            <tr className="bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-800/60 dark:to-gray-800/30 border-t-2 border-gray-100 dark:border-gray-800">
-                              <td colSpan={5} className="py-4 px-5">
-                                <span className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                  Sous-total Chap. {chap.numero}
+                            <tr className="bg-secondary/5 dark:bg-secondary/10 border-t-2 border-secondary/20 dark:border-secondary/30">
+                              <td colSpan={5} className="py-4 px-4 border-r border-gray-100 dark:border-gray-800/60">
+                                <span className="text-[13px] font-black uppercase tracking-wide text-secondary dark:text-secondary-light">
+                                  Sous-total — Chapitre {chap.numero}
                                 </span>
                               </td>
-                              <td className="py-4 px-5 text-right">
-                                <span className="text-[13px] font-black text-gray-900 dark:text-white">{formatMontant(chap.montantTotal)}</span>
+                              <td className="py-4 px-4 text-right border-r border-gray-100 dark:border-gray-800/60">
+                                <span className="text-[14px] font-black text-gray-900 dark:text-white tabular-nums">{formatMontant(chap.montantTotal)}</span>
                               </td>
-                              <td className="py-4 px-5 text-center">
+                              <td className="py-4 px-4 text-center">
                                 <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-bold rounded-full ring-1 ring-inset ${progressBadgeClass(chap.avancementPct)}`}>
                                   {chap.avancementPct}%
                                 </span>
                               </td>
-                              {canEdit && <td></td>}
+                              {canEdit && <td className="border-l border-gray-100 dark:border-gray-800/60"></td>}
                             </tr>
                           </tfoot>
                         </table>

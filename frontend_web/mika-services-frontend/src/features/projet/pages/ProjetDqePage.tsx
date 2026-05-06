@@ -547,8 +547,8 @@ export const ProjetDqePage = () => {
                 ) : (
                   <>
                     {/* Badge numero */}
-                    <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-primary/10 to-orange-100 dark:from-primary/20 dark:to-orange-900/20 rounded-xl flex items-center justify-center">
-                      <span className="text-sm font-black text-primary">{chap.numero}</span>
+                    <div className="flex-shrink-0 min-w-[48px] h-10 px-3 bg-gradient-to-br from-primary/10 to-orange-100 dark:from-primary/20 dark:to-orange-900/20 rounded-xl flex items-center justify-center">
+                      <span className="text-sm font-black text-primary whitespace-nowrap">{chap.numero}</span>
                     </div>
 
                     {/* Titre du lot */}

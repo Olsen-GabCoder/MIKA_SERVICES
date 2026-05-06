@@ -391,7 +391,7 @@ export const ProjetDqePage = () => {
             </div>
             {canEdit && !addingChapitre && (
               <Button variant="primary" size="md" onClick={() => setAddingChapitre(true)} className="flex items-center gap-2 shadow-lg shadow-primary/20">
-                <IconPlus /> Nouveau lot
+                <IconPlus /> Nouveau chapitre
               </Button>
             )}
           </div>
@@ -425,11 +425,11 @@ export const ProjetDqePage = () => {
               </div>
             </div>
 
-            {/* Lots / Lignes */}
+            {/* Chapitres / Lignes */}
             <div className="relative bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/10 rounded-xl p-5 border border-violet-100 dark:border-violet-800/30 overflow-hidden group hover:shadow-md transition-shadow duration-300">
               <div className="absolute -right-3 -top-3 w-16 h-16 bg-violet-500/5 rounded-full" />
               <p className="text-[11px] text-violet-600 dark:text-violet-400 uppercase font-bold tracking-wider mb-2">Structure</p>
-              <p className="text-xl lg:text-2xl font-black text-violet-700 dark:text-violet-300">{chapitres.length} <span className="text-sm font-bold">lots</span></p>
+              <p className="text-xl lg:text-2xl font-black text-violet-700 dark:text-violet-300">{chapitres.length} <span className="text-sm font-bold">chap.</span></p>
               <p className="text-sm text-violet-500 dark:text-violet-400 mt-0.5">{totalLignes} lignes au total</p>
             </div>
           </div>
@@ -442,11 +442,11 @@ export const ProjetDqePage = () => {
       {addingChapitre && (
         <div className="mb-6 bg-white dark:bg-gray-900 rounded-2xl border-2 border-dashed border-primary/40 shadow-lg shadow-primary/5 p-6 animate-in fade-in duration-200">
           <h3 className="text-sm font-bold text-primary uppercase tracking-wide mb-4 flex items-center gap-2">
-            <IconFolder /> Nouveau lot / chapitre
+            <IconFolder /> Nouveau chapitre
           </h3>
           <div className="flex flex-col md:flex-row gap-4 items-end">
             <div className="w-full md:w-36">
-              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">N. Lot</label>
+              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">N. Chapitre</label>
               <input
                 value={chapitreForm.numero}
                 onChange={(e) => setChapitreForm({ ...chapitreForm, numero: e.target.value })}
@@ -485,22 +485,22 @@ export const ProjetDqePage = () => {
               <IconDocument />
             </div>
           </div>
-          <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-2">Aucun lot DQE</h3>
+          <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-2">Aucun chapitre DQE</h3>
           <p className="text-sm text-gray-400 dark:text-gray-500 max-w-md mx-auto">
             {canEdit
-              ? 'Commencez par creer votre premier lot pour structurer le detail quantitatif et estimatif de ce projet.'
-              : 'Aucun lot n\'a encore ete cree pour ce projet.'}
+              ? 'Commencez par creer votre premier chapitre pour structurer le detail quantitatif et estimatif de ce projet.'
+              : 'Aucun chapitre n\'a encore ete cree pour ce projet.'}
           </p>
           {canEdit && (
             <Button variant="primary" size="lg" onClick={() => setAddingChapitre(true)} className="mt-8 flex items-center gap-2 mx-auto shadow-lg shadow-primary/20">
-              <IconPlus /> Creer le premier lot
+              <IconPlus /> Creer le premier chapitre
             </Button>
           )}
         </div>
       )}
 
       {/* ══════════════════════════════════════════════════════════════════
-          LISTE DES LOTS (CHAPITRES) — PAGINES
+          LISTE DES CHAPITRES — PAGINES
       ══════════════════════════════════════════════════════════════════ */}
       <div className="space-y-5">
         {paginatedChapitres.map((chap, index) => {
@@ -518,7 +518,7 @@ export const ProjetDqePage = () => {
               }`}
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              {/* ── Header du lot ─────────────────────────────────────── */}
+              {/* ── Header du chapitre ─────────────────────────────────────── */}
               <div
                 className={`px-6 py-5 flex items-center gap-4 cursor-pointer select-none transition-colors duration-200 ${
                   isOpen ? 'bg-gradient-to-r from-primary/[0.03] to-transparent dark:from-primary/[0.05]' : 'hover:bg-gray-50/50 dark:hover:bg-gray-800/30'
@@ -551,7 +551,7 @@ export const ProjetDqePage = () => {
                       <span className="text-sm font-black text-primary whitespace-nowrap">{chap.numero}</span>
                     </div>
 
-                    {/* Titre du lot */}
+                    {/* Titre du chapitre */}
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm lg:text-base font-bold text-gray-900 dark:text-white truncate">
                         {chap.designation}
@@ -561,7 +561,7 @@ export const ProjetDqePage = () => {
                       </p>
                     </div>
 
-                    {/* Metriques du lot */}
+                    {/* Metriques du chapitre */}
                     <div className="hidden md:flex items-center gap-5 flex-shrink-0">
                       <div className="text-right">
                         <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Montant</p>
@@ -598,10 +598,10 @@ export const ProjetDqePage = () => {
                 )}
               </div>
 
-              {/* ── Corps du lot (lignes) ─────────────────────────────── */}
+              {/* ── Corps du chapitre (lignes) ─────────────────────────────── */}
               <div className={`transition-all duration-300 ease-out overflow-hidden ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                 <div className="px-6 pb-6 pt-2">
-                  {/* Mini barre d'avancement du lot */}
+                  {/* Mini barre d'avancement du chapitre */}
                   <div className="flex items-center gap-3 mb-5 px-1">
                     <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                       <div
@@ -719,12 +719,12 @@ export const ProjetDqePage = () => {
                             })}
                           </tbody>
 
-                          {/* Sous-total du lot */}
+                          {/* Sous-total du chapitre */}
                           <tfoot>
                             <tr className="bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-800/60 dark:to-gray-800/30 border-t-2 border-gray-100 dark:border-gray-800">
                               <td colSpan={5} className="py-3.5 px-4">
                                 <span className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                  Sous-total Lot {chap.numero}
+                                  Sous-total Chap. {chap.numero}
                                 </span>
                               </td>
                               <td className="py-3.5 px-4 text-right">
@@ -750,7 +750,7 @@ export const ProjetDqePage = () => {
                     </div>
                   ) : (
                     <div className="text-center py-10 bg-gray-50/50 dark:bg-gray-800/20 rounded-xl border border-dashed border-gray-200 dark:border-gray-800">
-                      <p className="text-sm text-gray-400 dark:text-gray-500">Aucun poste dans ce lot</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500">Aucun poste dans ce chapitre</p>
                     </div>
                   )}
 

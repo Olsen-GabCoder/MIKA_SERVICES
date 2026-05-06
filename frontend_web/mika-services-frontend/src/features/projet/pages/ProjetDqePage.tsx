@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Alert } from '@/components/ui/Alert'
 import { useAppSelector } from '@/store/hooks'
@@ -255,12 +255,12 @@ export const ProjetDqePage = () => {
   // ── Rendu ─────────────────────────────────────────────────────────
 
   if (loading) return <PageContainer><div className="text-center text-gray-500 py-12">Chargement du DQE…</div></PageContainer>
-  if (error && !projet) return <PageContainer><Alert variant="error">{error}</Alert></PageContainer>
+  if (error && !projet) return <PageContainer><Alert type="error">{error}</Alert></PageContainer>
   if (!projet) return <PageContainer><div className="text-center text-gray-500 py-12">Projet non trouvé</div></PageContainer>
 
   return (
     <PageContainer size="full" className="bg-gray-50/80 dark:bg-gray-900/80">
-      {error && <Alert variant="error" className="mb-4" onClose={() => setError(null)}>{error}</Alert>}
+      {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
 
       {/* En-tête */}
       <header className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-md mb-6 overflow-hidden">

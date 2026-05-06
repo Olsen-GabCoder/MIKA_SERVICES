@@ -5,14 +5,22 @@ import { Modal } from '@/components/ui/Modal'
 export interface ConfirmOptions {
   /** Clé i18n du titre (namespace common par défaut). */
   titleKey?: string
+  /** Titre brut (prioritaire sur titleKey). */
+  title?: string
   /** Clé i18n du message (namespace common par défaut). */
-  messageKey: string
+  messageKey?: string
+  /** Message brut (prioritaire sur messageKey). */
+  message?: string
   /** Paramètres d'interpolation pour le message (ex. {{ name }}). */
   messageParams?: Record<string, string>
   /** Namespace pour title et message (défaut: common). */
   ns?: string
   /** Si true, affiche un seul bouton OK (remplace alert()). */
   alertOnly?: boolean
+  /** Libellé du bouton de confirmation. */
+  confirmLabel?: string
+  /** Variante visuelle (danger = bouton rouge). */
+  variant?: 'danger' | 'default'
 }
 
 type ConfirmResolve = (value: boolean) => void
@@ -20,10 +28,14 @@ type ConfirmResolve = (value: boolean) => void
 interface ConfirmState {
   isOpen: boolean
   titleKey: string
+  titleRaw?: string
   messageKey: string
+  messageRaw?: string
   messageParams?: Record<string, string>
   ns: string
   alertOnly: boolean
+  confirmLabel?: string
+  variant?: 'danger' | 'default'
 }
 
 const defaultState: ConfirmState = {
@@ -45,16 +57,20 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const confirm = useCallback((options: ConfirmOptions): Promise<boolean> => {
     const ns = options.ns ?? 'common'
     const titleKey = options.titleKey ?? 'confirm.title'
-    const messageKey = options.messageKey
+    const messageKey = options.messageKey ?? ''
     const messageParams = options.messageParams
     const alertOnly = options.alertOnly ?? false
     setState({
       isOpen: true,
       titleKey,
+      titleRaw: options.title,
       messageKey,
+      messageRaw: options.message,
       messageParams,
       ns,
       alertOnly,
+      confirmLabel: options.confirmLabel,
+      variant: options.variant,
     })
     return new Promise<boolean>((resolve) => {
       resolveRef.current = resolve
@@ -67,8 +83,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, isOpen: false }))
   }, [])
 
-  const title = state.messageKey ? t(state.titleKey) : ''
-  const message = state.messageKey ? t(state.messageKey, state.messageParams) : ''
+  const title = state.titleRaw ?? (state.messageKey || state.messageRaw ? t(state.titleKey) : '')
+  const message = state.messageRaw ?? (state.messageKey ? t(state.messageKey, state.messageParams) : '')
 
   const footer = state.alertOnly ? (
     <button
@@ -92,7 +108,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         onClick={() => handleClose(true)}
         className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium"
       >
-        {t('confirm.delete')}
+        {state.confirmLabel ?? t('confirm.delete')}
       </button>
     </>
   )

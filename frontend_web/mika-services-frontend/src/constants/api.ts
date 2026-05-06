@@ -187,6 +187,15 @@ export const API_ENDPOINTS = {
     EN_RETARD: '/qshe/actions/en-retard',
     SUMMARY: (projetId: number) => `/qshe/actions/summary/projet/${projetId}`,
   },
+  DQE: {
+    BY_PROJET: (projetId: number) => `/dqe/projet/${projetId}`,
+    SUMMARY: (projetId: number) => `/dqe/projet/${projetId}/summary`,
+    CHAPITRES: '/dqe/chapitres',
+    CHAPITRE_BY_ID: (id: number) => `/dqe/chapitres/${id}`,
+    LIGNES_BY_CHAPITRE: (chapitreId: number) => `/dqe/chapitres/${chapitreId}/lignes`,
+    LIGNES: '/dqe/lignes',
+    LIGNE_BY_ID: (id: number) => `/dqe/lignes/${id}`,
+  },
   REUNIONS_HEBDO: {
     BASE: '/reunions-hebdo',
     BY_ID: (id: number) => `/reunions-hebdo/${id}`,

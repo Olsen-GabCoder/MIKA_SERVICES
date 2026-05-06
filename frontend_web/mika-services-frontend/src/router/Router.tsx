@@ -14,6 +14,7 @@ const ProjetListPage = lazy(() => import('@/features/projet/pages/ProjetListPage
 const ProjetDetailPage = lazy(() => import('@/features/projet/pages/ProjetDetailPage').then(m => ({ default: m.ProjetDetailPage })))
 const ProjetHistoriquePage = lazy(() => import('@/features/projet/pages/ProjetHistoriquePage').then(m => ({ default: m.ProjetHistoriquePage })))
 const ProjetFormPage = lazy(() => import('@/features/projet/pages/ProjetFormPage').then(m => ({ default: m.ProjetFormPage })))
+const ProjetDqePage = lazy(() => import('@/features/projet/pages/ProjetDqePage').then(m => ({ default: m.ProjetDqePage })))
 const EquipeListPage = lazy(() => import('@/features/equipe/pages/EquipeListPage').then(m => ({ default: m.EquipeListPage })))
 const EquipeFormPage = lazy(() => import('@/features/equipe/pages/EquipeFormPage').then(m => ({ default: m.EquipeFormPage })))
 const EquipeDetailPage = lazy(() => import('@/features/equipe/pages/EquipeDetailPage').then(m => ({ default: m.EquipeDetailPage })))
@@ -134,6 +135,10 @@ const router = createBrowserRouter([
       {
         path: 'projets/:id',
         element: <ProtectedRoute><L><ProjetDetailPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'projets/:id/dqe',
+        element: <ProtectedRoute><L><ProjetDqePage /></L></ProtectedRoute>,
       },
       {
         path: 'projets/:id/edit',

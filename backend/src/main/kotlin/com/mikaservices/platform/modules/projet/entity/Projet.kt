@@ -193,7 +193,10 @@ class Projet(
     var revisionsBudget: MutableList<RevisionBudget> = mutableListOf(),
 
     @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var avancementEtudes: MutableList<AvancementEtudeProjet> = mutableListOf()
+    var avancementEtudes: MutableList<AvancementEtudeProjet> = mutableListOf(),
+
+    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var dqeChapitres: MutableList<DqeChapitre> = mutableListOf()
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

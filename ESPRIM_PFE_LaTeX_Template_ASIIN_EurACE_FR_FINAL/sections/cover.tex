@@ -1,0 +1,49 @@
+\begin{titlepage}
+\selectlanguage{french}
+\thispagestyle{empty}
+\begin{center}
+
+{\large \textbf{\DegreeName}}\\[0.35cm]
+{\large Ann\'ee universitaire \AcademicYear}\\[0.9cm]
+
+\IfFileExists{\EsprimLogoPath}{
+    \includegraphics[width=0.62\textwidth]{\EsprimLogoPath}\\[0.6cm]
+}{
+    \fbox{\parbox[c][2.8cm][c]{7cm}{\centering Logo ESPRIM}}\\[0.6cm]
+}
+
+{\normalsize \DepartmentName}\\[0.15cm]
+{\normalsize \SpecialityName}\\[1.2cm]
+
+{\Large \textbf{Rapport de Projet de Fin d'\'Etudes}}\\[0.25cm]
+{\large Discipline : \DisciplineName}\\[0.9cm]
+
+\rule{0.9\textwidth}{0.8pt}\\[0.35cm]
+{\Huge \bfseries \ReportTitleFR}\\[0.25cm]
+{\large \itshape \ReportTitleEN}\\[0.35cm]
+\rule{0.9\textwidth}{0.8pt}\\[1cm]
+
+\begin{tabular}{>{\bfseries}p{5cm}p{8.3cm}}
+R\'ealis\'e par & \StudentName \\
+Organisme d'accueil & \CompanyName \\
+Encadrant professionnel & \IndustrialSupervisor \\
+Encadrant universitaire & \AcademicSupervisor \\
+Date de soutenance & \DefenseDate \\
+Confidentialit\'e & \ConfidentialityStatus \\
+\end{tabular}
+
+\vfill
+
+\begin{tabular}{>{\bfseries}p{5cm}p{8.3cm}}
+Pr\'esident du jury & \JuryPresident \\
+Examinateur & \JuryMemberA \\
+Examinateur & \JuryMemberB \\
+\end{tabular}
+
+\vfill
+\end{center}
+\end{titlepage}
+
+\guided{%
+Cette page doit rester sobre, institutionnelle et coh\'erente avec le sujet valid\'e. Le logo officiel de l'\'ecole est int\'egr\'e au template. Si le projet est confidentiel, produire une version acad\'emique diffusable qui conserve la logique scientifique du travail.
+}

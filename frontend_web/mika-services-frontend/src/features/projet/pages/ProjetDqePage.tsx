@@ -614,131 +614,154 @@ export const ProjetDqePage = () => {
                     </span>
                   </div>
 
-                  {/* Tableau des lignes */}
+                  {/* Lignes du chapitre — vue cartes */}
                   {chap.lignes.length > 0 ? (
-                    <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="bg-gradient-to-r from-gray-50 to-gray-50/50 dark:from-gray-800/80 dark:to-gray-800/40">
-                              <th className="py-3 px-4 text-left text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400" style={{ width: '70px' }}>N.</th>
-                              <th className="py-3 px-4 text-left text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">Designation</th>
-                              <th className="py-3 px-4 text-center text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400" style={{ width: '60px' }}>Unite</th>
-                              <th className="py-3 px-4 text-right text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400" style={{ width: '90px' }}>Qte</th>
-                              <th className="py-3 px-4 text-right text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400" style={{ width: '110px' }}>P.U.</th>
-                              <th className="py-3 px-4 text-right text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400" style={{ width: '130px' }}>Montant</th>
-                              <th className="py-3 px-4 text-center text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400" style={{ width: '130px' }}>Avancement</th>
-                              {canEdit && <th className="py-3 px-4" style={{ width: '70px' }}></th>}
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
-                            {paginatedLignes.map((ligne, lIdx) => {
-                              if (editingLigneId === ligne.id) {
-                                return (
-                                  <tr key={ligne.id} className="bg-primary/[0.02] dark:bg-primary/[0.04]">
-                                    <td className="py-2.5 px-3"><input value={editLigneForm.numeroPoste} onChange={(e) => setEditLigneForm({ ...editLigneForm, numeroPoste: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-2.5 px-3"><input value={editLigneForm.designation} onChange={(e) => setEditLigneForm({ ...editLigneForm, designation: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-2.5 px-3"><input value={editLigneForm.unite} onChange={(e) => setEditLigneForm({ ...editLigneForm, unite: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2 py-1.5 text-xs text-center bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-2.5 px-3"><input type="number" value={editLigneForm.quantite} onChange={(e) => setEditLigneForm({ ...editLigneForm, quantite: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2 py-1.5 text-xs text-right bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-2.5 px-3"><input type="number" value={editLigneForm.prixUnitaire} onChange={(e) => setEditLigneForm({ ...editLigneForm, prixUnitaire: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2 py-1.5 text-xs text-right bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-2.5 px-3"><input type="number" value={editLigneForm.montantTotal} onChange={(e) => setEditLigneForm({ ...editLigneForm, montantTotal: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2 py-1.5 text-xs text-right bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-2.5 px-3"><input type="number" min="0" max="100" value={editLigneForm.avancementPct} onChange={(e) => setEditLigneForm({ ...editLigneForm, avancementPct: e.target.value })} className="w-full border-2 border-primary/20 rounded-lg px-2 py-1.5 text-xs text-center bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:border-primary outline-none" /></td>
-                                    <td className="py-2.5 px-3">
-                                      <div className="flex gap-1">
-                                        <button onClick={() => handleUpdateLigne(ligne.id)} disabled={saving} className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg transition-colors"><IconCheck /></button>
-                                        <button onClick={() => setEditingLigneId(null)} className="p-1.5 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 rounded-lg transition-colors"><IconX /></button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                )
-                              }
+                    <>
+                      <div className="space-y-3">
+                        {paginatedLignes.map((ligne) => {
+                          // Mode edition
+                          if (editingLigneId === ligne.id) {
+                            return (
+                              <div key={ligne.id} className="bg-primary/[0.03] dark:bg-primary/[0.06] rounded-xl border-2 border-primary/20 p-5">
+                                <div className="flex items-center justify-between mb-4">
+                                  <span className="text-xs font-bold text-primary uppercase tracking-wider">Modification du poste</span>
+                                  <div className="flex gap-1.5">
+                                    <button onClick={() => handleUpdateLigne(ligne.id)} disabled={saving} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"><IconCheck /> Enregistrer</button>
+                                    <button onClick={() => setEditingLigneId(null)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 text-xs font-bold rounded-lg transition-colors"><IconX /> Annuler</button>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">N. Poste</label>
+                                    <input value={editLigneForm.numeroPoste} onChange={(e) => setEditLigneForm({ ...editLigneForm, numeroPoste: e.target.value })} className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-semibold bg-white dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all" />
+                                  </div>
+                                  <div className="col-span-2 md:col-span-3">
+                                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Designation</label>
+                                    <input value={editLigneForm.designation} onChange={(e) => setEditLigneForm({ ...editLigneForm, designation: e.target.value })} className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Unite</label>
+                                    <input value={editLigneForm.unite} onChange={(e) => setEditLigneForm({ ...editLigneForm, unite: e.target.value })} className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Quantite</label>
+                                    <input type="number" value={editLigneForm.quantite} onChange={(e) => setEditLigneForm({ ...editLigneForm, quantite: e.target.value })} className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Prix unitaire</label>
+                                    <input type="number" value={editLigneForm.prixUnitaire} onChange={(e) => setEditLigneForm({ ...editLigneForm, prixUnitaire: e.target.value })} className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Montant total</label>
+                                    <input type="number" value={editLigneForm.montantTotal} onChange={(e) => setEditLigneForm({ ...editLigneForm, montantTotal: e.target.value })} className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all" />
+                                  </div>
+                                  <div className="col-span-2 md:col-span-4">
+                                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Avancement (%)</label>
+                                    <div className="flex items-center gap-3">
+                                      <input type="range" min="0" max="100" value={editLigneForm.avancementPct} onChange={(e) => setEditLigneForm({ ...editLigneForm, avancementPct: e.target.value })} className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-primary" />
+                                      <input type="number" min="0" max="100" value={editLigneForm.avancementPct} onChange={(e) => setEditLigneForm({ ...editLigneForm, avancementPct: e.target.value })} className="w-20 border-2 border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-center font-bold bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          }
 
-                              return (
-                                <tr
-                                  key={ligne.id}
-                                  className={`group transition-colors duration-150 ${
-                                    lIdx % 2 === 0
-                                      ? 'bg-white dark:bg-gray-900'
-                                      : 'bg-gray-50/50 dark:bg-gray-800/20'
-                                  } hover:bg-primary/[0.02] dark:hover:bg-primary/[0.03]`}
-                                >
-                                  <td className="py-3.5 px-4">
-                                    <span className="font-mono text-xs font-semibold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
-                                      {ligne.numeroPoste || '-'}
-                                    </span>
-                                  </td>
-                                  <td className="py-3.5 px-4">
-                                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{ligne.designation}</span>
-                                  </td>
-                                  <td className="py-3.5 px-4 text-center">
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{ligne.unite || '-'}</span>
-                                  </td>
-                                  <td className="py-3.5 px-4 text-right">
-                                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 font-mono">
-                                      {ligne.quantite != null ? ligne.quantite.toLocaleString('fr-FR') : '-'}
-                                    </span>
-                                  </td>
-                                  <td className="py-3.5 px-4 text-right">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                                      {ligne.prixUnitaire != null ? formatMontant(ligne.prixUnitaire) : '-'}
-                                    </span>
-                                  </td>
-                                  <td className="py-3.5 px-4 text-right">
-                                    <span className="text-sm font-bold text-gray-900 dark:text-white">
+                          // Mode lecture — carte
+                          return (
+                            <div
+                              key={ligne.id}
+                              className="group relative bg-white dark:bg-gray-900/60 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-md transition-all duration-200 overflow-hidden"
+                            >
+                              {/* Barre laterale avancement */}
+                              <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl overflow-hidden">
+                                <div
+                                  className={`w-full transition-all duration-500 ${progressColor(ligne.avancementPct)}`}
+                                  style={{ height: `${Math.max(ligne.avancementPct, 4)}%` }}
+                                />
+                              </div>
+
+                              <div className="pl-5 pr-5 py-4">
+                                {/* Ligne 1 : Numero + Designation + Actions */}
+                                <div className="flex items-start gap-3 mb-3">
+                                  <span className="flex-shrink-0 inline-flex items-center justify-center min-w-[42px] h-7 px-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-[11px] font-bold font-mono text-gray-500 dark:text-gray-400">
+                                    {ligne.numeroPoste || '-'}
+                                  </span>
+                                  <h4 className="flex-1 text-sm font-semibold text-gray-800 dark:text-gray-200 leading-snug pt-0.5">
+                                    {ligne.designation}
+                                  </h4>
+                                  {canEdit && (
+                                    <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                      <button onClick={() => { setEditingLigneId(ligne.id); setEditLigneForm(ligneToForm(ligne)) }} className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all" title="Modifier"><IconEdit /></button>
+                                      <button onClick={() => handleDeleteLigne(ligne)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Supprimer"><IconTrash /></button>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Ligne 2 : Metriques en chips */}
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                  {ligne.unite && (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Unite</span>
+                                      <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-md">{ligne.unite}</span>
+                                    </div>
+                                  )}
+                                  {ligne.quantite != null && (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Qte</span>
+                                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300 font-mono">{ligne.quantite.toLocaleString('fr-FR')}</span>
+                                    </div>
+                                  )}
+                                  {ligne.prixUnitaire != null && (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">P.U.</span>
+                                      <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">{formatMontant(ligne.prixUnitaire)}</span>
+                                    </div>
+                                  )}
+
+                                  {/* Separateur visuel */}
+                                  <div className="hidden md:block w-px h-4 bg-gray-200 dark:bg-gray-700" />
+
+                                  {/* Montant — mis en valeur */}
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Montant</span>
+                                    <span className="text-sm font-black text-gray-900 dark:text-white">
                                       {ligne.montantTotal != null ? formatMontant(ligne.montantTotal) : '-'}
                                     </span>
-                                  </td>
-                                  <td className="py-3.5 px-4">
-                                    <div className="flex items-center gap-2">
-                                      <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                        <div
-                                          className={`h-full rounded-full transition-all duration-500 ${progressColor(ligne.avancementPct)}`}
-                                          style={{ width: `${Math.min(100, ligne.avancementPct)}%` }}
-                                        />
-                                      </div>
-                                      <span className={`text-[11px] font-bold min-w-[36px] text-right ${
-                                        ligne.avancementPct >= 100 ? 'text-emerald-600 dark:text-emerald-400'
-                                        : ligne.avancementPct >= 50 ? 'text-blue-600 dark:text-blue-400'
-                                        : ligne.avancementPct > 0 ? 'text-amber-600 dark:text-amber-400'
-                                        : 'text-gray-400'
-                                      }`}>
-                                        {ligne.avancementPct}%
-                                      </span>
-                                    </div>
-                                  </td>
-                                  {canEdit && (
-                                    <td className="py-3.5 px-4">
-                                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                        <button onClick={() => { setEditingLigneId(ligne.id); setEditLigneForm(ligneToForm(ligne)) }} className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all" title="Modifier"><IconEdit /></button>
-                                        <button onClick={() => handleDeleteLigne(ligne)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Supprimer"><IconTrash /></button>
-                                      </div>
-                                    </td>
-                                  )}
-                                </tr>
-                              )
-                            })}
-                          </tbody>
+                                  </div>
 
-                          {/* Sous-total du chapitre */}
-                          <tfoot>
-                            <tr className="bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-800/60 dark:to-gray-800/30 border-t-2 border-gray-100 dark:border-gray-800">
-                              <td colSpan={5} className="py-3.5 px-4">
-                                <span className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                  Sous-total Chap. {chap.numero}
-                                </span>
-                              </td>
-                              <td className="py-3.5 px-4 text-right">
-                                <span className="text-sm font-black text-gray-900 dark:text-white">{formatMontant(chap.montantTotal)}</span>
-                              </td>
-                              <td className="py-3.5 px-4 text-center">
-                                <span className={`inline-flex items-center px-2 py-0.5 text-xs font-bold rounded-full ring-1 ring-inset ${progressBadgeClass(chap.avancementPct)}`}>
-                                  {chap.avancementPct}%
-                                </span>
-                              </td>
-                              {canEdit && <td></td>}
-                            </tr>
-                          </tfoot>
-                        </table>
+                                  <div className="hidden md:block w-px h-4 bg-gray-200 dark:bg-gray-700" />
+
+                                  {/* Avancement */}
+                                  <div className="flex items-center gap-2 ml-auto">
+                                    <div className="w-20 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full transition-all duration-500 ${progressColor(ligne.avancementPct)}`}
+                                        style={{ width: `${Math.min(100, ligne.avancementPct)}%` }}
+                                      />
+                                    </div>
+                                    <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-bold rounded-full ring-1 ring-inset ${progressBadgeClass(ligne.avancementPct)}`}>
+                                      {ligne.avancementPct}%
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* Sous-total du chapitre */}
+                      <div className="mt-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-800/60 dark:to-gray-800/30 rounded-xl px-5 py-3.5 border border-gray-100 dark:border-gray-800">
+                        <span className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          Sous-total {chap.numero}
+                        </span>
+                        <div className="flex items-center gap-4">
+                          <span className="text-sm font-black text-gray-900 dark:text-white">{formatMontant(chap.montantTotal)}</span>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-bold rounded-full ring-1 ring-inset ${progressBadgeClass(chap.avancementPct)}`}>
+                            {chap.avancementPct}%
+                          </span>
+                        </div>
                       </div>
 
                       {/* Pagination lignes */}
@@ -747,7 +770,7 @@ export const ProjetDqePage = () => {
                         totalPages={ligneTotalPages}
                         onPageChange={(p) => setLignePage(chap.id, p)}
                       />
-                    </div>
+                    </>
                   ) : (
                     <div className="text-center py-10 bg-gray-50/50 dark:bg-gray-800/20 rounded-xl border border-dashed border-gray-200 dark:border-gray-800">
                       <p className="text-sm text-gray-400 dark:text-gray-500">Aucun poste dans ce chapitre</p>

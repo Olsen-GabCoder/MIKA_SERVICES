@@ -121,6 +121,7 @@ function ligneToForm(l: DqeLigne): LigneForm {
 type FlatRow =
   | { type: 'chapitre'; chapitre: DqeChapitre }
   | { type: 'ligne'; ligne: DqeLigne; chapitreId: number }
+  | { type: 'add-ligne'; chapitre: DqeChapitre }
   | { type: 'sous-total'; chapitre: DqeChapitre }
 
 // ── Composant principal ──────────────────────────────────────────────
@@ -186,10 +187,14 @@ export const ProjetDqePage = () => {
       for (const ligne of chap.lignes) {
         rows.push({ type: 'ligne', ligne, chapitreId: chap.id })
       }
+      // Insertion du formulaire ajout ligne juste apres les lignes du chapitre
+      if (addingLigneChapitreId === chap.id) {
+        rows.push({ type: 'add-ligne', chapitre: chap } as FlatRow)
+      }
       rows.push({ type: 'sous-total', chapitre: chap })
     }
     return rows
-  }, [chapitres])
+  }, [chapitres, addingLigneChapitreId])
 
   const totalPages = Math.ceil(flatRows.length / ROWS_PER_PAGE)
   const paginatedRows = useMemo(() => {
@@ -207,6 +212,8 @@ export const ProjetDqePage = () => {
       setChapitreForm(emptyChapitreForm)
       setAddingChapitre(false)
       await loadData()
+      // Aller a la derniere page pour voir le nouveau chapitre
+      setPage(Math.ceil((flatRows.length + 3) / ROWS_PER_PAGE))
     } catch { setError('Erreur lors de la creation du chapitre') }
     finally { setSaving(false) }
   }
@@ -230,7 +237,7 @@ export const ProjetDqePage = () => {
       variant: 'danger',
     })
     if (!ok) return
-    try { await dqeApi.deleteChapitre(chap.id); await loadData() }
+    try { await dqeApi.deleteChapitre(chap.id); await loadData(); setPage(1) }
     catch { setError('Erreur lors de la suppression du chapitre') }
   }
 
@@ -277,7 +284,7 @@ export const ProjetDqePage = () => {
       variant: 'danger',
     })
     if (!ok) return
-    try { await dqeApi.deleteLigne(ligne.id); await loadData() }
+    try { await dqeApi.deleteLigne(ligne.id); await loadData(); if (paginatedRows.length <= 2) setPage(Math.max(1, page - 1)) }
     catch { setError('Erreur lors de la suppression de la ligne') }
   }
 
@@ -470,6 +477,33 @@ export const ProjetDqePage = () => {
                     )
                   }
 
+                  // ── FORMULAIRE AJOUT LIGNE (inline) ─────────────
+                  if (row.type === 'add-ligne') {
+                    const chap = (row as { type: 'add-ligne'; chapitre: DqeChapitre }).chapitre
+                    return (
+                      <tr key={`al-${chap.id}`} className="bg-primary/[0.03] dark:bg-primary/[0.05]">
+                        <td colSpan={colCount} className="py-4 px-5 border-y-2 border-dashed border-primary/20">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-black text-primary uppercase tracking-wider">Nouveau poste — {chap.numero}</p>
+                            <button onClick={() => { setAddingLigneChapitreId(null); setLigneForm(emptyLigneForm) }} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"><IconX /></button>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-7 gap-2">
+                            <input value={ligneForm.numeroPoste} onChange={(e) => setLigneForm({ ...ligneForm, numeroPoste: e.target.value })} placeholder="N. Poste" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
+                            <input value={ligneForm.designation} onChange={(e) => setLigneForm({ ...ligneForm, designation: e.target.value })} placeholder="Designation *" className="md:col-span-2 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
+                            <input value={ligneForm.unite} onChange={(e) => setLigneForm({ ...ligneForm, unite: e.target.value })} placeholder="Unite" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
+                            <input type="number" value={ligneForm.quantite} onChange={(e) => setLigneForm({ ...ligneForm, quantite: e.target.value })} placeholder="Qte" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
+                            <input type="number" value={ligneForm.prixUnitaire} onChange={(e) => setLigneForm({ ...ligneForm, prixUnitaire: e.target.value })} placeholder="P.U." className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
+                            <input type="number" value={ligneForm.montantTotal} onChange={(e) => setLigneForm({ ...ligneForm, montantTotal: e.target.value })} placeholder="Montant" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <Button variant="primary" size="sm" onClick={() => handleCreateLigne(chap.id)} disabled={saving || !ligneForm.designation.trim()} className="flex items-center gap-1.5"><IconCheck /> Valider</Button>
+                            <Button variant="outline" size="sm" onClick={() => { setAddingLigneChapitreId(null); setLigneForm(emptyLigneForm) }} className="flex items-center gap-1.5"><IconX /> Annuler</Button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  }
+
                   // ── LIGNE SOUS-TOTAL ───────────────────────────
                   if (row.type === 'sous-total') {
                     const chap = row.chapitre
@@ -562,30 +596,11 @@ export const ProjetDqePage = () => {
                   )
                 })}
 
-                {/* Formulaire ajout ligne (s'affiche apres la derniere ligne du chapitre concerne) */}
-                {addingLigneChapitreId != null && (
-                  <tr className="bg-primary/[0.03] dark:bg-primary/[0.05] border-t-2 border-dashed border-primary/20">
-                    <td colSpan={colCount} className="py-4 px-5">
-                      <p className="text-xs font-black text-primary uppercase tracking-wider mb-3">Nouveau poste</p>
-                      <div className="grid grid-cols-2 md:grid-cols-7 gap-2">
-                        <input value={ligneForm.numeroPoste} onChange={(e) => setLigneForm({ ...ligneForm, numeroPoste: e.target.value })} placeholder="N. Poste" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
-                        <input value={ligneForm.designation} onChange={(e) => setLigneForm({ ...ligneForm, designation: e.target.value })} placeholder="Designation *" className="md:col-span-2 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
-                        <input value={ligneForm.unite} onChange={(e) => setLigneForm({ ...ligneForm, unite: e.target.value })} placeholder="Unite" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
-                        <input type="number" value={ligneForm.quantite} onChange={(e) => setLigneForm({ ...ligneForm, quantite: e.target.value })} placeholder="Qte" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
-                        <input type="number" value={ligneForm.prixUnitaire} onChange={(e) => setLigneForm({ ...ligneForm, prixUnitaire: e.target.value })} placeholder="P.U." className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
-                        <input type="number" value={ligneForm.montantTotal} onChange={(e) => setLigneForm({ ...ligneForm, montantTotal: e.target.value })} placeholder="Montant" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
-                      </div>
-                      <div className="flex gap-2 mt-3">
-                        <Button variant="primary" size="sm" onClick={() => handleCreateLigne(addingLigneChapitreId)} disabled={saving || !ligneForm.designation.trim()} className="flex items-center gap-1.5"><IconCheck /> Valider</Button>
-                        <Button variant="outline" size="sm" onClick={() => { setAddingLigneChapitreId(null); setLigneForm(emptyLigneForm) }} className="flex items-center gap-1.5"><IconX /> Annuler</Button>
-                      </div>
-                    </td>
-                  </tr>
-                )}
+                {/* (formulaire ajout ligne est insere via flatRows type 'add-ligne') */}
               </tbody>
 
-              {/* ── TOTAL GENERAL ──────────────────────────────── */}
-              {chapitres.length > 0 && (
+              {/* ── TOTAL GENERAL (derniere page uniquement) ───── */}
+              {chapitres.length > 0 && (page >= totalPages || totalPages <= 1) && (
                 <tfoot>
                   <tr className="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-950 dark:to-gray-900 border-t-4 border-secondary">
                     <td colSpan={5} className="py-5 px-5 border-r border-gray-700">

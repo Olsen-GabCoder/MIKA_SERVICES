@@ -493,6 +493,10 @@ export const ProjetFormPage = () => {
   const [addingPointBloquant, setAddingPointBloquant] = useState(false)
   const [pbSearch, setPbSearch] = useState('')
   const [showPbSuggestions, setShowPbSuggestions] = useState(false)
+  const [besoinMatSearch, setBesoinMatSearch] = useState('')
+  const [showBesoinMatSuggestions, setShowBesoinMatSuggestions] = useState(false)
+  const [besoinHumSearch, setBesoinHumSearch] = useState('')
+  const [showBesoinHumSuggestions, setShowBesoinHumSuggestions] = useState(false)
   const [previsions, setPrevisions] = useState<Prevision[]>([])
   const [dqeChapitres, setDqeChapitres] = useState<DqeChapitre[]>([])
   const [previsionSearch, setPrevisionSearch] = useState('')
@@ -1897,181 +1901,147 @@ export const ProjetFormPage = () => {
               {/* Besoins matériels */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t('detail.besoinsMateriel')}</label>
-                <select
-                  value=""
-                  onChange={(e) => {
-                    const v = e.target.value
-                    if (!v) return
-                    const list = parseBesoinsList(form.besoinsMateriel)
-                    if (!list.includes(v)) setForm((prev) => ({ ...prev, besoinsMateriel: list.length ? list.concat(v).join(BESOINS_SEP) : v }))
-                    e.target.value = ''
-                  }}
-                  disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100 dark:disabled:bg-gray-600 bg-white dark:bg-gray-700 dark:text-gray-100"
-                >
-                  <option value="">{t('form.choisirBesoinMateriel')}</option>
-                  {['Engins', 'Équipements', 'Combinaisons'].map((group) => {
-                    const groupKey = BESOINS_MATERIEL_GROUP_KEYS[group] ?? group
-                    const groupLabel = t(`form.besoinsMateriel.groups.${groupKey}`) || group
-                    return (
-                      <optgroup key={group} label={groupLabel}>
-                        {BESOINS_MATERIEL_OPTIONS.filter((o) => o.group === group).map((o) => {
-                          const optKey = slugForI18n(o.value)
-                          const optLabel = t(`form.besoinsMateriel.options.${optKey}`) || o.label
-                          return <option key={o.value} value={o.value}>{optLabel}</option>
-                        })}
-                      </optgroup>
-                    )
-                  })}
-                </select>
+                {!readOnly && (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={besoinMatSearch}
+                      onChange={(e) => { setBesoinMatSearch(e.target.value); setShowBesoinMatSuggestions(true) }}
+                      onFocus={() => setShowBesoinMatSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowBesoinMatSuggestions(false), 200)}
+                      onKeyDown={(e) => {
+                        if (e.key !== 'Enter') return
+                        e.preventDefault()
+                        const v = besoinMatSearch.trim()
+                        if (!v) return
+                        const list = parseBesoinsList(form.besoinsMateriel)
+                        if (!list.includes(v)) setForm((prev) => ({ ...prev, besoinsMateriel: list.length ? list.concat(v).join(BESOINS_SEP) : v }))
+                        setBesoinMatSearch('')
+                      }}
+                      placeholder={t('form.ajouterBesoinNonListe')}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
+                    />
+                    {showBesoinMatSuggestions && (
+                      <div className="absolute z-30 top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl">
+                        {(() => {
+                          const q = besoinMatSearch.toLowerCase()
+                          const existing = parseBesoinsList(form.besoinsMateriel)
+                          const groups: { label: string; items: { value: string; label: string }[] }[] = []
+                          for (const group of ['Engins', 'Équipements', 'Combinaisons']) {
+                            const gk = `form.besoinsMateriel.groups.${BESOINS_MATERIEL_GROUP_KEYS[group] ?? group}`
+                            const groupLabel = t(gk) !== gk ? t(gk) : group
+                            const items = BESOINS_MATERIEL_OPTIONS.filter((o) => o.group === group)
+                              .map((o) => { const k = `form.besoinsMateriel.options.${slugForI18n(o.value)}`; return { value: o.value, label: t(k) !== k ? t(k) : o.label } })
+                              .filter((o) => !existing.includes(o.value))
+                              .filter((o) => !q || o.label.toLowerCase().includes(q))
+                            if (items.length > 0) groups.push({ label: groupLabel, items })
+                          }
+                          if (groups.length === 0) return <div className="px-3 py-2 text-xs text-gray-400">{q ? 'Aucun résultat — Entrée pour ajouter' : 'Tous les besoins prédéfinis sont déjà ajoutés'}</div>
+                          return groups.map((g) => (
+                            <div key={g.label}>
+                              <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900 sticky top-0">{g.label}</div>
+                              {g.items.map((item) => (
+                                <button key={item.value} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-primary/10 dark:hover:bg-primary/20 text-gray-700 dark:text-gray-200 transition-colors" onMouseDown={(e) => e.preventDefault()} onClick={() => {
+                                  const list = parseBesoinsList(form.besoinsMateriel)
+                                  if (!list.includes(item.value)) setForm((prev) => ({ ...prev, besoinsMateriel: list.length ? list.concat(item.value).join(BESOINS_SEP) : item.value }))
+                                  setBesoinMatSearch(''); setShowBesoinMatSuggestions(false)
+                                }}>{item.label}</button>
+                              ))}
+                            </div>
+                          ))
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-2 mt-2">
                   {parseBesoinsList(form.besoinsMateriel).map((item) => {
                     const optKey = slugForI18n(item)
                     const translated = t(`form.besoinsMateriel.options.${optKey}`)
                     const label = translated !== `form.besoinsMateriel.options.${optKey}` ? translated : item
                     return (
-                    <span
-                      key={item}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-gray-100 text-gray-800"
-                    >
+                    <span key={item} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-gray-100 text-gray-800">
                       {label}
                       {!readOnly && (
-                        <button
-                          type="button"
-                          onClick={() => setForm((prev) => ({ ...prev, besoinsMateriel: parseBesoinsList(prev.besoinsMateriel).filter((x) => x !== item).join(BESOINS_SEP) }))}
-                          className="text-gray-500 hover:text-red-600"
-                          aria-label={t('form.retirer')}
-                        >
-                          ×
-                        </button>
+                        <button type="button" onClick={() => setForm((prev) => ({ ...prev, besoinsMateriel: parseBesoinsList(prev.besoinsMateriel).filter((x) => x !== item).join(BESOINS_SEP) }))} className="text-gray-500 hover:text-red-600" aria-label={t('form.retirer')}>×</button>
                       )}
                     </span>
                     )
                   })}
                 </div>
-                {!readOnly && (
-                  <div className="flex gap-2 mt-2">
-                    <input
-                      type="text"
-                      placeholder={t('form.ajouterBesoinNonListe')}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary text-sm"
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter') return
-                        e.preventDefault()
-                        const input = e.currentTarget
-                        const v = input.value.trim()
-                        if (!v) return
-                        const list = parseBesoinsList(form.besoinsMateriel)
-                        if (!list.includes(v)) setForm((prev) => ({ ...prev, besoinsMateriel: list.length ? list.concat(v).join(BESOINS_SEP) : v }))
-                        input.value = ''
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        const input = (e.currentTarget.previousElementSibling as HTMLInputElement)
-                        const v = input?.value?.trim()
-                        if (!v) return
-                        const list = parseBesoinsList(form.besoinsMateriel)
-                        if (!list.includes(v)) setForm((prev) => ({ ...prev, besoinsMateriel: list.length ? list.concat(v).join(BESOINS_SEP) : v }))
-                        if (input) input.value = ''
-                      }}
-                      className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark whitespace-nowrap"
-                    >
-                      {t('form.ajouter')}
-                    </button>
-                  </div>
-                )}
               </div>
 
               {/* Besoins humains */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t('detail.besoinsHumain')}</label>
-                <select
-                  value=""
-                  onChange={(e) => {
-                    const v = e.target.value
-                    if (!v) return
-                    const list = parseBesoinsList(form.besoinsHumain)
-                    if (!list.includes(v)) setForm((prev) => ({ ...prev, besoinsHumain: list.length ? list.concat(v).join(BESOINS_SEP) : v }))
-                    e.target.value = ''
-                  }}
-                  disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100 dark:disabled:bg-gray-600 bg-white dark:bg-gray-700 dark:text-gray-100"
-                >
-                  <option value="">{t('form.choisirBesoinHumain')}</option>
-                  {['Rôles', 'Combinaisons'].map((group) => {
-                    const groupKey = BESOINS_HUMAIN_GROUP_KEYS[group] ?? group
-                    const groupLabel = t(`form.besoinsHumain.groups.${groupKey}`) || group
-                    return (
-                      <optgroup key={group} label={groupLabel}>
-                        {BESOINS_HUMAIN_OPTIONS.filter((o) => o.group === group).map((o) => {
-                          const optKey = slugForI18n(o.value)
-                          const optLabel = t(`form.besoinsHumain.options.${optKey}`) || o.label
-                          return <option key={o.value} value={o.value}>{optLabel}</option>
-                        })}
-                      </optgroup>
-                    )
-                  })}
-                </select>
+                {!readOnly && (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={besoinHumSearch}
+                      onChange={(e) => { setBesoinHumSearch(e.target.value); setShowBesoinHumSuggestions(true) }}
+                      onFocus={() => setShowBesoinHumSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowBesoinHumSuggestions(false), 200)}
+                      onKeyDown={(e) => {
+                        if (e.key !== 'Enter') return
+                        e.preventDefault()
+                        const v = besoinHumSearch.trim()
+                        if (!v) return
+                        const list = parseBesoinsList(form.besoinsHumain)
+                        if (!list.includes(v)) setForm((prev) => ({ ...prev, besoinsHumain: list.length ? list.concat(v).join(BESOINS_SEP) : v }))
+                        setBesoinHumSearch('')
+                      }}
+                      placeholder={t('form.ajouterBesoinNonListe')}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
+                    />
+                    {showBesoinHumSuggestions && (
+                      <div className="absolute z-30 top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl">
+                        {(() => {
+                          const q = besoinHumSearch.toLowerCase()
+                          const existing = parseBesoinsList(form.besoinsHumain)
+                          const groups: { label: string; items: { value: string; label: string }[] }[] = []
+                          for (const group of ['Rôles', 'Combinaisons']) {
+                            const gk = `form.besoinsHumain.groups.${BESOINS_HUMAIN_GROUP_KEYS[group] ?? group}`
+                            const groupLabel = t(gk) !== gk ? t(gk) : group
+                            const items = BESOINS_HUMAIN_OPTIONS.filter((o) => o.group === group)
+                              .map((o) => { const k = `form.besoinsHumain.options.${slugForI18n(o.value)}`; return { value: o.value, label: t(k) !== k ? t(k) : o.label } })
+                              .filter((o) => !existing.includes(o.value))
+                              .filter((o) => !q || o.label.toLowerCase().includes(q))
+                            if (items.length > 0) groups.push({ label: groupLabel, items })
+                          }
+                          if (groups.length === 0) return <div className="px-3 py-2 text-xs text-gray-400">{q ? 'Aucun résultat — Entrée pour ajouter' : 'Tous les besoins prédéfinis sont déjà ajoutés'}</div>
+                          return groups.map((g) => (
+                            <div key={g.label}>
+                              <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900 sticky top-0">{g.label}</div>
+                              {g.items.map((item) => (
+                                <button key={item.value} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-primary/10 dark:hover:bg-primary/20 text-gray-700 dark:text-gray-200 transition-colors" onMouseDown={(e) => e.preventDefault()} onClick={() => {
+                                  const list = parseBesoinsList(form.besoinsHumain)
+                                  if (!list.includes(item.value)) setForm((prev) => ({ ...prev, besoinsHumain: list.length ? list.concat(item.value).join(BESOINS_SEP) : item.value }))
+                                  setBesoinHumSearch(''); setShowBesoinHumSuggestions(false)
+                                }}>{item.label}</button>
+                              ))}
+                            </div>
+                          ))
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-2 mt-2">
                   {parseBesoinsList(form.besoinsHumain).map((item) => {
                     const optKey = slugForI18n(item)
                     const translated = t(`form.besoinsHumain.options.${optKey}`)
                     const label = translated !== `form.besoinsHumain.options.${optKey}` ? translated : item
                     return (
-                    <span
-                      key={item}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-blue-50 text-blue-800"
-                    >
+                    <span key={item} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-blue-50 text-blue-800">
                       {label}
                       {!readOnly && (
-                        <button
-                          type="button"
-                          onClick={() => setForm((prev) => ({ ...prev, besoinsHumain: parseBesoinsList(prev.besoinsHumain).filter((x) => x !== item).join(BESOINS_SEP) }))}
-                          className="text-blue-600 hover:text-red-600"
-                          aria-label={t('form.retirer')}
-                        >
-                          ×
-                        </button>
+                        <button type="button" onClick={() => setForm((prev) => ({ ...prev, besoinsHumain: parseBesoinsList(prev.besoinsHumain).filter((x) => x !== item).join(BESOINS_SEP) }))} className="text-blue-600 hover:text-red-600" aria-label={t('form.retirer')}>×</button>
                       )}
                     </span>
                     )
                   })}
                 </div>
-                {!readOnly && (
-                  <div className="flex gap-2 mt-2">
-                    <input
-                      type="text"
-                      placeholder={t('form.ajouterBesoinNonListe')}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary text-sm"
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter') return
-                        e.preventDefault()
-                        const input = e.currentTarget
-                        const v = input.value.trim()
-                        if (!v) return
-                        const list = parseBesoinsList(form.besoinsHumain)
-                        if (!list.includes(v)) setForm((prev) => ({ ...prev, besoinsHumain: list.length ? list.concat(v).join(BESOINS_SEP) : v }))
-                        input.value = ''
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        const input = (e.currentTarget.previousElementSibling as HTMLInputElement)
-                        const v = input?.value?.trim()
-                        if (!v) return
-                        const list = parseBesoinsList(form.besoinsHumain)
-                        if (!list.includes(v)) setForm((prev) => ({ ...prev, besoinsHumain: list.length ? list.concat(v).join(BESOINS_SEP) : v }))
-                        if (input) input.value = ''
-                      }}
-                      className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark whitespace-nowrap"
-                    >
-                      {t('form.ajouter')}
-                    </button>
-                  </div>
-                )}
               </div>
 
               <div>

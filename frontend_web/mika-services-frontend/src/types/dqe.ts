@@ -78,3 +78,26 @@ export interface DqeLigneUpdateRequest {
   avancementPct?: number
   ordre?: number
 }
+
+// ── Types pour l'analyse IA de DQE ──────────────────────────────────
+
+export interface DqeAnalyseResponse {
+  chapitres: DqeChapitreExtrait[]
+  avertissements: string[]
+  champsExtraits: number
+}
+
+export interface DqeChapitreExtrait {
+  numero: string
+  designation: string
+  lignes: DqeLigneExtraite[]
+}
+
+export interface DqeLigneExtraite {
+  numeroPoste?: string
+  designation: string
+  unite?: string
+  quantite?: number
+  prixUnitaire?: number
+  montantTotal?: number
+}

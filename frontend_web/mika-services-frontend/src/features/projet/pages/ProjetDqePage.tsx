@@ -15,6 +15,7 @@ import { projetApi } from '@/api/projetApi'
 import { canEditProjetEffective } from '@/utils/authRoles'
 import type { DqeChapitre, DqeLigne } from '@/types/dqe'
 import type { Projet } from '@/types/projet'
+import { DqeImportModal } from '@/features/projet/components/DqeImportModal'
 
 // ── Pagination ───────────────────────────────────────────────────────
 const ROWS_PER_PAGE = 15
@@ -196,6 +197,11 @@ const IconSpinner = () => (
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
   </svg>
 )
+const IconUpload = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+  </svg>
+)
 const IconSearch = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -248,6 +254,8 @@ export const ProjetDqePage = () => {
   const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null)
   // Batch avancement
   const [batchChapitreId, setBatchChapitreId] = useState<number | null>(null)
+  // Import IA
+  const [importModalOpen, setImportModalOpen] = useState(false)
   const [batchPct, setBatchPct] = useState('100')
 
   // ── Chargement ─────────────────────────────────────────────────────
@@ -593,6 +601,9 @@ export const ProjetDqePage = () => {
               <Button variant="primary" size="sm" onClick={() => { setAddingChapitre(true); setChapitreForm({ numero: nextChapitreNumero(chapitres), designation: '' }) }} className="flex items-center gap-1.5">
                 <IconPlus /> Ajouter un chapitre
               </Button>
+              <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="flex items-center gap-1.5">
+                <IconUpload /> Importer un DQE (IA)
+              </Button>
             ) : (
               <div className="flex flex-1 flex-col md:flex-row gap-3 items-end">
                 <div className="w-full md:w-36">
@@ -911,6 +922,16 @@ export const ProjetDqePage = () => {
           </div>
         )}
       </div>
+
+      {/* Modale d'import DQE par IA */}
+      {canEdit && (
+        <DqeImportModal
+          projetId={Number(id)}
+          open={importModalOpen}
+          onClose={() => setImportModalOpen(false)}
+          onImported={loadData}
+        />
+      )}
     </PageContainer>
   )
 }

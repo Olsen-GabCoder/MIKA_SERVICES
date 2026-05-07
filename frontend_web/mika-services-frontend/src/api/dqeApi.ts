@@ -8,6 +8,7 @@ import type {
   DqeLigneCreateRequest,
   DqeLigneUpdateRequest,
   DqeSummary,
+  DqeAnalyseResponse,
 } from '@/types/dqe'
 
 // ============================================
@@ -92,5 +93,20 @@ export const dqeApi = {
   /** Réordonner les lignes DQE d'un chapitre */
   reorderLignes: async (items: { id: number; ordre: number }[]): Promise<void> => {
     await apiClient.put(API_ENDPOINTS.DQE.REORDER_LIGNES, items)
+  },
+
+  // ── Import IA ──────────────────────────────────────────────────────
+
+  /** Analyser un fichier DQE via IA et extraire chapitres/lignes */
+  analyserDqe: async (projetId: number, file?: File, texte?: string): Promise<DqeAnalyseResponse> => {
+    const formData = new FormData()
+    if (file) formData.append('file', file)
+    if (texte) formData.append('texte', texte)
+    const response = await apiClient.post<DqeAnalyseResponse>(
+      `/projets/${projetId}/analyse-dqe`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 90000 }
+    )
+    return response.data
   },
 }

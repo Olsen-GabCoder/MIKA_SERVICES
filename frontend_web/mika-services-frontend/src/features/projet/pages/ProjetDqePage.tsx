@@ -709,7 +709,7 @@ export const ProjetDqePage = () => {
                               <div className="flex items-center gap-3">
                                 <span className="text-xs font-bold text-white/60">{chap.nombreLignes} postes</span>
                                 {canEdit && (
-                                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <div className="flex gap-1 opacity-60 hover:opacity-100 transition-opacity">
                                     <button onClick={() => { setEditingChapitreId(chap.id); setEditChapitreForm({ numero: chap.numero, designation: chap.designation }) }} className="p-1.5 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Modifier"><IconEdit /></button>
                                     <button onClick={() => handleDeleteChapitre(chap)} className="p-1.5 text-white/50 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors" title="Supprimer"><IconTrash /></button>
                                     <button onClick={() => { setAddingLigneChapitreId(chap.id); setLigneForm({ ...emptyLigneForm, numeroPoste: nextPosteNumero(chap) }) }} className="p-1.5 text-white/50 hover:text-emerald-300 hover:bg-emerald-500/20 rounded-lg transition-colors" title="Ajouter un poste"><IconPlus /></button>
@@ -848,7 +848,7 @@ export const ProjetDqePage = () => {
                       </td>
                       {canEdit && (
                         <td className="py-3 px-3 border-l border-gray-100 dark:border-gray-800/50">
-                          <div className="flex gap-0.5 justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                          <div className="flex gap-0.5 justify-center opacity-50 hover:opacity-100 transition-opacity duration-150">
                             <button onClick={() => { setEditingLigneId(ligne.id); setEditLigneForm(ligneToForm(ligne)) }} className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all" title="Modifier"><IconEdit /></button>
                             <button onClick={() => handleDuplicateLigne(ligne, row.chapitreId)} disabled={saving} className="p-1.5 text-gray-400 hover:text-secondary hover:bg-secondary/5 rounded-lg transition-all" title="Dupliquer"><IconCopy /></button>
                             <button onClick={() => handleDeleteLigne(ligne)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Supprimer"><IconTrash /></button>

@@ -86,19 +86,17 @@ const IconGrip = () => (
 )
 
 /** Ligne de tableau triable par drag & drop */
-function SortableTableRow({ id, disabled, children }: { id: string; disabled?: boolean; children: React.ReactNode }) {
+function SortableTableRow({ id, disabled, children, listeners: externalListeners }: { id: string; disabled?: boolean; children: React.ReactNode; listeners?: Record<string, unknown> }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled })
+  void externalListeners // unused — listeners come from useSortable
   return (
     <tr
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, position: 'relative', zIndex: isDragging ? 10 : undefined }}
       {...attributes}
+      {...(disabled ? {} : listeners)}
     >
-      {React.Children.map(children, (child, idx) =>
-        idx === 0 && !disabled
-          ? React.cloneElement(child as React.ReactElement, { ...listeners, style: { cursor: 'grab', ...(child as React.ReactElement).props?.style } })
-          : child
-      )}
+      {children}
     </tr>
   )
 }
@@ -445,21 +443,6 @@ export const ProjetDqePage = () => {
   // ── Drag & drop réordonnement ─────────────────────────────────────
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
-
-  const handleDragEndChapitre = useCallback(async (event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const oldIdx = chapitres.findIndex(c => `chap-${c.id}` === active.id)
-    const newIdx = chapitres.findIndex(c => `chap-${c.id}` === over.id)
-    if (oldIdx === -1 || newIdx === -1) return
-    const reordered = [...chapitres]
-    const [moved] = reordered.splice(oldIdx, 1)
-    reordered.splice(newIdx, 0, moved)
-    setChapitres(reordered)
-    try {
-      await dqeApi.reorderChapitres(reordered.map((c, i) => ({ id: c.id, ordre: i })))
-    } catch { setError('Erreur lors du réordonnement'); await loadData() }
-  }, [chapitres, loadData])
 
   const handleDragEndLigne = useCallback(async (event: DragEndEvent, chapitreId: number) => {
     const { active, over } = event

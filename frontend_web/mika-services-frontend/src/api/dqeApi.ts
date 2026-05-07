@@ -81,4 +81,16 @@ export const dqeApi = {
   deleteLigne: async (id: number): Promise<void> => {
     await apiClient.delete(API_ENDPOINTS.DQE.LIGNE_BY_ID(id))
   },
+
+  // ── Réordonnement ────────────────────────────────────────────────────
+
+  /** Réordonner les chapitres DQE d'un projet */
+  reorderChapitres: async (items: { id: number; ordre: number }[]): Promise<void> => {
+    await apiClient.put(API_ENDPOINTS.DQE.REORDER_CHAPITRES, items)
+  },
+
+  /** Réordonner les lignes DQE d'un chapitre */
+  reorderLignes: async (items: { id: number; ordre: number }[]): Promise<void> => {
+    await apiClient.put(API_ENDPOINTS.DQE.REORDER_LIGNES, items)
+  },
 }

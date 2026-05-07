@@ -1,5 +1,9 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
@@ -73,6 +77,32 @@ const IconPercent = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M4 20l16-16m-2 0a2 2 0 11-4 0 2 2 0 014 0zM10 20a2 2 0 11-4 0 2 2 0 014 0z" />
   </svg>
 )
+const IconGrip = () => (
+  <svg className="w-4 h-4 text-gray-300 dark:text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+    <circle cx="9" cy="5" r="1.5" /><circle cx="15" cy="5" r="1.5" />
+    <circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
+    <circle cx="9" cy="19" r="1.5" /><circle cx="15" cy="19" r="1.5" />
+  </svg>
+)
+
+/** Ligne de tableau triable par drag & drop */
+function SortableTableRow({ id, disabled, children }: { id: string; disabled?: boolean; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled })
+  return (
+    <tr
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, position: 'relative', zIndex: isDragging ? 10 : undefined }}
+      {...attributes}
+    >
+      {React.Children.map(children, (child, idx) =>
+        idx === 0 && !disabled
+          ? React.cloneElement(child as React.ReactElement, { ...listeners, style: { cursor: 'grab', ...(child as React.ReactElement).props?.style } })
+          : child
+      )}
+    </tr>
+  )
+}
+
 const IconDocument = () => (
   <svg className="w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -412,6 +442,42 @@ export const ProjetDqePage = () => {
     finally { setSaving(false) }
   }
 
+  // ── Drag & drop réordonnement ─────────────────────────────────────
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  const handleDragEndChapitre = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIdx = chapitres.findIndex(c => `chap-${c.id}` === active.id)
+    const newIdx = chapitres.findIndex(c => `chap-${c.id}` === over.id)
+    if (oldIdx === -1 || newIdx === -1) return
+    const reordered = [...chapitres]
+    const [moved] = reordered.splice(oldIdx, 1)
+    reordered.splice(newIdx, 0, moved)
+    setChapitres(reordered)
+    try {
+      await dqeApi.reorderChapitres(reordered.map((c, i) => ({ id: c.id, ordre: i })))
+    } catch { setError('Erreur lors du réordonnement'); await loadData() }
+  }, [chapitres, loadData])
+
+  const handleDragEndLigne = useCallback(async (event: DragEndEvent, chapitreId: number) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const chap = chapitres.find(c => c.id === chapitreId)
+    if (!chap) return
+    const oldIdx = chap.lignes.findIndex(l => `ligne-${l.id}` === active.id)
+    const newIdx = chap.lignes.findIndex(l => `ligne-${l.id}` === over.id)
+    if (oldIdx === -1 || newIdx === -1) return
+    const reorderedLignes = [...chap.lignes]
+    const [moved] = reorderedLignes.splice(oldIdx, 1)
+    reorderedLignes.splice(newIdx, 0, moved)
+    setChapitres(prev => prev.map(c => c.id === chapitreId ? { ...c, lignes: reorderedLignes } : c))
+    try {
+      await dqeApi.reorderLignes(reorderedLignes.map((l, i) => ({ id: l.id, ordre: i })))
+    } catch { setError('Erreur lors du réordonnement'); await loadData() }
+  }, [chapitres, loadData])
+
   // ── Export PDF / Excel ─────────────────────────────────────────────
 
   const handleExport = async (format: 'pdf' | 'excel') => {
@@ -614,6 +680,17 @@ export const ProjetDqePage = () => {
                 </tr>
               </thead>
 
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => {
+                // Detecter si c'est une ligne ou un chapitre
+                const activeId = String(e.active.id)
+                if (activeId.startsWith('ligne-') && e.over) {
+                  // Trouver le chapitre de la ligne active
+                  const ligneId = Number(activeId.replace('ligne-', ''))
+                  const chap = chapitres.find(c => c.lignes.some(l => l.id === ligneId))
+                  if (chap) handleDragEndLigne(e, chap.id)
+                }
+              }}>
+              <SortableContext items={paginatedRows.filter(r => r.type === 'ligne').map(r => `ligne-${(r as { type: 'ligne'; ligne: DqeLigne }).ligne.id}`)} strategy={verticalListSortingStrategy}>
               <tbody>
                 {paginatedRows.map((row, rIdx) => {
                   // ── LIGNE CHAPITRE (bandeau) ───────────────────
@@ -752,14 +829,16 @@ export const ProjetDqePage = () => {
                   }
 
                   return (
-                    <tr
+                    <SortableTableRow
                       key={`l-${ligne.id}`}
-                      className={`group transition-colors duration-100 border-b border-gray-100 dark:border-gray-800/50 ${
-                        rIdx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/40 dark:bg-gray-800/10'
-                      } hover:bg-blue-50/30 dark:hover:bg-blue-900/5`}
+                      id={`ligne-${ligne.id}`}
+                      disabled={!canEdit}
                     >
-                      <td className="py-3 px-4 border-r border-gray-100 dark:border-gray-800/50">
-                        <span className="font-mono text-[13px] font-bold text-secondary dark:text-secondary-light">{ligne.numeroPoste || ''}</span>
+                      <td className={`py-3 px-4 border-r border-gray-100 dark:border-gray-800/50 group transition-colors duration-100 ${rIdx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/40 dark:bg-gray-800/10'} hover:bg-blue-50/30 dark:hover:bg-blue-900/5`}>
+                        <div className="flex items-center gap-1.5">
+                          {canEdit && <span className="opacity-0 group-hover:opacity-40 transition-opacity cursor-grab"><IconGrip /></span>}
+                          <span className="font-mono text-[13px] font-bold text-secondary dark:text-secondary-light">{ligne.numeroPoste || ''}</span>
+                        </div>
                       </td>
                       <td className="py-3 px-4 border-r border-gray-100 dark:border-gray-800/50">
                         <span className="text-[13px] text-gray-800 dark:text-gray-200">{ligne.designation}</span>
@@ -793,12 +872,14 @@ export const ProjetDqePage = () => {
                           </div>
                         </td>
                       )}
-                    </tr>
+                    </SortableTableRow>
                   )
                 })}
 
                 {/* (formulaire ajout ligne est insere via flatRows type 'add-ligne') */}
               </tbody>
+              </SortableContext>
+              </DndContext>
 
               {/* ── TOTAL GENERAL (derniere page uniquement) ───── */}
               {chapitres.length > 0 && (page >= totalPages || totalPages <= 1) && (

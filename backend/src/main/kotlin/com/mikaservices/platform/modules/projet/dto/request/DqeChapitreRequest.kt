@@ -28,3 +28,8 @@ data class DqeChapitreUpdateRequest(
 
     val ordre: Int? = null
 )
+
+data class DqeReorderItem(
+    val id: Long,
+    val ordre: Int
+)

@@ -4,6 +4,7 @@ import com.mikaservices.platform.modules.projet.dto.request.DqeChapitreCreateReq
 import com.mikaservices.platform.modules.projet.dto.request.DqeChapitreUpdateRequest
 import com.mikaservices.platform.modules.projet.dto.request.DqeLigneCreateRequest
 import com.mikaservices.platform.modules.projet.dto.request.DqeLigneUpdateRequest
+import com.mikaservices.platform.modules.projet.dto.request.DqeReorderItem
 import com.mikaservices.platform.modules.projet.dto.response.DqeChapitreResponse
 import com.mikaservices.platform.modules.projet.dto.response.DqeLigneResponse
 import com.mikaservices.platform.modules.projet.dto.response.DqeSummaryResponse
@@ -61,6 +62,13 @@ class DqeController(
         return ResponseEntity.ok(mapOf("message" to "Chapitre DQE supprimé avec succès"))
     }
 
+    @PutMapping("/chapitres/reorder")
+    @Operation(summary = "Réordonner les chapitres DQE d'un projet")
+    fun reorderChapitres(@RequestBody items: List<DqeReorderItem>): ResponseEntity<Map<String, String>> {
+        dqeService.reorderChapitres(items)
+        return ResponseEntity.ok(mapOf("message" to "Ordre des chapitres mis à jour"))
+    }
+
     // ── Lignes ────────────────────────────────────────────────────────────
 
     @PostMapping("/lignes")
@@ -92,5 +100,12 @@ class DqeController(
     fun deleteLigne(@PathVariable id: Long): ResponseEntity<Map<String, String>> {
         dqeService.deleteLigne(id)
         return ResponseEntity.ok(mapOf("message" to "Ligne DQE supprimée avec succès"))
+    }
+
+    @PutMapping("/lignes/reorder")
+    @Operation(summary = "Réordonner les lignes DQE d'un chapitre")
+    fun reorderLignes(@RequestBody items: List<DqeReorderItem>): ResponseEntity<Map<String, String>> {
+        dqeService.reorderLignes(items)
+        return ResponseEntity.ok(mapOf("message" to "Ordre des lignes mis à jour"))
     }
 }

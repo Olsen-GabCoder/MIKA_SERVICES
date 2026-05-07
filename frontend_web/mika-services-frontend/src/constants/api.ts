@@ -195,6 +195,8 @@ export const API_ENDPOINTS = {
     LIGNES_BY_CHAPITRE: (chapitreId: number) => `/dqe/chapitres/${chapitreId}/lignes`,
     LIGNES: '/dqe/lignes',
     LIGNE_BY_ID: (id: number) => `/dqe/lignes/${id}`,
+    REORDER_CHAPITRES: '/dqe/chapitres/reorder',
+    REORDER_LIGNES: '/dqe/lignes/reorder',
   },
   REUNIONS_HEBDO: {
     BASE: '/reunions-hebdo',

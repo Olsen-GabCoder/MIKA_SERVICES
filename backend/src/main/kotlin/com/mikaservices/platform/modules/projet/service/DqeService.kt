@@ -4,6 +4,7 @@ import com.mikaservices.platform.common.exception.ConflictException
 import com.mikaservices.platform.common.exception.ForbiddenException
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
 import com.mikaservices.platform.modules.projet.dto.request.DqeChapitreCreateRequest
+import com.mikaservices.platform.modules.projet.dto.request.DqeReorderItem
 import com.mikaservices.platform.modules.projet.dto.request.DqeChapitreUpdateRequest
 import com.mikaservices.platform.modules.projet.dto.request.DqeLigneCreateRequest
 import com.mikaservices.platform.modules.projet.dto.request.DqeLigneUpdateRequest
@@ -166,6 +167,38 @@ class DqeService(
         requireCanEdit(ligne.chapitre.projet.responsableProjet?.id)
         ligneRepository.delete(ligne)
         logger.info("DQE Ligne supprimée: ${ligne.numeroPoste} - ${ligne.designation}")
+    }
+
+    // ── Réordonnement ─────────────────────────────────────────────────────
+
+    fun reorderChapitres(items: List<DqeReorderItem>) {
+        if (items.isEmpty()) return
+        val first = getChapitreById(items.first().id)
+        requireCanEdit(first.projet.responsableProjet?.id)
+        val projetId = first.projet.id!!
+
+        val chapitres = chapitreRepository.findByProjetIdOrderByOrdreAsc(projetId).associateBy { it.id!! }
+        for (item in items) {
+            val chap = chapitres[item.id] ?: continue
+            chap.ordre = item.ordre
+        }
+        chapitreRepository.saveAll(chapitres.values)
+        logger.info("DQE Chapitres réordonnés pour projet $projetId")
+    }
+
+    fun reorderLignes(items: List<DqeReorderItem>) {
+        if (items.isEmpty()) return
+        val first = getLigneById(items.first().id)
+        requireCanEdit(first.chapitre.projet.responsableProjet?.id)
+        val chapitreId = first.chapitre.id!!
+
+        val lignes = ligneRepository.findByChapitreIdOrderByOrdreAsc(chapitreId).associateBy { it.id!! }
+        for (item in items) {
+            val ligne = lignes[item.id] ?: continue
+            ligne.ordre = item.ordre
+        }
+        ligneRepository.saveAll(lignes.values)
+        logger.info("DQE Lignes réordonnées pour chapitre $chapitreId")
     }
 
     // ── Résumé ────────────────────────────────────────────────────────────

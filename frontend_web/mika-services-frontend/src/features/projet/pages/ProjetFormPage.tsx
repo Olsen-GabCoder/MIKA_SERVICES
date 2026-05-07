@@ -491,6 +491,8 @@ export const ProjetFormPage = () => {
   const [avancementEtudesRows, setAvancementEtudesRows] = useState<{ phase: PhaseEtude; avancementPct?: number; dateDepot?: string; etatValidation?: string }[]>([])
   const [pointsBloquants, setPointsBloquants] = useState<PointBloquant[]>([])
   const [addingPointBloquant, setAddingPointBloquant] = useState(false)
+  const [pbSearch, setPbSearch] = useState('')
+  const [showPbSuggestions, setShowPbSuggestions] = useState(false)
   const [previsions, setPrevisions] = useState<Prevision[]>([])
   const [dqeChapitres, setDqeChapitres] = useState<DqeChapitre[]>([])
   const [previsionSearch, setPrevisionSearch] = useState('')
@@ -1481,27 +1483,58 @@ export const ProjetFormPage = () => {
             <p className="text-sm text-gray-500 mb-4">{t('form.pointsBloquantsHint')}</p>
             <div className="space-y-4">
               <div className="flex flex-wrap gap-3 items-end">
-                <div className="flex-1 min-w-0 sm:min-w-[200px]">
+                <div className="flex-1 min-w-0 sm:min-w-[200px] relative">
                   <label className="block text-xs font-medium text-gray-500 mb-1">{t('form.titre')}</label>
-                  <select
-                    id="pb-titre-select"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-white dark:bg-gray-700 text-sm dark:text-gray-100"
-                  >
-                    <option value="">{t('form.choisirType')}</option>
-                    {['Réseaux / Ouvrages', 'Points critiques', 'Logistique', 'Technique', 'Moyens généraux', 'Ressources humaines', 'Études', 'Administratif', 'Social', 'Environnement', 'Partenaire', 'Qualité', 'Sécurité'].map((g) => {
-                      const groupKey = POINT_BLOQUANT_GROUP_KEYS[g] ?? g
-                      const groupLabel = t(`form.pointBloquant.groups.${groupKey}`) || g
-                      return (
-                        <optgroup key={g} label={groupLabel}>
-                          {POINT_BLOQUANT_TITRE_OPTIONS.filter((o) => o.group === g).map((o) => {
-                            const optKey = POINT_BLOQUANT_OPTION_KEYS[o.value] ?? slugForI18n(o.value)
-                            const optLabel = t(`form.pointBloquant.options.${optKey}`) || o.label
-                            return <option key={o.value} value={o.value}>{optLabel}</option>
-                          })}
-                        </optgroup>
-                      )
-                    })}
-                  </select>
+                  <input
+                    type="text"
+                    value={pbSearch}
+                    onChange={(e) => { setPbSearch(e.target.value); setShowPbSuggestions(true) }}
+                    onFocus={() => setShowPbSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowPbSuggestions(false), 200)}
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Enter' || addingPointBloquant) return
+                      e.preventDefault()
+                      const v = pbSearch.trim()
+                      if (!v) return
+                      document.getElementById('pb-add-btn')?.click()
+                    }}
+                    placeholder={t('form.titrePersonnalise')}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
+                  />
+                  {showPbSuggestions && (
+                    <div className="absolute z-30 top-full left-0 right-0 mt-1 max-h-72 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl">
+                      {(() => {
+                        const q = pbSearch.toLowerCase()
+                        const groups: { label: string; items: { value: string; label: string }[] }[] = []
+                        for (const g of ['Réseaux / Ouvrages', 'Points critiques', 'Logistique', 'Technique', 'Moyens généraux', 'Ressources humaines', 'Études', 'Administratif', 'Social', 'Environnement', 'Partenaire', 'Qualité', 'Sécurité']) {
+                          const groupKey = POINT_BLOQUANT_GROUP_KEYS[g] ?? g
+                          const gLabelKey = `form.pointBloquant.groups.${groupKey}`
+                          const groupLabel = t(gLabelKey) !== gLabelKey ? t(gLabelKey) : g
+                          const items = POINT_BLOQUANT_TITRE_OPTIONS.filter((o) => o.group === g)
+                            .map((o) => { const k = `form.pointBloquant.options.${POINT_BLOQUANT_OPTION_KEYS[o.value] ?? slugForI18n(o.value)}`; return { value: o.value, label: t(k) !== k ? t(k) : o.label } })
+                            .filter((o) => !q || o.label.toLowerCase().includes(q))
+                          if (items.length > 0) groups.push({ label: groupLabel, items })
+                        }
+                        if (groups.length === 0) return <div className="px-3 py-2 text-xs text-gray-400">{q ? 'Aucun résultat — appuyez Entrée pour ajouter comme titre libre' : 'Commencez à taper...'}</div>
+                        return groups.map((g) => (
+                          <div key={g.label}>
+                            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900 sticky top-0">{g.label}</div>
+                            {g.items.map((item) => (
+                              <button
+                                key={item.value}
+                                type="button"
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-primary/10 dark:hover:bg-primary/20 text-gray-700 dark:text-gray-200 transition-colors"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => { setPbSearch(item.value); setShowPbSuggestions(false) }}
+                              >
+                                {item.label}
+                              </button>
+                            ))}
+                          </div>
+                        ))
+                      })()}
+                    </div>
+                  )}
                 </div>
                 <div className="w-32">
                   <label className="block text-xs font-medium text-gray-500 mb-1">{t('form.priorite')}</label>
@@ -1517,9 +1550,10 @@ export const ProjetFormPage = () => {
                 </div>
                 <button
                   type="button"
+                  id="pb-add-btn"
+                  disabled={addingPointBloquant}
                   onClick={async () => {
-                    const sel = document.getElementById('pb-titre-select') as HTMLSelectElement
-                    const titre = (document.getElementById('pb-titre-custom') as HTMLInputElement)?.value?.trim() || sel?.value
+                    const titre = pbSearch.trim()
                     if (!titre) return
                     const priorite = (document.getElementById('pb-priorite') as HTMLSelectElement)?.value as Priorite
                     if (addingPointBloquant) return
@@ -1532,30 +1566,17 @@ export const ProjetFormPage = () => {
                         dateDetection: new Date().toISOString().slice(0, 10),
                       })
                       setPointsBloquants((prev) => [...prev, created])
-                      if (sel) sel.value = ''
-                      const custom = document.getElementById('pb-titre-custom') as HTMLInputElement
-                      if (custom) custom.value = ''
+                      setPbSearch('')
                     } catch (e) {
                       setError((e as Error).message)
                     } finally {
                       setAddingPointBloquant(false)
                     }
                   }}
-                  id="pb-add-btn"
-                  disabled={addingPointBloquant}
                   className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {addingPointBloquant ? t('form.ajoutEnCours') : t('form.ajouter')}
                 </button>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  id="pb-titre-custom"
-                  type="text"
-                  placeholder={t('form.titrePersonnalise')}
-                  className="flex-1 max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary text-sm"
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !addingPointBloquant) document.getElementById('pb-add-btn')?.click() }}
-                />
               </div>
               <ul className="space-y-2">
                 {pointsBloquants.map((pb) => (

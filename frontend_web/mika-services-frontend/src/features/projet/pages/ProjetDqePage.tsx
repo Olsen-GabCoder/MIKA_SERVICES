@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Alert } from '@/components/ui/Alert'
@@ -61,6 +61,16 @@ const IconCheck = () => (
 const IconX = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+)
+const IconCopy = () => (
+  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+  </svg>
+)
+const IconPercent = () => (
+  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 20l16-16m-2 0a2 2 0 11-4 0 2 2 0 014 0zM10 20a2 2 0 11-4 0 2 2 0 014 0z" />
   </svg>
 )
 const IconDocument = () => (
@@ -208,6 +218,9 @@ export const ProjetDqePage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   // Export
   const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null)
+  // Batch avancement
+  const [batchChapitreId, setBatchChapitreId] = useState<number | null>(null)
+  const [batchPct, setBatchPct] = useState('100')
 
   // ── Chargement ─────────────────────────────────────────────────────
 
@@ -358,6 +371,45 @@ export const ProjetDqePage = () => {
     if (!ok) return
     try { await dqeApi.deleteLigne(ligne.id); await loadData(); if (paginatedRows.length <= 2) setPage(Math.max(1, page - 1)) }
     catch { setError('Erreur lors de la suppression de la ligne') }
+  }
+
+  // ── Duplication de ligne ──────────────────────────────────────────
+
+  const handleDuplicateLigne = async (ligne: DqeLigne, chapitreId: number) => {
+    setSaving(true)
+    try {
+      const chap = chapitres.find(c => c.id === chapitreId)
+      await dqeApi.createLigne({
+        chapitreId,
+        numeroPoste: chap ? nextPosteNumero(chap) : undefined,
+        designation: ligne.designation,
+        unite: ligne.unite ?? undefined,
+        quantite: ligne.quantite ?? undefined,
+        prixUnitaire: ligne.prixUnitaire ?? undefined,
+        montantTotal: ligne.montantTotal ?? undefined,
+        avancementPct: 0,
+      })
+      await loadData()
+    } catch { setError('Erreur lors de la duplication') }
+    finally { setSaving(false) }
+  }
+
+  // ── Batch avancement chapitre ───────────────────────────────────
+
+  const handleBatchAvancement = async (chapitreId: number) => {
+    const pct = Number(batchPct)
+    if (isNaN(pct) || pct < 0 || pct > 100) return
+    const chap = chapitres.find(c => c.id === chapitreId)
+    if (!chap || chap.lignes.length === 0) return
+    setSaving(true)
+    try {
+      await Promise.all(
+        chap.lignes.map(l => dqeApi.updateLigne(l.id, { avancementPct: pct }))
+      )
+      setBatchChapitreId(null)
+      await loadData()
+    } catch { setError('Erreur lors de la mise a jour de l\'avancement') }
+    finally { setSaving(false) }
   }
 
   // ── Export PDF / Excel ─────────────────────────────────────────────
@@ -587,25 +639,41 @@ export const ProjetDqePage = () => {
                     }
 
                     return (
-                      <tr key={`ch-${chap.id}`} className="bg-secondary-light dark:bg-secondary group">
-                        <td colSpan={colCount} className="py-3.5 px-5">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-[13px] font-black uppercase tracking-wide text-white">
-                              Chapitre {chap.numero} — {chap.designation}
-                            </h3>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs font-bold text-white/60">{chap.nombreLignes} postes</span>
-                              {canEdit && (
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={() => { setEditingChapitreId(chap.id); setEditChapitreForm({ numero: chap.numero, designation: chap.designation }) }} className="p-1.5 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Modifier"><IconEdit /></button>
-                                  <button onClick={() => handleDeleteChapitre(chap)} className="p-1.5 text-white/50 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors" title="Supprimer"><IconTrash /></button>
-                                  <button onClick={() => { setAddingLigneChapitreId(chap.id); setLigneForm({ ...emptyLigneForm, numeroPoste: nextPosteNumero(chap) }) }} className="p-1.5 text-white/50 hover:text-emerald-300 hover:bg-emerald-500/20 rounded-lg transition-colors" title="Ajouter un poste"><IconPlus /></button>
-                                </div>
-                              )}
+                      <React.Fragment key={`ch-${chap.id}`}>
+                        <tr className="bg-secondary-light dark:bg-secondary group">
+                          <td colSpan={colCount} className="py-3.5 px-5">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-[13px] font-black uppercase tracking-wide text-white">
+                                Chapitre {chap.numero} — {chap.designation}
+                              </h3>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs font-bold text-white/60">{chap.nombreLignes} postes</span>
+                                {canEdit && (
+                                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => { setEditingChapitreId(chap.id); setEditChapitreForm({ numero: chap.numero, designation: chap.designation }) }} className="p-1.5 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Modifier"><IconEdit /></button>
+                                    <button onClick={() => handleDeleteChapitre(chap)} className="p-1.5 text-white/50 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors" title="Supprimer"><IconTrash /></button>
+                                    <button onClick={() => { setAddingLigneChapitreId(chap.id); setLigneForm({ ...emptyLigneForm, numeroPoste: nextPosteNumero(chap) }) }} className="p-1.5 text-white/50 hover:text-emerald-300 hover:bg-emerald-500/20 rounded-lg transition-colors" title="Ajouter un poste"><IconPlus /></button>
+                                    <button onClick={() => { setBatchChapitreId(batchChapitreId === chap.id ? null : chap.id); setBatchPct('100') }} className="p-1.5 text-white/50 hover:text-amber-300 hover:bg-amber-500/20 rounded-lg transition-colors" title="Avancement en masse"><IconPercent /></button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                      </tr>
+                          </td>
+                        </tr>
+                        {batchChapitreId === chap.id && (
+                          <tr className="bg-amber-50 dark:bg-amber-900/20">
+                            <td colSpan={colCount} className="py-3 px-5 border-b-2 border-dashed border-amber-200 dark:border-amber-700/50">
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">Avancement en masse — {chap.numero}</span>
+                                <input type="number" min="0" max="100" value={batchPct} onChange={(e) => setBatchPct(e.target.value)} className="w-20 border border-amber-300 dark:border-amber-600 rounded-lg px-2.5 py-1.5 text-sm text-center font-bold bg-white dark:bg-gray-800 dark:text-white focus:border-amber-500 outline-none" />
+                                <span className="text-xs text-amber-600 dark:text-amber-400">% pour les {chap.nombreLignes} lignes</span>
+                                <Button variant="primary" size="sm" onClick={() => handleBatchAvancement(chap.id)} disabled={saving} className="flex items-center gap-1.5"><IconCheck /> Appliquer</Button>
+                                <button onClick={() => setBatchChapitreId(null)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"><IconX /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     )
                   }
 
@@ -720,6 +788,7 @@ export const ProjetDqePage = () => {
                         <td className="py-3 px-3 border-l border-gray-100 dark:border-gray-800/50">
                           <div className="flex gap-0.5 justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                             <button onClick={() => { setEditingLigneId(ligne.id); setEditLigneForm(ligneToForm(ligne)) }} className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all" title="Modifier"><IconEdit /></button>
+                            <button onClick={() => handleDuplicateLigne(ligne, row.chapitreId)} disabled={saving} className="p-1.5 text-gray-400 hover:text-secondary hover:bg-secondary/5 rounded-lg transition-all" title="Dupliquer"><IconCopy /></button>
                             <button onClick={() => handleDeleteLigne(ligne)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Supprimer"><IconTrash /></button>
                           </div>
                         </td>

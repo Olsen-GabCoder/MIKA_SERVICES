@@ -415,7 +415,6 @@ const BESOINS_HUMAIN_OPTIONS: { value: string; label: string; group?: string }[]
 // ── Styles partagés pour les champs de formulaire ─────────────────────
 const INPUT_CLS = 'w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors'
 const SELECT_CLS = INPUT_CLS + ' cursor-pointer'
-const TEXTAREA_CLS = INPUT_CLS + ' resize-y'
 const LABEL_CLS = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
 
 function parseBesoinsList(str: string | undefined): string[] {
@@ -1816,7 +1815,6 @@ export const ProjetFormPage = () => {
             const [yB, wB] = b.split('-').map(Number)
             return yA !== yB ? yA - yB : wA - wB
           })
-          const prevSelectId = 'prev-desc-any-week'
           return (
             <div id="sec-previsions" ref={setSectionRef('sec-previsions')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
               <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-2">{t('form.previsionsTitle')}</h2>

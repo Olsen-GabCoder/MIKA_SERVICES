@@ -448,6 +448,27 @@ export const ProjetDqePage = () => {
     finally { setSaving(false) }
   }
 
+  // ── Suppression totale du DQE ─────────────────────────────────────
+
+  const handleDeleteAllDqe = async () => {
+    const ok = await confirm({
+      title: 'Supprimer tout le DQE',
+      message: `Supprimer definitivement les ${chapitres.length} chapitres et toutes leurs lignes ? Cette action est irreversible.`,
+      confirmLabel: 'Supprimer tout',
+      variant: 'danger',
+    })
+    if (!ok) return
+    setSaving(true)
+    try {
+      for (const ch of chapitres) {
+        await dqeApi.deleteChapitre(ch.id)
+      }
+      await loadData()
+      setPage(1)
+    } catch { setError('Erreur lors de la suppression du DQE') }
+    finally { setSaving(false) }
+  }
+
   // ── Drag & drop réordonnement ─────────────────────────────────────
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -606,6 +627,13 @@ export const ProjetDqePage = () => {
                   <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="flex items-center gap-1.5">
                     <IconUpload /> Importer un DQE (IA)
                   </Button>
+                )}
+                {chapitres.length > 0 && (
+                  <div className="ml-auto">
+                    <button type="button" onClick={handleDeleteAllDqe} disabled={saving} className="px-3 py-1.5 text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-40">
+                      <IconTrash /> Supprimer tout le DQE
+                    </button>
+                  </div>
                 )}
               </>
             ) : (

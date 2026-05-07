@@ -601,9 +601,11 @@ export const ProjetDqePage = () => {
               <Button variant="primary" size="sm" onClick={() => { setAddingChapitre(true); setChapitreForm({ numero: nextChapitreNumero(chapitres), designation: '' }) }} className="flex items-center gap-1.5">
                 <IconPlus /> Ajouter un chapitre
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="flex items-center gap-1.5">
-                <IconUpload /> Importer un DQE (IA)
-              </Button>
+              {chapitres.length === 0 && (
+                <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="flex items-center gap-1.5">
+                  <IconUpload /> Importer un DQE (IA)
+                </Button>
+              )}
             ) : (
               <div className="flex flex-1 flex-col md:flex-row gap-3 items-end">
                 <div className="w-full md:w-36">
@@ -653,9 +655,14 @@ export const ProjetDqePage = () => {
               </div>
             </div>
             <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300 mb-2">Aucun chapitre DQE</h3>
-            <p className="text-sm text-gray-400 dark:text-gray-500 max-w-md mx-auto">
-              {canEdit ? 'Commencez par creer votre premier chapitre pour structurer le DQE.' : 'Aucun chapitre n\'a encore ete cree.'}
+            <p className="text-sm text-gray-400 dark:text-gray-500 max-w-md mx-auto mb-6">
+              {canEdit ? 'Commencez par creer votre premier chapitre ou importez un DQE existant.' : 'Aucun chapitre n\'a encore ete cree.'}
             </p>
+            {canEdit && (
+              <Button variant="primary" size="lg" onClick={() => setImportModalOpen(true)} className="flex items-center gap-2 mx-auto">
+                <IconUpload /> Importer un DQE existant (IA)
+              </Button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">

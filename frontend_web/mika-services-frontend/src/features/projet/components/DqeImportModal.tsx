@@ -50,7 +50,7 @@ export function DqeImportModal({ projetId, open, onClose, onImported }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [warnings, setWarnings] = useState<string[]>([])
   const [chapitres, setChapitres] = useState<EditableChapitre[]>([])
-  const [mode, setMode] = useState<'replace' | 'append'>('replace')
+
 
   if (!open) return null
 
@@ -81,14 +81,6 @@ export function DqeImportModal({ projetId, open, onClose, onImported }: Props) {
     setStep('saving')
     setError(null)
     try {
-      // Supprimer les chapitres existants si mode remplacer
-      if (mode === 'replace') {
-        const existing = await dqeApi.findByProjet(projetId)
-        for (const ch of existing) {
-          await dqeApi.deleteChapitre(ch.id)
-        }
-      }
-
       // Créer les chapitres et lignes
       for (let ci = 0; ci < chapitres.length; ci++) {
         const chap = chapitres[ci]
@@ -339,17 +331,7 @@ export function DqeImportModal({ projetId, open, onClose, onImported }: Props) {
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
-          <div>
-            {step === 'review' && (
-              <div className="flex items-center gap-3">
-                <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Si le DQE existe déjà :</label>
-                <select value={mode} onChange={(e) => setMode(e.target.value as 'replace' | 'append')} className="text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-800 dark:text-white">
-                  <option value="replace">Remplacer tout</option>
-                  <option value="append">Ajouter à la suite</option>
-                </select>
-              </div>
-            )}
-          </div>
+          <div />
           <div className="flex gap-2">
             {step === 'upload' && (
               <Button variant="primary" onClick={handleAnalyse} disabled={!file}>

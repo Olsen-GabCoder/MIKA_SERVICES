@@ -111,6 +111,7 @@ Chaque ligne a :
 - Un chapitre n'a PAS de montant propre, PAS de quantité, PAS d'unité — c'est un regroupement
 - Si le document utilise des "lots" (LOT 1, LOT 2...), traite chaque lot comme un chapitre
 - Les sous-totaux et totaux ne sont PAS des chapitres ni des lignes
+- **IMPORTANT** : Si le document NE contient PAS de chapitres (juste une liste plate de postes), tu DOIS proposer une structure logique en chapitres. Regroupe les postes par nature des travaux (ex: Terrassements, Gros Œuvre, Chaussées, Assainissement, Équipements, etc.) en te basant sur les désignations des postes. Numérote les chapitres créés en centaines (100, 200, 300...). Ne mets JAMAIS toutes les lignes dans un seul chapitre fourre-tout.
 
 ### Lignes
 - Extrais TOUTES les lignes avec leurs données chiffrées

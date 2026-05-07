@@ -598,14 +598,16 @@ export const ProjetDqePage = () => {
         {canEdit && (
           <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800 flex items-center gap-3">
             {!addingChapitre ? (
-              <Button variant="primary" size="sm" onClick={() => { setAddingChapitre(true); setChapitreForm({ numero: nextChapitreNumero(chapitres), designation: '' }) }} className="flex items-center gap-1.5">
-                <IconPlus /> Ajouter un chapitre
-              </Button>
-              {chapitres.length === 0 && (
-                <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="flex items-center gap-1.5">
-                  <IconUpload /> Importer un DQE (IA)
+              <>
+                <Button variant="primary" size="sm" onClick={() => { setAddingChapitre(true); setChapitreForm({ numero: nextChapitreNumero(chapitres), designation: '' }) }} className="flex items-center gap-1.5">
+                  <IconPlus /> Ajouter un chapitre
                 </Button>
-              )}
+                {chapitres.length === 0 && (
+                  <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="flex items-center gap-1.5">
+                    <IconUpload /> Importer un DQE (IA)
+                  </Button>
+                )}
+              </>
             ) : (
               <div className="flex flex-1 flex-col md:flex-row gap-3 items-end">
                 <div className="w-full md:w-36">

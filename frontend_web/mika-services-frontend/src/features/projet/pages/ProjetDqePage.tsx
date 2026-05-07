@@ -629,11 +629,9 @@ export const ProjetDqePage = () => {
                   </Button>
                 )}
                 {chapitres.length > 0 && (
-                  <div className="ml-auto">
-                    <button type="button" onClick={handleDeleteAllDqe} disabled={saving} className="px-3 py-1.5 text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-40">
-                      <IconTrash /> Supprimer tout le DQE
-                    </button>
-                  </div>
+                  <Button variant="outline" size="sm" onClick={handleDeleteAllDqe} disabled={saving} className="ml-auto flex items-center gap-1.5 border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <IconTrash /> Supprimer tout le DQE
+                  </Button>
                 )}
               </>
             ) : (

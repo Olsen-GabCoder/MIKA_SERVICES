@@ -1,0 +1,27 @@
+# ── IDE ───────────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.DS_Store
+
+# ── JVM crash logs ────────────────────────────────────────
+hs_err_pid*.log
+replay_pid*.log
+
+# ── Node ──────────────────────────────────────────────────
+node_modules/
+
+# ── Fichiers temporaires ─────────────────────────────────
+temp_*.txt
+*.tmp
+
+# ── Environnement / secrets ──────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── OS ────────────────────────────────────────────────────
+Thumbs.db
+Desktop.ini

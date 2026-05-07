@@ -324,7 +324,7 @@ export const ProjetDqePage = () => {
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl shadow-gray-200/40 dark:shadow-black/30 overflow-hidden">
 
         {/* ── En-tete du document ─────────────────────────────────── */}
-        <div className="bg-gradient-to-r from-secondary to-secondary-dark dark:from-secondary-dark dark:to-secondary px-8 py-7 text-white">
+        <div className="bg-gradient-to-r from-secondary to-secondary-light dark:from-secondary dark:to-secondary-light px-8 py-7 text-white">
           {/* Retour */}
           <button
             onClick={() => navigate(`/projets/${id}`)}
@@ -455,7 +455,7 @@ export const ProjetDqePage = () => {
                     }
 
                     return (
-                      <tr key={`ch-${chap.id}`} className="bg-gradient-to-r from-secondary to-secondary/90 dark:from-secondary-dark dark:to-secondary group">
+                      <tr key={`ch-${chap.id}`} className="bg-secondary-light dark:bg-secondary group">
                         <td colSpan={colCount} className="py-3.5 px-5">
                           <div className="flex items-center justify-between">
                             <h3 className="text-[13px] font-black uppercase tracking-wide text-white">
@@ -602,13 +602,13 @@ export const ProjetDqePage = () => {
               {/* ── TOTAL GENERAL (derniere page uniquement) ───── */}
               {chapitres.length > 0 && (page >= totalPages || totalPages <= 1) && (
                 <tfoot>
-                  <tr className="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-950 dark:to-gray-900 border-t-4 border-secondary">
-                    <td colSpan={5} className="py-5 px-5 border-r border-gray-700">
+                  <tr className="bg-gradient-to-r from-secondary to-secondary/90 dark:from-secondary-dark dark:to-secondary border-t-4 border-secondary-light">
+                    <td colSpan={5} className="py-5 px-5 border-r border-white/15">
                       <span className="text-[14px] font-black uppercase tracking-wider text-white">
                         Total General HT
                       </span>
                     </td>
-                    <td className="py-5 px-4 text-right border-r border-gray-700">
+                    <td className="py-5 px-4 text-right border-r border-white/15">
                       <span className="text-[16px] font-black text-white tabular-nums">{formatMontant(totalMontant)}</span>
                     </td>
                     <td className="py-5 px-4 text-center">
@@ -619,19 +619,19 @@ export const ProjetDqePage = () => {
                         </div>
                       </div>
                     </td>
-                    {canEdit && <td className="border-l border-gray-700"></td>}
+                    {canEdit && <td className="border-l border-white/15"></td>}
                   </tr>
-                  <tr className="bg-gray-800 dark:bg-gray-950">
-                    <td colSpan={5} className="py-3 px-5 border-r border-gray-700">
+                  <tr className="bg-secondary/90 dark:bg-secondary-dark">
+                    <td colSpan={5} className="py-3 px-5 border-r border-white/15">
                       <span className="text-[12px] font-bold text-emerald-400 uppercase tracking-wide">Montant execute</span>
                     </td>
-                    <td className="py-3 px-4 text-right border-r border-gray-700">
-                      <span className="text-[14px] font-black text-emerald-400 tabular-nums">{formatMontant(totalExecute)}</span>
+                    <td className="py-3 px-4 text-right border-r border-white/15">
+                      <span className="text-[14px] font-black text-emerald-300 tabular-nums">{formatMontant(totalExecute)}</span>
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className="text-[12px] font-semibold text-gray-400">Reste: {formatMontant(totalMontant - totalExecute)}</span>
+                      <span className="text-[12px] font-semibold text-white/60">Reste: {formatMontant(totalMontant - totalExecute)}</span>
                     </td>
-                    {canEdit && <td className="border-l border-gray-700"></td>}
+                    {canEdit && <td className="border-l border-white/15"></td>}
                   </tr>
                 </tfoot>
               )}

@@ -178,7 +178,7 @@ export function DqeDocumentPdf({ payload }: { payload: DqeExportPayload }) {
           <Text style={s.coverDocType}>DEVIS QUANTITATIF ET ESTIMATIF</Text>
           <Text style={s.coverTitle}>{projet.nom}</Text>
           {projet.numeroMarche && <Text style={s.coverRef}>Marché n° {projet.numeroMarche}</Text>}
-          <Text style={[s.coverRef, !projet.numeroMarche && { marginTop: 0 }]}>Réf. {ref}</Text>
+          <Text style={[s.coverRef, projet.numeroMarche ? {} : { marginTop: 0 }]}>Réf. {ref}</Text>
 
           <View style={s.coverMetaWrap}>
             {coverMeta.map(([label, value], i) => (

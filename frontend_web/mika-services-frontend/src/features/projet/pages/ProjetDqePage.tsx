@@ -145,8 +145,19 @@ function nextPosteNumero(chap: DqeChapitre): string {
   return `${chap.numero}-${(nums.length > 0 ? Math.max(...nums) : 0) + 1}`
 }
 
-// ── Icone recherche ──────────────────────────────────────────────────
+// ── Icones supplementaires ───────────────────────────────────────────
 
+const IconDownload = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+  </svg>
+)
+const IconSpinner = () => (
+  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+  </svg>
+)
 const IconSearch = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -195,6 +206,8 @@ export const ProjetDqePage = () => {
 
   // Recherche
   const [searchQuery, setSearchQuery] = useState('')
+  // Export
+  const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null)
 
   // ── Chargement ─────────────────────────────────────────────────────
 
@@ -347,6 +360,22 @@ export const ProjetDqePage = () => {
     catch { setError('Erreur lors de la suppression de la ligne') }
   }
 
+  // ── Export PDF / Excel ─────────────────────────────────────────────
+
+  const handleExport = async (format: 'pdf' | 'excel') => {
+    if (!projet) return
+    setExporting(format)
+    try {
+      const { generateDqeDocument } = await import('@/features/projet/export/dqeExport')
+      const filename = `DQE_${projet.codeProjet ?? projet.nom.replace(/\s+/g, '_')}`
+      await generateDqeDocument({ projet, chapitres, formatMontant }, format, filename)
+    } catch {
+      setError(`Erreur lors de l'export ${format.toUpperCase()}`)
+    } finally {
+      setExporting(null)
+    }
+  }
+
   // ── Calculs globaux ────────────────────────────────────────────────
 
   const totalMontant = chapitres.reduce((s, c) => s + c.montantTotal, 0)
@@ -430,6 +459,29 @@ export const ProjetDqePage = () => {
               <p className="text-[10px] uppercase tracking-widest text-white/50 font-bold mb-0.5">Structure</p>
               <p className="text-lg font-black">{chapitres.length} <span className="text-sm font-semibold text-white/60">chap.</span> / {totalLignes} <span className="text-sm font-semibold text-white/60">lignes</span></p>
             </div>
+
+            {/* Boutons export */}
+            {chapitres.length > 0 && (
+              <>
+                <div className="w-px h-10 bg-white/15" />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleExport('pdf')}
+                    disabled={exporting !== null}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors disabled:opacity-40"
+                  >
+                    {exporting === 'pdf' ? <IconSpinner /> : <IconDownload />} PDF
+                  </button>
+                  <button
+                    onClick={() => handleExport('excel')}
+                    disabled={exporting !== null}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors disabled:opacity-40"
+                  >
+                    {exporting === 'excel' ? <IconSpinner /> : <IconDownload />} Excel
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

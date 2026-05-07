@@ -1720,9 +1720,10 @@ export const ProjetFormPage = () => {
                             // Groupes prédéfinis
                             for (const g of ['Travaux', 'Études', 'Qualité', 'Pilotage', 'Administratif', 'Logistique', 'Sécurité']) {
                               const groupKey = PREVISION_GROUP_KEYS[g] ?? g
-                              const groupLabel = t(`form.prevision.groups.${groupKey}`) || g
+                              const groupLabelKey = `form.prevision.groups.${groupKey}`
+                              const groupLabel = t(groupLabelKey) !== groupLabelKey ? t(groupLabelKey) : g
                               const items = PREVISION_DESCRIPTION_OPTIONS.filter((o) => o.group === g)
-                                .map((o) => ({ value: o.value, label: t(`form.prevision.options.${slugForI18n(o.value)}`) || o.label }))
+                                .map((o) => { const k = `form.prevision.options.${slugForI18n(o.value)}`; return { value: o.value, label: t(k) !== k ? t(k) : o.label } })
                                 .filter((o) => !q || o.label.toLowerCase().includes(q))
                               if (items.length > 0) groups.push({ label: groupLabel, items })
                             }

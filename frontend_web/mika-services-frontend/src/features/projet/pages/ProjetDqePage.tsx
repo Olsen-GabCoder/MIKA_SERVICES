@@ -116,6 +116,43 @@ function ligneToForm(l: DqeLigne): LigneForm {
   }
 }
 
+/** Met a jour un champ du formulaire ligne et recalcule montant si qte ou pu changent */
+function calcLigneForm(form: LigneForm, field: keyof LigneForm, value: string): LigneForm {
+  const updated = { ...form, [field]: value }
+  if (field === 'quantite' || field === 'prixUnitaire') {
+    const qte = parseFloat(field === 'quantite' ? value : form.quantite)
+    const pu = parseFloat(field === 'prixUnitaire' ? value : form.prixUnitaire)
+    if (!isNaN(qte) && !isNaN(pu) && qte > 0 && pu > 0) {
+      updated.montantTotal = String(Math.round(qte * pu * 100) / 100)
+    }
+  }
+  return updated
+}
+
+/** Prochain numero de chapitre (100, 200, 300…) */
+function nextChapitreNumero(chapitres: DqeChapitre[]): string {
+  if (chapitres.length === 0) return '100'
+  const nums = chapitres.map(c => parseInt(c.numero)).filter(n => !isNaN(n))
+  if (nums.length === 0) return '100'
+  return String(Math.ceil((Math.max(...nums) + 1) / 100) * 100)
+}
+
+/** Prochain numero de poste pour un chapitre donne */
+function nextPosteNumero(chap: DqeChapitre): string {
+  const nums = chap.lignes
+    .map(l => { const m = l.numeroPoste?.match(/(\d+)$/); return m ? parseInt(m[1]) : 0 })
+    .filter(n => n > 0)
+  return `${chap.numero}-${(nums.length > 0 ? Math.max(...nums) : 0) + 1}`
+}
+
+// ── Icone recherche ──────────────────────────────────────────────────
+
+const IconSearch = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+)
+
 // ── Types pour le tableau aplati ─────────────────────────────────────
 
 type FlatRow =
@@ -156,6 +193,9 @@ export const ProjetDqePage = () => {
 
   const canEdit = projet != null && canEditProjetEffective(currentUser, accessToken, projet.responsableProjet?.id ?? projet.responsableProjetId)
 
+  // Recherche
+  const [searchQuery, setSearchQuery] = useState('')
+
   // ── Chargement ─────────────────────────────────────────────────────
 
   const loadData = useCallback(async () => {
@@ -178,23 +218,42 @@ export const ProjetDqePage = () => {
 
   useEffect(() => { loadData() }, [loadData])
 
+  // ── Filtrage recherche ────────────────────────────────────────────
+
+  const filteredChapitres = useMemo(() => {
+    if (!searchQuery.trim()) return chapitres
+    const q = searchQuery.toLowerCase()
+    return chapitres
+      .map(chap => {
+        const chapMatch = chap.numero.toLowerCase().includes(q) || chap.designation.toLowerCase().includes(q)
+        if (chapMatch) return chap
+        const matchingLignes = chap.lignes.filter(l =>
+          l.designation.toLowerCase().includes(q) ||
+          (l.numeroPoste?.toLowerCase().includes(q) ?? false) ||
+          (l.unite?.toLowerCase().includes(q) ?? false)
+        )
+        if (matchingLignes.length > 0) return { ...chap, lignes: matchingLignes } as DqeChapitre
+        return null
+      })
+      .filter((c): c is DqeChapitre => c !== null)
+  }, [chapitres, searchQuery])
+
   // ── Aplatir chapitres + lignes en tableau unique ───────────────────
 
   const flatRows: FlatRow[] = useMemo(() => {
     const rows: FlatRow[] = []
-    for (const chap of chapitres) {
+    for (const chap of filteredChapitres) {
       rows.push({ type: 'chapitre', chapitre: chap })
       for (const ligne of chap.lignes) {
         rows.push({ type: 'ligne', ligne, chapitreId: chap.id })
       }
-      // Insertion du formulaire ajout ligne juste apres les lignes du chapitre
       if (addingLigneChapitreId === chap.id) {
         rows.push({ type: 'add-ligne', chapitre: chap } as FlatRow)
       }
       rows.push({ type: 'sous-total', chapitre: chap })
     }
     return rows
-  }, [chapitres, addingLigneChapitreId])
+  }, [filteredChapitres, addingLigneChapitreId])
 
   const totalPages = Math.ceil(flatRows.length / ROWS_PER_PAGE)
   const paginatedRows = useMemo(() => {
@@ -378,7 +437,7 @@ export const ProjetDqePage = () => {
         {canEdit && (
           <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800 flex items-center gap-3">
             {!addingChapitre ? (
-              <Button variant="primary" size="sm" onClick={() => setAddingChapitre(true)} className="flex items-center gap-1.5">
+              <Button variant="primary" size="sm" onClick={() => { setAddingChapitre(true); setChapitreForm({ numero: nextChapitreNumero(chapitres), designation: '' }) }} className="flex items-center gap-1.5">
                 <IconPlus /> Ajouter un chapitre
               </Button>
             ) : (
@@ -396,6 +455,27 @@ export const ProjetDqePage = () => {
                   <Button variant="outline" size="sm" onClick={() => { setAddingChapitre(false); setChapitreForm(emptyChapitreForm) }} className="flex items-center gap-1.5"><IconX /> Annuler</Button>
                 </div>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Barre de recherche ─────────────────────────────────── */}
+        {chapitres.length > 0 && (
+          <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400"><IconSearch /></div>
+              <input
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
+                placeholder="Rechercher par designation, n. poste, unite..."
+                className="w-full pl-10 pr-10 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-colors"
+              />
+              {searchQuery && (
+                <button onClick={() => { setSearchQuery(''); setPage(1) }} className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><IconX /></button>
+              )}
+            </div>
+            {searchQuery && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">{filteredChapitres.length} chapitre(s) / {filteredChapitres.reduce((s, c) => s + c.lignes.length, 0)} ligne(s) correspondant(s)</p>
             )}
           </div>
         )}
@@ -467,7 +547,7 @@ export const ProjetDqePage = () => {
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <button onClick={() => { setEditingChapitreId(chap.id); setEditChapitreForm({ numero: chap.numero, designation: chap.designation }) }} className="p-1.5 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Modifier"><IconEdit /></button>
                                   <button onClick={() => handleDeleteChapitre(chap)} className="p-1.5 text-white/50 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors" title="Supprimer"><IconTrash /></button>
-                                  <button onClick={() => { setAddingLigneChapitreId(chap.id); setLigneForm(emptyLigneForm) }} className="p-1.5 text-white/50 hover:text-emerald-300 hover:bg-emerald-500/20 rounded-lg transition-colors" title="Ajouter un poste"><IconPlus /></button>
+                                  <button onClick={() => { setAddingLigneChapitreId(chap.id); setLigneForm({ ...emptyLigneForm, numeroPoste: nextPosteNumero(chap) }) }} className="p-1.5 text-white/50 hover:text-emerald-300 hover:bg-emerald-500/20 rounded-lg transition-colors" title="Ajouter un poste"><IconPlus /></button>
                                 </div>
                               )}
                             </div>
@@ -491,9 +571,9 @@ export const ProjetDqePage = () => {
                             <input value={ligneForm.numeroPoste} onChange={(e) => setLigneForm({ ...ligneForm, numeroPoste: e.target.value })} placeholder="N. Poste" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
                             <input value={ligneForm.designation} onChange={(e) => setLigneForm({ ...ligneForm, designation: e.target.value })} placeholder="Designation *" className="md:col-span-2 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
                             <input value={ligneForm.unite} onChange={(e) => setLigneForm({ ...ligneForm, unite: e.target.value })} placeholder="Unite" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
-                            <input type="number" value={ligneForm.quantite} onChange={(e) => setLigneForm({ ...ligneForm, quantite: e.target.value })} placeholder="Qte" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
-                            <input type="number" value={ligneForm.prixUnitaire} onChange={(e) => setLigneForm({ ...ligneForm, prixUnitaire: e.target.value })} placeholder="P.U." className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
-                            <input type="number" value={ligneForm.montantTotal} onChange={(e) => setLigneForm({ ...ligneForm, montantTotal: e.target.value })} placeholder="Montant" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
+                            <input type="number" value={ligneForm.quantite} onChange={(e) => setLigneForm(calcLigneForm(ligneForm, 'quantite', e.target.value))} placeholder="Qte" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
+                            <input type="number" value={ligneForm.prixUnitaire} onChange={(e) => setLigneForm(calcLigneForm(ligneForm, 'prixUnitaire', e.target.value))} placeholder="P.U." className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" />
+                            <input type="number" value={ligneForm.montantTotal} onChange={(e) => setLigneForm({ ...ligneForm, montantTotal: e.target.value })} placeholder="Montant (auto)" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-emerald-50 dark:bg-emerald-900/20 dark:text-white focus:border-primary outline-none tabular-nums" />
                           </div>
                           <div className="flex gap-2 mt-3">
                             <Button variant="primary" size="sm" onClick={() => handleCreateLigne(chap.id)} disabled={saving || !ligneForm.designation.trim()} className="flex items-center gap-1.5"><IconCheck /> Valider</Button>
@@ -537,9 +617,9 @@ export const ProjetDqePage = () => {
                         <td className="py-2.5 px-3 border-r border-gray-100 dark:border-gray-800"><input value={editLigneForm.numeroPoste} onChange={(e) => setEditLigneForm({ ...editLigneForm, numeroPoste: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" /></td>
                         <td className="py-2.5 px-3 border-r border-gray-100 dark:border-gray-800"><input value={editLigneForm.designation} onChange={(e) => setEditLigneForm({ ...editLigneForm, designation: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-sm bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" /></td>
                         <td className="py-2.5 px-3 border-r border-gray-100 dark:border-gray-800"><input value={editLigneForm.unite} onChange={(e) => setEditLigneForm({ ...editLigneForm, unite: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-sm text-center bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" /></td>
-                        <td className="py-2.5 px-3 border-r border-gray-100 dark:border-gray-800"><input type="number" value={editLigneForm.quantite} onChange={(e) => setEditLigneForm({ ...editLigneForm, quantite: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-sm text-right bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" /></td>
-                        <td className="py-2.5 px-3 border-r border-gray-100 dark:border-gray-800"><input type="number" value={editLigneForm.prixUnitaire} onChange={(e) => setEditLigneForm({ ...editLigneForm, prixUnitaire: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-sm text-right bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" /></td>
-                        <td className="py-2.5 px-3 border-r border-gray-100 dark:border-gray-800"><input type="number" value={editLigneForm.montantTotal} onChange={(e) => setEditLigneForm({ ...editLigneForm, montantTotal: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-sm text-right bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" /></td>
+                        <td className="py-2.5 px-3 border-r border-gray-100 dark:border-gray-800"><input type="number" value={editLigneForm.quantite} onChange={(e) => setEditLigneForm(calcLigneForm(editLigneForm, 'quantite', e.target.value))} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-sm text-right bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" /></td>
+                        <td className="py-2.5 px-3 border-r border-gray-100 dark:border-gray-800"><input type="number" value={editLigneForm.prixUnitaire} onChange={(e) => setEditLigneForm(calcLigneForm(editLigneForm, 'prixUnitaire', e.target.value))} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-sm text-right bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" /></td>
+                        <td className="py-2.5 px-3 border-r border-gray-100 dark:border-gray-800"><input type="number" value={editLigneForm.montantTotal} onChange={(e) => setEditLigneForm({ ...editLigneForm, montantTotal: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-sm text-right bg-emerald-50 dark:bg-emerald-900/20 dark:text-white focus:border-primary outline-none tabular-nums" /></td>
                         <td className="py-2.5 px-3"><input type="number" min="0" max="100" value={editLigneForm.avancementPct} onChange={(e) => setEditLigneForm({ ...editLigneForm, avancementPct: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-sm text-center bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" /></td>
                         <td className="py-2.5 px-3 border-l border-gray-100 dark:border-gray-800">
                           <div className="flex gap-1 justify-center">

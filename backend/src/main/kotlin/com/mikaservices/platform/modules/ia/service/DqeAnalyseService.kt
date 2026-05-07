@@ -208,7 +208,7 @@ Ajoute un avertissement si :
             }
 
             DqeChapitreExtrait(
-                numero = numero.ifBlank { "${chapitres.indexOf(chapNode) * 100 + 100}" },
+                numero = numero.ifBlank { "${json.path("chapitres").toList().indexOf(chapNode) * 100 + 100}" },
                 designation = designation,
                 lignes = lignes
             )
@@ -299,14 +299,13 @@ Ajoute un avertissement si :
         try {
             analyseLogRepository.save(AnalyseRapportLog(
                 projetId = projetId, userId = userId,
-                timestampDebut = LocalDateTime.now().minusMillis(System.currentTimeMillis() - startTime),
-                timestampFin = LocalDateTime.now(),
+                timestampDebut = LocalDateTime.now().minusSeconds((System.currentTimeMillis() - startTime) / 1000),
                 dureeMs = (System.currentTimeMillis() - startTime).toInt(),
                 modele = anthropicProperties.model,
                 tokensInput = inputTokens, tokensOutput = outputTokens,
-                succes = success, codeErreur = errorCode,
+                succes = success, erreurCode = errorCode,
                 hashRapport = hash, formatSource = format,
-                tailleOctets = taille, champsExtraitsCount = champsExtraits
+                tailleOctets = taille, nbChampsExtraits = champsExtraits
             ))
         } catch (e: Exception) {
             logger.warn("Erreur lors du log d'analyse DQE: {}", e.message)

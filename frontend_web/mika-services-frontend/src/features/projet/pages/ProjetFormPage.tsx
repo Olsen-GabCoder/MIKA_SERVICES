@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useConfirm } from '@/contexts/ConfirmContext'
@@ -412,6 +412,12 @@ const BESOINS_HUMAIN_OPTIONS: { value: string; label: string; group?: string }[]
   { value: '2 conducteurs engins + 1 grutier', label: '2 conducteurs engins + 1 grutier', group: 'Combinaisons' },
 ]
 
+// ── Styles partagés pour les champs de formulaire ─────────────────────
+const INPUT_CLS = 'w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors'
+const SELECT_CLS = INPUT_CLS + ' cursor-pointer'
+const TEXTAREA_CLS = INPUT_CLS + ' resize-y'
+const LABEL_CLS = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+
 function parseBesoinsList(str: string | undefined): string[] {
   if (!str || !str.trim()) return []
   return str.split(BESOINS_SEP).map((s) => s.trim()).filter(Boolean)
@@ -493,6 +499,8 @@ export const ProjetFormPage = () => {
   const [addingPointBloquant, setAddingPointBloquant] = useState(false)
   const [pbSearch, setPbSearch] = useState('')
   const [showPbSuggestions, setShowPbSuggestions] = useState(false)
+  const [pbPriorite, setPbPriorite] = useState<Priorite>('NORMALE')
+  const pbAddRef = useRef<HTMLButtonElement>(null)
   const [besoinMatSearch, setBesoinMatSearch] = useState('')
   const [showBesoinMatSuggestions, setShowBesoinMatSuggestions] = useState(false)
   const [besoinHumSearch, setBesoinHumSearch] = useState('')
@@ -830,17 +838,90 @@ export const ProjetFormPage = () => {
     }
   }
 
+  // ── Navigation sections (scroll-spy) ────────────────────────────────
+  const FORM_SECTIONS = useMemo(() => {
+    const base = [
+      { id: 'sec-general', label: t('form.generalInfo') },
+      { id: 'sec-localisation', label: 'Localisation' },
+      { id: 'sec-financier', label: t('form.financialInfo') },
+      { id: 'sec-delais', label: t('form.deadlines') },
+    ]
+    if (isEdit) {
+      base.push(
+        { id: 'sec-suivi-mensuel', label: t('form.suiviMensuelTitle') },
+        { id: 'sec-etudes', label: t('form.avancementEtudesTitle') },
+        { id: 'sec-bloquants', label: t('form.pointsBloquantsTitle') },
+        { id: 'sec-previsions', label: t('form.previsionsTitle') },
+        { id: 'sec-avancement', label: t('form.suiviAvancementPvTitle') },
+        { id: 'sec-besoins', label: t('form.besoinsObservations') },
+      )
+    }
+    return base
+  }, [isEdit, t])
+
+  const [activeSection, setActiveSection] = useState(FORM_SECTIONS[0]?.id ?? '')
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  const setSectionRef = useCallback((id: string) => (el: HTMLDivElement | null) => {
+    sectionRefs.current[id] = el
+  }, [])
+
+  // Scroll-spy via IntersectionObserver (stable — ne dépend que de isEdit)
+  useEffect(() => {
+    const ids = FORM_SECTIONS.map(s => s.id)
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id)
+            break
+          }
+        }
+      },
+      { rootMargin: '-20% 0px -70% 0px', threshold: 0 }
+    )
+    // Petit délai pour laisser le DOM se construire
+    const timer = setTimeout(() => {
+      for (const id of ids) {
+        const el = sectionRefs.current[id]
+        if (el) observer.observe(el)
+      }
+    }, 300)
+    return () => { clearTimeout(timer); observer.disconnect() }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit])
+
+  const scrollToSection = (id: string) => {
+    sectionRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <PageContainer size="full" className="bg-gray-50/80 dark:bg-gray-900/80">
-      <button onClick={() => navigate(isEdit ? `/projets/${id}` : '/projets')} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 mb-4 flex items-center gap-1">
-        ← {t('form.back')} {isEdit ? t('form.backToDetail') : t('form.backToList')}
-      </button>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{isEdit ? (readOnly ? t('form.readOnlyTitle') : t('form.editTitle')) : t('form.newTitle')}</h1>
-      {readOnly && (
-        <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200 px-4 py-3 rounded-lg mb-4 text-sm">
-          {t('form.readOnlyNotice')}
-        </div>
-      )}
+      {/* ── En-tête de page (normal, pas sticky) ────────────────── */}
+      <div className="mb-6">
+        <button type="button" onClick={() => navigate(isEdit ? `/projets/${id}` : '/projets')} className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-2 flex items-center gap-1.5 transition-colors">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          {isEdit ? t('form.backToDetail') : t('form.backToList')}
+        </button>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{isEdit ? (readOnly ? t('form.readOnlyTitle') : t('form.editTitle')) : t('form.newTitle')}</h1>
+        {readOnly && (
+          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200 px-4 py-2.5 rounded-lg mt-3 text-sm">
+            {t('form.readOnlyNotice')}
+          </div>
+        )}
+      </div>
+
+      {/* ── Boutons d'action flottants (bas droite) ────────────── */}
+      <div className="fixed bottom-6 right-6 z-50 flex gap-2">
+        <button type="button" onClick={() => navigate(isEdit ? `/projets/${id}` : '/projets')} className="px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-lg transition-all">
+          {readOnly ? t('form.backToDetailButton') : t('form.cancel')}
+        </button>
+        {!readOnly && (
+          <button type="submit" form="projet-form" disabled={loading} className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 disabled:opacity-50 disabled:shadow-none transition-all">
+            {loading ? t('form.saving') : isEdit ? t('form.update') : t('form.createProject')}
+          </button>
+        )}
+      </div>
 
       {error && (
         <Alert type="error" title={t('form.errorTitle')} onClose={() => setError(null)}>
@@ -848,12 +929,67 @@ export const ProjetFormPage = () => {
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="mika-theme-card rounded-xl shadow-sm border p-6">
-          <h2 className="text-lg font-semibold mb-4">{t('form.generalInfo')}</h2>
+      <div className="flex gap-6 relative">
+        {/* Navigation sticky des sections — desktop uniquement */}
+        <nav className="hidden xl:block w-52 shrink-0">
+          <div className="sticky top-20">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3 px-2">Sections</p>
+            <ul className="space-y-0.5">
+              {FORM_SECTIONS.map((sec) => (
+                <li key={sec.id}>
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection(sec.id)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
+                      activeSection === sec.id
+                        ? 'bg-primary/10 text-primary dark:text-primary-light font-semibold border-l-3 border-primary'
+                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    <span className="truncate">{sec.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {/* Progression */}
+            <div className="mt-4 px-2">
+              <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-300"
+                  style={{ width: `${Math.max(10, ((FORM_SECTIONS.findIndex(s => s.id === activeSection) + 1) / FORM_SECTIONS.length) * 100)}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 text-center">
+                {FORM_SECTIONS.findIndex(s => s.id === activeSection) + 1} / {FORM_SECTIONS.length}
+              </p>
+            </div>
+          </div>
+        </nav>
+
+        {/* Navigation mobile (horizontal scroll) */}
+        <div className="xl:hidden fixed top-14 left-0 right-0 z-20 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-gray-200 dark:border-gray-800 px-4 py-2 overflow-x-auto flex gap-1.5 scrollbar-none">
+          {FORM_SECTIONS.map((sec) => (
+            <button
+              key={sec.id}
+              type="button"
+              onClick={() => scrollToSection(sec.id)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                activeSection === sec.id
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              {sec.label}
+            </button>
+          ))}
+        </div>
+
+      <form id="projet-form" onSubmit={handleSubmit} className="flex-1 min-w-0 space-y-6 xl:pt-0 pt-12">
+        <div id="sec-general" ref={setSectionRef('sec-general')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
+          <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-4">{t('form.generalInfo')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.numeroMarche')}</label>
+              <label className={LABEL_CLS}>{t('form.numeroMarche')}</label>
               <div className="flex flex-col gap-2">
                 <label className="inline-flex items-center gap-2 cursor-pointer">
                   <input
@@ -865,9 +1001,9 @@ export const ProjetFormPage = () => {
                       if (checked) setForm((prev) => ({ ...prev, numeroMarche: '' }))
                     }}
                     disabled={readOnly}
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                    className="rounded border-gray-300 dark:border-gray-500 text-primary focus:ring-primary"
                   />
-                  <span className="text-sm text-gray-700">{t('form.sansNumero')}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{t('form.sansNumero')}</span>
                 </label>
                 {!sansNumeroMarche && (
                   <input
@@ -876,20 +1012,20 @@ export const ProjetFormPage = () => {
                     value={form.numeroMarche || ''}
                     onChange={handleChange}
                     disabled={readOnly}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100"
+                    className={INPUT_CLS}
                     placeholder="N°148/MTP/SG/2024"
                     required
                   />
                 )}
                 {sansNumeroMarche && (
-                  <p className="text-xs text-gray-500">{t('form.sansNumeroHint')}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('form.sansNumeroHint')}</p>
                 )}
               </div>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.intitule')}</label>
+              <label className={LABEL_CLS}>{t('form.intitule')}</label>
               <input type="text" name="nom" value={form.nom} onChange={handleChange} required disabled={readOnly}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100" placeholder={t('form.intitulePlaceholder')} />
+                className={INPUT_CLS} placeholder={t('form.intitulePlaceholder')} />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('form.typesLabel')}</label>
@@ -919,7 +1055,7 @@ export const ProjetFormPage = () => {
             </div>
             {form.types.includes('AUTRE') && (
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.typePersonnalise')}</label>
+                <label className={LABEL_CLS}>{t('form.typePersonnalise')}</label>
                 <input
                   type="text"
                   name="typePersonnalise"
@@ -927,27 +1063,27 @@ export const ProjetFormPage = () => {
                   onChange={handleChange}
                   disabled={readOnly}
                   maxLength={150}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100 dark:disabled:bg-gray-600 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                  className={INPUT_CLS}
                   placeholder={t('form.typePersonnalisePlaceholder')}
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('form.typePersonnaliseHint')}</p>
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.statut')}</label>
-              <select name="statut" value={form.statut || 'EN_ATTENTE'} onChange={handleChange} disabled={readOnly} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100">
+              <label className={LABEL_CLS}>{t('form.statut')}</label>
+              <select name="statut" value={form.statut || 'EN_ATTENTE'} onChange={handleChange} disabled={readOnly} className={INPUT_CLS}>
                 {STATUT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(`enums.statut.${o.value}`)}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.client')}</label>
+              <label className={LABEL_CLS}>{t('form.client')}</label>
               <select
                 name="clientId"
                 value={form.clientId ?? ''}
                 onChange={handleClientSelect}
                 disabled={readOnly}
                 required
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 dark:disabled:bg-gray-600 cursor-pointer dark:text-gray-100"
+                className={SELECT_CLS}
               >
                 <option value="">{t('form.selectClient')}</option>
                 {clients.map((c) => (
@@ -962,40 +1098,40 @@ export const ProjetFormPage = () => {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.manager')}</label>
-              <select name="responsableProjetId" value={form.responsableProjetId ?? ''} onChange={(e) => setForm((prev) => ({ ...prev, responsableProjetId: e.target.value ? Number(e.target.value) : undefined }))} disabled={readOnly} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100">
+              <label className={LABEL_CLS}>{t('form.manager')}</label>
+              <select name="responsableProjetId" value={form.responsableProjetId ?? ''} onChange={(e) => setForm((prev) => ({ ...prev, responsableProjetId: e.target.value ? Number(e.target.value) : undefined }))} disabled={readOnly} className={INPUT_CLS}>
                 <option value="">{t('form.selectManager')}</option>
                 {users.map((u) => <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.sourceFinancement')}</label>
-              <select name="sourceFinancement" value={form.sourceFinancement || ''} onChange={handleChange} disabled={readOnly} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100">
+              <label className={LABEL_CLS}>{t('form.sourceFinancement')}</label>
+              <select name="sourceFinancement" value={form.sourceFinancement || ''} onChange={handleChange} disabled={readOnly} className={INPUT_CLS}>
                 <option value="">{t('form.select')}</option>
                 {SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(`enums.sourceFinancement.${o.value}`)}</option>)}
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.description')}</label>
+              <label className={LABEL_CLS}>{t('form.description')}</label>
               <textarea name="description" value={form.description || ''} onChange={handleChange} rows={3} disabled={readOnly}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100" />
+                className={INPUT_CLS} />
             </div>
             {isEdit && (
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.propositionsAmelioration')}</label>
+                <label className={LABEL_CLS}>{t('form.propositionsAmelioration')}</label>
                 <textarea name="propositionsAmelioration" value={form.propositionsAmelioration ?? ''} onChange={handleChange} rows={2} disabled={readOnly}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100" placeholder={t('form.propositionsPlaceholder')} />
+                  className={INPUT_CLS} placeholder={t('form.propositionsPlaceholder')} />
               </div>
             )}
           </div>
         </div>
 
         {/* Localisation */}
-        <div className="mika-theme-card rounded-xl shadow-sm border p-6">
-          <h2 className="text-lg font-semibold mb-4">Localisation</h2>
+        <div id="sec-localisation" ref={setSectionRef('sec-localisation')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
+          <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-4">Localisation</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Province</label>
+              <label className={LABEL_CLS}>Province</label>
               <select
                 name="province"
                 value={form.province || ''}
@@ -1004,7 +1140,7 @@ export const ProjetFormPage = () => {
                   setForm((prev) => ({ ...prev, province, ville: '', latitude: undefined, longitude: undefined }))
                 }}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100 disabled:bg-gray-100"
+                className={INPUT_CLS}
               >
                 <option value="">— Sélectionner —</option>
                 {GABON_PROVINCES.map((p) => (
@@ -1013,7 +1149,7 @@ export const ProjetFormPage = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ville</label>
+              <label className={LABEL_CLS}>Ville</label>
               <select
                 name="ville"
                 value={form.ville || ''}
@@ -1029,7 +1165,7 @@ export const ProjetFormPage = () => {
                   }))
                 }}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100 disabled:bg-gray-100"
+                className={INPUT_CLS}
               >
                 <option value="">— Sélectionner —</option>
                 {(form.province ? getVillesParProvince(form.province) : []).map((v) => (
@@ -1041,7 +1177,7 @@ export const ProjetFormPage = () => {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Latitude</label>
+              <label className={LABEL_CLS}>Latitude</label>
               <input
                 type="number"
                 step="0.0001"
@@ -1049,12 +1185,12 @@ export const ProjetFormPage = () => {
                 value={form.latitude ?? ''}
                 onChange={(e) => setForm((prev) => ({ ...prev, latitude: e.target.value ? Number(e.target.value) : undefined }))}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100 disabled:bg-gray-100"
+                className={INPUT_CLS}
                 placeholder="Ex: 0.3924"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Longitude</label>
+              <label className={LABEL_CLS}>Longitude</label>
               <input
                 type="number"
                 step="0.0001"
@@ -1062,19 +1198,19 @@ export const ProjetFormPage = () => {
                 value={form.longitude ?? ''}
                 onChange={(e) => setForm((prev) => ({ ...prev, longitude: e.target.value ? Number(e.target.value) : undefined }))}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100 disabled:bg-gray-100"
+                className={INPUT_CLS}
                 placeholder="Ex: 9.4536"
               />
             </div>
             <div className="md:col-span-2 lg:col-span-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quartier / Adresse</label>
+              <label className={LABEL_CLS}>Quartier / Adresse</label>
               <input
                 type="text"
                 name="quartier"
                 value={form.quartier || ''}
                 onChange={handleChange}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100 disabled:bg-gray-100"
+                className={INPUT_CLS}
                 placeholder="Ex: PK5, Akébé, Glass..."
               />
             </div>
@@ -1090,8 +1226,8 @@ export const ProjetFormPage = () => {
         </div>
 
         {/* Financier */}
-        <div className="mika-theme-card rounded-xl shadow-sm border p-6">
-          <h2 className="text-lg font-semibold mb-4">{t('form.financialInfo')}</h2>
+        <div id="sec-financier" ref={setSectionRef('sec-financier')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
+          <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-4">{t('form.financialInfo')}</h2>
 
           <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 space-y-3">
             <p className="font-medium text-gray-900 dark:text-gray-100">{t('form.financialGuideTitle')}</p>
@@ -1106,63 +1242,63 @@ export const ProjetFormPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.montantHT')}</label>
+              <label className={LABEL_CLS}>{t('form.montantHT')}</label>
               <input type="number" name="montantHT" value={form.montantHT || ''} onChange={handleNumberChange} disabled={readOnly}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100" placeholder={t('form.placeholderMontantHT')} />
+                className={INPUT_CLS} placeholder={t('form.placeholderMontantHT')} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.montantTTC')}</label>
+              <label className={LABEL_CLS}>{t('form.montantTTC')}</label>
               <input type="number" name="montantTTC" value={form.montantTTC ?? (form.montantHT != null ? Math.round(form.montantHT * 1.19) : '')} readOnly
-                className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed" title={t('form.calculatedTitle')} />
+                className={`${INPUT_CLS} bg-gray-50 cursor-not-allowed`} title={t('form.calculatedTitle')} />
               <p className="mt-1 text-xs text-gray-500">{t('form.calculatedAuto')}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.travauxSupplementaires')}</label>
+              <label className={LABEL_CLS}>{t('form.travauxSupplementaires')}</label>
               <input type="number" name="montantInitial" value={form.montantInitial || ''} onChange={handleNumberChange} disabled={readOnly}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100"
+                className={INPUT_CLS}
                 placeholder={form.montantHT != null ? t('form.max15pctHT', { val: formatNumber(Math.round(form.montantHT * 0.15)) }) : t('form.max15pctHTShort')} />
               {form.montantHT != null && (
                 <p className="mt-1 text-xs text-gray-500">{t('form.seuil15', { val: formatNumber(Math.round(form.montantHT * 0.15)) })}</p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.avenant')}</label>
+              <label className={LABEL_CLS}>{t('form.avenant')}</label>
               <input type="number" name="montantRevise" value={form.montantRevise || ''} onChange={handleNumberChange} disabled={readOnly}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100"
+                className={INPUT_CLS}
                 placeholder={form.montantHT != null ? t('form.between15and30', { min: formatNumber(Math.round(form.montantHT * 0.15)), max: formatNumber(Math.round(form.montantHT * 0.30)) }) : t('form.between15and30Short')} />
               {form.montantHT != null && (
                 <p className="mt-1 text-xs text-gray-500">{t('form.plageAvenant', { min: formatNumber(Math.round(form.montantHT * 0.15)), max: formatNumber(Math.round(form.montantHT * 0.30)) })}</p>
               )}
             </div>
             <div className="md:col-span-2 lg:col-span-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.imputationBudgetaire')}</label>
+              <label className={LABEL_CLS}>{t('form.imputationBudgetaire')}</label>
               <input type="text" name="imputationBudgetaire" value={form.imputationBudgetaire || ''} onChange={handleChange} disabled={readOnly}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100" placeholder={t('form.imputationPlaceholder')} />
+                className={INPUT_CLS} placeholder={t('form.imputationPlaceholder')} />
             </div>
           </div>
         </div>
 
         {/* Délais */}
-        <div className="mika-theme-card rounded-xl shadow-sm border p-6">
-          <h2 className="text-lg font-semibold mb-4">{t('form.deadlines')}</h2>
+        <div id="sec-delais" ref={setSectionRef('sec-delais')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
+          <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-4">{t('form.deadlines')}</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
             {t('form.deadlinesHint')}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.dateDebutContractuelle')}</label>
+              <label className={LABEL_CLS}>{t('form.dateDebutContractuelle')}</label>
               <input
                 type="date"
                 name="dateDebut"
                 value={form.dateDebut || ''}
                 onChange={handleChange}
                 disabled={readOnly}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100 dark:disabled:bg-gray-600 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 ${dateErrors.dateDebut ? 'border-red-500' : ''}`}
+                className={`${INPUT_CLS} ${dateErrors.dateDebut ? 'border-red-500' : ''}`}
               />
               {dateErrors.dateDebut && <p className="mt-1 text-xs text-red-600">{dateErrors.dateDebut}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.delaiMois')}</label>
+              <label className={LABEL_CLS}>{t('form.delaiMois')}</label>
               <input
                 type="number"
                 name="delaiMois"
@@ -1170,19 +1306,19 @@ export const ProjetFormPage = () => {
                 value={form.delaiMois ?? ''}
                 onChange={handleNumberChange}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100 dark:disabled:bg-gray-600 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                className={INPUT_CLS}
                 placeholder="Ex. 12"
               />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('form.imposedByClient')}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.dateFinContractuelle')}</label>
+              <label className={LABEL_CLS}>{t('form.dateFinContractuelle')}</label>
               <input
                 type="date"
                 name="dateFin"
                 value={form.dateFin || ''}
                 readOnly
-                className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-700 dark:text-gray-300 cursor-not-allowed"
+                className={`${INPUT_CLS} bg-gray-50 cursor-not-allowed`}
                 title={t('form.dateFinTitle')}
               />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('form.calculatedAutoShort')}</p>
@@ -1231,7 +1367,7 @@ export const ProjetFormPage = () => {
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.dateDebutReelle')}</label>
+              <label className={LABEL_CLS}>{t('form.dateDebutReelle')}</label>
               <input
                 type="date"
                 name="dateDebutReel"
@@ -1240,14 +1376,14 @@ export const ProjetFormPage = () => {
                 disabled={readOnly || !isEdit}
                 min={form.dateDebut || undefined}
                 max={form.dateFin || undefined}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100 ${dateErrors.dateDebutReel ? 'border-red-500' : ''}`}
+                className={`${INPUT_CLS} ${dateErrors.dateDebutReel ? 'border-red-500' : ''}`}
                 title={!isEdit ? t('form.modifiableAfterCreate') : undefined}
               />
               {!isEdit && <p className="mt-1 text-xs text-gray-500">{t('form.modifiableAfterCreate')}</p>}
               {dateErrors.dateDebutReel && <p className="mt-1 text-xs text-red-600">{dateErrors.dateDebutReel}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.dateFinReelle')}</label>
+              <label className={LABEL_CLS}>{t('form.dateFinReelle')}</label>
               <input
                 type="date"
                 name="dateFinReelle"
@@ -1255,7 +1391,7 @@ export const ProjetFormPage = () => {
                 onChange={handleChange}
                 disabled={readOnly || !isEdit}
                 min={form.dateDebutReel || form.dateDebut || undefined}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100 ${dateErrors.dateFinReelle ? 'border-red-500' : ''}`}
+                className={`${INPUT_CLS} ${dateErrors.dateFinReelle ? 'border-red-500' : ''}`}
                 title={!isEdit ? t('form.modifiableAfterCreate') : undefined}
               />
               {!isEdit && <p className="mt-1 text-xs text-gray-500">{t('form.modifiableAfterCreate')}</p>}
@@ -1269,8 +1405,8 @@ export const ProjetFormPage = () => {
           (((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL')
           || (isEdit && ((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'AUTO' && form.dateDebut && form.dateFin && suiviMensuelRows.length > 0)
         )) && (
-          <div className="mika-theme-card rounded-xl shadow-sm border p-6">
-            <h2 className="text-lg font-semibold mb-2">{t('form.suiviMensuelTitle')}</h2>
+          <div id="sec-suivi-mensuel" ref={setSectionRef('sec-suivi-mensuel')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
+            <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-2">{t('form.suiviMensuelTitle')}</h2>
             <p className="text-sm text-gray-500 mb-4">
               {((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL'
                 ? t('form.suiviMensuelManualHint')
@@ -1286,11 +1422,11 @@ export const ProjetFormPage = () => {
                 )}
                 <div className="flex flex-col md:flex-row md:items-end gap-3">
                   <div className="w-full md:w-56">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.mois')}</label>
+                    <label className={LABEL_CLS}>{t('form.mois')}</label>
                     <select
                       value={manualSuiviNewMonth}
                       onChange={(e) => setManualSuiviNewMonth(Number(e.target.value))}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                      className={INPUT_CLS}
                     >
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
                         <option key={m} value={m}>
@@ -1300,12 +1436,12 @@ export const ProjetFormPage = () => {
                     </select>
                   </div>
                   <div className="w-full md:w-40">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.annee')}</label>
+                    <label className={LABEL_CLS}>{t('form.annee')}</label>
                     <input
                       type="number"
                       value={manualSuiviNewYear}
                       onChange={(e) => setManualSuiviNewYear(e.target.value ? Number(e.target.value) : new Date().getFullYear())}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                      className={INPUT_CLS}
                     />
                   </div>
                   <button
@@ -1415,8 +1551,8 @@ export const ProjetFormPage = () => {
 
         {/* État d'avancement des études — en édition uniquement */}
         {isEdit && !readOnly && avancementEtudesRows.length > 0 && (
-          <div className="mika-theme-card rounded-xl shadow-sm border p-6">
-            <h2 className="text-lg font-semibold mb-2">{t('form.avancementEtudesTitle')}</h2>
+          <div id="sec-etudes" ref={setSectionRef('sec-etudes')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
+            <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-2">{t('form.avancementEtudesTitle')}</h2>
             <p className="text-sm text-gray-500 mb-4">{t('form.avancementEtudesHint')}</p>
             <div className="w-full min-w-0 overflow-x-auto">
               <table className="w-full text-sm border-collapse table-fixed">
@@ -1482,8 +1618,8 @@ export const ProjetFormPage = () => {
 
         {/* Points bloquants — en édition uniquement, menus déroulants + ajout personnalisé */}
         {isEdit && !readOnly && id && (
-          <div className="mika-theme-card rounded-xl shadow-sm border p-6">
-            <h2 className="text-lg font-semibold mb-2">{t('form.pointsBloquantsTitle')}</h2>
+          <div id="sec-bloquants" ref={setSectionRef('sec-bloquants')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
+            <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-2">{t('form.pointsBloquantsTitle')}</h2>
             <p className="text-sm text-gray-500 mb-4">{t('form.pointsBloquantsHint')}</p>
             <div className="space-y-4">
               <div className="flex flex-wrap gap-3 items-end">
@@ -1500,10 +1636,10 @@ export const ProjetFormPage = () => {
                       e.preventDefault()
                       const v = pbSearch.trim()
                       if (!v) return
-                      document.getElementById('pb-add-btn')?.click()
+                      pbAddRef.current?.click()
                     }}
                     placeholder={t('form.titrePersonnalise')}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
+                    className={INPUT_CLS}
                   />
                   {showPbSuggestions && (
                     <div className="absolute z-30 top-full left-0 right-0 mt-1 max-h-72 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl">
@@ -1542,31 +1678,29 @@ export const ProjetFormPage = () => {
                 </div>
                 <div className="w-32">
                   <label className="block text-xs font-medium text-gray-500 mb-1">{t('form.priorite')}</label>
-                  <select id="pb-priorite" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-white dark:bg-gray-700 text-sm dark:text-gray-100">
+                  <select value={pbPriorite} onChange={(e) => setPbPriorite(e.target.value as Priorite)} className={SELECT_CLS}>
                     {PRIORITE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(`enums.priorite.${o.value}`)}</option>)}
                   </select>
                 </div>
                 <div className="w-32">
                   <label className="block text-xs font-medium text-gray-500 mb-1">{t('form.statut')}</label>
-                  <select id="pb-statut" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-white dark:bg-gray-700 text-sm dark:text-gray-100">
+                  <select id="pb-statut" className={SELECT_CLS}>
                     {STATUT_POINT_BLOQUANT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(`enums.statutPointBloquant.${o.value}`)}</option>)}
                   </select>
                 </div>
                 <button
                   type="button"
-                  id="pb-add-btn"
+                  ref={pbAddRef}
                   disabled={addingPointBloquant}
                   onClick={async () => {
                     const titre = pbSearch.trim()
-                    if (!titre) return
-                    const priorite = (document.getElementById('pb-priorite') as HTMLSelectElement)?.value as Priorite
-                    if (addingPointBloquant) return
+                    if (!titre || addingPointBloquant) return
                     setAddingPointBloquant(true)
                     try {
                       const created = await pointBloquantApi.create({
                         projetId: Number(id),
                         titre,
-                        priorite,
+                        priorite: pbPriorite,
                         dateDetection: new Date().toISOString().slice(0, 10),
                       })
                       setPointsBloquants((prev) => [...prev, created])
@@ -1642,7 +1776,7 @@ export const ProjetFormPage = () => {
                   </li>
                 ))}
               </ul>
-              {pointsBloquants.length === 0 && <p className="text-sm text-gray-500">{t('form.aucunPointBloquant')}</p>}
+              {pointsBloquants.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400">{t('form.aucunPointBloquant')}</p>}
             </div>
           </div>
         )}
@@ -1684,8 +1818,8 @@ export const ProjetFormPage = () => {
           })
           const prevSelectId = 'prev-desc-any-week'
           return (
-            <div className="mika-theme-card rounded-xl shadow-sm border p-6">
-              <h2 className="text-lg font-semibold mb-2">{t('form.previsionsTitle')}</h2>
+            <div id="sec-previsions" ref={setSectionRef('sec-previsions')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
+              <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-2">{t('form.previsionsTitle')}</h2>
               <p className="text-sm text-gray-500 mb-4">{t('form.previsionsHint')}</p>
               <div className="flex flex-wrap items-end gap-4 mb-4">
                 <div>
@@ -1734,7 +1868,7 @@ export const ProjetFormPage = () => {
                           setShowPrevisionSuggestions(false)
                         }}
                         placeholder={t('form.previsionCustomPlaceholder')}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
+                        className={INPUT_CLS}
                       />
                       {showPrevisionSuggestions && (
                         <div className="absolute z-30 top-full left-0 right-0 mt-1 max-h-72 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl">
@@ -1858,7 +1992,7 @@ export const ProjetFormPage = () => {
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">{t('form.noPrevisionYet')}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('form.noPrevisionYet')}</p>
               )}
             </div>
           )
@@ -1866,26 +2000,26 @@ export const ProjetFormPage = () => {
 
         {/* Suivi d'avancement (PV) — en édition uniquement */}
         {isEdit && (
-          <div className="mika-theme-card rounded-xl shadow-sm border p-6">
-            <h2 className="text-lg font-semibold mb-2">{t('form.suiviAvancementPvTitle')}</h2>
+          <div id="sec-avancement" ref={setSectionRef('sec-avancement')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
+            <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-2">{t('form.suiviAvancementPvTitle')}</h2>
             <p className="text-sm text-gray-500 mb-4">{t('form.suiviAvancementPvHint')}</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.avancementPhysiquePct')}</label>
+                <label className={LABEL_CLS}>{t('form.avancementPhysiquePct')}</label>
                 <input type="number" name="avancementGlobal" min={0} max={100} step={0.01} value={form.avancementGlobal ?? ''} onChange={handleNumberChange} disabled={readOnly}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100" title={t('form.indicateurPrincipal')} />
+                  className={INPUT_CLS} title={t('form.indicateurPrincipal')} />
                 <p className="mt-1 text-xs text-gray-500">{t('form.indicateurPrincipal')}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.avancementFinancierPct')}</label>
+                <label className={LABEL_CLS}>{t('form.avancementFinancierPct')}</label>
                 <input type="number" name="avancementFinancierPct" min={0} max={100} step={0.01} value={form.avancementFinancierPct ?? ''} onChange={handleNumberChange} disabled={readOnly}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100" title={t('form.executionBudgetaire')} />
+                  className={INPUT_CLS} title={t('form.executionBudgetaire')} />
                 <p className="mt-1 text-xs text-gray-500">{t('form.executionBudgetaire')}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.delaiConsommePct')}</label>
+                <label className={LABEL_CLS}>{t('form.delaiConsommePct')}</label>
                 <input type="number" name="delaiConsommePct" min={0} max={100} step={0.01} value={form.delaiConsommePct ?? ''} onChange={handleNumberChange} disabled={readOnly}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100" title={t('form.partDelai')} />
+                  className={INPUT_CLS} title={t('form.partDelai')} />
                 <p className="mt-1 text-xs text-gray-500">{t('form.partDelai')}</p>
               </div>
             </div>
@@ -1894,13 +2028,13 @@ export const ProjetFormPage = () => {
 
         {/* Besoins et observations (PV) — en édition uniquement */}
         {isEdit && (
-          <div className="mika-theme-card rounded-xl shadow-sm border p-6">
-            <h2 className="text-lg font-semibold mb-2">{t('form.besoinsObservations')}</h2>
+          <div id="sec-besoins" ref={setSectionRef('sec-besoins')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
+            <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-2">{t('form.besoinsObservations')}</h2>
             <p className="text-sm text-gray-500 mb-4">{t('form.besoinsObservationsHint')}</p>
             <div className="space-y-6">
               {/* Besoins matériels */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('detail.besoinsMateriel')}</label>
+                <label className={LABEL_CLS}>{t('detail.besoinsMateriel')}</label>
                 {!readOnly && (
                   <div className="flex gap-2">
                     <div className="relative flex-1">
@@ -1920,7 +2054,7 @@ export const ProjetFormPage = () => {
                         setBesoinMatSearch('')
                       }}
                       placeholder={t('form.ajouterBesoinNonListe')}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
+                      className={INPUT_CLS}
                     />
                     {showBesoinMatSuggestions && (
                       <div className="absolute z-30 top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl">
@@ -1975,10 +2109,10 @@ export const ProjetFormPage = () => {
                     const translated = t(`form.besoinsMateriel.options.${optKey}`)
                     const label = translated !== `form.besoinsMateriel.options.${optKey}` ? translated : item
                     return (
-                    <span key={item} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-gray-100 text-gray-800">
+                    <span key={item} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                       {label}
                       {!readOnly && (
-                        <button type="button" onClick={() => setForm((prev) => ({ ...prev, besoinsMateriel: parseBesoinsList(prev.besoinsMateriel).filter((x) => x !== item).join(BESOINS_SEP) }))} className="text-gray-500 hover:text-red-600" aria-label={t('form.retirer')}>×</button>
+                        <button type="button" onClick={() => setForm((prev) => ({ ...prev, besoinsMateriel: parseBesoinsList(prev.besoinsMateriel).filter((x) => x !== item).join(BESOINS_SEP) }))} className="text-gray-500 dark:text-gray-400 hover:text-red-600" aria-label={t('form.retirer')}>×</button>
                       )}
                     </span>
                     )
@@ -1988,7 +2122,7 @@ export const ProjetFormPage = () => {
 
               {/* Besoins humains */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('detail.besoinsHumain')}</label>
+                <label className={LABEL_CLS}>{t('detail.besoinsHumain')}</label>
                 {!readOnly && (
                   <div className="flex gap-2">
                     <div className="relative flex-1">
@@ -2008,7 +2142,7 @@ export const ProjetFormPage = () => {
                         setBesoinHumSearch('')
                       }}
                       placeholder={t('form.ajouterBesoinNonListe')}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
+                      className={INPUT_CLS}
                     />
                     {showBesoinHumSuggestions && (
                       <div className="absolute z-30 top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl">
@@ -2063,7 +2197,7 @@ export const ProjetFormPage = () => {
                     const translated = t(`form.besoinsHumain.options.${optKey}`)
                     const label = translated !== `form.besoinsHumain.options.${optKey}` ? translated : item
                     return (
-                    <span key={item} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-blue-50 text-blue-800">
+                    <span key={item} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
                       {label}
                       {!readOnly && (
                         <button type="button" onClick={() => setForm((prev) => ({ ...prev, besoinsHumain: parseBesoinsList(prev.besoinsHumain).filter((x) => x !== item).join(BESOINS_SEP) }))} className="text-blue-600 hover:text-red-600" aria-label={t('form.retirer')}>×</button>
@@ -2075,26 +2209,32 @@ export const ProjetFormPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.observations')}</label>
+                <label className={LABEL_CLS}>{t('form.observations')}</label>
                 <textarea name="observations" value={form.observations ?? ''} onChange={handleChange} rows={2} disabled={readOnly}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary disabled:bg-gray-100" placeholder={t('form.observationsPlaceholder')} />
+                  className={INPUT_CLS} placeholder={t('form.observationsPlaceholder')} />
               </div>
             </div>
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex justify-end gap-3">
-          <button type="button" onClick={() => navigate(isEdit ? `/projets/${id}` : '/projets')} className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-            {readOnly ? t('form.backToDetailButton') : t('form.cancel')}
-          </button>
-          {!readOnly && (
-            <button type="submit" disabled={loading} className="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium disabled:opacity-50">
-              {loading ? t('form.saving') : isEdit ? t('form.update') : t('form.createProject')}
-            </button>
-          )}
-        </div>
+        {/* Indicateur sections disponibles après création */}
+        {!isEdit && (
+          <div className="mika-theme-card rounded-xl shadow-sm border p-6 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-5 h-5 text-secondary dark:text-secondary-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">{t('form.sectionsAfterCreateTitle') || 'Sections supplémentaires'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('form.sectionsAfterCreateHint') || 'Après la création du projet, vous pourrez ajouter : suivi mensuel, avancement des études, points bloquants, prévisions, besoins matériels et humains, observations.'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
       </form>
+
+      </div>{/* fermeture du flex layout */}
 
       {/* Modal création client — nom et type uniquement, comme source de financement */}
       {clientModalOpen && (
@@ -2103,20 +2243,20 @@ export const ProjetFormPage = () => {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('form.newClientTitle')}</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.clientNameLabel')}</label>
+                <label className={LABEL_CLS}>{t('form.clientNameLabel')}</label>
                 <input type="text" value={newClient.nom} onChange={(e) => setNewClient((p) => ({ ...p, nom: e.target.value }))}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary" placeholder={t('form.clientNamePlaceholder')} />
+                  className={INPUT_CLS} placeholder={t('form.clientNamePlaceholder')} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('form.clientTypeLabel')}</label>
+                <label className={LABEL_CLS}>{t('form.clientTypeLabel')}</label>
                 <select value={newClient.type} onChange={(e) => setNewClient((p) => ({ ...p, type: e.target.value as TypeClient }))}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary">
+                  className={INPUT_CLS}>
                   {TYPE_CLIENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(`enums.typeClient.${o.value}`)}</option>)}
                 </select>
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-              <button type="button" onClick={() => setClientModalOpen(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+              <button type="button" onClick={() => setClientModalOpen(false)} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
                 {t('form.cancel')}
               </button>
               <button type="button" onClick={handleCreateClient} disabled={!newClient.nom.trim() || loading}

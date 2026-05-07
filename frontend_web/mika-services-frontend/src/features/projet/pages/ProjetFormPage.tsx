@@ -8,6 +8,8 @@ import { Alert } from '@/components/ui/Alert'
 import { createProjet, updateProjet, fetchProjetById, fetchClients, createClient, clearProjetDetail } from '@/store/slices/projetSlice'
 import { userApi } from '@/api/userApi'
 import { projetApi, pointBloquantApi } from '@/api/projetApi'
+import { dqeApi } from '@/api/dqeApi'
+import type { DqeChapitre } from '@/types/dqe'
 import type { User } from '@/types'
 import type { ProjetCreateRequest, ProjetUpdateRequest, TypeProjet, StatutProjet, SourceFinancement, TypeClient, PhaseEtude, EtatValidationEtude, PointBloquant, Prevision, Priorite, StatutPointBloquant, TypePrevision, ModeSuiviMensuel } from '@/types/projet'
 import { useFormatNumber } from '@/hooks/useFormatNumber'
@@ -490,6 +492,9 @@ export const ProjetFormPage = () => {
   const [pointsBloquants, setPointsBloquants] = useState<PointBloquant[]>([])
   const [addingPointBloquant, setAddingPointBloquant] = useState(false)
   const [previsions, setPrevisions] = useState<Prevision[]>([])
+  const [dqeChapitres, setDqeChapitres] = useState<DqeChapitre[]>([])
+  const [previsionSearch, setPrevisionSearch] = useState('')
+  const [showPrevisionSuggestions, setShowPrevisionSuggestions] = useState(false)
   const { annee: defaultAnnee, semaine: defaultSemaine } = getSemaineCourante()
   const [selectedAnneePrevision, setSelectedAnneePrevision] = useState(defaultAnnee)
   const [selectedSemainePrevision, setSelectedSemainePrevision] = useState(defaultSemaine)
@@ -571,6 +576,7 @@ export const ProjetFormPage = () => {
     const pid = Number(id)
     pointBloquantApi.findByProjet(pid, 0, 100).then((res) => setPointsBloquants(res.content ?? [])).catch(() => setPointsBloquants([]))
     projetApi.getPrevisions(pid).then(setPrevisions).catch(() => setPrevisions([]))
+    dqeApi.findByProjet(pid).then(setDqeChapitres).catch(() => setDqeChapitres([]))
   }, [isEdit, id])
 
   // Charger avancement des études en édition
@@ -1639,7 +1645,8 @@ export const ProjetFormPage = () => {
               setPrevisions((prev) => prev.filter((x) => x.id !== p.id))
             } catch (err) { setError((err as Error).message) }
           }
-          const previsionsByWeek = previsions.reduce<Record<string, Prevision[]>>((acc, p) => {
+          const activePrevisions = previsions.filter(p => p.avancementPct == null || p.avancementPct < 100)
+          const previsionsByWeek = activePrevisions.reduce<Record<string, Prevision[]>>((acc, p) => {
             const key = `${p.annee ?? 0}-${p.semaine ?? 0}`
             if (!acc[key]) acc[key] = []
             acc[key].push(p)
@@ -1682,64 +1689,88 @@ export const ProjetFormPage = () => {
                     ))}
                   </select>
                 </div>
-                <div className="flex-1 min-w-0 sm:min-w-[200px]">
-                  <label htmlFor={prevSelectId} className="block text-xs font-medium text-gray-500 mb-1">{t('form.tacheARealiser')}</label>
+                <div className="flex-1 min-w-0 sm:min-w-[200px] relative">
+                  <label className="block text-xs font-medium text-gray-500 mb-1">{t('form.tacheARealiser')}</label>
                   <div className="flex gap-2">
-                    <select id={prevSelectId} className="flex-1 px-3 py-2 border rounded-lg text-sm">
-                      <option value="">{t('form.choisirTache')}</option>
-                      {['Travaux', 'Études', 'Qualité', 'Pilotage', 'Administratif', 'Logistique', 'Sécurité'].map((g) => {
-                        const groupKey = PREVISION_GROUP_KEYS[g] ?? g
-                        const groupLabel = t(`form.prevision.groups.${groupKey}`) || g
-                        return (
-                          <optgroup key={g} label={groupLabel}>
-                            {PREVISION_DESCRIPTION_OPTIONS.filter((o) => o.group === g).map((o) => {
-                              const optKey = slugForI18n(o.value)
-                              const optLabel = t(`form.prevision.options.${optKey}`) || o.label
-                              return <option key={o.value} value={o.value}>{optLabel}</option>
-                            })}
-                          </optgroup>
-                        )
-                      })}
-                    </select>
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={previsionSearch}
+                        onChange={(e) => { setPrevisionSearch(e.target.value); setShowPrevisionSuggestions(true) }}
+                        onFocus={() => setShowPrevisionSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowPrevisionSuggestions(false), 200)}
+                        onKeyDown={(e) => {
+                          if (e.key !== 'Enter') return
+                          e.preventDefault()
+                          const v = previsionSearch.trim()
+                          if (!v) return
+                          addPrevision(selectedSemainePrevision, selectedAnneePrevision, v)
+                          setPrevisionSearch('')
+                          setShowPrevisionSuggestions(false)
+                        }}
+                        placeholder={t('form.previsionCustomPlaceholder')}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
+                      />
+                      {showPrevisionSuggestions && (
+                        <div className="absolute z-30 top-full left-0 right-0 mt-1 max-h-72 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl">
+                          {(() => {
+                            const q = previsionSearch.toLowerCase()
+                            const groups: { label: string; items: { value: string; label: string }[] }[] = []
+
+                            // Groupes prédéfinis
+                            for (const g of ['Travaux', 'Études', 'Qualité', 'Pilotage', 'Administratif', 'Logistique', 'Sécurité']) {
+                              const groupKey = PREVISION_GROUP_KEYS[g] ?? g
+                              const groupLabel = t(`form.prevision.groups.${groupKey}`) || g
+                              const items = PREVISION_DESCRIPTION_OPTIONS.filter((o) => o.group === g)
+                                .map((o) => ({ value: o.value, label: t(`form.prevision.options.${slugForI18n(o.value)}`) || o.label }))
+                                .filter((o) => !q || o.label.toLowerCase().includes(q))
+                              if (items.length > 0) groups.push({ label: groupLabel, items })
+                            }
+
+                            // Groupes DQE par chapitre
+                            for (const chap of dqeChapitres) {
+                              const items = chap.lignes
+                                .map((l) => ({ value: `[DQE] ${l.numeroPoste ?? ''} — ${l.designation}`, label: `${l.numeroPoste ?? ''} — ${l.designation}${l.unite ? ` (${l.unite})` : ''}` }))
+                                .filter((o) => !q || o.label.toLowerCase().includes(q))
+                              if (items.length > 0) groups.push({ label: `DQE — Chap. ${chap.numero} ${chap.designation}`, items })
+                            }
+
+                            if (groups.length === 0) return <div className="px-3 py-2 text-xs text-gray-400">{q ? 'Aucun résultat — appuyez Entrée pour ajouter comme tâche libre' : 'Commencez à taper...'}</div>
+
+                            return groups.map((g) => (
+                              <div key={g.label}>
+                                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900 sticky top-0">{g.label}</div>
+                                {g.items.map((item) => (
+                                  <button
+                                    key={item.value}
+                                    type="button"
+                                    className="w-full text-left px-3 py-2 text-sm hover:bg-primary/10 dark:hover:bg-primary/20 text-gray-700 dark:text-gray-200 transition-colors"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => {
+                                      addPrevision(selectedSemainePrevision, selectedAnneePrevision, item.value)
+                                      setPrevisionSearch('')
+                                      setShowPrevisionSuggestions(false)
+                                    }}
+                                  >
+                                    {item.label}
+                                  </button>
+                                ))}
+                              </div>
+                            ))
+                          })()}
+                        </div>
+                      )}
+                    </div>
                     <button
                       type="button"
                       onClick={() => {
-                        const sel = document.getElementById(prevSelectId) as HTMLSelectElement
-                        const v = sel?.value
+                        const v = previsionSearch.trim()
                         if (!v) return
                         addPrevision(selectedSemainePrevision, selectedAnneePrevision, v)
-                        if (sel) sel.value = ''
+                        setPrevisionSearch('')
+                        setShowPrevisionSuggestions(false)
                       }}
                       className="px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark shrink-0"
-                    >
-                      {t('form.ajouterPour', { semaine: selectedSemainePrevision, annee: selectedAnneePrevision })}
-                    </button>
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    <input
-                      id="prev-custom-desc"
-                      type="text"
-                      placeholder={t('form.previsionCustomPlaceholder')}
-                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary text-sm bg-white dark:bg-gray-700 dark:text-gray-100"
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter') return
-                        e.preventDefault()
-                        const v = e.currentTarget.value.trim()
-                        if (!v) return
-                        addPrevision(selectedSemainePrevision, selectedAnneePrevision, v)
-                        e.currentTarget.value = ''
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const input = document.getElementById('prev-custom-desc') as HTMLInputElement
-                        const v = input?.value?.trim()
-                        if (!v) return
-                        addPrevision(selectedSemainePrevision, selectedAnneePrevision, v)
-                        if (input) input.value = ''
-                      }}
-                      className="px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark shrink-0 whitespace-nowrap"
                     >
                       {t('form.ajouterPour', { semaine: selectedSemainePrevision, annee: selectedAnneePrevision })}
                     </button>

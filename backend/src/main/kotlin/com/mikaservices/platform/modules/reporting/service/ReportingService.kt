@@ -51,7 +51,7 @@ class ReportingService(
     fun getProjetReport(projetId: Long): ProjetReportResponse {
         val projet = projetService.requireCanViewProjet(projetId)
 
-        val budgetPrevu = projet.montantRevise ?: projet.montantInitial ?: BigDecimal.ZERO
+        val budgetPrevu = projet.montantRevise ?: projet.montantHT ?: projet.montantInitial ?: BigDecimal.ZERO
         val depenses = depenseRepository.sumMontantByProjetId(projetId)
         val ecart = budgetPrevu.subtract(depenses)
         val tauxConso = if (budgetPrevu > BigDecimal.ZERO) {
@@ -133,7 +133,7 @@ class ReportingService(
 
     private fun getGlobalBudgetStats(): BudgetStats {
         val projets = projetRepository.findAll()
-        val budgetPrevu = projets.map { it.montantRevise ?: it.montantInitial ?: BigDecimal.ZERO }.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
+        val budgetPrevu = projets.map { it.montantRevise ?: it.montantHT ?: it.montantInitial ?: BigDecimal.ZERO }.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
         val depenses = projets.mapNotNull { it.id }.fold(BigDecimal.ZERO) { acc, id ->
             acc.add(depenseRepository.sumMontantByProjetId(id))
         }

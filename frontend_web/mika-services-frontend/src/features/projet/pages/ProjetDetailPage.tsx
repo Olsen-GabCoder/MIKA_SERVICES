@@ -164,7 +164,7 @@ export const ProjetDetailPage = () => {
     ? Math.max(1, Math.round((new Date(projet.dateFin).getTime() - new Date(projet.dateDebut).getTime()) / (1000 * 60 * 60 * 24 * 30.44)))
     : null)
 
-  const budgetPrevu = rapport?.budget?.budgetTotalPrevu ?? projet?.montantHT ?? 0
+  const budgetPrevu = (rapport?.budget?.budgetTotalPrevu || 0) > 0 ? rapport!.budget.budgetTotalPrevu : (projet?.montantHT ?? 0)
   const depensesTotales = rapport?.budget?.depensesTotales ?? 0
   // Tableau de suivi mensuel :
   // - AUTO : synchronisé avec les dates réelles (fallback sur dates prévues)

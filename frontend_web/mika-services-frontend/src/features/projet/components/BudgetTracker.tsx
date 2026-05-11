@@ -81,10 +81,10 @@ function EditableCell({
     <input
       type="number"
       min={0}
-      value={value || ''}
+      value={value !== 0 ? value : ''}
       onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))}
       className="w-full bg-transparent text-right tabular-nums px-1 py-0.5 rounded border border-transparent focus:border-primary focus:bg-white dark:focus:bg-gray-800 focus:outline-none transition-colors dark:text-gray-100"
-      placeholder="\u2014"
+      placeholder="0"
     />
   )
 }

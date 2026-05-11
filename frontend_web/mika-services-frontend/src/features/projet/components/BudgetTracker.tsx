@@ -39,12 +39,18 @@ interface BudgetTrackerProps {
 // ── Formatters ───────────────────────────────────────────────────────
 function fmtMoney(n: number | null | undefined): string {
   if (n == null || isNaN(n)) return '\u2014'
+  if (n === 0) return '\u2014'
   const abs = Math.abs(n)
-  if (abs >= 1_000_000) {
-    const v = (n / 1_000_000).toFixed(1).replace('.0', '')
-    return `${v}M`
+  const sign = n < 0 ? '-' : ''
+  if (abs >= 1_000_000_000) {
+    const v = (abs / 1_000_000_000).toFixed(2).replace(/\.?0+$/, '')
+    return `${sign}${v}Md`
   }
-  if (abs >= 10_000) return `${Math.round(n / 1_000)}k`
+  if (abs >= 1_000_000) {
+    const v = (abs / 1_000_000).toFixed(1).replace('.0', '')
+    return `${sign}${v}M`
+  }
+  if (abs >= 10_000) return `${sign}${Math.round(abs / 1_000)}k`
   return n.toLocaleString('fr-FR')
 }
 
@@ -55,6 +61,7 @@ function fmtPct(n: number | null | undefined): string {
 
 function fmtDelta(n: number | null | undefined): string {
   if (n == null || isNaN(n)) return '\u2014'
+  if (n === 0) return '0'
   const sign = n > 0 ? '+' : ''
   return `${sign}${fmtMoney(n)}`
 }

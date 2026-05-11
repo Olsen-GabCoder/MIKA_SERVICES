@@ -77,6 +77,24 @@ export default function ProjetDocumentsPage() {
 
   const canEdit = projet != null && canEditProjetEffective(currentUser, accessToken, projet.responsableProjet?.id ?? projet.responsableProjetId)
 
+  // Image thumbnail cache: load blob URLs for image documents
+  const [thumbnails, setThumbnails] = useState<Record<number, string>>({})
+  useEffect(() => {
+    const images = documents.filter((d) => d.typeMime?.startsWith('image/'))
+    let cancelled = false
+    images.forEach((doc) => {
+      if (thumbnails[doc.id]) return
+      documentApi.download(doc.id).then((blob) => {
+        if (cancelled) return
+        const url = URL.createObjectURL(blob)
+        setThumbnails((prev) => ({ ...prev, [doc.id]: url }))
+      }).catch(() => {})
+    })
+    return () => { cancelled = true }
+    // Only re-run when document list changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documents])
+
   useEffect(() => {
     if (id) dispatch(fetchProjetById(Number(id)))
     return () => { dispatch(clearProjetDetail()) }
@@ -334,23 +352,61 @@ export default function ProjetDocumentsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filtered.map((doc) => {
               const meta = getFileMeta(doc.typeMime)
+              const isImage = doc.typeMime?.startsWith('image/')
+              const thumb = thumbnails[doc.id]
               return (
                 <div key={doc.id} className="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 overflow-hidden">
-                  {/* Top color stripe */}
-                  <div className={`h-1 bg-gradient-to-r ${meta.gradient}`} />
-                  <div className="p-5">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className={`w-12 h-12 rounded-xl ${meta.bg} ring-1 ${meta.ring} flex items-center justify-center ${meta.text} text-sm font-extrabold shrink-0`}>
-                        {meta.label}
+                  {/* Image preview OR color stripe */}
+                  {isImage && thumb ? (
+                    <div className="relative h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                      <img
+                        src={thumb}
+                        alt={doc.nomOriginal}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {/* Floating actions on image hover */}
+                      <div className="absolute bottom-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button type="button" onClick={() => handleDownload(doc)} className="p-1.5 rounded-lg bg-white/90 dark:bg-gray-800/90 text-primary hover:bg-white shadow-sm transition-colors" title={t('document:download')}>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        </button>
+                        {canEdit && (
+                          <button type="button" onClick={() => handleDelete(doc)} className="p-1.5 rounded-lg bg-white/90 dark:bg-gray-800/90 text-red-500 hover:bg-white shadow-sm transition-colors" title={t('document:delete')}>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          </button>
+                        )}
                       </div>
+                      {/* Type badge on image */}
+                      <span className={`absolute top-2 left-2 inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide ${TYPE_COLORS[doc.typeDocument] ?? TYPE_COLORS.AUTRE} shadow-sm`}>
+                        {t(`document:type.${doc.typeDocument}`)}
+                      </span>
+                    </div>
+                  ) : isImage ? (
+                    <div className="h-40 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                      <div className="animate-pulse w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600" />
+                    </div>
+                  ) : (
+                    <div className={`h-1 bg-gradient-to-r ${meta.gradient}`} />
+                  )}
+
+                  <div className="p-5">
+                    {/* File icon + name (hide icon for images with preview) */}
+                    <div className="flex items-start gap-3 mb-3">
+                      {!(isImage && thumb) && (
+                        <div className={`w-12 h-12 rounded-xl ${meta.bg} ring-1 ${meta.ring} flex items-center justify-center ${meta.text} text-sm font-extrabold shrink-0`}>
+                          {meta.label}
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate leading-tight" title={doc.nomOriginal}>
                           {doc.nomOriginal}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1">
-                          <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide ${TYPE_COLORS[doc.typeDocument] ?? TYPE_COLORS.AUTRE}`}>
-                            {t(`document:type.${doc.typeDocument}`)}
-                          </span>
+                          {!(isImage && thumb) && (
+                            <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide ${TYPE_COLORS[doc.typeDocument] ?? TYPE_COLORS.AUTRE}`}>
+                              {t(`document:type.${doc.typeDocument}`)}
+                            </span>
+                          )}
                           <span className="text-[10px] text-gray-400 dark:text-gray-500">{doc.tailleFormatee}</span>
                         </div>
                       </div>
@@ -365,16 +421,19 @@ export default function ProjetDocumentsPage() {
                         {doc.uploadeParNom && <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{doc.uploadeParNom}</p>}
                         <p className="text-[10px] text-gray-400 dark:text-gray-500">{formatDate(doc.createdAt, { monthStyle: 'short' })}</p>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button type="button" onClick={() => handleDownload(doc)} className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors" title={t('document:download')}>
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                        </button>
-                        {canEdit && (
-                          <button type="button" onClick={() => handleDelete(doc)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title={t('document:delete')}>
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      {/* Actions for non-image cards (images have floating actions) */}
+                      {!(isImage && thumb) && (
+                        <div className="flex items-center gap-1">
+                          <button type="button" onClick={() => handleDownload(doc)} className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors" title={t('document:download')}>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                           </button>
-                        )}
-                      </div>
+                          {canEdit && (
+                            <button type="button" onClick={() => handleDelete(doc)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title={t('document:delete')}>
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -387,11 +446,17 @@ export default function ProjetDocumentsPage() {
             <ul className="divide-y divide-gray-100 dark:divide-gray-700">
               {filtered.map((doc) => {
                 const meta = getFileMeta(doc.typeMime)
+                const isImage = doc.typeMime?.startsWith('image/')
+                const thumb = thumbnails[doc.id]
                 return (
                   <li key={doc.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50/60 dark:hover:bg-gray-700/30 transition-colors group">
-                    <div className={`w-11 h-11 rounded-xl ${meta.bg} ring-1 ${meta.ring} flex items-center justify-center ${meta.text} text-xs font-extrabold shrink-0`}>
-                      {meta.label}
-                    </div>
+                    {isImage && thumb ? (
+                      <img src={thumb} alt={doc.nomOriginal} className="w-11 h-11 rounded-xl object-cover ring-1 ring-violet-200 dark:ring-violet-800 shrink-0" />
+                    ) : (
+                      <div className={`w-11 h-11 rounded-xl ${meta.bg} ring-1 ${meta.ring} flex items-center justify-center ${meta.text} text-xs font-extrabold shrink-0`}>
+                        {meta.label}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{doc.nomOriginal}</p>
                       <div className="flex flex-wrap items-center gap-2 mt-1">

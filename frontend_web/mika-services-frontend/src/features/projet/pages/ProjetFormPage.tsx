@@ -15,6 +15,7 @@ import type { ProjetCreateRequest, ProjetUpdateRequest, TypeProjet, StatutProjet
 import { useFormatNumber } from '@/hooks/useFormatNumber'
 import { canEditProjetEffective, hasGlobalAdminRoleEffective } from '@/utils/authRoles'
 import { GABON_PROVINCES, getVillesParProvince, findVille } from '@/constants/gabonGeo'
+import BudgetTracker from '@/features/projet/components/BudgetTracker'
 
 /** Types de projet : chaque type est distinct (sans regroupement) + type personnalisé */
 const TYPE_OPTIONS: { value: TypeProjet; label: string }[] = [
@@ -810,15 +811,15 @@ export const ProjetFormPage = () => {
           await projetApi.replaceSuiviMensuel(Number(id), suiviMensuelRows.map((r) => ({
             mois: r.mois,
             annee: r.annee,
-            caPrevisionnel: r.caPrevisionnel || undefined,
-            caRealise: r.caRealise || undefined,
+            caPrevisionnel: r.caPrevisionnel ?? undefined,
+            caRealise: r.caRealise ?? undefined,
           })))
         } else if (suiviMensuelRows.length > 0) {
           await projetApi.saveSuiviMensuel(Number(id), suiviMensuelRows.map((r) => ({
             mois: r.mois,
             annee: r.annee,
-            caPrevisionnel: r.caPrevisionnel || undefined,
-            caRealise: r.caRealise || undefined,
+            caPrevisionnel: r.caPrevisionnel ?? undefined,
+            caRealise: r.caRealise ?? undefined,
           })))
         }
       } else {
@@ -828,8 +829,8 @@ export const ProjetFormPage = () => {
           await projetApi.replaceSuiviMensuel(created.id, suiviMensuelRows.map((r) => ({
             mois: r.mois,
             annee: r.annee,
-            caPrevisionnel: r.caPrevisionnel || undefined,
-            caRealise: r.caRealise || undefined,
+            caPrevisionnel: r.caPrevisionnel ?? undefined,
+            caRealise: r.caRealise ?? undefined,
           })))
         }
       }
@@ -1479,76 +1480,19 @@ export const ProjetFormPage = () => {
               <p className="text-sm text-gray-600 dark:text-gray-300">{t('form.suiviMensuelManualEmpty')}</p>
             ) : null}
 
-            <div className="w-full min-w-0 overflow-x-auto">
-              <table className="w-full text-sm border-collapse table-fixed">
-                <colgroup>
-                  <col style={{ width: '14%' }} />
-                  <col style={{ width: '22%' }} />
-                  <col style={{ width: '22%' }} />
-                  {((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL' && (
-                    <col style={{ width: '12%' }} />
-                  )}
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th className="py-2.5 px-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">{t('form.mois')}</th>
-                    <th className="py-2.5 px-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">{t('form.caPrevisionnel')}</th>
-                    <th className="py-2.5 px-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">{t('form.caRealise')}</th>
-                    {((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL' && (
-                      <th className="py-2.5 px-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                        {t('form.actions')}
-                      </th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {suiviMensuelRows.map((row, idx) => (
-                    <tr key={`${row.mois}-${row.annee}`} className="hover:bg-gray-50/60 dark:hover:bg-gray-700/60">
-                      <td className="py-2.5 px-3 border-b border-gray-100 dark:border-gray-600 font-medium text-gray-900 dark:text-gray-100">{row.label}</td>
-                      <td className="py-2 px-3 border-b border-gray-100 text-right">
-                        <input
-                          type="number"
-                          min={0}
-                          value={row.caPrevisionnel || ''}
-                          onChange={(e) => {
-                            const v = e.target.value ? Number(e.target.value) : 0
-                            setSuiviMensuelRows((prev) => prev.map((r, i) => (i === idx ? { ...r, caPrevisionnel: v } : r)))
-                          }}
-                          className="w-full text-right px-2 py-1.5 border rounded focus:ring-2 focus:ring-primary"
-                        />
-                      </td>
-                      <td className="py-2 px-3 border-b border-gray-100 text-right">
-                        <input
-                          type="number"
-                          min={0}
-                          value={row.caRealise || ''}
-                          onChange={(e) => {
-                            const v = e.target.value ? Number(e.target.value) : 0
-                            setSuiviMensuelRows((prev) => prev.map((r, i) => (i === idx ? { ...r, caRealise: v } : r)))
-                          }}
-                          className="w-full text-right px-2 py-1.5 border rounded focus:ring-2 focus:ring-primary"
-                        />
-                      </td>
-                      {((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL' && (
-                        <td className="py-2 px-3 border-b border-gray-100 text-right">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setManualSuiviError(null)
-                              setSuiviMensuelRows((prev) => prev.filter((_, i) => i !== idx))
-                            }}
-                            className="text-red-600 hover:text-red-800 font-semibold"
-                            aria-label={t('form.deleteLabel')}
-                          >
-                            {t('form.deleteLabel')}
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <BudgetTracker
+              rows={suiviMensuelRows}
+              budgetTotal={Number(form.montantRevise) || Number(form.montantHT) || 0}
+              editable={!readOnly}
+              showDeleteColumn={((form.modeSuiviMensuel as ModeSuiviMensuel | undefined) ?? 'AUTO') === 'MANUEL'}
+              onChange={(idx, field, value) => {
+                setSuiviMensuelRows((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)))
+              }}
+              onDelete={(idx) => {
+                setManualSuiviError(null)
+                setSuiviMensuelRows((prev) => prev.filter((_, i) => i !== idx))
+              }}
+            />
           </div>
         )}
 

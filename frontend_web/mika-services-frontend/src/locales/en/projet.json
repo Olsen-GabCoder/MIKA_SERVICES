@@ -672,5 +672,15 @@
     "noTasksForWeek": "No tasks recorded for this week.",
     "modificationsAndSummary": "Changes and summary (minutes)",
     "modificationsHint": "Summary of works, blocking points, needs and proposals from the weekly minutes."
+  },
+  "suivi": {
+    "groupPrevu": "Forecast",
+    "groupRealise": "Actual",
+    "groupEcarts": "Variance",
+    "groupAvancement": "Progress",
+    "colMensuel": "Monthly",
+    "colCumule": "Cumulative",
+    "colPrevu": "Forecast",
+    "colRealise": "Actual"
   }
 }

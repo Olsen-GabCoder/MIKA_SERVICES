@@ -672,5 +672,15 @@
     "noTasksForWeek": "Aucune tâche enregistrée pour cette semaine.",
     "modificationsAndSummary": "Modifications et synthèse (PV)",
     "modificationsHint": "Résumé des travaux, points bloquants, besoins et propositions issus du PV hebdo."
+  },
+  "suivi": {
+    "groupPrevu": "Prévisionnel",
+    "groupRealise": "Réalisé",
+    "groupEcarts": "Écarts",
+    "groupAvancement": "Avancement",
+    "colMensuel": "Mensuel",
+    "colCumule": "Cumulé",
+    "colPrevu": "Prévu",
+    "colRealise": "Réalisé"
   }
 }

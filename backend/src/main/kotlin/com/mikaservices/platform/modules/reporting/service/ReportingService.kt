@@ -97,7 +97,7 @@ class ReportingService(
         val all = projetRepository.findAll().filter { it.actif }
         val today = LocalDate.now()
         val enRetard = all.count { p ->
-            p.statut == StatutProjet.EN_COURS && p.dateFin != null && p.dateFin!!.isBefore(today)
+            p.statut == StatutProjet.EN_COURS_EXECUTION && p.dateFin != null && p.dateFin!!.isBefore(today)
         }.toLong()
 
         val montantTotal = all.fold(BigDecimal.ZERO) { acc, p ->
@@ -118,8 +118,8 @@ class ReportingService(
 
         return ProjetStats(
             total = all.size.toLong(),
-            enCours = all.count { it.statut == StatutProjet.EN_COURS }.toLong(),
-            termines = all.count { it.statut == StatutProjet.TERMINE }.toLong(),
+            enCours = all.count { it.statut == StatutProjet.EN_COURS_EXECUTION || it.statut == StatutProjet.EN_AVANCE }.toLong(),
+            termines = all.count { it.statut == StatutProjet.RECEPTION_DEFINITIVE }.toLong(),
             enRetard = enRetard,
             montantTotal = montantTotal,
             avancementMoyen = avancementMoyen,

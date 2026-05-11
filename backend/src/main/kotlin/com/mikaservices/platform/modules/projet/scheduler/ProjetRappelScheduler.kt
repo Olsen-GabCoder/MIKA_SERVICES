@@ -27,9 +27,10 @@ class ProjetRappelScheduler(
 
     /** Statuts considérés comme "actifs" — projets qui doivent être mis à jour chaque semaine. */
     private val statutsActifs = listOf(
-        StatutProjet.EN_COURS,
-        StatutProjet.PLANIFIE,
-        StatutProjet.RECEPTION_PROVISOIRE
+        StatutProjet.EN_COURS_EXECUTION,
+        StatutProjet.INITIALISATION,
+        StatutProjet.RECEPTION_PROVISOIRE,
+        StatutProjet.EN_AVANCE
     )
 
     // ─── Mercredi 08h00 : premier rappel ──────────────────────────

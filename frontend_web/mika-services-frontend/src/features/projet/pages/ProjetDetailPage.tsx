@@ -351,18 +351,17 @@ export const ProjetDetailPage = () => {
             <div className="flex-shrink-0 flex flex-col items-start lg:items-end gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`px-4 py-1.5 rounded-full text-sm font-extrabold border ${
-                  projet.statut === 'EN_COURS' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-700/40' :
-                  projet.statut === 'PLANIFIE' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700/40' :
-                  projet.statut === 'TERMINE' ? 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-900/20 dark:text-violet-400 dark:border-violet-700/40' :
-                  projet.statut === 'SUSPENDU' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700/40' :
-                  projet.statut === 'ABANDONNE' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-700/40' :
+                  projet.statut === 'EN_COURS_EXECUTION' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-700/40' :
+                  projet.statut === 'INITIALISATION' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700/40' :
+                  projet.statut === 'SUSPENSION' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700/40' :
                   projet.statut === 'RECEPTION_PROVISOIRE' ? 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-700/40' :
                   projet.statut === 'RECEPTION_DEFINITIVE' ? 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-900/20 dark:text-cyan-400 dark:border-cyan-700/40' :
+                  projet.statut === 'EN_AVANCE' ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/40' :
                   'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
                 }`}>
                   {t(`enums.statut.${projet.statut}`)}
                 </span>
-                {delaiConsommePctEffectif > 100 && projet.statut === 'EN_COURS' && (
+                {delaiConsommePctEffectif > 100 && projet.statut === 'EN_COURS_EXECUTION' && (
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white shadow-sm">
                     {t('detail.enRetard')}
                   </span>

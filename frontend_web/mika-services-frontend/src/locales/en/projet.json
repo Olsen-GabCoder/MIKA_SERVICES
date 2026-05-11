@@ -413,14 +413,12 @@
   },
   "enums": {
     "statut": {
-      "EN_ATTENTE": "Pending",
-      "PLANIFIE": "Planned",
-      "EN_COURS": "In progress",
-      "SUSPENDU": "Suspended",
-      "TERMINE": "Completed",
-      "ABANDONNE": "Abandoned",
+      "INITIALISATION": "Initialization",
+      "EN_COURS_EXECUTION": "In progress",
+      "SUSPENSION": "Suspended",
       "RECEPTION_PROVISOIRE": "Provisional acceptance",
-      "RECEPTION_DEFINITIVE": "Final acceptance"
+      "RECEPTION_DEFINITIVE": "Final acceptance",
+      "EN_AVANCE": "Ahead of schedule"
     },
     "type": {
       "VOIRIE": "Roadworks",

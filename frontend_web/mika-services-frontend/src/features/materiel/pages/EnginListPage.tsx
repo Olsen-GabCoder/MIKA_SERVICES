@@ -596,8 +596,8 @@ export const EnginListPage = () => {
     return Object.entries(counts).map(([statut, count]) => ({ statut, count }))
   }, [engins])
 
-  const projetsSuspendus = useMemo(() => projets.filter((p) => p.statut === 'SUSPENDU'), [projets])
-  const projetsActifs = useMemo(() => projets.filter((p) => p.statut === 'EN_COURS').length, [projets])
+  const projetsSuspendus = useMemo(() => projets.filter((p) => p.statut === 'SUSPENSION'), [projets])
+  const projetsActifs = useMemo(() => projets.filter((p) => p.statut === 'EN_COURS_EXECUTION' || p.statut === 'EN_AVANCE').length, [projets])
   const topProjets = useMemo(
     () => projets
       .filter((p) => (p.nombreEnginsAffectes ?? 0) > 0)

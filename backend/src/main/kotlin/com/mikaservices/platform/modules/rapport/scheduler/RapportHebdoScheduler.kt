@@ -37,12 +37,12 @@ class RapportHebdoScheduler(
     private val logger = LoggerFactory.getLogger(RapportHebdoScheduler::class.java)
 
     private val statutsActifs = listOf(
-        StatutProjet.EN_COURS,
-        StatutProjet.PLANIFIE,
-        StatutProjet.EN_ATTENTE,
+        StatutProjet.EN_COURS_EXECUTION,
+        StatutProjet.INITIALISATION,
         StatutProjet.RECEPTION_PROVISOIRE,
         StatutProjet.RECEPTION_DEFINITIVE,
-        StatutProjet.SUSPENDU
+        StatutProjet.SUSPENSION,
+        StatutProjet.EN_AVANCE
     )
 
     private val statutsPBActifs = listOf(
@@ -145,12 +145,12 @@ class RapportHebdoScheduler(
             semaine                    = semaine,
             annee                      = annee,
             dateEmission               = today,
-            projetsEnCours             = buildRows(projetsParStatut[StatutProjet.EN_COURS]              ?: emptyList()),
-            projetsPlanifies           = buildRows(projetsParStatut[StatutProjet.PLANIFIE]              ?: emptyList()),
-            projetsEnAttente           = buildRows(projetsParStatut[StatutProjet.EN_ATTENTE]            ?: emptyList()),
+            projetsEnCours             = buildRows((projetsParStatut[StatutProjet.EN_COURS_EXECUTION] ?: emptyList()) + (projetsParStatut[StatutProjet.EN_AVANCE] ?: emptyList())),
+            projetsPlanifies           = buildRows(projetsParStatut[StatutProjet.INITIALISATION]        ?: emptyList()),
+            projetsEnAttente           = emptyList(),
             projetsReceptionProvisoire = buildRows(projetsParStatut[StatutProjet.RECEPTION_PROVISOIRE]  ?: emptyList()),
             projetsReceptionDefinitive = buildRows(projetsParStatut[StatutProjet.RECEPTION_DEFINITIVE]  ?: emptyList()),
-            projetsSuspendus           = buildRows(projetsParStatut[StatutProjet.SUSPENDU]              ?: emptyList())
+            projetsSuspendus           = buildRows(projetsParStatut[StatutProjet.SUSPENSION]            ?: emptyList())
         )
     }
 }

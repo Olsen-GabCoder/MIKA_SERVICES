@@ -37,9 +37,10 @@ class PlatformStatusScheduler(
     private val logger = LoggerFactory.getLogger(PlatformStatusScheduler::class.java)
 
     private val statutsActifs = listOf(
-        StatutProjet.EN_COURS,
-        StatutProjet.PLANIFIE,
-        StatutProjet.RECEPTION_PROVISOIRE
+        StatutProjet.EN_COURS_EXECUTION,
+        StatutProjet.INITIALISATION,
+        StatutProjet.RECEPTION_PROVISOIRE,
+        StatutProjet.EN_AVANCE
     )
 
     /** Statuts de points bloquants considérés comme "actifs" (non résolus). */
@@ -125,8 +126,8 @@ class PlatformStatusScheduler(
 
         return PlatformStatusEmailData(
             date                        = LocalDate.now(),
-            projetsEnCours              = buildRows(projetsParStatut[StatutProjet.EN_COURS] ?: emptyList()),
-            projetsPlanifies            = buildRows(projetsParStatut[StatutProjet.PLANIFIE] ?: emptyList()),
+            projetsEnCours              = buildRows((projetsParStatut[StatutProjet.EN_COURS_EXECUTION] ?: emptyList()) + (projetsParStatut[StatutProjet.EN_AVANCE] ?: emptyList())),
+            projetsPlanifies            = buildRows(projetsParStatut[StatutProjet.INITIALISATION] ?: emptyList()),
             projetsReceptionProvisoire  = buildRows(projetsParStatut[StatutProjet.RECEPTION_PROVISOIRE] ?: emptyList())
         )
     }

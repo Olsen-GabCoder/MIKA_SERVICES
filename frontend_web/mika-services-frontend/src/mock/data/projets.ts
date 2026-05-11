@@ -2,11 +2,11 @@ import type { Projet, ProjetSummary, PageResponse, PointBloquant, Prevision, Ava
 import { getProjetTypes } from '@/types/projet'
 
 export const mockProjetSummaries: ProjetSummary[] = [
-  { id: 1, nom: 'Réhabilitation RN1 - Section Libreville / Owendo', type: 'VOIRIE', statut: 'EN_COURS', clientNom: 'Ministère des Travaux Publics', montantHT: 120_000_000, avancementGlobal: 58, dateDebut: '2024-01-15', dateFin: '2025-06-30', responsableNom: 'Jean Mbenda', responsableProjetId: 101 },
-  { id: 2, nom: 'Assainissement quartier Akébé', type: 'ASSAINISSEMENT', statut: 'EN_COURS', clientNom: 'Ville de Libreville', montantHT: 85_000_000, avancementGlobal: 67, dateDebut: '2024-03-01', dateFin: '2025-02-28', responsableNom: 'Marie Okoué', responsableProjetId: 102 },
-  { id: 3, nom: 'Construction pont sur la Komo', type: 'PONT', statut: 'PLANIFIE', clientNom: 'État gabonais', montantHT: 250_000_000, avancementGlobal: 0, dateDebut: '2025-01-01', dateFin: '2026-12-31', responsableNom: 'Paul Mba', responsableProjetId: 103 },
-  { id: 4, nom: 'Voirie secondaire Port-Gentil', type: 'VOIRIE', statut: 'TERMINE', clientNom: 'Région Ogooué-Maritime', montantHT: 45_000_000, avancementGlobal: 100, dateDebut: '2023-06-01', dateFin: '2024-05-15', responsableNom: 'Anne Nguema', responsableProjetId: 104 },
-  { id: 5, nom: 'Terrassement zone industrielle', type: 'TERRASSEMENT', statut: 'TERMINE', clientNom: 'GSEZ', montantHT: 32_000_000, avancementGlobal: 100, dateDebut: '2023-09-01', dateFin: '2024-04-30', responsableNom: 'Pierre Ndong', responsableProjetId: 105 },
+  { id: 1, nom: 'Réhabilitation RN1 - Section Libreville / Owendo', type: 'VOIRIE', statut: 'EN_COURS_EXECUTION', clientNom: 'Ministère des Travaux Publics', montantHT: 120_000_000, avancementGlobal: 58, dateDebut: '2024-01-15', dateFin: '2025-06-30', responsableNom: 'Jean Mbenda', responsableProjetId: 101 },
+  { id: 2, nom: 'Assainissement quartier Akébé', type: 'ASSAINISSEMENT', statut: 'EN_COURS_EXECUTION', clientNom: 'Ville de Libreville', montantHT: 85_000_000, avancementGlobal: 67, dateDebut: '2024-03-01', dateFin: '2025-02-28', responsableNom: 'Marie Okoué', responsableProjetId: 102 },
+  { id: 3, nom: 'Construction pont sur la Komo', type: 'PONT', statut: 'INITIALISATION', clientNom: 'État gabonais', montantHT: 250_000_000, avancementGlobal: 0, dateDebut: '2025-01-01', dateFin: '2026-12-31', responsableNom: 'Paul Mba', responsableProjetId: 103 },
+  { id: 4, nom: 'Voirie secondaire Port-Gentil', type: 'VOIRIE', statut: 'RECEPTION_DEFINITIVE', clientNom: 'Région Ogooué-Maritime', montantHT: 45_000_000, avancementGlobal: 100, dateDebut: '2023-06-01', dateFin: '2024-05-15', responsableNom: 'Anne Nguema', responsableProjetId: 104 },
+  { id: 5, nom: 'Terrassement zone industrielle', type: 'TERRASSEMENT', statut: 'RECEPTION_DEFINITIVE', clientNom: 'GSEZ', montantHT: 32_000_000, avancementGlobal: 100, dateDebut: '2023-09-01', dateFin: '2024-04-30', responsableNom: 'Pierre Ndong', responsableProjetId: 105 },
 ]
 
 function pageResponse<T>(content: T[], page = 0, size = 20): PageResponse<T> {
@@ -132,7 +132,7 @@ export function getMockPointsBloquants(projetId: number): PointBloquant[] {
   const nom = mockProjetSummaries.find((p) => p.id === projetId)?.nom ?? ''
   return [
     { id: projetId * 10 + 1, projetId, projetNom: nom, titre: 'Conduite en fonte sur Axe 3', description: 'Déplacement nécessaire avant poursuite des travaux.', priorite: 'HAUTE', statut: 'OUVERT', dateDetection: '2025-01-10', detectePar: { id: 1, nom: 'Mbenda', prenom: 'Jean', email: 'j.mbenda@mika.ga' }, assigneA: { id: 2, nom: 'Okoué', prenom: 'Marie', email: 'm.okoue@mika.ga' } },
-    { id: projetId * 10 + 2, projetId, projetNom: nom, titre: 'Transfo à déplacer sur l\'emprise Axe 4', description: 'Coordination avec énergie électrique.', priorite: 'NORMALE', statut: 'EN_COURS', dateDetection: '2025-01-05' },
+    { id: projetId * 10 + 2, projetId, projetNom: nom, titre: 'Transfo à déplacer sur l\'emprise Axe 4', description: 'Coordination avec énergie électrique.', priorite: 'NORMALE', statut: 'EN_COURS_EXECUTION', dateDetection: '2025-01-05' },
     { id: projetId * 10 + 3, projetId, projetNom: nom, titre: 'Besoin d\'une Niveleuse à temps plein', description: 'Location ou affectation supplémentaire.', priorite: 'URGENTE', statut: 'OUVERT', dateDetection: '2025-01-12' },
   ]
 }

@@ -21,14 +21,12 @@ import {
 } from '@/utils/authRoles'
 
 const STATUT_COLORS: Record<string, string> = {
-  EN_ATTENTE: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
-  PLANIFIE: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200',
-  EN_COURS: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200',
-  SUSPENDU: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200',
-  TERMINE: 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200',
-  ABANDONNE: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200',
+  INITIALISATION: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200',
+  EN_COURS_EXECUTION: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200',
+  SUSPENSION: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200',
   RECEPTION_PROVISOIRE: 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200',
   RECEPTION_DEFINITIVE: 'bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200',
+  EN_AVANCE: 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200',
 }
 
 const SORTABLE_KEYS: { key: ProjetSortKey; align?: 'left' | 'center' | 'right' }[] = [

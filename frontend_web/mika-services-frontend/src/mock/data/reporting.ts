@@ -54,7 +54,7 @@ export const mockGlobalDashboard: GlobalDashboard = {
 export const mockProjetReport1: ProjetReport = {
   projetId: 1,
   projetNom: 'Réhabilitation RN1 - Section Libreville / Owendo',
-  statut: 'EN_COURS',
+  statut: 'EN_COURS_EXECUTION',
   nbChantiers: 4,
   nbSousProjets: 2,
   budget: {
@@ -86,7 +86,7 @@ export const mockProjetReport1: ProjetReport = {
 export const mockProjetReport2: ProjetReport = {
   projetId: 2,
   projetNom: 'Assainissement quartier Akébé',
-  statut: 'EN_COURS',
+  statut: 'EN_COURS_EXECUTION',
   nbChantiers: 3,
   nbSousProjets: 1,
   budget: {

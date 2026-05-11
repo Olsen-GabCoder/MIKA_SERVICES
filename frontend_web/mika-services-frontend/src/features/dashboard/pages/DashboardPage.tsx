@@ -168,7 +168,7 @@ export default function DashboardPage() {
   }, [dashboard, t])
 
   const activeProjects = useMemo(() =>
-    [...projets].filter(p => p.statut === 'EN_COURS')
+    [...projets].filter(p => p.statut === 'EN_COURS_EXECUTION' || p.statut === 'EN_AVANCE')
       .sort((a, b) => (a.avancementGlobal ?? 0) - (b.avancementGlobal ?? 0)).slice(0, 6),
   [projets])
 

@@ -1,12 +1,10 @@
 package com.mikaservices.platform.common.enums
 
 enum class StatutProjet {
-    EN_ATTENTE,
-    PLANIFIE,
-    EN_COURS,
-    SUSPENDU,
-    TERMINE,
-    ABANDONNE,
+    INITIALISATION,
+    EN_COURS_EXECUTION,
+    SUSPENSION,
     RECEPTION_PROVISOIRE,
-    RECEPTION_DEFINITIVE
+    RECEPTION_DEFINITIVE,
+    EN_AVANCE
 }

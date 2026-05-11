@@ -413,14 +413,12 @@
   },
   "enums": {
     "statut": {
-      "EN_ATTENTE": "En attente",
-      "PLANIFIE": "Planifié",
-      "EN_COURS": "En cours",
-      "SUSPENDU": "Suspendu",
-      "TERMINE": "Terminé",
-      "ABANDONNE": "Abandonné",
+      "INITIALISATION": "Initialisation",
+      "EN_COURS_EXECUTION": "En cours d'exécution",
+      "SUSPENSION": "Suspension",
       "RECEPTION_PROVISOIRE": "Réception provisoire",
-      "RECEPTION_DEFINITIVE": "Réception définitive"
+      "RECEPTION_DEFINITIVE": "Réception définitive",
+      "EN_AVANCE": "En avance"
     },
     "type": {
       "VOIRIE": "Voirie",

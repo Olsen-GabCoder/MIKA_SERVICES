@@ -304,13 +304,12 @@ const TYPE_PREVISION_OPTIONS: { value: TypePrevision; label: string }[] = [
 
 
 const STATUT_OPTIONS: { value: StatutProjet; label: string }[] = [
-  { value: 'EN_ATTENTE', label: 'En attente' },
-  { value: 'PLANIFIE', label: 'Planifié' },
-  { value: 'EN_COURS', label: 'En cours' },
-  { value: 'SUSPENDU', label: 'Suspendu' },
-  { value: 'TERMINE', label: 'Terminé' },
+  { value: 'INITIALISATION', label: 'Initialisation' },
+  { value: 'EN_COURS_EXECUTION', label: 'En cours d\'exécution' },
+  { value: 'SUSPENSION', label: 'Suspension' },
   { value: 'RECEPTION_PROVISOIRE', label: 'Réception provisoire' },
   { value: 'RECEPTION_DEFINITIVE', label: 'Réception définitive' },
+  { value: 'EN_AVANCE', label: 'En avance' },
 ]
 
 const SOURCE_OPTIONS: { value: SourceFinancement; label: string }[] = [
@@ -480,7 +479,7 @@ export const ProjetFormPage = () => {
   const [form, setForm] = useState<ProjetCreateRequest>({
     nom: '',
     types: ['VOIRIE'],
-    statut: 'EN_ATTENTE',
+    statut: 'INITIALISATION',
     description: '',
     numeroMarche: '',
     modeSuiviMensuel: 'AUTO',
@@ -1075,7 +1074,7 @@ export const ProjetFormPage = () => {
             )}
             <div>
               <label className={LABEL_CLS}>{t('form.statut')}</label>
-              <select name="statut" value={form.statut || 'EN_ATTENTE'} onChange={handleChange} disabled={readOnly} className={INPUT_CLS}>
+              <select name="statut" value={form.statut || 'INITIALISATION'} onChange={handleChange} disabled={readOnly} className={INPUT_CLS}>
                 {STATUT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(`enums.statut.${o.value}`)}</option>)}
               </select>
             </div>

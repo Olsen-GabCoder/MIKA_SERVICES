@@ -26,7 +26,7 @@ data class ProjetCreateRequest(
     @field:Size(max = 150, message = "Le libellé personnalisé ne peut pas dépasser 150 caractères")
     val typePersonnalise: String? = null,
 
-    val statut: StatutProjet = StatutProjet.EN_ATTENTE,
+    val statut: StatutProjet = StatutProjet.INITIALISATION,
     val clientId: Long? = null,
     val sourceFinancement: SourceFinancement? = null,
     val imputationBudgetaire: String? = null,

@@ -49,7 +49,7 @@ class Projet(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "statut", nullable = false, length = 30)
-    var statut: StatutProjet = StatutProjet.EN_ATTENTE,
+    var statut: StatutProjet = StatutProjet.INITIALISATION,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id")

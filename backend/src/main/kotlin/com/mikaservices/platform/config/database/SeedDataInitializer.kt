@@ -13,10 +13,12 @@ import com.mikaservices.platform.modules.materiel.repository.EnginRepository
 import com.mikaservices.platform.modules.materiel.repository.MateriauRepository
 import com.mikaservices.platform.modules.planning.entity.Tache
 import com.mikaservices.platform.modules.planning.repository.TacheRepository
+import com.mikaservices.platform.modules.projet.entity.CAPrevisionnelRealise
 import com.mikaservices.platform.modules.projet.entity.Client
 import com.mikaservices.platform.modules.projet.entity.PointBloquant
 import com.mikaservices.platform.modules.projet.entity.Prevision
 import com.mikaservices.platform.modules.projet.entity.Projet
+import com.mikaservices.platform.modules.projet.repository.CAPrevisionnelRealiseRepository
 import com.mikaservices.platform.modules.projet.repository.ClientRepository
 import com.mikaservices.platform.modules.projet.repository.PointBloquantRepository
 import com.mikaservices.platform.modules.projet.repository.PrevisionRepository
@@ -66,6 +68,7 @@ class SeedDataInitializer(
     private val fournisseurRepository: FournisseurRepository,
     private val materiauRepository: MateriauRepository,
     private val enginRepository: EnginRepository,
+    private val caPrevisionnelRealiseRepository: CAPrevisionnelRealiseRepository,
     private val jdbcTemplate: JdbcTemplate,
     private val demandeReceptionRepository: DemandeReceptionRepository,
     private val essaiLaboBetonRepository: EssaiLaboBetonRepository,
@@ -87,6 +90,7 @@ class SeedDataInitializer(
                 initProjets()
                 ensureProjetId1()
                 initDepenses()
+                initSuiviMensuel()
                 initTaches()
                 initPointsBloquants()
                 initPrevisions()
@@ -168,6 +172,90 @@ class SeedDataInitializer(
         }
         depenseRepository.saveAll(depenses)
         logger.info("${depenses.size} dépenses créées")
+    }
+
+    /**
+     * Seed suivi mensuel (CA prévisionnel / réalisé) pour les 2 premiers projets EN_COURS.
+     * Données réalistes BTP Gabon : montée en puissance progressive, écarts positifs/négatifs.
+     */
+    private fun initSuiviMensuel() {
+        if (caPrevisionnelRealiseRepository.count() > 0L) return
+        val projets = projetRepository.findByActifTrue(PageRequest.of(0, 500)).content
+            .filter { it.statut == StatutProjet.EN_COURS && it.dateDebut != null && it.dateFin != null }
+            .take(2)
+        if (projets.isEmpty()) return
+
+        val rows = mutableListOf<CAPrevisionnelRealise>()
+
+        // Projet 1 : RN1 Libreville-Owendo — 120M HT, 18 mois (jan 2024 → juin 2025)
+        // Montée en puissance : faible début, pic au milieu, décélération fin
+        projets.getOrNull(0)?.let { p ->
+            val budget = p.montantHT ?: BigDecimal("120000000")
+            val prevusMensuels = listOf(
+                2_000_000L, 4_000_000L, 6_500_000L, 8_000_000L, 9_500_000L, 10_000_000L,
+                10_500_000L, 11_000_000L, 10_000_000L, 9_000_000L, 8_500_000L, 8_000_000L,
+                7_500_000L, 6_000_000L, 5_000_000L, 3_500_000L, 2_500_000L, 1_500_000L
+            )
+            val realisesMensuels = listOf(
+                1_800_000L, 3_500_000L, 7_200_000L, 7_500_000L, 10_200_000L, 9_800_000L,
+                11_000_000L, 10_500_000L, 9_200_000L, 8_800_000L, 9_000_000L, 7_500_000L,
+                6_800_000L, 5_500_000L, null, null, null, null
+            )
+            var start = YearMonth.of(2024, 1)
+            var cumulPrevu = BigDecimal.ZERO
+            var cumulRealise = BigDecimal.ZERO
+            for (i in prevusMensuels.indices) {
+                val ym = start.plusMonths(i.toLong())
+                val prevu = BigDecimal(prevusMensuels[i])
+                val realise = realisesMensuels.getOrNull(i)?.let { BigDecimal(it) } ?: BigDecimal.ZERO
+                val ecart = realise.subtract(prevu)
+                cumulPrevu = cumulPrevu.add(prevu)
+                cumulRealise = cumulRealise.add(realise)
+                val avancement = if (budget > BigDecimal.ZERO)
+                    cumulRealise.multiply(BigDecimal(100)).divide(budget, 2, java.math.RoundingMode.HALF_UP)
+                else BigDecimal.ZERO
+                rows.add(CAPrevisionnelRealise(
+                    projet = p, mois = ym.monthValue, annee = ym.year,
+                    caPrevisionnel = prevu, caRealise = realise, ecart = ecart,
+                    avancementCumule = avancement
+                ))
+            }
+        }
+
+        // Projet 2 : Assainissement Akébé — 85M HT, 12 mois (mars 2024 → fév 2025)
+        projets.getOrNull(1)?.let { p ->
+            val budget = p.montantHT ?: BigDecimal("85000000")
+            val prevusMensuels = listOf(
+                3_000_000L, 5_500_000L, 8_000_000L, 9_000_000L, 10_000_000L, 10_500_000L,
+                10_000_000L, 9_000_000L, 7_500_000L, 6_000_000L, 4_000_000L, 2_500_000L
+            )
+            val realisesMensuels = listOf(
+                2_500_000L, 6_000_000L, 7_800_000L, 9_500_000L, 10_500_000L, 10_000_000L,
+                10_200_000L, 8_500_000L, 7_000_000L, null, null, null
+            )
+            var start = YearMonth.of(2024, 3)
+            var cumulPrevu = BigDecimal.ZERO
+            var cumulRealise = BigDecimal.ZERO
+            for (i in prevusMensuels.indices) {
+                val ym = start.plusMonths(i.toLong())
+                val prevu = BigDecimal(prevusMensuels[i])
+                val realise = realisesMensuels.getOrNull(i)?.let { BigDecimal(it) } ?: BigDecimal.ZERO
+                val ecart = realise.subtract(prevu)
+                cumulPrevu = cumulPrevu.add(prevu)
+                cumulRealise = cumulRealise.add(realise)
+                val avancement = if (budget > BigDecimal.ZERO)
+                    cumulRealise.multiply(BigDecimal(100)).divide(budget, 2, java.math.RoundingMode.HALF_UP)
+                else BigDecimal.ZERO
+                rows.add(CAPrevisionnelRealise(
+                    projet = p, mois = ym.monthValue, annee = ym.year,
+                    caPrevisionnel = prevu, caRealise = realise, ecart = ecart,
+                    avancementCumule = avancement
+                ))
+            }
+        }
+
+        caPrevisionnelRealiseRepository.saveAll(rows)
+        logger.info("${rows.size} lignes de suivi mensuel créées")
     }
 
     private fun initTaches() {

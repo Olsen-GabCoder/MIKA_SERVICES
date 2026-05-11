@@ -142,6 +142,8 @@ export default function BudgetTracker({
     })
   }, [rows, budgetTotal])
 
+  const lastRow = computed.length > 0 ? computed[computed.length - 1] : null
+
   const totals: BudgetTotals = useMemo(() => {
     const totalPrevu = rows.reduce((s, r) => s + (Number(r.caPrevisionnel) || 0), 0)
     const totalRealise = rows.reduce((s, r) => s + (Number(r.caRealise) || 0), 0)
@@ -287,11 +289,11 @@ export default function BudgetTracker({
               {t('detail.total')}
             </td>
             <td className={`${td} text-blue-700 dark:text-blue-300 font-bold`}>{fmtMoney(totals.totalPrevu)}</td>
-            <td className={`${td} ${cumBg} text-gray-400 dark:text-gray-500`}>{'\u2014'}</td>
+            <td className={`${td} ${cumBg} text-blue-700 dark:text-blue-300 font-bold`}>{fmtMoney(lastRow?.cumulPrevu)}</td>
             <td className={`${td} text-emerald-700 dark:text-emerald-300 font-bold`}>{fmtMoney(totals.totalRealise)}</td>
-            <td className={`${td} ${cumBg} text-gray-400 dark:text-gray-500`}>{'\u2014'}</td>
+            <td className={`${td} ${cumBg} text-emerald-700 dark:text-emerald-300 font-bold`}>{fmtMoney(lastRow?.cumulRealise)}</td>
             <td className={`${td} ${ecartCls(totals.ecart)} font-bold`}>{fmtDelta(totals.ecart)}</td>
-            <td className={`${td} ${cumBg} text-gray-400 dark:text-gray-500`}>{'\u2014'}</td>
+            <td className={`${td} ${cumBg} ${ecartCls(lastRow?.ecartCumule ?? 0)} font-bold`}>{fmtDelta(lastRow?.ecartCumule)}</td>
             <td className={`${td} text-amber-700 dark:text-amber-300 font-bold`}>{fmtPct(totals.avancementPrevu)}</td>
             <td className={`${td} ${cumBg} text-amber-700 dark:text-amber-300 font-bold`}>{fmtPct(totals.avancementRealise)}</td>
             {showDeleteColumn && <td />}

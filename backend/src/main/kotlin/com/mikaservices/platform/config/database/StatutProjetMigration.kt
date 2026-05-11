@@ -22,6 +22,14 @@ class StatutProjetMigration(
     @PostConstruct
     fun migrate() {
         try {
+            // PostgreSQL : supprimer la contrainte CHECK sur l'enum statut (bloque les nouvelles valeurs)
+            try {
+                jdbcTemplate.execute("ALTER TABLE projets DROP CONSTRAINT IF EXISTS projets_statut_check")
+                logger.warn("[StatutProjetMigration] Contrainte projets_statut_check supprimee.")
+            } catch (e: Exception) {
+                logger.warn("[StatutProjetMigration] Pas de contrainte a supprimer : ${e.message}")
+            }
+
             val oldCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM projets WHERE statut IN ('EN_ATTENTE','PLANIFIE','EN_COURS','SUSPENDU','TERMINE','ABANDONNE')",
                 Int::class.java
@@ -54,6 +62,17 @@ class StatutProjetMigration(
             }
 
             logger.warn("[StatutProjetMigration] Migration terminee : $totalMigrated projet(s) mis a jour.")
+
+            // Recreer la contrainte CHECK avec les nouvelles valeurs
+            try {
+                jdbcTemplate.execute("""
+                    ALTER TABLE projets ADD CONSTRAINT projets_statut_check
+                    CHECK (statut IN ('INITIALISATION','EN_COURS_EXECUTION','SUSPENSION','RECEPTION_PROVISOIRE','RECEPTION_DEFINITIVE','EN_AVANCE'))
+                """.trimIndent())
+                logger.warn("[StatutProjetMigration] Contrainte projets_statut_check recree avec les nouveaux statuts.")
+            } catch (e: Exception) {
+                logger.warn("[StatutProjetMigration] Impossible de recreer la contrainte : ${e.message}")
+            }
         } catch (e: Exception) {
             logger.error("[StatutProjetMigration] ERREUR migration : ${e.message}", e)
         }

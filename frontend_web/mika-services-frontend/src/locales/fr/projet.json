@@ -145,6 +145,8 @@
     "executionBudgetaire": "Exécution budgétaire (dépenses / budget)",
     "partDelai": "Part du délai prévu déjà écoulée",
     "noPrevisionYet": "Aucune prévision pour le moment. Sélectionnez une semaine et ajoutez des tâches.",
+    "previsionsTerminees": "Tâches terminées ({{count}})",
+    "previsionTerminee": "Terminée",
     "suiviAvancementPvTitle": "Suivi d'avancement (PV)",
     "suiviAvancementPvHint": "Pourcentages saisis par le chef de projet pour les réunions hebdomadaires. L'avancement physique est l'indicateur principal affiché dans la liste et le détail.",
     "pointBloquant": {

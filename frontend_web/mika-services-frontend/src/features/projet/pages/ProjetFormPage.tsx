@@ -508,6 +508,10 @@ export const ProjetFormPage = () => {
   const [dqeChapitres, setDqeChapitres] = useState<DqeChapitre[]>([])
   const [previsionSearch, setPrevisionSearch] = useState('')
   const [showPrevisionSuggestions, setShowPrevisionSuggestions] = useState(false)
+  const [showCompletedPrevisions, setShowCompletedPrevisions] = useState(false)
+  /** Local values for avancementPct inputs (immediate display, debounced API call) */
+  const [localPctValues, setLocalPctValues] = useState<Record<number, string>>({})
+  const pctDebounceTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({})
   const { annee: defaultAnnee, semaine: defaultSemaine } = getSemaineCourante()
   const [selectedAnneePrevision, setSelectedAnneePrevision] = useState(defaultAnnee)
   const [selectedSemainePrevision, setSelectedSemainePrevision] = useState(defaultSemaine)
@@ -1795,26 +1799,106 @@ export const ProjetFormPage = () => {
               ) as { semaine?: number; annee?: number; description?: string; type?: string; dateDebut?: string; dateFin?: string; avancementPct?: number }
               const updated = await projetApi.updatePrevision(Number(id), p.id, filtered)
               setPrevisions((prev) => prev.map((x) => (x.id === p.id ? updated : x)))
+              setLocalPctValues((prev) => { const next = { ...prev }; delete next[p.id]; return next })
             } catch (err) { setError((err as Error).message) }
+          }
+          const handlePctChange = (p: Prevision, rawValue: string) => {
+            setLocalPctValues((prev) => ({ ...prev, [p.id]: rawValue }))
+            if (pctDebounceTimers.current[p.id]) clearTimeout(pctDebounceTimers.current[p.id])
+            pctDebounceTimers.current[p.id] = setTimeout(() => {
+              const v = rawValue === '' ? undefined : Math.min(100, Math.max(0, Number(rawValue)))
+              updatePrevision(p, { avancementPct: v } as Partial<Prevision>)
+            }, 600)
+          }
+          const getPctDisplayValue = (p: Prevision): string => {
+            if (p.id in localPctValues) return localPctValues[p.id]
+            return p.avancementPct != null ? String(p.avancementPct) : ''
           }
           const deletePrevision = async (p: Prevision) => {
             try {
               await projetApi.deletePrevision(Number(id), p.id)
               setPrevisions((prev) => prev.filter((x) => x.id !== p.id))
+              setLocalPctValues((prev) => { const next = { ...prev }; delete next[p.id]; return next })
             } catch (err) { setError((err as Error).message) }
           }
-          const activePrevisions = previsions.filter(p => p.avancementPct == null || p.avancementPct < 100)
-          const previsionsByWeek = activePrevisions.reduce<Record<string, Prevision[]>>((acc, p) => {
-            const key = `${p.annee ?? 0}-${p.semaine ?? 0}`
-            if (!acc[key]) acc[key] = []
-            acc[key].push(p)
-            return acc
-          }, {})
-          const weekKeys = Object.keys(previsionsByWeek).sort((a, b) => {
-            const [yA, wA] = a.split('-').map(Number)
-            const [yB, wB] = b.split('-').map(Number)
-            return yA !== yB ? yA - yB : wA - wB
+          const activePrevisions = previsions.filter(p => {
+            const localVal = p.id in localPctValues ? localPctValues[p.id] : null
+            if (localVal !== null) return localVal === '' || Number(localVal) < 100
+            return p.avancementPct == null || p.avancementPct < 100
           })
+          const completedPrevisions = previsions.filter(p => {
+            const localVal = p.id in localPctValues ? localPctValues[p.id] : null
+            if (localVal !== null) return localVal !== '' && Number(localVal) >= 100
+            return p.avancementPct != null && p.avancementPct >= 100
+          })
+          const groupByWeek = (list: Prevision[]) => {
+            const byWeek = list.reduce<Record<string, Prevision[]>>((acc, p) => {
+              const key = `${p.annee ?? 0}-${p.semaine ?? 0}`
+              if (!acc[key]) acc[key] = []
+              acc[key].push(p)
+              return acc
+            }, {})
+            const keys = Object.keys(byWeek).sort((a, b) => {
+              const [yA, wA] = a.split('-').map(Number)
+              const [yB, wB] = b.split('-').map(Number)
+              return yA !== yB ? yA - yB : wA - wB
+            })
+            return { byWeek, keys }
+          }
+          const { byWeek: previsionsByWeek, keys: weekKeys } = groupByWeek(activePrevisions)
+          const { byWeek: completedByWeek, keys: completedWeekKeys } = groupByWeek(completedPrevisions)
+
+          const renderPrevisionLabel = (p: Prevision): string => {
+            const raw = p.description || p.type
+            if (!raw) return ''
+            const isTypePrevision = (TYPE_PREVISION_OPTIONS as { value: string }[]).some((o) => o.value === raw)
+            if (isTypePrevision) return t(`enums.typePrevision.${raw}`) || raw
+            const keyPrefix = 'form.prevision.options.'
+            if (raw.startsWith(keyPrefix)) {
+              const suffix = raw.slice(keyPrefix.length)
+              const translated = t(`form.prevision.options.${suffix}`)
+              if (translated !== `form.prevision.options.${suffix}`) return translated
+              return suffix.replace(/_/g, ' ')
+            }
+            const optKey = slugForI18n(raw)
+            const translated = t(`form.prevision.options.${optKey}`)
+            if (translated !== `form.prevision.options.${optKey}`) return translated
+            return raw
+          }
+
+          const renderWeekBlock = (key: string, list: Prevision[], completed = false) => {
+            const [annee, semaine] = key.split('-').map(Number)
+            return (
+              <div key={key} className={`border rounded-lg p-3 ${completed ? 'border-green-200 dark:border-green-800 bg-green-50/30 dark:bg-green-900/10' : 'border-gray-200 dark:border-gray-600'}`}>
+                <h4 className={`text-sm font-medium mb-2 ${completed ? 'text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}`}>{t('form.weekLabelShort', { semaine, annee })}</h4>
+                <ul className="space-y-1.5">
+                  {list.map((p) => (
+                    <li key={p.id} className={`flex items-center gap-2 text-sm py-1.5 border-b last:border-0 ${completed ? 'border-green-100 dark:border-green-800/50 opacity-75' : 'border-gray-100 dark:border-gray-600'}`}>
+                      <span className={`flex-1 min-w-0 ${completed ? 'line-through text-gray-500 dark:text-gray-400' : ''}`}>
+                        {renderPrevisionLabel(p)}
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={getPctDisplayValue(p)}
+                        onChange={(e) => handlePctChange(p, e.target.value)}
+                        placeholder={t('form.avancementPctPlaceholder')}
+                        className={`w-16 px-1.5 py-0.5 border rounded text-xs text-center ${completed ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' : ''}`}
+                        title={t('form.avancementPct')}
+                      />
+                      {completed && (
+                        <span className="text-green-600 dark:text-green-400 text-xs" title={t('form.previsionTerminee')}>&#10003;</span>
+                      )}
+                      <button type="button" onClick={() => deletePrevision(p)} className="text-red-600 hover:text-red-800" aria-label={t('form.deleteLabel')}>×</button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          }
+
           return (
             <div id="sec-previsions" ref={setSectionRef('sec-previsions')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
               <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-2">{t('form.previsionsTitle')}</h2>
@@ -1935,62 +2019,34 @@ export const ProjetFormPage = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Tâches en cours */}
               {weekKeys.length > 0 ? (
                 <div className="space-y-4">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('form.previsionsParSemaine')}</h3>
-                  {weekKeys.map((key) => {
-                    const [annee, semaine] = key.split('-').map(Number)
-                    const list = previsionsByWeek[key]
-                    return (
-                      <div key={key} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3">
-                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('form.weekLabelShort', { semaine, annee })}</h4>
-                        <ul className="space-y-1.5">
-                          {list.map((p) => (
-                            <li key={p.id} className="flex items-center gap-2 text-sm py-1.5 border-b border-gray-100 dark:border-gray-600 last:border-0">
-                              <span className="flex-1 min-w-0">
-                              {((): string => {
-                                const raw = p.description || p.type
-                                if (!raw) return ''
-                                const isTypePrevision = (TYPE_PREVISION_OPTIONS as { value: string }[]).some((o) => o.value === raw)
-                                if (isTypePrevision) return t(`enums.typePrevision.${raw}`) || raw
-                                // Si la valeur stockée est déjà une clé i18n (ex. form.prevision.options.xxx), utiliser le suffixe pour éviter le double préfixe
-                                const keyPrefix = 'form.prevision.options.'
-                                if (raw.startsWith(keyPrefix)) {
-                                  const suffix = raw.slice(keyPrefix.length)
-                                  const translated = t(`form.prevision.options.${suffix}`)
-                                  if (translated !== `form.prevision.options.${suffix}`) return translated
-                                  return suffix.replace(/_/g, ' ')
-                                }
-                                const optKey = slugForI18n(raw)
-                                const translated = t(`form.prevision.options.${optKey}`)
-                                if (translated !== `form.prevision.options.${optKey}`) return translated
-                                return raw
-                              })()}
-                            </span>
-                              <input
-                                type="number"
-                                min={0}
-                                max={100}
-                                step={1}
-                                value={p.avancementPct ?? ''}
-                                onChange={(e) => {
-                                  const v = e.target.value === '' ? undefined : Math.min(100, Math.max(0, Number(e.target.value)))
-                                  updatePrevision(p, { avancementPct: v } as Partial<Prevision>)
-                                }}
-                                placeholder={t('form.avancementPctPlaceholder')}
-                                className="w-16 px-1.5 py-0.5 border rounded text-xs text-center"
-                                title={t('form.avancementPct')}
-                              />
-                              <button type="button" onClick={() => deletePrevision(p)} className="text-red-600 hover:text-red-800" aria-label={t('form.deleteLabel')}>×</button>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )
-                  })}
+                  {weekKeys.map((key) => renderWeekBlock(key, previsionsByWeek[key]))}
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 dark:text-gray-400">{t('form.noPrevisionYet')}</p>
+              )}
+
+              {/* Tâches terminées (100%) — section rétractable */}
+              {completedPrevisions.length > 0 && (
+                <div className="mt-6 border-t border-gray-200 dark:border-gray-600 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowCompletedPrevisions((v) => !v)}
+                    className="flex items-center gap-2 text-sm font-semibold text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
+                  >
+                    <span className={`inline-block transition-transform duration-200 ${showCompletedPrevisions ? 'rotate-90' : ''}`}>&#9654;</span>
+                    {t('form.previsionsTerminees', { count: completedPrevisions.length })}
+                  </button>
+                  {showCompletedPrevisions && (
+                    <div className="mt-3 space-y-3">
+                      {completedWeekKeys.map((key) => renderWeekBlock(key, completedByWeek[key], true))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )

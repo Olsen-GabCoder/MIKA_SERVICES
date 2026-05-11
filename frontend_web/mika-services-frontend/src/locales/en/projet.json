@@ -145,6 +145,8 @@
     "executionBudgetaire": "Budget execution (expenditure / budget)",
     "partDelai": "Share of planned duration already elapsed",
     "noPrevisionYet": "No forecasts yet. Select a week and add tasks.",
+    "previsionsTerminees": "Completed tasks ({{count}})",
+    "previsionTerminee": "Completed",
     "suiviAvancementPvTitle": "Progress tracking (PV)",
     "suiviAvancementPvHint": "Percentages entered by the project manager for weekly meetings. Physical progress is the main indicator shown in the list and detail.",
     "pointBloquant": {

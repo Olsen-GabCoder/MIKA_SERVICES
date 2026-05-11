@@ -27,6 +27,10 @@
   "dropOrClick": "Click or drag a file here",
   "changeFile": "Change file",
   "dragHint": "Drag & drop a file anywhere on this page to add it.",
+  "typePlaceholder": "Choose or type a new one...",
+  "typeCustom": "New type:",
+  "typeCustomHint": "Custom type — will be saved as \"Other\"",
+  "typeEmpty": "No type found",
   "type": {
     "PLAN": "Plan",
     "RAPPORT": "Report",

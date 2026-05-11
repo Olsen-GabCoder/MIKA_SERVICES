@@ -67,9 +67,13 @@ export default function ProjetDocumentsPage() {
   const [dragOver, setDragOver] = useState(false)
 
   const [uploadFile, setUploadFile] = useState<File | null>(null)
-  const [uploadType, setUploadType] = useState<TypeDocument>('AUTRE')
+  const [uploadType, setUploadType] = useState<TypeDocument | ''>('AUTRE')
+  const [customType, setCustomType] = useState('')
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false)
+  const [typeSearch, setTypeSearch] = useState('')
   const [uploadDesc, setUploadDesc] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const typeInputRef = useRef<HTMLInputElement>(null)
 
   const canEdit = projet != null && canEditProjetEffective(currentUser, accessToken, projet.responsableProjet?.id ?? projet.responsableProjetId)
 
@@ -117,15 +121,21 @@ export default function ProjetDocumentsPage() {
     setUploading(true)
     setUploadProgress(0)
     setError(null)
-    // Simulate progress
     const interval = setInterval(() => setUploadProgress((p) => Math.min(p + Math.random() * 20, 90)), 200)
     try {
-      await documentApi.upload(uploadFile, uploadType, uploadDesc || undefined, Number(id))
+      const isCustom = uploadType === '' || !!customType
+      const finalType: TypeDocument = isCustom ? 'AUTRE' : (uploadType as TypeDocument)
+      const finalDesc = isCustom && customType
+        ? (uploadDesc ? `[${customType}] ${uploadDesc}` : `[${customType}]`)
+        : (uploadDesc || undefined)
+      await documentApi.upload(uploadFile, finalType, finalDesc, Number(id))
       setUploadProgress(100)
       setTimeout(() => {
         setShowUploadModal(false)
         setUploadFile(null)
         setUploadType('AUTRE')
+        setCustomType('')
+        setTypeSearch('')
         setUploadDesc('')
         setUploadProgress(0)
         loadDocuments()
@@ -467,12 +477,86 @@ export default function ProjetDocumentsPage() {
               )}
 
               <div className="grid grid-cols-1 gap-4">
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{t('document:typeDocument')}</label>
-                  <select value={uploadType} onChange={(e) => setUploadType(e.target.value as TypeDocument)}
-                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-primary transition text-sm">
-                    {Object.values(TypeDocument).map((type) => <option key={type} value={type}>{t(`document:type.${type}`)}</option>)}
-                  </select>
+                  <div className="relative">
+                    <input
+                      ref={typeInputRef}
+                      type="text"
+                      value={customType || (uploadType ? t(`document:type.${uploadType}`) : '')}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setTypeSearch(v)
+                        setCustomType(v)
+                        setUploadType('')
+                        setShowTypeDropdown(true)
+                      }}
+                      onFocus={() => { setTypeSearch(''); setShowTypeDropdown(true) }}
+                      onBlur={() => setTimeout(() => setShowTypeDropdown(false), 200)}
+                      placeholder={t('document:typePlaceholder', 'Choisir ou saisir un type...')}
+                      className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-primary transition text-sm pr-10"
+                    />
+                    <svg className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                  {showTypeDropdown && (() => {
+                    const q = typeSearch.toLowerCase()
+                    const matchingTypes = Object.values(TypeDocument).filter((type) =>
+                      !q || t(`document:type.${type}`).toLowerCase().includes(q) || type.toLowerCase().includes(q)
+                    )
+                    const hasExactMatch = Object.values(TypeDocument).some((type) =>
+                      t(`document:type.${type}`).toLowerCase() === q
+                    )
+                    return (
+                      <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                        {matchingTypes.map((type) => (
+                          <button
+                            key={type}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setUploadType(type)
+                              setCustomType('')
+                              setTypeSearch('')
+                              setShowTypeDropdown(false)
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center gap-2.5 ${uploadType === type ? 'bg-primary/5 text-primary font-semibold' : 'text-gray-700 dark:text-gray-200'}`}
+                          >
+                            <span className={`inline-flex w-6 h-6 rounded-md items-center justify-center text-[9px] font-bold ${TYPE_COLORS[type] ?? TYPE_COLORS.AUTRE}`}>
+                              {t(`document:type.${type}`).slice(0, 2).toUpperCase()}
+                            </span>
+                            {t(`document:type.${type}`)}
+                          </button>
+                        ))}
+                        {q && !hasExactMatch && (
+                          <>
+                            {matchingTypes.length > 0 && <div className="border-t border-gray-100 dark:border-gray-700" />}
+                            <button
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => {
+                                setCustomType(typeSearch)
+                                setUploadType('')
+                                setShowTypeDropdown(false)
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors flex items-center gap-2.5 text-amber-700 dark:text-amber-400"
+                            >
+                              <span className="inline-flex w-6 h-6 rounded-md items-center justify-center text-[9px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">+</span>
+                              {t('document:typeCustom', 'Nouveau type :')} <span className="font-bold">&laquo; {typeSearch} &raquo;</span>
+                            </button>
+                          </>
+                        )}
+                        {matchingTypes.length === 0 && !q && (
+                          <p className="px-4 py-3 text-sm text-gray-400">{t('document:typeEmpty', 'Aucun type trouvé')}</p>
+                        )}
+                      </div>
+                    )
+                  })()}
+                  {customType && !uploadType && (
+                    <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      {t('document:typeCustomHint', 'Type personnalisé — sera enregistré comme « Autre »')}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{t('document:description')}</label>

@@ -27,6 +27,10 @@
   "dropOrClick": "Cliquez ou glissez un fichier ici",
   "changeFile": "Changer de fichier",
   "dragHint": "Glissez-déposez un fichier n'importe où sur cette page pour l'ajouter.",
+  "typePlaceholder": "Choisir ou saisir un type...",
+  "typeCustom": "Nouveau type :",
+  "typeCustomHint": "Type personnalisé — sera enregistré comme « Autre »",
+  "typeEmpty": "Aucun type trouvé",
   "type": {
     "PLAN": "Plan",
     "RAPPORT": "Rapport",

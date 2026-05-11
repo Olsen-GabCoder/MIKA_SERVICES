@@ -119,7 +119,10 @@
       "projectsInProgress": "In progress",
       "projectsCompleted": "Completed",
       "totalAmount": "Total amount (excl. tax)",
-      "avgProgress": "Average progress"
+      "avgProgress": "Average progress",
+      "equipment": "Equipment",
+      "available": "available",
+      "lowStock": "low stock"
     },
     "projectsOverview": {
       "title": "Overview — Projects",
@@ -209,6 +212,7 @@
       "available": "Available",
       "inUse": "In service",
       "units": "units",
+      "statusBreakdown": "Status breakdown",
       "budgetBreakdown": "Budget Breakdown",
       "plannedVsSpent": "Planned vs spent"
     },

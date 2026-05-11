@@ -126,7 +126,10 @@
       "projectsInProgress": "En cours",
       "projectsCompleted": "Terminés",
       "totalAmount": "Montant total (HT)",
-      "avgProgress": "Avancement moyen"
+      "avgProgress": "Avancement moyen",
+      "equipment": "Matériel",
+      "available": "disponibles",
+      "lowStock": "stock bas"
     },
     "projectsOverview": {
       "title": "Vue d'ensemble — Projets",
@@ -216,6 +219,7 @@
       "available": "Disponibles",
       "inUse": "En service",
       "units": "engins",
+      "statusBreakdown": "Répartition par statut",
       "budgetBreakdown": "Répartition budget",
       "plannedVsSpent": "Prévu vs dépensé"
     },

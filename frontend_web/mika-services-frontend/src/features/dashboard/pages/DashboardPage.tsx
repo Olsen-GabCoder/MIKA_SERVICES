@@ -28,14 +28,12 @@ const C = {
 const PALETTE = [C.secondary, C.teal, C.accent, C.gold, C.violet, C.rose, C.cyan, C.indigo]
 
 const STATUT_MAP: Record<string, { label: string; color: string }> = {
-  EN_COURS:            { label: 'En cours',         color: C.secondary },
-  TERMINE:             { label: 'Terminé',           color: C.teal      },
-  EN_ATTENTE:          { label: 'En attente',        color: C.gold      },
-  PLANIFIE:            { label: 'Planifié',          color: C.violet    },
-  SUSPENDU:            { label: 'Suspendu',          color: C.rose      },
-  ABANDONNE:           { label: 'Abandonné',         color: C.gray      },
-  RECEPTION_PROVISOIRE:{ label: 'Réc. provisoire',  color: C.cyan      },
-  RECEPTION_DEFINITIVE:{ label: 'Réc. définitive',  color: C.green     },
+  INITIALISATION:       { label: 'Initialisation',      color: C.blue      },
+  EN_COURS_EXECUTION:   { label: 'En cours d\'exéc.',   color: C.secondary },
+  SUSPENSION:           { label: 'Suspension',           color: C.rose      },
+  RECEPTION_PROVISOIRE: { label: 'Réc. provisoire',     color: C.cyan      },
+  RECEPTION_DEFINITIVE: { label: 'Réc. définitive',     color: C.green     },
+  EN_AVANCE:            { label: 'En avance',            color: C.teal      },
 }
 
 /* ── Custom tooltip ── */
@@ -232,10 +230,6 @@ export default function DashboardPage() {
     ...w,
     displayLabel: w.isCurrent ? `${w.label} ★` : w.label,
   }))
-  const sitesBars = [
-    { name: t('db.charts.active'),    value: d.chantiers.actifs,   fill: C.blue  },
-    { name: t('db.charts.completed'), value: d.chantiers.termines, fill: C.green },
-  ]
   const equipDonut = [
     { name: t('db.charts.available'), value: d.materiel.enginsDisponibles, color: C.green },
     { name: t('db.charts.inUse'),     value: d.materiel.enginsTotal - d.materiel.enginsDisponibles, color: C.blue },
@@ -325,7 +319,11 @@ export default function DashboardPage() {
           sub={`${fmtS(d.budget.depensesTotales)} / ${fmtS(d.budget.budgetTotalPrevu)}`}
           progress={d.budget.tauxConsommation}
           onClick={() => navigate('/budget')} icon="💰" />
-        {/* TODO QSHE v2 — KPI qualite retiré lors du nettoyage #0, à reconstruire au livrable #4 */}
+        <GlassKpi
+          accent={C.blue} label={t('db.kpi.equipment')} value={d.materiel.enginsTotal}
+          sub={`${d.materiel.enginsDisponibles} ${t('db.kpi.available')} · ${d.materiel.materiauxStockBas} ${t('db.kpi.lowStock')}`}
+          progress={d.materiel.enginsTotal > 0 ? (d.materiel.enginsDisponibles / d.materiel.enginsTotal) * 100 : 0}
+          onClick={() => navigate('/engins')} icon="🚜" />
       </div>
 
       {/* ════════════════════════════════════════════════════════════
@@ -495,9 +493,9 @@ export default function DashboardPage() {
       </div>
 
       {/* ════════════════════════════════════════════════════════════
-          ROW 3 — 4 CHARTS
+          ROW 3 — 3 CHARTS
       ════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
         {/* Budget donut */}
         <Card title={t('db.charts.budgetTitle')} subtitle={`${d.budget.tauxConsommation}% ${t('db.charts.consumed')}`}>
           <div className="relative">
@@ -573,74 +571,38 @@ export default function DashboardPage() {
 
         {/* TODO QSHE v2 — Quality donut chart retiré lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE) */}
 
-        {/* Sites bar */}
-        <Card title={t('db.charts.sitesTitle')} subtitle={`${d.chantiers.total} ${t('db.charts.totalSites')}`}>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={sitesBars} margin={{ top: 8, right: 8, left: -12, bottom: 4 }}>
-              <defs>
-                <linearGradient id="gSite0" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={C.blue}  stopOpacity={1}   />
-                  <stop offset="100%" stopColor={C.blue} stopOpacity={0.7} />
-                </linearGradient>
-                <linearGradient id="gSite1" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={C.green}  stopOpacity={1}   />
-                  <stop offset="100%" stopColor={C.green} stopOpacity={0.7} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={24} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                <Cell fill="url(#gSite0)" />
-                <Cell fill="url(#gSite1)" />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        {/* Statut breakdown bar (replaces empty Sites chart) */}
+        <Card title={t('db.charts.statusBreakdown')} subtitle={`${totalProj} ${t('db.kpi.totalProjects')}`}>
+          <div className="space-y-2.5 py-2">
+            {pieData.map((e) => {
+              const pct = Math.round((e.value / Math.max(totalProj, 1)) * 100)
+              return (
+                <div key={e.name} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: e.color }} />
+                      <span className="text-gray-600 dark:text-gray-300 truncate">{e.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-bold text-gray-800 dark:text-gray-100 tabular-nums">{e.value}</span>
+                      <span className="text-gray-400 dark:text-gray-500 tabular-nums w-8 text-right">{pct}%</span>
+                    </div>
+                  </div>
+                  <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: e.color }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </Card>
       </div>
 
       {/* ════════════════════════════════════════════════════════════
           ROW 4 — PIE + PROJECTS TABLE
       ════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
-        <Card title={t('db.pie.title')}>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <defs>
-                {pieData.map((e, i) => (
-                  <linearGradient key={i} id={`pieAll-${i}`} x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor={e.color} stopOpacity={1}   />
-                    <stop offset="100%" stopColor={e.color} stopOpacity={0.7} />
-                  </linearGradient>
-                ))}
-              </defs>
-              <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80}
-                paddingAngle={3} dataKey="value"
-                label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
-                labelLine={{ stroke: '#cbd5e1', strokeWidth: 1 }}>
-                {pieData.map((_, i) => <Cell key={i} fill={`url(#pieAll-${i})`} stroke="none" />)}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="space-y-1.5 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-            {pieData.map((e, i) => (
-              <div key={i} className="flex items-center gap-2 text-xs">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: e.color }} />
-                <span className="flex-1 text-gray-600 dark:text-gray-300 truncate">{e.name}</span>
-                <div className="w-16"><MiniBar value={e.value / Math.max(totalProj, 1) * 100} color={e.color} /></div>
-                <span className="font-bold text-gray-800 dark:text-gray-100 w-5 text-right">{e.value}</span>
-              </div>
-            ))}
-            <div className="flex justify-between text-xs pt-1.5 border-t border-gray-100 dark:border-gray-700 font-bold">
-              <span className="text-gray-700 dark:text-gray-200">{t('db.pie.total')}</span>
-              <span className="text-gray-800 dark:text-gray-100">{totalProj}</span>
-            </div>
-          </div>
-        </Card>
-
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-5 mb-6">
+        <div>
           <Card title={t('db.projects.title')}
             action={<button onClick={() => navigate('/projets')} className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline">{t('db.seeAll')} →</button>}>
             {activeProjects.length ? (
@@ -794,19 +756,21 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <MeteoWidget />
         <Card title={t('db.quickAccess')}>
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-            {[
-              { k: 'projets',    p: '/projets',    i: '📋' }, { k: 'planning',  p: '/planning',  i: '📅' },
-              { k: 'budget',     p: '/budget',     i: '💰' }, { k: 'engins',    p: '/engins',    i: '🚜' },
-              { k: 'materiaux',  p: '/materiaux',  i: '🧱' },
-              // TODO QSHE v2 — liens qualite/securite retirés lors du nettoyage #0, à reconstruire au livrable #3
-              { k: 'messagerie',p: '/messagerie',i: '💬' },
-              { k: 'equipes',    p: '/equipes',    i: '👷' }, { k: 'documents', p: '/documents', i: '📁' },
-            ].map(x => (
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+            {([
+              { k: 'projets',    p: '/projets',    icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg> },
+              { k: 'planning',   p: '/planning',   icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg> },
+              { k: 'budget',     p: '/budget',     icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+              { k: 'engins',     p: '/engins',     icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.07-.504 1.07-1.125V14.25M3.375 14.25h17.25" /></svg> },
+              { k: 'materiaux',  p: '/materiaux',  icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg> },
+              { k: 'messagerie', p: '/messagerie', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg> },
+              { k: 'equipes',    p: '/equipes',    icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg> },
+              { k: 'documents',  p: '/documents',  icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg> },
+            ] as const).map(x => (
               <button key={x.p} onClick={() => navigate(x.p)}
-                className="group flex flex-col items-center gap-1.5 px-1 py-3 bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600/50 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-sm transition-all duration-150">
-                <span className="text-xl group-hover:scale-110 transition-transform duration-150">{x.i}</span>
-                <span className="text-[9px] leading-tight text-center text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400">
+                className="group flex flex-col items-center gap-1.5 px-1 py-3 bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600/50 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary dark:hover:text-primary-400 hover:shadow-sm transition-all duration-150">
+                <span className="group-hover:scale-110 transition-transform duration-150">{x.icon}</span>
+                <span className="text-[9px] leading-tight text-center font-medium">
                   {t(`db.shortcuts.${x.k}`)}
                 </span>
               </button>
@@ -836,7 +800,7 @@ function ProjetReportBlock({ report, fmt, fmtS, t }: {
     { name: t('db.planning.overdue'),   value: p.tachesEnRetard,  color: C.red   },
   ]
   return (
-    <Card className="mb-6" title={report.projetNom} subtitle={`${t('db.report.status')}: ${report.statut}`}
+    <Card className="mb-6" title={report.projetNom} subtitle={`${t('db.report.status')}: ${STATUT_MAP[report.statut]?.label ?? report.statut}`}
       action={
         <div className="flex gap-2 flex-wrap">
           <Chip color="blue">{report.nbChantiers} {t('db.report.sites')}</Chip>

@@ -106,7 +106,7 @@ export function getMockProjetById(id: number): (Projet & { _fromMock?: boolean }
     dateDebut: s.dateDebut,
     dateFin: s.dateFin,
     dateDebutReel: s.dateDebut,
-    dateFinReelle: s.statut === 'TERMINE' ? s.dateFin : undefined,
+    dateFinReelle: s.statut === 'RECEPTION_DEFINITIVE' ? s.dateFin : undefined,
     avancementGlobal: s.avancementGlobal,
     avancementPhysiquePct: s.avancementGlobal,
     avancementFinancierPct: Math.min(100, s.avancementGlobal + (s.id % 3) * 5),
@@ -132,7 +132,7 @@ export function getMockPointsBloquants(projetId: number): PointBloquant[] {
   const nom = mockProjetSummaries.find((p) => p.id === projetId)?.nom ?? ''
   return [
     { id: projetId * 10 + 1, projetId, projetNom: nom, titre: 'Conduite en fonte sur Axe 3', description: 'Déplacement nécessaire avant poursuite des travaux.', priorite: 'HAUTE', statut: 'OUVERT', dateDetection: '2025-01-10', detectePar: { id: 1, nom: 'Mbenda', prenom: 'Jean', email: 'j.mbenda@mika.ga' }, assigneA: { id: 2, nom: 'Okoué', prenom: 'Marie', email: 'm.okoue@mika.ga' } },
-    { id: projetId * 10 + 2, projetId, projetNom: nom, titre: 'Transfo à déplacer sur l\'emprise Axe 4', description: 'Coordination avec énergie électrique.', priorite: 'NORMALE', statut: 'EN_COURS_EXECUTION', dateDetection: '2025-01-05' },
+    { id: projetId * 10 + 2, projetId, projetNom: nom, titre: 'Transfo à déplacer sur l\'emprise Axe 4', description: 'Coordination avec énergie électrique.', priorite: 'NORMALE', statut: 'EN_COURS', dateDetection: '2025-01-05' },
     { id: projetId * 10 + 3, projetId, projetNom: nom, titre: 'Besoin d\'une Niveleuse à temps plein', description: 'Location ou affectation supplémentaire.', priorite: 'URGENTE', statut: 'OUVERT', dateDetection: '2025-01-12' },
   ]
 }

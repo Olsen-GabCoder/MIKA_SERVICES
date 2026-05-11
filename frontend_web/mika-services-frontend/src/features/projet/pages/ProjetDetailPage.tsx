@@ -224,16 +224,6 @@ export const ProjetDetailPage = () => {
   const budgetTrackerRowsVisible = suiviMensuelExpanded ? budgetTrackerRows : budgetTrackerRows.slice(0, SUIVI_MENSUEL_INITIAL_MOIS)
   const suiviMensuelHasMore = budgetTrackerRows.length > SUIVI_MENSUEL_INITIAL_MOIS
 
-  // Keep lignesCA for exports/other usages
-  const totauxCA = lignesCA.length > 0
-    ? {
-        caPrevisionnel: lignesCA.reduce((s, l) => s + l.caPrevisionnel, 0),
-        caRealise: lignesCA.reduce((s, l) => s + l.caRealise, 0),
-        ecart: lignesCA.reduce((s, l) => s + l.ecart, 0),
-        avancementCumule: (() => { const lastWithPct = [...lignesCA].reverse().find((l) => l.avancementCumule != null); return lastWithPct?.avancementCumule ?? null })(),
-      }
-    : null
-
   const handleDownloadDocument = async (format: DocumentExportFormat) => {
     if (!projet) return
     setExportingDocument(true)

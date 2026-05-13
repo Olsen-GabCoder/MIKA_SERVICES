@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useConfirm } from '@/contexts/ConfirmContext'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { reunionHebdoApi } from '@/api/reunionHebdoApi'
 import type { ReunionHebdoSummary, StatutReunion } from '@/types/reunionHebdo'
@@ -140,18 +142,20 @@ function EmptyState({ onCreate, labelNoData, hintNoData, labelCreate }: {
       </div>
       <p className="text-lg font-bold text-gray-900 dark:text-white mb-1">{labelNoData}</p>
       <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">{hintNoData}</p>
-      <motion.button
-        type="button"
-        onClick={onCreate}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary-dark transition-colors shadow-md shadow-primary/20"
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.97 }}
-      >
-        <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        {labelCreate}
-      </motion.button>
+      <OfflineDisabledButton>
+        <motion.button
+          type="button"
+          onClick={onCreate}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary-dark transition-colors shadow-md shadow-primary/20"
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          {labelCreate}
+        </motion.button>
+      </OfflineDisabledButton>
     </motion.div>
   )
 }
@@ -237,6 +241,7 @@ function ReunionCard({
   onEdit,
   onDelete,
   t,
+  isOnline,
 }: {
   r: ReunionHebdoSummary
   index: number
@@ -244,6 +249,7 @@ function ReunionCard({
   onEdit: () => void
   onDelete: () => void
   t: (k: string) => string
+  isOnline: boolean
 }) {
   const cfg = STATUT_CFG[r.statut] ?? STATUT_CFG.BROUILLON
   const weekNum = getWeekNumber(r.dateReunion)
@@ -361,7 +367,9 @@ function ReunionCard({
           <motion.button
             type="button"
             onClick={onEdit}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 border border-transparent hover:border-gray-200 dark:hover:border-gray-600 transition-all"
+            disabled={!isOnline}
+            title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 border border-transparent hover:border-gray-200 dark:hover:border-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
           >
@@ -374,7 +382,9 @@ function ReunionCard({
           <motion.button
             type="button"
             onClick={onDelete}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-danger hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 transition-all"
+            disabled={!isOnline}
+            title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-danger hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200 dark:hover:border-red-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
           >
@@ -393,6 +403,7 @@ function ReunionCard({
 
 export const ReunionHebdoListPage = () => {
   const { t } = useTranslation('reunionHebdo')
+  const isOnline = useIsOnline()
   const formatDate = useFormatDate()
   const navigate = useNavigate()
   const confirm = useConfirm()
@@ -490,18 +501,20 @@ export const ReunionHebdoListPage = () => {
               </div>
 
               {/* CTA */}
-              <motion.button
-                type="button"
-                onClick={() => navigate('/reunions-hebdo/nouveau')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-sm transition-colors shadow-md shadow-primary/20 self-start sm:self-auto"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                {t('list.newMeeting')}
-              </motion.button>
+              <OfflineDisabledButton>
+                <motion.button
+                  type="button"
+                  onClick={() => navigate('/reunions-hebdo/nouveau')}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-sm transition-colors shadow-md shadow-primary/20 self-start sm:self-auto"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  {t('list.newMeeting')}
+                </motion.button>
+              </OfflineDisabledButton>
             </div>
 
             {/* ── KPI chips ───────────────────────────────────────────────── */}
@@ -592,6 +605,7 @@ export const ReunionHebdoListPage = () => {
                       onEdit={() => navigate(`/reunions-hebdo/${r.id}/edit`)}
                       onDelete={() => handleDelete(r.id, r.dateReunion)}
                       t={t}
+                      isOnline={isOnline}
                     />
                   ))}
                 </div>

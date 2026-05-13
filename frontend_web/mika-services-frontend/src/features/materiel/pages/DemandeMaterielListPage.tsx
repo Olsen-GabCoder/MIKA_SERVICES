@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { fetchDmas } from '@/store/slices/demandeMaterielSlice'
 import { MaterielEmptyState, MaterielPagination } from '../components/MaterielListChrome'
@@ -336,21 +337,23 @@ export function DemandeMaterielListPage() {
                 transition={{ duration: 0.5, delay: 0.1 }}
               >
                 <MaterielModuleTabs />
-                <motion.button
-                  type="button"
-                  onClick={() => navigate('/dma/new')}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg
-                             bg-gray-900 dark:bg-white text-white dark:text-gray-900
-                             font-bold text-sm shadow-sm
-                             hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                  {t('dma.create')}
-                </motion.button>
+                <OfflineDisabledButton>
+                  <motion.button
+                    type="button"
+                    onClick={() => navigate('/dma/new')}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg
+                               bg-gray-900 dark:bg-white text-white dark:text-gray-900
+                               font-bold text-sm shadow-sm
+                               hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    {t('dma.create')}
+                  </motion.button>
+                </OfflineDisabledButton>
               </motion.div>
             </div>
 

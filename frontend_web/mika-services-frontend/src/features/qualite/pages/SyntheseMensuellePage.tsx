@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineBlockedPage } from '@/components/pwa/OfflineBlockedPage'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { qualiteSyntheseApi } from '@/api/qualiteSyntheseApi'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -106,6 +108,9 @@ export default function SyntheseMensuellePage() {
   // Totaux globaux rapides pour les KPIs
   const totalReceptions = data.receptions.reduce((sum, r) => sum + r.total, 0)
   const totalAgrements = data.agrements.total
+
+  const isOnline = useIsOnline()
+  if (!isOnline) return <OfflineBlockedPage pageNameKey="offline.pages.qualiteSynthese" />
 
   return (
     <PageContainer size="full" className="space-y-4 sm:space-y-6">

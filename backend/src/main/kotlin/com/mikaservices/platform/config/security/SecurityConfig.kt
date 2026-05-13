@@ -59,6 +59,7 @@ class SecurityConfig(
                     .requestMatchers("/v3/api-docs/**").permitAll()
                     .requestMatchers("/webjars/**").permitAll()
                     .requestMatchers("/ws/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/health").permitAll()
                     .requestMatchers("/error").permitAll()
                     .requestMatchers("/").permitAll()
                     .anyRequest().authenticated()

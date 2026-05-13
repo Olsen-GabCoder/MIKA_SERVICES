@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import {
   fetchDmaById,
   fetchDmaHistorique,
@@ -115,6 +116,7 @@ function InfoRow({ label, value }: { label: string; value?: string | number | nu
 
 export function DemandeMaterielDetailPage() {
   const { t, i18n } = useTranslation('materiel')
+  const isOnline = useIsOnline()
   const { id } = useParams<{ id: string }>()
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
@@ -287,7 +289,8 @@ export function DemandeMaterielDetailPage() {
                 key={wb.kind}
                 variant={wb.variant ?? 'primary'}
                 onClick={() => setActiveAction(wb.kind)}
-                disabled={actionBusy}
+                disabled={actionBusy || !isOnline}
+                title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
               >
                 {t(wb.labelKey)}
               </Button>

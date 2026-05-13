@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { fetchUserFromToken } from '@/store/slices/authSlice'
 import { setCurrentUser } from '@/store/slices/userSlice'
 import { userApi } from '@/api/userApi'
@@ -149,6 +150,7 @@ const PasswordField = ({
 
 export const ProfilePasswordSection = () => {
   const { t } = useTranslation(['user', 'common'])
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const currentUser = useAppSelector((state) => state.user.currentUser)
 
@@ -256,6 +258,8 @@ export const ProfilePasswordSection = () => {
               type="button"
               variant="primary"
               isLoading={loading}
+              disabled={loading || !isOnline}
+              title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
               onClick={handleSubmit}
             >
               {t('profile.submitChangePassword')}

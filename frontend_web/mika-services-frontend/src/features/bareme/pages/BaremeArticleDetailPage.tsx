@@ -1,6 +1,7 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useRef, useState } from 'react'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Button } from '@/components/ui/Button'
 import { useDeleteBaremeArticle, useBaremeArticle } from '../hooks/useBaremeQueries'
@@ -49,6 +50,7 @@ export function BaremeArticleDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useTranslation('bareme')
+  const isOnline = useIsOnline()
   const { formatMontant } = useFormatNumber()
   const currentUser = useAppSelector((state) => state.auth.user)
   const isAdmin = currentUser?.roles?.some((r) => r.code === 'ADMIN' || r.code === 'SUPER_ADMIN') ?? false
@@ -168,13 +170,13 @@ export function BaremeArticleDetailPage() {
             </button>
             {isAdmin && (
               <div className="hidden md:flex items-center gap-2">
-                <Button type="button" variant="outline" size="sm" disabled={deleteMutation.isPending} onClick={() => navigate('/bareme/articles/nouveau')}>
+                <Button type="button" variant="outline" size="sm" disabled={deleteMutation.isPending || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} onClick={() => navigate('/bareme/articles/nouveau')}>
                   + {t('create.addArticle')}
                 </Button>
-                <Button type="button" variant="primary" size="sm" disabled={deleteMutation.isPending} onClick={() => navigate(`/bareme/articles/${articleId}/edit`)}>
+                <Button type="button" variant="primary" size="sm" disabled={deleteMutation.isPending || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} onClick={() => navigate(`/bareme/articles/${articleId}/edit`)}>
                   {t('detail.edit')}
                 </Button>
-                <Button type="button" variant="danger" size="sm" isLoading={deleteMutation.isPending} onClick={onDelete}>
+                <Button type="button" variant="danger" size="sm" isLoading={deleteMutation.isPending} disabled={deleteMutation.isPending || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} onClick={onDelete}>
                   {t('detail.delete')}
                 </Button>
               </div>
@@ -182,13 +184,13 @@ export function BaremeArticleDetailPage() {
           </div>
           {isAdmin && (
             <div className="md:hidden mt-3 grid grid-cols-3 gap-2">
-              <Button type="button" variant="outline" size="sm" disabled={deleteMutation.isPending} onClick={() => navigate('/bareme/articles/nouveau')}>
+              <Button type="button" variant="outline" size="sm" disabled={deleteMutation.isPending || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} onClick={() => navigate('/bareme/articles/nouveau')}>
                 + {t('create.addArticle')}
               </Button>
-              <Button type="button" variant="primary" size="sm" disabled={deleteMutation.isPending} onClick={() => navigate(`/bareme/articles/${articleId}/edit`)}>
+              <Button type="button" variant="primary" size="sm" disabled={deleteMutation.isPending || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} onClick={() => navigate(`/bareme/articles/${articleId}/edit`)}>
                 {t('detail.edit')}
               </Button>
-              <Button type="button" variant="danger" size="sm" isLoading={deleteMutation.isPending} onClick={onDelete}>
+              <Button type="button" variant="danger" size="sm" isLoading={deleteMutation.isPending} disabled={deleteMutation.isPending || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} onClick={onDelete}>
                 {t('detail.delete')}
               </Button>
             </div>

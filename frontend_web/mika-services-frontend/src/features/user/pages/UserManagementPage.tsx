@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { setItemsPerPage } from '@/store/slices/uiSlice'
 import {
@@ -111,9 +112,11 @@ export const UserManagementPage = () => {
             </p>
           </div>
           <div className="flex-shrink-0">
-            <Button variant="primary" onClick={() => setIsCreateModalOpen(true)}>
-              + {t('user:management.addUser')}
-            </Button>
+            <OfflineDisabledButton>
+              <Button variant="primary" onClick={() => setIsCreateModalOpen(true)}>
+                + {t('user:management.addUser')}
+              </Button>
+            </OfflineDisabledButton>
           </div>
         </div>
       </header>

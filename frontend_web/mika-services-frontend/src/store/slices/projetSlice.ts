@@ -31,6 +31,7 @@ interface ProjetState {
   pendingListPage: number | null
   loading: boolean
   error: string | null
+  lastFetched: string | null
 }
 
 const initialState: ProjetState = {
@@ -44,6 +45,7 @@ const initialState: ProjetState = {
   pendingListPage: null,
   loading: false,
   error: null,
+  lastFetched: null,
 }
 
 // ============================================
@@ -212,6 +214,7 @@ const projetSlice = createSlice({
         state.totalElements = Number(action.payload.totalElements) || 0
         state.totalPages = Math.max(0, Number(action.payload.totalPages) || 0)
         state.currentPage = responsePage >= 0 ? responsePage : 0
+        state.lastFetched = new Date().toISOString()
       })
       .addCase(fetchProjets.rejected, (state, action) => {
         state.loading = false

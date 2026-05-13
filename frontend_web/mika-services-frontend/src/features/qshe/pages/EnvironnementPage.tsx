@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineBlockedPage } from '@/components/pwa/OfflineBlockedPage'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { qsheEnvApi } from '@/api/qsheEnvironnementApi'
 import type { SuiviEnvResponse, DechetResponse, EnvironnementSummaryResponse } from '@/types/qsheEnvironnement'
@@ -36,6 +38,9 @@ export default function EnvironnementPage() {
       <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
     </div></div>
   )
+
+  const isOnline = useIsOnline()
+  if (!isOnline) return <OfflineBlockedPage pageNameKey="offline.pages.qsheEnvironnement" />
 
   return (
     <PageContainer size="full" className="space-y-4 sm:space-y-6 bg-gray-50/80 dark:bg-gray-900/80">

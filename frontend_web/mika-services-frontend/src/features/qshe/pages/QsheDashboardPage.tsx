@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineBlockedPage } from '@/components/pwa/OfflineBlockedPage'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { qsheDashboardApi } from '@/api/qsheDashboardApi'
 import apiClient from '@/api/axios'
@@ -77,6 +79,9 @@ export default function QsheDashboardPage() {
       </div>
     )
   }
+
+  const isOnline = useIsOnline()
+  if (!isOnline) return <OfflineBlockedPage pageNameKey="offline.pages.qsheDashboard" />
 
   return (
     <PageContainer size="full" className="space-y-4 sm:space-y-6 bg-gray-50/80 dark:bg-gray-900/80">

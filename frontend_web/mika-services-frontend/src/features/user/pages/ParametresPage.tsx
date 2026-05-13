@@ -19,6 +19,7 @@ import type { AnimationPreference } from '@/utils/animationPreferences'
 import { TIMEZONE_OPTIONS } from '@/utils/timezonePreferences'
 import { setTokenStorageMode } from '@/utils/tokenStorage'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { OfflineWarningBanner } from '@/components/pwa/OfflineWarningBanner'
 
 /* ══════════════════════════════════════════════════════════════════
    SECTION IDS
@@ -460,6 +461,7 @@ export const ParametresPage = () => {
 
   return (
     <PageContainer size="full" className="h-full flex flex-col min-h-0">
+      <OfflineWarningBanner messageKey="offline.preferencesWarning" />
 
       {/* ═══ HERO HEADER (charte: secondary + primary) ═══ */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-secondary-dark via-secondary to-secondary-dark px-6 sm:px-10 py-7 text-white shadow-2xl mb-6 shrink-0">

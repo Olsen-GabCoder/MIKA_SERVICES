@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import {
   fetchNotifications,
   marquerNotifLue,
@@ -37,6 +38,7 @@ const typeColors: Record<TypeNotification, string> = {
 
 export default function NotificationsPage() {
   const { t } = useTranslation('communication')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const formatDate = useFormatDate()
   const { notifications, notificationsNonLuesCount, loading, totalPages, currentPage } = useAppSelector(
@@ -77,7 +79,9 @@ export default function NotificationsPage() {
         {notificationsNonLuesCount > 0 && (
           <button
             onClick={handleMarkAllRead}
-            className="text-primary-600 hover:text-primary-700 text-sm font-medium transition"
+            disabled={!isOnline}
+            title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+            className="text-primary-600 hover:text-primary-700 text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('notifications.markAllRead')}
           </button>
@@ -94,8 +98,9 @@ export default function NotificationsPage() {
             {notifications.map((notif: Notification) => (
               <div
                 key={notif.id}
-                className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/70 transition cursor-pointer ${!notif.lu ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
-                onClick={() => !notif.lu && handleMarkRead(notif.id)}
+                className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/70 transition ${!notif.lu ? (isOnline ? 'cursor-pointer' : 'cursor-not-allowed') : ''} ${!notif.lu ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
+                onClick={() => isOnline && !notif.lu && handleMarkRead(notif.id)}
+                title={!notif.lu && !isOnline ? t('common:offline.actionUnavailable') : undefined}
               >
                 <div className="flex items-start gap-3">
                   {!notif.lu && <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />}

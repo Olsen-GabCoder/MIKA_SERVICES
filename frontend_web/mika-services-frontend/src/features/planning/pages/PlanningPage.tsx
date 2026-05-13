@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import {
   fetchTachesByProjet,
@@ -77,6 +79,7 @@ function KpiCard({
 
 export default function PlanningPage() {
   const { t } = useTranslation('planning')
+  const isOnline = useIsOnline()
   const formatDate = useFormatDate()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
@@ -212,14 +215,16 @@ export default function PlanningPage() {
                   ))}
                 </select>
                 {selectedProjetId && (
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModal(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition shadow-sm"
-                  >
-                    <span className="text-lg leading-none">+</span>
-                    {t('newTask')}
-                  </button>
+                  <OfflineDisabledButton>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateModal(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition shadow-sm"
+                    >
+                      <span className="text-lg leading-none">+</span>
+                      {t('newTask')}
+                    </button>
+                  </OfflineDisabledButton>
                 )}
               </div>
             </div>
@@ -373,8 +378,10 @@ export default function PlanningPage() {
                           <div className="flex items-center gap-2 shrink-0 sm:flex-col sm:items-stretch">
                             <select
                               value={tache.statut}
+                              disabled={!isOnline}
+                              title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                               onChange={(e) => handleStatusChange(tache, e.target.value as StatutTache)}
-                              className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-primary w-full sm:min-w-[140px]"
+                              className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-primary w-full sm:min-w-[140px] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {Object.values(StatutTache).map((s) => (
                                 <option key={s} value={s}>{t(`statut.${s}`)}</option>
@@ -383,7 +390,9 @@ export default function PlanningPage() {
                             <button
                               type="button"
                               onClick={() => handleDelete(tache.id)}
-                              className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition"
+                              disabled={!isOnline}
+                              title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                              className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {t('delete')}
                             </button>
@@ -479,8 +488,9 @@ export default function PlanningPage() {
                   <button
                     type="button"
                     onClick={handleCreate}
-                    disabled={!newTitre.trim()}
-                    className="px-4 py-2.5 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark disabled:opacity-50 transition"
+                    disabled={!newTitre.trim() || !isOnline}
+                    title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                    className="px-4 py-2.5 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
                     {t('modalCreate')}
                   </button>

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { fetchPermisByProjet, createPermis, deletePermis, fetchPermisSummary } from '@/store/slices/qshePermisSlice'
 import { TypePermis, StatutPermis } from '@/types/qshePermis'
@@ -22,6 +24,7 @@ const statutColors: Record<StatutPermis, string> = {
 
 export default function PermisPage() {
   const { t } = useTranslation('qshe')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
   const { permis, summary, loading, totalPages } = useAppSelector(s => s.qshePermis)
@@ -77,10 +80,12 @@ export default function PermisPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Feu, espace confiné, hauteur, fouille, électrique, LOTO</p>
         </div>
         {projetId && (
-          <button onClick={() => setShowForm(true)}
-            className="bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-dark font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-lg leading-none">+</span> Nouveau permis
-          </button>
+          <OfflineDisabledButton>
+            <button onClick={() => setShowForm(true)}
+              className="bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-dark font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
+              <span className="text-lg leading-none">+</span> Nouveau permis
+            </button>
+          </OfflineDisabledButton>
         )}
       </div>
 
@@ -127,7 +132,9 @@ export default function PermisPage() {
                         </div>
                       </div>
                       <button onClick={() => handleDelete(p.id)}
-                        className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 transition self-end sm:self-start">Supprimer</button>
+                        disabled={!isOnline}
+                        title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                        className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 transition self-end sm:self-start disabled:opacity-50 disabled:cursor-not-allowed">Supprimer</button>
                     </div>
                   </div>
                 ))}

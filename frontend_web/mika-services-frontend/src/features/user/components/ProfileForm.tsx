@@ -5,6 +5,7 @@ import type { User } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useAppDispatch } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { updateMyProfile } from '@/store/slices/userSlice'
 import { setUser } from '@/store/slices/authSlice'
 import { ProfileHeader } from './ProfileHeader'
@@ -89,6 +90,7 @@ const FieldGroup = ({ label, children }: { label: string; children: ReactNode })
 
 export const ProfileForm = ({ user, children }: ProfileFormProps) => {
   const { t } = useTranslation('user')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -227,7 +229,8 @@ export const ProfileForm = ({ user, children }: ProfileFormProps) => {
           </FieldGroup>
 
           <div className="flex justify-end pt-4 mt-2 border-t border-gray-200 dark:border-gray-600">
-            <Button type="submit" variant="primary" isLoading={isLoading}>
+            <Button type="submit" variant="primary" isLoading={isLoading} disabled={isLoading || !isOnline}
+              title={!isOnline ? t('common:offline.actionUnavailable') : undefined}>
               {t('profile.saveModifications')}
             </Button>
           </div>

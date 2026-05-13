@@ -137,6 +137,14 @@ export function clearUsersCache(): void {
   } catch { /* ignore */ }
 }
 
+/** Invalide le cache dashboard. */
+export function clearDashboardCache(): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.removeItem(DASHBOARD_CACHE_KEY)
+  } catch { /* ignore */ }
+}
+
 // --- Dashboard cache ---
 
 export function setDashboardCache(data: unknown): void {

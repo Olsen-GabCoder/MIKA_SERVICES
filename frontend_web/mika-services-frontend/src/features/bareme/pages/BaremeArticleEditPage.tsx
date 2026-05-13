@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef, type FormEvent, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { PageContainer } from '@/components/layout/PageContainer'
 import {
   useBaremeArticle,
@@ -471,6 +472,7 @@ function PageSkeleton() {
 
 export function BaremeArticleEditPage() {
   const { t } = useTranslation('bareme')
+  const isOnline = useIsOnline()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const articleId = id != null ? Number(id) : null
@@ -1117,11 +1119,12 @@ export function BaremeArticleEditPage() {
 
                 <button
                   type="submit"
-                  disabled={!isValid || updateMutation.isPending}
+                  disabled={!isValid || updateMutation.isPending || !isOnline}
+                  title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                   className={`
                     flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-200 shadow-sm
                     ${
-                      isValid && !updateMutation.isPending
+                      isValid && !updateMutation.isPending && isOnline
                         ? 'bg-secondary hover:bg-secondary-dark shadow-secondary/30 hover:shadow-md hover:shadow-secondary/20 hover:-translate-y-px active:translate-y-0'
                         : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed opacity-60'
                     }

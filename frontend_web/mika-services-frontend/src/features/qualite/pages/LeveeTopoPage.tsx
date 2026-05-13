@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchLevees, createLevee, updateLevee, deleteLevee } from '@/store/slices/qualiteLeveeTopoSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import type { LeveeTopoResponse } from '@/types/qualiteLeveeTopo'
@@ -17,6 +19,7 @@ function getCurrentMonth(): string {
 
 export default function LeveeTopoPage() {
   const { t } = useTranslation('qualite')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
 
@@ -125,12 +128,14 @@ export default function LeveeTopoPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('leveeTopo.subtitle')}</p>
         </div>
         {projetId && (
-          <button
-            onClick={openCreate}
-            className="bg-[#FF6B35] text-white px-4 py-2.5 rounded-lg hover:bg-[#e55a2b] font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto"
-          >
-            <span className="text-lg leading-none">+</span> {t('leveeTopo.create')}
-          </button>
+          <OfflineDisabledButton>
+            <button
+              onClick={openCreate}
+              className="bg-[#FF6B35] text-white px-4 py-2.5 rounded-lg hover:bg-[#e55a2b] font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto"
+            >
+              <span className="text-lg leading-none">+</span> {t('leveeTopo.create')}
+            </button>
+          </OfflineDisabledButton>
         )}
       </div>
 
@@ -190,10 +195,16 @@ export default function LeveeTopoPage() {
                     <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{e.saisiParNom ?? '\u2014'}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <button onClick={() => openEdit(e)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs transition">
+                        <button onClick={() => openEdit(e)}
+                          disabled={!isOnline}
+                          title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs transition disabled:opacity-50 disabled:cursor-not-allowed">
                           {t('leveeTopo.edit')}
                         </button>
-                        <button onClick={() => handleDelete(e.id)} className="text-red-500 hover:text-red-700 dark:text-red-400 text-xs transition">
+                        <button onClick={() => handleDelete(e.id)}
+                          disabled={!isOnline}
+                          title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                          className="text-red-500 hover:text-red-700 dark:text-red-400 text-xs transition disabled:opacity-50 disabled:cursor-not-allowed">
                           {t('leveeTopo.delete')}
                         </button>
                       </div>

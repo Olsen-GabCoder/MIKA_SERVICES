@@ -4,7 +4,11 @@ import type { User } from '@/types'
 import { authApi, isLogin2FAPending } from '@/api/authApi'
 import type { LoginRequest } from '@/api/authApi'
 import { getAccessToken, setAccessToken, setRefreshToken, removeAllTokens } from '@/utils/tokenStorage'
-import { setCurrentUserCache, getCurrentUserCache, clearCurrentUserCache } from '@/utils/offlineCache'
+import { setCurrentUserCache, getCurrentUserCache, clearCurrentUserCache, clearProjetsCache, clearUsersCache, clearDashboardCache } from '@/utils/offlineCache'
+import { clearResponseCache } from '@/utils/responseCache'
+import { clearOfflineCredentials } from '@/utils/offlineAuth'
+import { clearQueue } from '@/utils/offlineQueue'
+import { queryClient } from '@/services/queryClient'
 import { isNetworkError } from '@/utils/errorHandler'
 
 /** État intermédiaire après login quand 2FA est requis */
@@ -87,10 +91,33 @@ export const refreshToken = createAsyncThunk(
   }
 )
 
+interface LogoutOptions {
+  preserveQueue?: boolean
+}
+
 export const logoutUser = createAsyncThunk(
   'auth/logout',
-  async () => {
+  async (options?: LogoutOptions) => {
+    const opts = options ?? {}
+    // 1. Tokens + cookie serveur
     await authApi.logout()
+    // 2. Purge des caches applicatifs (silent on error, sécurité cross-user)
+    try { clearResponseCache() } catch { /* ignore */ }
+    try { clearProjetsCache() } catch { /* ignore */ }
+    try { clearUsersCache() } catch { /* ignore */ }
+    try { clearDashboardCache() } catch { /* ignore */ }
+    try { clearOfflineCredentials() } catch { /* ignore */ }
+    // 3. Queue : préservée si session expirée (replay post-login)
+    if (!opts.preserveQueue) {
+      try { clearQueue() } catch { /* ignore */ }
+    }
+    // 4. React Query (mémoire)
+    try { queryClient.clear() } catch { /* ignore */ }
+    // 5. SW runtime caches (données utilisateur uniquement, pas Google Fonts ni pre-cache)
+    try {
+      await caches.delete('mika-api-cache')
+      await caches.delete('mika-user-identity')
+    } catch { /* ignore */ }
   }
 )
 

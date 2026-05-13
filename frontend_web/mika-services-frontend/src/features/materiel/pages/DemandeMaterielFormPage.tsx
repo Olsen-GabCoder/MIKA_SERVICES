@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { createDma } from '@/store/slices/demandeMaterielSlice'
 import { projetApi } from '@/api/projetApi'
 import type { ProjetSummary } from '@/types/projet'
@@ -125,6 +126,7 @@ function CheckBox({
 
 export function DemandeMaterielFormPage() {
   const { t: _t } = useTranslation('materiel')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const formRef = useRef<HTMLDivElement>(null)
@@ -283,8 +285,9 @@ export function DemandeMaterielFormPage() {
           <motion.button
             type="button"
             onClick={() => { void handleSubmit() }}
-            disabled={submitting}
-            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-bold shadow-lg shadow-primary/25 disabled:opacity-50"
+            disabled={submitting || !isOnline}
+            title={!isOnline ? _t('common:offline.actionUnavailable') : undefined}
+            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-bold shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed"
             whileHover={{ scale: 1.03, boxShadow: '0 12px 30px -4px rgba(232, 90, 42, 0.4)' }}
             whileTap={{ scale: 0.97 }}
           >

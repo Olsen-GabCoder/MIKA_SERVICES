@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { PageContainer } from '@/components/layout/PageContainer'
 import {
   useCorpsEtat,
@@ -421,6 +422,7 @@ const IconSave = () => (
 
 export function BaremeArticleCreatePage() {
   const { t } = useTranslation('bareme')
+  const isOnline = useIsOnline()
   const navigate = useNavigate()
 
   const { data: corpsEtats = [] } = useCorpsEtat()
@@ -1018,11 +1020,12 @@ export function BaremeArticleCreatePage() {
 
                 <button
                   type="submit"
-                  disabled={!isValid || createMutation.isPending}
+                  disabled={!isValid || createMutation.isPending || !isOnline}
+                  title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                   className={`
                     flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-200 shadow-sm
                     ${
-                      isValid && !createMutation.isPending
+                      isValid && !createMutation.isPending && isOnline
                         ? 'bg-primary hover:bg-primary-dark shadow-primary/30 hover:shadow-md hover:shadow-primary/20 hover:-translate-y-px active:translate-y-0'
                         : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed opacity-60'
                     }

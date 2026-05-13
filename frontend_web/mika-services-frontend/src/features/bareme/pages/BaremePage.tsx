@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { PageContainer } from '@/components/layout/PageContainer'
 import {
   useDerniereMiseAJour,
@@ -692,14 +693,16 @@ export function BaremePage() {
                 </div>
 
                 {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => navigate('/bareme/articles/nouveau')}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-primary font-bold text-sm hover:bg-white/90 transition-all duration-200 shadow-lg shadow-black/10"
-                  >
-                    <IconPlus />
-                    {t('create.addArticle')}
-                  </button>
+                  <OfflineDisabledButton>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/bareme/articles/nouveau')}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-primary font-bold text-sm hover:bg-white/90 transition-all duration-200 shadow-lg shadow-black/10"
+                    >
+                      <IconPlus />
+                      {t('create.addArticle')}
+                    </button>
+                  </OfflineDisabledButton>
                 )}
               </div>
             </div>

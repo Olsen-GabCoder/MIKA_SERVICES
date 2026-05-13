@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineWarningBanner } from '@/components/pwa/OfflineWarningBanner'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Alert } from '@/components/ui/Alert'
 import { createProjet, updateProjet, fetchProjetById, fetchClients, createClient, clearProjetDetail } from '@/store/slices/projetSlice'
@@ -452,6 +454,7 @@ export interface SuiviMensuelRow {
 
 export const ProjetFormPage = () => {
   const { t } = useTranslation('projet')
+  const isOnline = useIsOnline()
   const { formatNumber } = useFormatNumber()
   const monthsShort = useMemo(() => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => t(`detail.monthsShort_${i}`)), [t])
   const confirm = useConfirm()
@@ -920,7 +923,9 @@ export const ProjetFormPage = () => {
           {readOnly ? t('form.backToDetailButton') : t('form.cancel')}
         </button>
         {!readOnly && (
-          <button type="submit" form="projet-form" disabled={loading} className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 disabled:opacity-50 disabled:shadow-none transition-all">
+          <button type="submit" form="projet-form" disabled={loading || !isOnline}
+            title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+            className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transition-all">
             {loading ? t('form.saving') : isEdit ? t('form.update') : t('form.createProject')}
           </button>
         )}
@@ -931,6 +936,8 @@ export const ProjetFormPage = () => {
           {error}
         </Alert>
       )}
+
+      <OfflineWarningBanner messageKey="offline.formSubmitDisabled" />
 
       <div className="flex gap-6 relative">
         {/* Navigation sticky des sections — desktop uniquement */}
@@ -1637,7 +1644,8 @@ export const ProjetFormPage = () => {
                 <button
                   type="button"
                   ref={pbAddRef}
-                  disabled={addingPointBloquant}
+                  disabled={addingPointBloquant || !isOnline}
+                  title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                   onClick={async () => {
                     const titre = pbSearch.trim()
                     if (!titre || addingPointBloquant) return
@@ -1683,30 +1691,36 @@ export const ProjetFormPage = () => {
                     </span>
                     <select
                       value={pb.priorite}
+                      disabled={!isOnline}
+                      title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                       onChange={async (e) => {
                         try {
                           const updated = await pointBloquantApi.update(pb.id, { priorite: e.target.value as Priorite })
                           setPointsBloquants((prev) => prev.map((x) => (x.id === pb.id ? updated : x)))
                         } catch (err) { setError((err as Error).message) }
                       }}
-                      className="px-2 py-1 border rounded text-sm w-28"
+                      className="px-2 py-1 border rounded text-sm w-28 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {PRIORITE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(`enums.priorite.${o.value}`)}</option>)}
                     </select>
                     <select
                       value={pb.statut}
+                      disabled={!isOnline}
+                      title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                       onChange={async (e) => {
                         try {
                           const updated = await pointBloquantApi.update(pb.id, { statut: e.target.value as StatutPointBloquant })
                           setPointsBloquants((prev) => prev.map((x) => (x.id === pb.id ? updated : x)))
                         } catch (err) { setError((err as Error).message) }
                       }}
-                      className="px-2 py-1 border rounded text-sm w-28"
+                      className="px-2 py-1 border rounded text-sm w-28 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {STATUT_POINT_BLOQUANT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(`enums.statutPointBloquant.${o.value}`)}</option>)}
                     </select>
                     <button
                       type="button"
+                      disabled={!isOnline}
+                      title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                       onClick={async () => {
                         if (!(await confirm({ messageKey: 'confirm.deletePointBloquant' }))) return
                         try {
@@ -1714,7 +1728,7 @@ export const ProjetFormPage = () => {
                           setPointsBloquants((prev) => prev.filter((x) => x.id !== pb.id))
                         } catch (err) { setError((err as Error).message) }
                       }}
-                      className="text-red-600 hover:text-red-800 text-sm"
+                      className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       aria-label={t('form.deleteLabel')}
                     >
                       ×
@@ -1834,7 +1848,7 @@ export const ProjetFormPage = () => {
                       {completed && (
                         <span className="text-green-600 dark:text-green-400 text-xs" title={t('form.previsionTerminee')}>&#10003;</span>
                       )}
-                      <button type="button" onClick={() => deletePrevision(p)} className="text-red-600 hover:text-red-800" aria-label={t('form.deleteLabel')}>×</button>
+                      <button type="button" onClick={() => deletePrevision(p)} disabled={!isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} className="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed" aria-label={t('form.deleteLabel')}>×</button>
                     </li>
                   ))}
                 </ul>
@@ -1948,6 +1962,8 @@ export const ProjetFormPage = () => {
                     </div>
                     <button
                       type="button"
+                      disabled={!isOnline}
+                      title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                       onClick={() => {
                         const v = previsionSearch.trim()
                         if (!v) return
@@ -1955,7 +1971,7 @@ export const ProjetFormPage = () => {
                         setPrevisionSearch('')
                         setShowPrevisionSuggestions(false)
                       }}
-                      className="px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark shrink-0"
+                      className="px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {t('form.ajouterPour', { semaine: selectedSemainePrevision, annee: selectedAnneePrevision })}
                     </button>
@@ -2256,8 +2272,9 @@ export const ProjetFormPage = () => {
               <button type="button" onClick={() => setClientModalOpen(false)} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
                 {t('form.cancel')}
               </button>
-              <button type="button" onClick={handleCreateClient} disabled={!newClient.nom.trim() || loading}
-                className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium disabled:opacity-50">
+              <button type="button" onClick={handleCreateClient} disabled={!newClient.nom.trim() || loading || !isOnline}
+                title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                 {t('form.createAndSelect')}
               </button>
             </div>

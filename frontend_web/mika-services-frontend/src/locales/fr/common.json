@@ -262,5 +262,53 @@
     "forecast5Days": "Prévisions 5 jours",
     "unavailable": "Impossible de charger la météo.",
     "retry": "Réessayer"
+  },
+  "offline": {
+    "actionUnavailable": "Action indisponible hors ligne",
+    "pageBlockedTitle": "Page indisponible hors ligne",
+    "pageBlockedMessage": "La page {{pageName}} nécessite une connexion internet.",
+    "goBack": "Retour",
+    "dataFromCache": "Données du cache (dernière synchronisation : {{date}})",
+    "preferencesWarning": "Vous êtes hors ligne. Les modifications de préférences ne seront pas sauvegardées tant que la connexion n'est pas rétablie.",
+    "formSubmitDisabled": "Vous êtes hors ligne. L'enregistrement du formulaire est désactivé. Vos modifications ne seront pas conservées si vous quittez cette page.",
+    "profileWarning": "Vous êtes hors ligne. Les modifications de votre profil ne pourront pas être sauvegardées tant que la connexion n'est pas rétablie.",
+    "pages": {
+      "messagerie": "Messagerie",
+      "qsheDashboard": "Tableau de bord QSHE",
+      "qsheEnvironnement": "Environnement",
+      "qsheProduits": "Produits chimiques",
+      "qualiteSynthese": "Synthèse mensuelle",
+      "activite": "Suivi d'activité"
+    }
+  },
+  "sync": {
+    "inProgress_one": "Synchronisation de {{count}} modification…",
+    "inProgress_other": "Synchronisation de {{count}} modifications…",
+    "succeeded_one": "{{count}} modification synchronisée",
+    "succeeded_other": "{{count}} modifications synchronisées",
+    "failed_one": "{{count}} modification a échoué",
+    "failed_other": "{{count}} modifications ont échoué",
+    "viewDetails": "Voir les détails",
+    "failedDetailsTitle": "Détails des échecs de synchronisation",
+    "failedType": "Type",
+    "failedReason": "Raison"
+  },
+  "session": {
+    "expiredTitle": "Session expirée",
+    "expiredMessage": "Votre session a expiré pendant que vous étiez hors ligne. Vos modifications en attente seront synchronisées après reconnexion.",
+    "pendingMutations_one": "{{count}} modification en attente",
+    "pendingMutations_other": "{{count}} modifications en attente",
+    "reconnect": "Se reconnecter"
+  },
+  "connectivity": {
+    "offline": "Vous êtes hors ligne — Les données affichées proviennent du cache",
+    "reconnecting": "Reconnexion en cours…",
+    "reconnected": "Connexion rétablie"
+  },
+  "pwa": {
+    "updateAvailable": "Une nouvelle version est disponible",
+    "updateNow": "Mettre à jour",
+    "dismiss": "Plus tard",
+    "offlineReady": "Application prête pour le mode hors ligne"
   }
 }

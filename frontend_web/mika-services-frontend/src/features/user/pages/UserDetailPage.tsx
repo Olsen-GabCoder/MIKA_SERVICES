@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { fetchUserById, updateUser, deleteUser, fetchUsers } from '@/store/slices/userSlice'
 import { userApi, equipeApi, auditApi } from '@/api/userApi'
@@ -38,6 +39,7 @@ const SECTION_BODY_CLASS = 'p-6 flex-1 text-gray-900 dark:text-gray-100'
 
 export const UserDetailPage = () => {
   const { t } = useTranslation('user')
+  const isOnline = useIsOnline()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
@@ -241,23 +243,26 @@ export const UserDetailPage = () => {
 
       {/* Barre d'actions */}
       <div className="flex flex-wrap gap-2 mb-6">
-        <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}>
+        <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}
+          disabled={!isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined}>
           {t('detail.actions.edit')}
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => setConfirmToggleActif(true)}
-          disabled={isSelf}
-          title={isSelf ? t('detail.actions.cannotSelf') : undefined}
+          disabled={isSelf || !isOnline}
+          title={!isOnline ? t('common:offline.actionUnavailable') : isSelf ? t('detail.actions.cannotSelf') : undefined}
         >
           {user.actif ? t('detail.actions.deactivate') : t('detail.actions.activate')}
         </Button>
-        <Button variant="outline" size="sm" onClick={() => { setResetPasswordModalOpen(true); setResetPasswordError(null); setResetPasswordValue(''); }}>
+        <Button variant="outline" size="sm" onClick={() => { setResetPasswordModalOpen(true); setResetPasswordError(null); setResetPasswordValue(''); }}
+          disabled={!isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined}>
           {t('detail.actions.resetPassword')}
         </Button>
         {user.totpEnabled && (
-          <Button variant="outline" size="sm" onClick={() => setConfirmDisable2FA(true)}>
+          <Button variant="outline" size="sm" onClick={() => setConfirmDisable2FA(true)}
+            disabled={!isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined}>
             {t('detail.actions.disable2FA')}
           </Button>
         )}
@@ -265,8 +270,8 @@ export const UserDetailPage = () => {
           variant="outline"
           size="sm"
           onClick={() => setConfirmDelete(true)}
-          disabled={isSelf}
-          title={isSelf ? t('detail.actions.cannotSelf') : undefined}
+          disabled={isSelf || !isOnline}
+          title={!isOnline ? t('common:offline.actionUnavailable') : isSelf ? t('detail.actions.cannotSelf') : undefined}
           className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
         >
           {t('detail.actions.delete')}

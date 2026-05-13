@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { fetchCurrentUser } from '@/store/slices/userSlice'
 import { Card } from '@/components/ui/Card'
 import { Loading } from '@/components/ui/Loading'
+import { OfflineWarningBanner } from '@/components/pwa/OfflineWarningBanner'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { ProfileForm } from '../components/ProfileForm'
 import { ProfileCvSection } from '../components/ProfileCvSection'
@@ -45,6 +46,8 @@ export const ProfilePage = () => {
   return (
     <PageContainer size="full" className="w-full space-y-6 bg-gray-50/80 dark:bg-gray-900/80">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('profile.title')}</h1>
+
+      <OfflineWarningBanner messageKey="offline.profileWarning" />
 
       {userForDisplay?.mustChangePassword && (
         <div

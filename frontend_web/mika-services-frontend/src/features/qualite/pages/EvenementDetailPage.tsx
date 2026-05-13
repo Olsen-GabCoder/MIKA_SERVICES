@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { fetchEvenementById, setCurrent } from '@/store/slices/qualiteEvenementSlice'
 import { qualiteEvenementApi } from '@/api/qualiteEvenementApi'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -33,6 +34,7 @@ const statutColors: Record<string, string> = {
 export default function EvenementDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t } = useTranslation('qualite')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { current: evenement, loading } = useAppSelector(s => s.qualiteEvenement)
@@ -204,8 +206,9 @@ export default function EvenementDetailPage() {
                         ) : isActive && currentUser ? (
                           <button
                             onClick={() => handleSignCollegiale(c.roleAttendu as RoleCollegial)}
-                            disabled={signingSection === `6-${c.roleAttendu}`}
-                            className="px-3 py-1.5 bg-[#FF6B35] text-white rounded-lg text-xs font-medium hover:bg-[#e55a2b] disabled:opacity-50 transition-colors shadow-sm">
+                            disabled={signingSection === `6-${c.roleAttendu}` || !isOnline}
+                            title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                            className="px-3 py-1.5 bg-[#FF6B35] text-white rounded-lg text-xs font-medium hover:bg-[#e55a2b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
                             {t('evenements.sign')}
                           </button>
                         ) : (
@@ -225,8 +228,9 @@ export default function EvenementDetailPage() {
                 {!section.signee && isActive && section.numeroSection !== NumeroSection.SECTION_6 && currentUser && (
                   <button
                     onClick={() => handleSignSection(Number(sectionNum))}
-                    disabled={signingSection === sectionNum}
-                    className="mt-2 px-5 py-2 bg-[#FF6B35] text-white rounded-lg text-sm font-medium hover:bg-[#e55a2b] disabled:opacity-50 transition-colors shadow-sm">
+                    disabled={signingSection === sectionNum || !isOnline}
+                    title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                    className="mt-2 px-5 py-2 bg-[#FF6B35] text-white rounded-lg text-sm font-medium hover:bg-[#e55a2b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
                     {t('evenements.signSection')}
                   </button>
                 )}

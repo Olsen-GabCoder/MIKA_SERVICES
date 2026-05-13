@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchEpis, createEpi, deleteEpi, fetchExpires, fetchStockBas, fetchEpiSummary } from '@/store/slices/qsheEpiSlice'
 import { TypeEpi, EtatEpi } from '@/types/qsheEpi'
 import type { EpiCreateRequest, EpiResponse } from '@/types/qsheEpi'
@@ -20,6 +22,7 @@ const etatColors: Record<EtatEpi, string> = {
 
 export default function EpiPage() {
   const { t } = useTranslation('qshe')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
   const { epis, summary, loading, totalPages } = useAppSelector(s => s.qsheEpi)
@@ -70,10 +73,12 @@ export default function EpiPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Équipements de Protection Individuelle</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Inventaire, dotation, expiration, stock</p>
         </div>
-        <button onClick={() => setShowForm(true)}
-          className="bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-dark font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
-          <span className="text-lg leading-none">+</span> Nouvel EPI
-        </button>
+        <OfflineDisabledButton>
+          <button onClick={() => setShowForm(true)}
+            className="bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-dark font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
+            <span className="text-lg leading-none">+</span> Nouvel EPI
+          </button>
+        </OfflineDisabledButton>
       </div>
 
       {summary && (
@@ -120,7 +125,9 @@ export default function EpiPage() {
                     </div>
                   </div>
                   <button onClick={() => handleDelete(e.id)}
-                    className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 transition self-end sm:self-start">Supprimer</button>
+                    disabled={!isOnline}
+                    title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                    className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 transition self-end sm:self-start disabled:opacity-50 disabled:cursor-not-allowed">Supprimer</button>
                 </div>
               </div>
             ))}

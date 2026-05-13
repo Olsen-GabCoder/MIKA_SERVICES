@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { fetchCauseriesByProjet, createCauserie, deleteCauserie, fetchCauserieSummary } from '@/store/slices/qsheCauserieSlice'
 import type { CauserieCreateRequest, CauserieResponse } from '@/types/qsheCauserie'
@@ -12,6 +14,7 @@ const BODY = 'p-4 sm:p-5'
 
 export default function CauseriesPage() {
   const { t } = useTranslation('qshe')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
   const { causeries, summary, loading, totalPages } = useAppSelector(s => s.qsheCauserie)
@@ -66,10 +69,12 @@ export default function CauseriesPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Toolbox talks, quart d'heure sécurité, présence</p>
         </div>
         {projetId && (
-          <button onClick={() => setShowForm(true)}
-            className="bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-dark font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-lg leading-none">+</span> Nouvelle causerie
-          </button>
+          <OfflineDisabledButton>
+            <button onClick={() => setShowForm(true)}
+              className="bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-dark font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
+              <span className="text-lg leading-none">+</span> Nouvelle causerie
+            </button>
+          </OfflineDisabledButton>
         )}
       </div>
 
@@ -114,7 +119,9 @@ export default function CauseriesPage() {
                         </div>
                       </div>
                       <button onClick={() => handleDelete(c.id)}
-                        className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 transition self-end sm:self-start">Supprimer</button>
+                        disabled={!isOnline}
+                        title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                        className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 transition self-end sm:self-start disabled:opacity-50 disabled:cursor-not-allowed">Supprimer</button>
                     </div>
                   </div>
                 ))}

@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchEvenements, createEvenement, deleteEvenement, fetchEvenementStats } from '@/store/slices/qualiteEvenementSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { TypeEvenement, CategorieEvenement, OrigineEvenement, StatutEvenement } from '@/types/qualiteEvenement'
@@ -36,6 +38,7 @@ const catColors: Record<string, string> = {
 
 export default function EvenementsPage() {
   const { t } = useTranslation('qualite')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const confirm = useConfirm()
@@ -133,10 +136,12 @@ export default function EvenementsPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('evenements.subtitle')}</p>
         </div>
         {projetId && (
-          <button onClick={() => setShowModal(true)}
-            className="bg-[#FF6B35] text-white px-4 py-2.5 rounded-lg hover:bg-[#e55a2b] font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-lg leading-none">+</span> {t('evenements.create')}
-          </button>
+          <OfflineDisabledButton>
+            <button onClick={() => setShowModal(true)}
+              className="bg-[#FF6B35] text-white px-4 py-2.5 rounded-lg hover:bg-[#e55a2b] font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
+              <span className="text-lg leading-none">+</span> {t('evenements.create')}
+            </button>
+          </OfflineDisabledButton>
         )}
       </div>
 
@@ -228,7 +233,9 @@ export default function EvenementsPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0 self-end sm:self-start" onClick={e => e.stopPropagation()}>
                     <button onClick={() => handleDelete(ev.id)}
-                      className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 transition">{t('evenements.delete')}</button>
+                      disabled={!isOnline}
+                      title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                      className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 transition disabled:opacity-50 disabled:cursor-not-allowed">{t('evenements.delete')}</button>
                   </div>
                 </div>
               </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { PageContainer } from '@/components/layout/PageContainer'
 import {
   createEquipe,
@@ -17,6 +18,7 @@ const TYPE_EQUIPE_VALUES: TypeEquipe[] = ['TERRASSEMENT', 'VOIRIE', 'ASSAINISSEM
 
 export const EquipeFormPage = () => {
   const { t } = useTranslation('equipe')
+  const isOnline = useIsOnline()
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
   const navigate = useNavigate()
@@ -210,8 +212,9 @@ export const EquipeFormPage = () => {
           </button>
           <button
             type="submit"
-            disabled={loading}
-            className="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium disabled:opacity-50"
+            disabled={loading || !isOnline}
+            title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+            className="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? t('form.saving') : isEdit ? t('form.save') : t('form.create')}
           </button>

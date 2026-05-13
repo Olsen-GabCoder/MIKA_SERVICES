@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import {
   fetchIncidentsByProjet, fetchIncidentSummary,
@@ -32,6 +34,7 @@ const statutColors: Record<StatutIncident, string> = {
 
 export default function IncidentsPage() {
   const { t } = useTranslation('qshe')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
   const { incidents, summary, loading, totalPages } = useAppSelector(s => s.qsheIncident)
@@ -133,10 +136,12 @@ export default function IncidentsPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('incidents.subtitle')}</p>
         </div>
         {projetId && canDeclare && (
-          <button onClick={() => setShowForm(true)}
-            className="bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-dark font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-lg leading-none">+</span> {t('incidents.declareIncident')}
-          </button>
+          <OfflineDisabledButton>
+            <button onClick={() => setShowForm(true)}
+              className="bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary-dark font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
+              <span className="text-lg leading-none">+</span> {t('incidents.declareIncident')}
+            </button>
+          </OfflineDisabledButton>
         )}
       </div>
 
@@ -212,12 +217,16 @@ export default function IncidentsPage() {
                       <div className="flex items-center gap-2 shrink-0 self-end sm:self-start">
                         {canDeclare && (
                           <select value={inc.statut} onChange={e => handleStatut(inc.id, e.target.value as StatutIncident)}
-                            className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                            disabled={!isOnline}
+                            title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                            className="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
                             {Object.values(StatutIncident).map(s => <option key={s} value={s}>{t(`statutIncident.${s}`)}</option>)}
                           </select>
                         )}
                         <button onClick={() => handleDelete(inc.id)}
-                          className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 transition">{t('incidents.delete')}</button>
+                          disabled={!isOnline}
+                          title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                          className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 transition disabled:opacity-50 disabled:cursor-not-allowed">{t('incidents.delete')}</button>
                       </div>
                     </div>
                   </div>

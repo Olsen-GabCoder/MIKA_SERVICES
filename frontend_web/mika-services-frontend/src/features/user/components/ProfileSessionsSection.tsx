@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { userApi, type Session } from '@/api/userApi'
 import { handleApiError } from '@/utils/errorHandler'
 import { useFormatDate } from '@/hooks/useFormatDate'
@@ -77,6 +78,7 @@ const EmptyIcon = () => (
 export const ProfileSessionsSection = () => {
   const formatDate = useFormatDate()
   const { t } = useTranslation('user')
+  const isOnline = useIsOnline()
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -570,9 +572,10 @@ export const ProfileSessionsSection = () => {
                   {/* Revoke */}
                   <button
                     type="button"
-                    className="pss-revoke-btn"
+                    className="pss-revoke-btn disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => handleRevoke(s.id)}
-                    disabled={s.isCurrent || revokingId === s.id}
+                    disabled={s.isCurrent || revokingId === s.id || !isOnline}
+                    title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                     aria-label={`${t('profile.sessions.revoke')} — ${s.deviceName}`}
                   >
                     {revokingId === s.id && <SpinnerIcon />}

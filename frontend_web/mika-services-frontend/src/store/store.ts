@@ -29,6 +29,7 @@ import reportingReducer from './slices/reportingSlice'
 import documentReducer from './slices/documentSlice'
 import fournisseurReducer from './slices/fournisseurSlice'
 import uiReducer from './slices/uiSlice'
+import syncReducer from './slices/syncSlice'
 
 export const store = configureStore({
   reducer: {
@@ -60,6 +61,7 @@ export const store = configureStore({
     document: documentReducer,
     fournisseur: fournisseurReducer,
     ui: uiReducer,
+    sync: syncReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

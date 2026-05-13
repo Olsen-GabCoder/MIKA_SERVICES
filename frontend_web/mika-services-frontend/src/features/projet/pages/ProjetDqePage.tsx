@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
@@ -9,6 +10,8 @@ import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { useAppSelector } from '@/store/hooks'
 import { useFormatNumber } from '@/hooks/useFormatNumber'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { dqeApi } from '@/api/dqeApi'
 import { projetApi } from '@/api/projetApi'
@@ -18,7 +21,7 @@ import type { Projet } from '@/types/projet'
 import { DqeImportModal } from '@/features/projet/components/DqeImportModal'
 
 // ── Pagination ───────────────────────────────────────────────────────
-const ROWS_PER_PAGE = 15
+const ROWS_PER_PAGE = 50
 
 // ── Helpers visuels ──────────────────────────────────────────────────
 
@@ -221,6 +224,8 @@ type FlatRow =
 export const ProjetDqePage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { t } = useTranslation()
+  const isOnline = useIsOnline()
   const confirm = useConfirm()
   const { formatMontant } = useFormatNumber()
   const currentUser = useAppSelector((s) => s.auth.user)
@@ -234,6 +239,7 @@ export const ProjetDqePage = () => {
 
   // Pagination globale du document
   const [page, setPage] = useState(1)
+  const [showAll, setShowAll] = useState(false)
 
   // Formulaires inline
   const [addingChapitre, setAddingChapitre] = useState(false)
@@ -317,11 +323,12 @@ export const ProjetDqePage = () => {
     return rows
   }, [filteredChapitres, addingLigneChapitreId])
 
-  const totalPages = Math.ceil(flatRows.length / ROWS_PER_PAGE)
+  const totalPages = showAll ? 1 : Math.ceil(flatRows.length / ROWS_PER_PAGE)
   const paginatedRows = useMemo(() => {
+    if (showAll) return flatRows
     const start = (page - 1) * ROWS_PER_PAGE
     return flatRows.slice(start, start + ROWS_PER_PAGE)
-  }, [flatRows, page])
+  }, [flatRows, page, showAll])
 
   // ── CRUD Chapitres ─────────────────────────────────────────────────
 
@@ -597,15 +604,17 @@ export const ProjetDqePage = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleExport('pdf')}
-                    disabled={exporting !== null}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors disabled:opacity-40"
+                    disabled={exporting !== null || !isOnline}
+                    title={!isOnline ? t('offline.actionUnavailable') : undefined}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {exporting === 'pdf' ? <IconSpinner /> : <IconDownload />} PDF
                   </button>
                   <button
                     onClick={() => handleExport('excel')}
-                    disabled={exporting !== null}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors disabled:opacity-40"
+                    disabled={exporting !== null || !isOnline}
+                    title={!isOnline ? t('offline.actionUnavailable') : undefined}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {exporting === 'excel' ? <IconSpinner /> : <IconDownload />} Excel
                   </button>
@@ -620,16 +629,20 @@ export const ProjetDqePage = () => {
           <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800 flex items-center gap-3">
             {!addingChapitre ? (
               <>
-                <Button variant="primary" size="sm" onClick={() => { setAddingChapitre(true); setChapitreForm({ numero: nextChapitreNumero(chapitres), designation: '' }) }} className="flex items-center gap-1.5">
-                  <IconPlus /> Ajouter un chapitre
-                </Button>
-                {chapitres.length === 0 && (
-                  <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="flex items-center gap-1.5">
-                    <IconUpload /> Importer un DQE (IA)
+                <OfflineDisabledButton>
+                  <Button variant="primary" size="sm" onClick={() => { setAddingChapitre(true); setChapitreForm({ numero: nextChapitreNumero(chapitres), designation: '' }) }} className="flex items-center gap-1.5">
+                    <IconPlus /> Ajouter un chapitre
                   </Button>
+                </OfflineDisabledButton>
+                {chapitres.length === 0 && (
+                  <OfflineDisabledButton>
+                    <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="flex items-center gap-1.5">
+                      <IconUpload /> Importer un DQE (IA)
+                    </Button>
+                  </OfflineDisabledButton>
                 )}
                 {chapitres.length > 0 && (
-                  <Button variant="outline" size="sm" onClick={handleDeleteAllDqe} disabled={saving} className="ml-auto flex items-center gap-1.5 border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                  <Button variant="outline" size="sm" onClick={handleDeleteAllDqe} disabled={saving || !isOnline} title={!isOnline ? t('offline.actionUnavailable') : undefined} className="ml-auto flex items-center gap-1.5 border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                     <IconTrash /> Supprimer tout le DQE
                   </Button>
                 )}
@@ -645,7 +658,7 @@ export const ProjetDqePage = () => {
                   <input value={chapitreForm.designation} onChange={(e) => setChapitreForm({ ...chapitreForm, designation: e.target.value })} placeholder="Ex: TRAVAUX PREPARATOIRES" className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none" />
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="primary" size="sm" onClick={handleCreateChapitre} disabled={saving || !chapitreForm.numero.trim() || !chapitreForm.designation.trim()} className="flex items-center gap-1.5"><IconCheck /> OK</Button>
+                  <Button variant="primary" size="sm" onClick={handleCreateChapitre} disabled={saving || !chapitreForm.numero.trim() || !chapitreForm.designation.trim() || !isOnline} title={!isOnline ? t('offline.actionUnavailable') : undefined} className="flex items-center gap-1.5"><IconCheck /> OK</Button>
                   <Button variant="outline" size="sm" onClick={() => { setAddingChapitre(false); setChapitreForm(emptyChapitreForm) }} className="flex items-center gap-1.5"><IconX /> Annuler</Button>
                 </div>
               </div>
@@ -687,9 +700,11 @@ export const ProjetDqePage = () => {
               {canEdit ? 'Commencez par creer votre premier chapitre ou importez un DQE existant.' : 'Aucun chapitre n\'a encore ete cree.'}
             </p>
             {canEdit && (
-              <Button variant="primary" size="lg" onClick={() => setImportModalOpen(true)} className="flex items-center gap-2 mx-auto">
-                <IconUpload /> Importer un DQE existant (IA)
-              </Button>
+              <OfflineDisabledButton>
+                <Button variant="primary" size="lg" onClick={() => setImportModalOpen(true)} className="flex items-center gap-2 mx-auto">
+                  <IconUpload /> Importer un DQE existant (IA)
+                </Button>
+              </OfflineDisabledButton>
             )}
           </div>
         ) : (
@@ -735,7 +750,7 @@ export const ProjetDqePage = () => {
                               <input value={editChapitreForm.numero} onChange={(e) => setEditChapitreForm({ ...editChapitreForm, numero: e.target.value })} className="w-32 border-2 border-secondary/30 rounded-lg px-3 py-1.5 text-sm font-bold bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-secondary outline-none" />
                               <input value={editChapitreForm.designation} onChange={(e) => setEditChapitreForm({ ...editChapitreForm, designation: e.target.value })} className="flex-1 border-2 border-secondary/30 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-secondary outline-none" />
                               <div className="flex gap-1.5">
-                                <button onClick={() => handleUpdateChapitre(chap.id)} disabled={saving} className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg transition-colors"><IconCheck /></button>
+                                <button onClick={() => handleUpdateChapitre(chap.id)} disabled={saving || !isOnline} title={!isOnline ? t('offline.actionUnavailable') : undefined} className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><IconCheck /></button>
                                 <button onClick={() => setEditingChapitreId(null)} className="p-2 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 rounded-lg transition-colors"><IconX /></button>
                               </div>
                             </div>
@@ -756,10 +771,10 @@ export const ProjetDqePage = () => {
                                 <span className="text-xs font-bold text-white/60">{chap.nombreLignes} postes</span>
                                 {canEdit && (
                                   <div className="flex gap-1 opacity-60 hover:opacity-100 transition-opacity">
-                                    <button onClick={() => { setEditingChapitreId(chap.id); setEditChapitreForm({ numero: chap.numero, designation: chap.designation }) }} className="p-1.5 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Modifier"><IconEdit /></button>
-                                    <button onClick={() => handleDeleteChapitre(chap)} className="p-1.5 text-white/50 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors" title="Supprimer"><IconTrash /></button>
-                                    <button onClick={() => { setAddingLigneChapitreId(chap.id); setLigneForm({ ...emptyLigneForm, numeroPoste: nextPosteNumero(chap) }) }} className="p-1.5 text-white/50 hover:text-emerald-300 hover:bg-emerald-500/20 rounded-lg transition-colors" title="Ajouter un poste"><IconPlus /></button>
-                                    <button onClick={() => { setBatchChapitreId(batchChapitreId === chap.id ? null : chap.id); setBatchPct('100') }} className="p-1.5 text-white/50 hover:text-amber-300 hover:bg-amber-500/20 rounded-lg transition-colors" title="Avancement en masse"><IconPercent /></button>
+                                    <button onClick={() => { setEditingChapitreId(chap.id); setEditChapitreForm({ numero: chap.numero, designation: chap.designation }) }} disabled={!isOnline} title={!isOnline ? t('offline.actionUnavailable') : 'Modifier'} className="p-1.5 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><IconEdit /></button>
+                                    <button onClick={() => handleDeleteChapitre(chap)} disabled={!isOnline} title={!isOnline ? t('offline.actionUnavailable') : 'Supprimer'} className="p-1.5 text-white/50 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><IconTrash /></button>
+                                    <button onClick={() => { setAddingLigneChapitreId(chap.id); setLigneForm({ ...emptyLigneForm, numeroPoste: nextPosteNumero(chap) }) }} disabled={!isOnline} title={!isOnline ? t('offline.actionUnavailable') : 'Ajouter un poste'} className="p-1.5 text-white/50 hover:text-emerald-300 hover:bg-emerald-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><IconPlus /></button>
+                                    <button onClick={() => { setBatchChapitreId(batchChapitreId === chap.id ? null : chap.id); setBatchPct('100') }} disabled={!isOnline} title={!isOnline ? t('offline.actionUnavailable') : 'Avancement en masse'} className="p-1.5 text-white/50 hover:text-amber-300 hover:bg-amber-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><IconPercent /></button>
                                   </div>
                                 )}
                               </div>
@@ -773,7 +788,7 @@ export const ProjetDqePage = () => {
                                 <span className="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">Avancement en masse — {chap.numero}</span>
                                 <input type="number" min="0" max="100" value={batchPct} onChange={(e) => setBatchPct(e.target.value)} className="w-20 border border-amber-300 dark:border-amber-600 rounded-lg px-2.5 py-1.5 text-sm text-center font-bold bg-white dark:bg-gray-800 dark:text-white focus:border-amber-500 outline-none" />
                                 <span className="text-xs text-amber-600 dark:text-amber-400">% pour les {chap.nombreLignes} lignes</span>
-                                <Button variant="primary" size="sm" onClick={() => handleBatchAvancement(chap.id)} disabled={saving} className="flex items-center gap-1.5"><IconCheck /> Appliquer</Button>
+                                <Button variant="primary" size="sm" onClick={() => handleBatchAvancement(chap.id)} disabled={saving || !isOnline} title={!isOnline ? t('offline.actionUnavailable') : undefined} className="flex items-center gap-1.5"><IconCheck /> Appliquer</Button>
                                 <button onClick={() => setBatchChapitreId(null)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"><IconX /></button>
                               </div>
                             </td>
@@ -802,7 +817,7 @@ export const ProjetDqePage = () => {
                             <input type="number" value={ligneForm.montantTotal} onChange={(e) => setLigneForm({ ...ligneForm, montantTotal: e.target.value })} placeholder="Montant (auto)" className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-emerald-50 dark:bg-emerald-900/20 dark:text-white focus:border-primary outline-none tabular-nums" />
                           </div>
                           <div className="flex gap-2 mt-3">
-                            <Button variant="primary" size="sm" onClick={() => handleCreateLigne(chap.id)} disabled={saving || !ligneForm.designation.trim()} className="flex items-center gap-1.5"><IconCheck /> Valider</Button>
+                            <Button variant="primary" size="sm" onClick={() => handleCreateLigne(chap.id)} disabled={saving || !ligneForm.designation.trim() || !isOnline} title={!isOnline ? t('offline.actionUnavailable') : undefined} className="flex items-center gap-1.5"><IconCheck /> Valider</Button>
                             <Button variant="outline" size="sm" onClick={() => { setAddingLigneChapitreId(null); setLigneForm(emptyLigneForm) }} className="flex items-center gap-1.5"><IconX /> Annuler</Button>
                           </div>
                         </td>
@@ -849,7 +864,7 @@ export const ProjetDqePage = () => {
                         <td className="py-2.5 px-3"><input type="number" min="0" max="100" value={editLigneForm.avancementPct} onChange={(e) => setEditLigneForm({ ...editLigneForm, avancementPct: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2.5 py-2 text-sm text-center bg-white dark:bg-gray-800 dark:text-white focus:border-primary outline-none" /></td>
                         <td className="py-2.5 px-3 border-l border-gray-100 dark:border-gray-800">
                           <div className="flex gap-1 justify-center">
-                            <button onClick={() => handleUpdateLigne(ligne.id)} disabled={saving} className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg transition-colors"><IconCheck /></button>
+                            <button onClick={() => handleUpdateLigne(ligne.id)} disabled={saving || !isOnline} title={!isOnline ? t('offline.actionUnavailable') : undefined} className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><IconCheck /></button>
                             <button onClick={() => setEditingLigneId(null)} className="p-1.5 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 rounded-lg transition-colors"><IconX /></button>
                           </div>
                         </td>
@@ -861,7 +876,7 @@ export const ProjetDqePage = () => {
                     <SortableTableRow
                       key={`l-${ligne.id}`}
                       id={`ligne-${ligne.id}`}
-                      disabled={!canEdit}
+                      disabled={!canEdit || !isOnline}
                     >
                       <td className={`py-3 px-4 border-r border-gray-100 dark:border-gray-800/50 group transition-colors duration-100 ${rIdx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/40 dark:bg-gray-800/10'} hover:bg-blue-50/30 dark:hover:bg-blue-900/5`}>
                         <div className="flex items-center gap-1.5">
@@ -895,9 +910,9 @@ export const ProjetDqePage = () => {
                       {canEdit && (
                         <td className="py-3 px-3 border-l border-gray-100 dark:border-gray-800/50">
                           <div className="flex gap-0.5 justify-center opacity-50 hover:opacity-100 transition-opacity duration-150">
-                            <button onClick={() => { setEditingLigneId(ligne.id); setEditLigneForm(ligneToForm(ligne)) }} className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all" title="Modifier"><IconEdit /></button>
-                            <button onClick={() => handleDuplicateLigne(ligne, row.chapitreId)} disabled={saving} className="p-1.5 text-gray-400 hover:text-secondary hover:bg-secondary/5 rounded-lg transition-all" title="Dupliquer"><IconCopy /></button>
-                            <button onClick={() => handleDeleteLigne(ligne)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Supprimer"><IconTrash /></button>
+                            <button onClick={() => { setEditingLigneId(ligne.id); setEditLigneForm(ligneToForm(ligne)) }} disabled={!isOnline} title={!isOnline ? t('offline.actionUnavailable') : 'Modifier'} className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"><IconEdit /></button>
+                            <button onClick={() => handleDuplicateLigne(ligne, row.chapitreId)} disabled={saving || !isOnline} title={!isOnline ? t('offline.actionUnavailable') : 'Dupliquer'} className="p-1.5 text-gray-400 hover:text-secondary hover:bg-secondary/5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"><IconCopy /></button>
+                            <button onClick={() => handleDeleteLigne(ligne)} disabled={!isOnline} title={!isOnline ? t('offline.actionUnavailable') : 'Supprimer'} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"><IconTrash /></button>
                           </div>
                         </td>
                       )}
@@ -950,10 +965,29 @@ export const ProjetDqePage = () => {
           </div>
         )}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="border-t border-gray-200 dark:border-gray-800">
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+        {/* Pagination + Tout afficher */}
+        {flatRows.length > ROWS_PER_PAGE && (
+          <div className="border-t border-gray-200 dark:border-gray-800 flex flex-col items-center gap-2 py-3">
+            {!showAll && totalPages > 1 && (
+              <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+            )}
+            <button
+              type="button"
+              onClick={() => { setShowAll(!showAll); if (!showAll) setPage(1) }}
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              {showAll ? (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" /></svg>
+                  Paginer ({ROWS_PER_PAGE} lignes/page)
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>
+                  Tout afficher ({flatRows.length} lignes)
+                </>
+              )}
+            </button>
           </div>
         )}
       </div>

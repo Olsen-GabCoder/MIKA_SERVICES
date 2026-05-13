@@ -5,6 +5,8 @@ import { fetchDocuments, createDocument, deleteDocument, fetchDocumentById } fro
 import { qualiteDocumentApi } from '@/api/qualiteDocumentApi'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { useConfirm } from '@/contexts/ConfirmContext'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import type { VersionDocumentResponse } from '@/types/qualiteDocument'
 
 const CARD = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm overflow-hidden'
@@ -108,6 +110,7 @@ function DropZone({
 
 export default function DocumentsQualitePage() {
   const { t } = useTranslation('qualite')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
 
@@ -194,10 +197,12 @@ export default function DocumentsQualitePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('documents.title')}</h1>
-        <button onClick={() => setShowCreate(true)}
-          className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#e55a2b] transition-colors shadow-sm">
-          {t('documents.create')}
-        </button>
+        <OfflineDisabledButton>
+          <button onClick={() => setShowCreate(true)}
+            className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#e55a2b] transition-colors shadow-sm">
+            {t('documents.create')}
+          </button>
+        </OfflineDisabledButton>
       </div>
 
       {/* Filter */}
@@ -251,7 +256,10 @@ export default function DocumentsQualitePage() {
                       </td>
                       <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{d.updatedAt?.substring(0, 10) ?? '\u2014'}</td>
                       <td className="py-3 px-4" onClick={e => e.stopPropagation()}>
-                        <button onClick={() => handleDelete(d.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 text-xs">{t('documents.delete')}</button>
+                        <button onClick={() => handleDelete(d.id)}
+                          disabled={!isOnline}
+                          title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                          className="text-red-600 hover:text-red-800 dark:text-red-400 text-xs disabled:opacity-50 disabled:cursor-not-allowed">{t('documents.delete')}</button>
                       </td>
                     </tr>
                   )
@@ -325,10 +333,12 @@ export default function DocumentsQualitePage() {
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <h3 className="font-medium text-gray-900 dark:text-white">{t('documents.historique')}</h3>
-              <button onClick={() => setShowVersion(true)}
-                className="px-3 py-1.5 bg-[#FF6B35] text-white rounded-lg text-sm hover:bg-[#e55a2b] transition-colors shadow-sm">
-                {t('documents.nouvelleVersion')}
-              </button>
+              <OfflineDisabledButton>
+                <button onClick={() => setShowVersion(true)}
+                  className="px-3 py-1.5 bg-[#FF6B35] text-white rounded-lg text-sm hover:bg-[#e55a2b] transition-colors shadow-sm">
+                  {t('documents.nouvelleVersion')}
+                </button>
+              </OfflineDisabledButton>
             </div>
 
             <div className="space-y-2">

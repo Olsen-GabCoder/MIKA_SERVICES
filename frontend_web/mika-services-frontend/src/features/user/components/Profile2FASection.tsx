@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { authApi } from '@/api/authApi'
 import { setCurrentUser } from '@/store/slices/userSlice'
 import { setUser } from '@/store/slices/authSlice'
@@ -97,6 +98,7 @@ const StepDot = ({ active, done, n }: { active: boolean; done: boolean; n: numbe
 
 export const Profile2FASection = () => {
   const { t } = useTranslation('auth')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const currentUser = useAppSelector((state) => state.user.currentUser)
   const [loading, setLoading] = useState(false)
@@ -263,7 +265,8 @@ export const Profile2FASection = () => {
                 type="button"
                 variant="primary"
                 isLoading={loading}
-                disabled={loading || setupCode.replace(/\D/g, '').length < 6}
+                disabled={loading || setupCode.replace(/\D/g, '').length < 6 || !isOnline}
+                title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                 onClick={handleVerifySetup}
               >
                 {t('twoFa.setupSubmit')}
@@ -323,7 +326,8 @@ export const Profile2FASection = () => {
             </div>
 
             <div className="flex gap-2 flex-wrap">
-              <Button type="submit" variant="primary" isLoading={loading}>
+              <Button type="submit" variant="primary" isLoading={loading} disabled={loading || !isOnline}
+                title={!isOnline ? t('common:offline.actionUnavailable') : undefined}>
                 {t('twoFa.disableSubmit')}
               </Button>
               <button
@@ -347,11 +351,13 @@ export const Profile2FASection = () => {
             </p>
             <div className="flex gap-2 flex-wrap mt-4">
               {totpEnabled ? (
-                <Button type="button" variant="secondary" onClick={() => setShowDisableForm(true)}>
+                <Button type="button" variant="secondary" onClick={() => setShowDisableForm(true)}
+                  disabled={!isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined}>
                   {t('twoFa.disableTitle')}
                 </Button>
               ) : (
-                <Button type="button" variant="primary" onClick={handleStartSetup} isLoading={loading}>
+                <Button type="button" variant="primary" onClick={handleStartSetup} isLoading={loading}
+                  disabled={loading || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined}>
                   {t('twoFa.setupSubmit')}
                 </Button>
               )}

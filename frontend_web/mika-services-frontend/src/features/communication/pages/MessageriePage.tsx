@@ -2,6 +2,8 @@ import React, { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallba
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { useIsOnline } from "@/hooks/useConnectivity";
+import { OfflineBlockedPage } from "@/components/pwa/OfflineBlockedPage";
 import {
   fetchMessagesRecus,
   fetchMessagesEnvoyes,
@@ -751,6 +753,9 @@ export default function MessageriePage(){
 
   const showList=!selectedConversation||!mobileShowReader;
   const showChat=selectedConversation&&mobileShowReader;
+  const isOnline = useIsOnline()
+
+  if (!isOnline) return <OfflineBlockedPage pageNameKey="offline.pages.messagerie" />
 
   return(
     <div

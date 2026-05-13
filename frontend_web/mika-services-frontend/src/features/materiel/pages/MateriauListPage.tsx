@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { fetchMateriaux, deleteMateriau } from '@/store/slices/materiauSlice'
@@ -29,6 +30,7 @@ function SkeletonRowMateriau() {
 
 export const MateriauListPage = () => {
   const { t, i18n } = useTranslation('materiel')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
   const { materiaux, totalElements, totalPages, currentPage, loading, error } = useAppSelector((state) => state.materiau)
@@ -299,7 +301,9 @@ export const MateriauListPage = () => {
                           <button
                             type="button"
                             onClick={() => handleDelete(m.id, m.nom)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-700/50 bg-red-50/80 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/35 transition-all duration-150"
+                            disabled={!isOnline}
+                            title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-700/50 bg-red-50/80 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/35 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {t('materiau.delete')}
                           </button>

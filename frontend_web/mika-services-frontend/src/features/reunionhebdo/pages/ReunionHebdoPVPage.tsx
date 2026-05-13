@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useConfirm } from '@/contexts/ConfirmContext'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Button } from '@/components/ui/Button'
 import { reunionHebdoApi } from '@/api/reunionHebdoApi'
@@ -216,6 +217,7 @@ function PVLoadingSkeleton() {
 
 export const ReunionHebdoPVPage = () => {
   const { t } = useTranslation('reunionHebdo')
+  const isOnline = useIsOnline()
   const formatDate = useFormatDate()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -385,8 +387,9 @@ export const ReunionHebdoPVPage = () => {
                 <button
                   type="button"
                   onClick={handleDownloadPV}
-                  disabled={exportingPV}
-                  className="bg-primary text-white rounded-xl px-5 py-2.5 font-bold inline-flex items-center gap-2 hover:bg-primary-dark transition-colors disabled:opacity-60 text-sm shadow-sm"
+                  disabled={exportingPV || !isOnline}
+                  title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                  className="bg-primary text-white rounded-xl px-5 py-2.5 font-bold inline-flex items-center gap-2 hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-sm shadow-sm"
                 >
                   {exportingPV ? (
                     <svg className="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
@@ -402,7 +405,9 @@ export const ReunionHebdoPVPage = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/reunions-hebdo/' + id + '/edit')}
-                  className="border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors inline-flex items-center gap-2"
+                  disabled={!isOnline}
+                  title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                  className="border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <IconPencil />
                   {t('pv.editMeeting')}
@@ -577,7 +582,9 @@ export const ReunionHebdoPVPage = () => {
                           <button
                             type="button"
                             onClick={() => setEditingPoint(editingPoint === point.id ? null : point.id)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border text-xs font-bold uppercase tracking-wide transition-colors shrink-0 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800"
+                            disabled={!isOnline}
+                            title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border text-xs font-bold uppercase tracking-wide transition-colors shrink-0 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {editingPoint === point.id ? (
                               <>
@@ -694,6 +701,7 @@ export const ReunionHebdoPVPage = () => {
                               onSave={handleSavePoint}
                               onCancel={() => setEditingPoint(null)}
                               onDelete={() => handleDeletePoint(point.id)}
+                              isOnline={isOnline}
                             />
                           )}
                         </div>
@@ -808,7 +816,7 @@ export const ReunionHebdoPVPage = () => {
           </motion.div>
 
           <div className="hidden xl:block space-y-2">
-            <Button type="button" variant="primary" className="w-full justify-center inline-flex items-center gap-2" onClick={handleDownloadPV} disabled={exportingPV} isLoading={exportingPV}>
+            <Button type="button" variant="primary" className="w-full justify-center inline-flex items-center gap-2" onClick={handleDownloadPV} disabled={exportingPV || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} isLoading={exportingPV}>
               <IconDownload />
               {t('pv.downloadPV')}
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/20 text-white uppercase tracking-wide">PDF</span>
@@ -816,7 +824,9 @@ export const ReunionHebdoPVPage = () => {
             <button
               type="button"
               onClick={() => navigate('/reunions-hebdo/' + id + '/edit')}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors inline-flex items-center justify-center gap-2"
+              disabled={!isOnline}
+              title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconPencil />
               {t('pv.editMeeting')}
@@ -833,11 +843,13 @@ function PointProjetEditForm({
   onSave,
   onCancel,
   onDelete,
+  isOnline,
 }: {
   point: PointProjetPV
   onSave: (data: PointProjetPVRequest) => Promise<void>
   onCancel: () => void
   onDelete: () => void
+  isOnline: boolean
 }) {
   const { t } = useTranslation('reunionHebdo')
   const [saving, setSaving] = useState(false)
@@ -900,13 +912,13 @@ function PointProjetEditForm({
         <StyledTextarea value={propositionsAmelioration} onChange={(e) => setPropositionsAmelioration(e.target.value)} rows={2} />
       </FieldGroup>
       <div className="flex flex-wrap gap-2 pt-2">
-        <Button type="submit" variant="primary" size="sm" disabled={saving} isLoading={saving}>
+        <Button type="submit" variant="primary" size="sm" disabled={saving || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} isLoading={saving}>
           {t('pv.form.save')}
         </Button>
         <Button type="button" variant="outline" size="sm" onClick={onCancel}>
           {t('pv.form.cancel')}
         </Button>
-        <Button type="button" variant="danger" size="sm" onClick={() => onDelete()}>
+        <Button type="button" variant="danger" size="sm" disabled={!isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} onClick={() => onDelete()}>
           {t('pv.form.removeFromPV')}
         </Button>
       </div>

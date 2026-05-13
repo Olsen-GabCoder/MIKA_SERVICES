@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { PageContainer } from '@/components/layout/PageContainer'
 import {
   fetchMouvements,
@@ -89,6 +91,7 @@ type PendingAction = { type: 'depart' | 'reception' | 'annuler'; mouvementId: nu
 
 export function MouvementEnginListPage() {
   const { t, i18n } = useTranslation('materiel')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const { mouvements, totalElements, totalPages, currentPage, loading, actionLoading, error } = useAppSelector((s) => s.mouvementEngin)
 
@@ -151,16 +154,18 @@ export function MouvementEnginListPage() {
                     <p className="text-sm font-bold text-white">{totalElements.toLocaleString(i18n.language)}</p>
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setShowCreate(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-primary font-bold text-sm shadow-md hover:bg-white/90 transition-all duration-200"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                  {t('mouvement.create')}
-                </button>
+                <OfflineDisabledButton>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreate(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-primary font-bold text-sm shadow-md hover:bg-white/90 transition-all duration-200"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    {t('mouvement.create')}
+                  </button>
+                </OfflineDisabledButton>
               </div>
             </div>
           </div>
@@ -284,17 +289,19 @@ export function MouvementEnginListPage() {
                               <>
                                 <button
                                   type="button"
-                                  disabled={isActing}
+                                  disabled={isActing || !isOnline}
+                                  title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                                   onClick={() => setPendingAction({ type: 'depart', mouvementId: m.id, label: t('mouvement.action.confirmDepart') })}
-                                  className="px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-700/50 bg-indigo-50/80 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/35 disabled:opacity-50 transition-all"
+                                  className="px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-700/50 bg-indigo-50/80 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/35 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                 >
                                   {t('mouvement.action.confirmDepart')}
                                 </button>
                                 <button
                                   type="button"
-                                  disabled={isActing}
+                                  disabled={isActing || !isOnline}
+                                  title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                                   onClick={() => setPendingAction({ type: 'annuler', mouvementId: m.id, label: t('mouvement.action.annuler') })}
-                                  className="px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-700/50 bg-red-50/80 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/35 disabled:opacity-50 transition-all"
+                                  className="px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-700/50 bg-red-50/80 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/35 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                 >
                                   {t('mouvement.action.annuler')}
                                 </button>
@@ -303,9 +310,10 @@ export function MouvementEnginListPage() {
                             {m.statut === 'EN_TRANSIT' && (
                               <button
                                 type="button"
-                                disabled={isActing}
+                                disabled={isActing || !isOnline}
+                                title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                                 onClick={() => setPendingAction({ type: 'reception', mouvementId: m.id, label: t('mouvement.action.confirmReception') })}
-                                className="px-2.5 py-1.5 rounded-lg border border-green-200 dark:border-green-700/50 bg-green-50/80 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs font-bold hover:bg-green-100 dark:hover:bg-green-900/35 disabled:opacity-50 transition-all"
+                                className="px-2.5 py-1.5 rounded-lg border border-green-200 dark:border-green-700/50 bg-green-50/80 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs font-bold hover:bg-green-100 dark:hover:bg-green-900/35 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                               >
                                 {isActing ? '…' : t('mouvement.action.confirmReception')}
                               </button>

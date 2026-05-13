@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { documentApi } from '@/api/documentApi'
 import { TypeDocument } from '@/types/document'
 import type { DocumentFile } from '@/types/document'
@@ -68,6 +69,7 @@ const EmptyIcon = () => (
 
 export const ProfileCvSection = () => {
   const { t } = useTranslation('user')
+  const isOnline = useIsOnline()
   const currentUser = useAppSelector((state) => state.user.currentUser)
   const [cvList, setCvList] = useState<DocumentFile[]>([])
   const [loading, setLoading] = useState(true)
@@ -150,7 +152,8 @@ export const ProfileCvSection = () => {
         )}
 
         <label
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold border-2 border-dashed border-primary bg-primary/10 text-primary cursor-pointer transition-colors hover:bg-primary/20 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 ${uploading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold border-2 border-dashed border-primary bg-primary/10 text-primary cursor-pointer transition-colors hover:bg-primary/20 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 ${uploading ? 'opacity-70 cursor-not-allowed' : ''} ${!isOnline ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+          title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
         >
           {uploading ? (
             <svg className="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -167,7 +170,7 @@ export const ProfileCvSection = () => {
             accept=".pdf,application/pdf"
             className="sr-only"
             onChange={handleUpload}
-            disabled={uploading}
+            disabled={uploading || !isOnline}
           />
         </label>
 

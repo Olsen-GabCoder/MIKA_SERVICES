@@ -9,6 +9,7 @@ interface ReportingState {
   projetReport: ProjetReport | null
   loading: boolean
   error: string | null
+  lastFetched: string | null
 }
 
 const initialState: ReportingState = {
@@ -16,6 +17,7 @@ const initialState: ReportingState = {
   projetReport: null,
   loading: false,
   error: null,
+  lastFetched: null,
 }
 
 export const fetchGlobalDashboard = createAsyncThunk(
@@ -51,7 +53,7 @@ const reportingSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(fetchGlobalDashboard.pending, (state) => { state.loading = true; state.error = null })
-    builder.addCase(fetchGlobalDashboard.fulfilled, (state, action) => { state.dashboard = action.payload; state.loading = false })
+    builder.addCase(fetchGlobalDashboard.fulfilled, (state, action) => { state.dashboard = action.payload; state.loading = false; state.lastFetched = new Date().toISOString() })
     builder.addCase(fetchGlobalDashboard.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
 
     builder.addCase(fetchProjetReport.pending, (state) => { state.loading = true; state.error = null })

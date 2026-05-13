@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchAgrements, createAgrement, updateAgrement, deleteAgrement } from '@/store/slices/qualiteAgrementSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { StatutAgrement } from '@/types/qualiteAgrement'
@@ -22,6 +24,7 @@ const statutColors: Record<string, string> = {
 
 export default function AgrementsPage() {
   const { t } = useTranslation('qualite')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
 
@@ -113,10 +116,12 @@ export default function AgrementsPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('agrements.subtitle')}</p>
         </div>
         {projetId && (
-          <button onClick={openCreate}
-            className="bg-[#FF6B35] text-white px-4 py-2.5 rounded-lg hover:bg-[#e55a2b] font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-lg leading-none">+</span> {t('agrements.create')}
-          </button>
+          <OfflineDisabledButton>
+            <button onClick={openCreate}
+              className="bg-[#FF6B35] text-white px-4 py-2.5 rounded-lg hover:bg-[#e55a2b] font-medium shadow-sm transition flex items-center gap-2 self-start sm:self-auto">
+              <span className="text-lg leading-none">+</span> {t('agrements.create')}
+            </button>
+          </OfflineDisabledButton>
         )}
       </div>
 
@@ -193,8 +198,14 @@ export default function AgrementsPage() {
                         <td className="py-3 px-4 text-gray-500 dark:text-gray-400 tabular-nums">{a.dateSoumission ?? '—'}</td>
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
-                            <button onClick={() => openEdit(a)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs transition">{t('agrements.edit')}</button>
-                            <button onClick={() => handleDelete(a.id)} className="text-red-500 hover:text-red-700 dark:text-red-400 text-xs transition">{t('agrements.delete')}</button>
+                            <button onClick={() => openEdit(a)}
+                              disabled={!isOnline}
+                              title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs transition disabled:opacity-50 disabled:cursor-not-allowed">{t('agrements.edit')}</button>
+                            <button onClick={() => handleDelete(a.id)}
+                              disabled={!isOnline}
+                              title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                              className="text-red-500 hover:text-red-700 dark:text-red-400 text-xs transition disabled:opacity-50 disabled:cursor-not-allowed">{t('agrements.delete')}</button>
                           </div>
                         </td>
                       </tr>

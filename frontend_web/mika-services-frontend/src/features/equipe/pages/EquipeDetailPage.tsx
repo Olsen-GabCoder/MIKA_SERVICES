@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { fetchEquipeById, clearEquipeDetail } from '@/store/slices/equipeSlice'
 import { equipeApi } from '@/api/chantierApi'
@@ -12,6 +14,7 @@ import { useFormatDate } from '@/hooks/useFormatDate'
 
 export const EquipeDetailPage = () => {
   const { t } = useTranslation('equipe')
+  const isOnline = useIsOnline()
   const formatDate = useFormatDate()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -102,12 +105,14 @@ export const EquipeDetailPage = () => {
             <span className="text-sm text-gray-500">{t('detail.effectifLabel')} : {equipe.effectif}</span>
           </div>
         </div>
-        <button
-          onClick={() => navigate(`/equipes/${equipe.id}/edit`)}
-          className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          {t('detail.edit')}
-        </button>
+        <OfflineDisabledButton>
+          <button
+            onClick={() => navigate(`/equipes/${equipe.id}/edit`)}
+            className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            {t('detail.edit')}
+          </button>
+        </OfflineDisabledButton>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -125,13 +130,15 @@ export const EquipeDetailPage = () => {
           <div className="bg-white rounded-xl shadow-sm border p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-gray-900">{t('detail.members')}</h2>
-              <button
-                type="button"
-                onClick={() => setShowAddMembre(true)}
-                className="text-sm bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-dark"
-              >
-                {t('detail.addMember')}
-              </button>
+              <OfflineDisabledButton>
+                <button
+                  type="button"
+                  onClick={() => setShowAddMembre(true)}
+                  className="text-sm bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-dark"
+                >
+                  {t('detail.addMember')}
+                </button>
+              </OfflineDisabledButton>
             </div>
 
             {showAddMembre && (
@@ -168,8 +175,9 @@ export const EquipeDetailPage = () => {
                 </div>
                 <button
                   type="submit"
-                  disabled={adding}
-                  className="px-4 py-2 bg-primary text-white rounded-lg text-sm disabled:opacity-50"
+                  disabled={adding || !isOnline}
+                  title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                  className="px-4 py-2 bg-primary text-white rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {adding ? t('detail.adding') : t('detail.add')}
                 </button>

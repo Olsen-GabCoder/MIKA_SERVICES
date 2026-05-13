@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { fetchFournisseurs, fetchCommandes, createFournisseur, deleteFournisseur } from '../../../store/slices/fournisseurSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -13,6 +15,7 @@ const statutColors: Record<string, string> = {
 
 export default function FournisseurPage() {
   const { t } = useTranslation('fournisseur')
+  const isOnline = useIsOnline()
   const { formatMontant } = useFormatNumber()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
@@ -50,9 +53,11 @@ export default function FournisseurPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('title')}</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">{t('subtitle', { suppliers: totalFournisseurs, orders: totalCommandes })}</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition">
-          {t('newSupplier')}
-        </button>
+        <OfflineDisabledButton>
+          <button onClick={() => setShowModal(true)} className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition">
+            {t('newSupplier')}
+          </button>
+        </OfflineDisabledButton>
       </div>
 
       {/* Onglets */}
@@ -88,7 +93,7 @@ export default function FournisseurPage() {
                     {f.noteEvaluation != null && <span>{t('note', { value: f.noteEvaluation })}</span>}
                   </div>
                 </div>
-                <button onClick={() => handleDelete(f.id)} className="text-xs text-red-500 hover:text-red-700">{t('delete')}</button>
+                <button onClick={() => handleDelete(f.id)} disabled={!isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed">{t('delete')}</button>
               </div>
             </div>
           ))}
@@ -138,7 +143,7 @@ export default function FournisseurPage() {
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => { setShowModal(false); resetForm() }} className="px-4 py-2 border dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">{t('cancel')}</button>
-              <button onClick={handleCreate} disabled={!formNom.trim()} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50">{t('create')}</button>
+              <button onClick={handleCreate} disabled={!formNom.trim() || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed">{t('create')}</button>
             </div>
           </div>
         </div>

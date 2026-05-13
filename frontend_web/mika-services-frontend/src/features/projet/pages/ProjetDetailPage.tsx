@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { useFormatDate } from '@/hooks/useFormatDate'
 import { useFormatNumber } from '@/hooks/useFormatNumber'
 import { ProjetDownloadDocumentModal } from '@/features/projet/components/ProjetDownloadDocumentModal'
@@ -423,27 +424,31 @@ export const ProjetDetailPage = () => {
               </svg>
               DQE
             </button>
-            <button
-              type="button"
-              onClick={() => setDownloadModalOpen(true)}
-              disabled={exportingDocument}
-              className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 border border-gray-200 dark:border-gray-700 disabled:opacity-60"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              {exportingDocument ? t('detail.downloadGenerating') : t('detail.downloadDocument')}
-            </button>
-            {canEditProjet && (
+            <OfflineDisabledButton>
               <button
-                onClick={() => navigate(`/projets/${projet.id}/edit`)}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-bold px-5 py-2 rounded-xl shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                type="button"
+                onClick={() => setDownloadModalOpen(true)}
+                disabled={exportingDocument}
+                className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 border border-gray-200 dark:border-gray-700 disabled:opacity-60"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                {t('detail.editProject')}
+                {exportingDocument ? t('detail.downloadGenerating') : t('detail.downloadDocument')}
               </button>
+            </OfflineDisabledButton>
+            {canEditProjet && (
+              <OfflineDisabledButton>
+                <button
+                  onClick={() => navigate(`/projets/${projet.id}/edit`)}
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-bold px-5 py-2 rounded-xl shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  {t('detail.editProject')}
+                </button>
+              </OfflineDisabledButton>
             )}
           </div>
         </div>
@@ -1122,7 +1127,9 @@ export const ProjetDetailPage = () => {
       {/* Assistant IA Chatbot */}
       {canEditProjet && (
         <>
-          <ChatbotFloatingButton onClick={() => setChatbotOpen(true)} />
+          <OfflineDisabledButton>
+            <ChatbotFloatingButton onClick={() => setChatbotOpen(true)} />
+          </OfflineDisabledButton>
           <ProjetChatbotDrawer
             isOpen={chatbotOpen}
             onClose={() => setChatbotOpen(false)}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
 import { fetchEnginById, clearEnginDetail, deleteEngin } from '@/store/slices/enginSlice'
 import { enginApi } from '@/api/enginApi'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -40,6 +41,7 @@ export function EnginDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t } = useTranslation('materiel')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
   const { enginDetail, loading, error } = useAppSelector((s) => s.engin)
@@ -128,14 +130,18 @@ export function EnginDetailPage() {
             <button
               type="button"
               onClick={() => setShowEditModal(true)}
-              className="px-3 py-2 rounded-xl bg-white text-primary text-xs font-bold hover:bg-white/90 transition-colors shadow"
+              disabled={!isOnline}
+              title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+              className="px-3 py-2 rounded-xl bg-white text-primary text-xs font-bold hover:bg-white/90 transition-colors shadow disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t('detail.edit')}
             </button>
             <button
               type="button"
               onClick={handleDelete}
-              className="px-3 py-2 rounded-xl bg-red-500/20 border border-red-400/30 text-red-200 text-xs font-bold hover:bg-red-500/30 transition-colors"
+              disabled={!isOnline}
+              title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+              className="px-3 py-2 rounded-xl bg-red-500/20 border border-red-400/30 text-red-200 text-xs font-bold hover:bg-red-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t('engin.delete')}
             </button>

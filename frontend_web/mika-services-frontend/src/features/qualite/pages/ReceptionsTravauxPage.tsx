@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import {
   fetchReceptions,
   createReception,
@@ -27,6 +29,7 @@ const statutColors: Record<string, string> = {
 
 export default function ReceptionsTravauxPage() {
   const { t } = useTranslation('qualite')
+  const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const projets = useAppSelector(s => s.projet.projets)
   const { demandes, summary, loading, totalPages, currentPage } = useAppSelector(s => s.qualiteReception)
@@ -100,12 +103,14 @@ export default function ReceptionsTravauxPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('receptions.title')}</h1>
         {projetId && (
-          <button
-            onClick={() => setShowCreate(true)}
-            className="px-4 py-2 rounded-lg bg-[#FF6B35] text-white text-sm font-medium hover:bg-[#e55a28] transition self-start sm:self-auto"
-          >
-            + {t('receptions.create')}
-          </button>
+          <OfflineDisabledButton>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="px-4 py-2 rounded-lg bg-[#FF6B35] text-white text-sm font-medium hover:bg-[#e55a28] transition self-start sm:self-auto"
+            >
+              + {t('receptions.create')}
+            </button>
+          </OfflineDisabledButton>
         )}
       </div>
 
@@ -195,7 +200,9 @@ export default function ReceptionsTravauxPage() {
                 </div>
                 <button
                   onClick={() => handleDelete(d.id)}
-                  className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 shrink-0"
+                  disabled={!isOnline}
+                  title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                  className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Supprimer
                 </button>

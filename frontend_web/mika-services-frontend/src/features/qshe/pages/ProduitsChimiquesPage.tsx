@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { qsheEnvApi } from '@/api/qsheEnvironnementApi'
 import type { ProduitChimiqueResponse, ProduitChimiqueCreateRequest } from '@/types/qsheEnvironnement'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineBlockedPage } from '@/components/pwa/OfflineBlockedPage'
 
 const CARD = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm overflow-hidden'
 
@@ -32,6 +34,9 @@ export default function ProduitsChimiquesPage() {
     setShowForm(false); setFCode(''); setFNom(''); setFFournisseur(''); setFPicto(''); setFEpi(''); setFDateFds('')
     load()
   }
+
+  const isOnline = useIsOnline()
+  if (!isOnline) return <OfflineBlockedPage pageNameKey="offline.pages.qsheProduits" />
 
   return (
     <PageContainer size="full" className="space-y-4 sm:space-y-6 bg-gray-50/80 dark:bg-gray-900/80">

@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { fetchDocuments, fetchDocumentsByProjet, uploadDocument, deleteDocument } from '../../../store/slices/documentSlice'
@@ -25,6 +27,7 @@ const typeColors: Record<TypeDocument, string> = {
 
 export default function DocumentPage() {
   const { t } = useTranslation('document')
+  const isOnline = useIsOnline()
   const formatDate = useFormatDate()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
@@ -99,13 +102,15 @@ export default function DocumentPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('title')}</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">{t('subtitle')}</p>
         </div>
-        <button
-          onClick={() => setShowUploadModal(true)}
-          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition flex items-center gap-2"
-        >
-          <span className="text-lg">+</span>
-          {t('upload')}
-        </button>
+        <OfflineDisabledButton>
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition flex items-center gap-2"
+          >
+            <span className="text-lg">+</span>
+            {t('upload')}
+          </button>
+        </OfflineDisabledButton>
       </div>
 
       {/* Filtres */}
@@ -157,7 +162,7 @@ export default function DocumentPage() {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => handleDownload(doc.id, doc.nomOriginal)} className="text-xs text-primary-600 hover:text-primary-800 font-medium transition">{t('download')}</button>
-                    <button onClick={() => handleDelete(doc.id)} className="text-xs text-red-500 hover:text-red-700 transition">{t('delete')}</button>
+                    <button onClick={() => handleDelete(doc.id)} disabled={!isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} className="text-xs text-red-500 hover:text-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed">{t('delete')}</button>
                   </div>
                 </div>
               </div>
@@ -217,7 +222,7 @@ export default function DocumentPage() {
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => { setShowUploadModal(false); resetUploadForm() }} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">{t('cancel')}</button>
-              <button onClick={handleUpload} disabled={!selectedFile || uploading} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50">
+              <button onClick={handleUpload} disabled={!selectedFile || uploading || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed">
                 {uploading ? t('uploading') : t('send')}
               </button>
             </div>

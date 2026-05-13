@@ -2,6 +2,8 @@ import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { fetchEquipes, deleteEquipe } from '@/store/slices/equipeSlice'
@@ -9,6 +11,7 @@ import type { TypeEquipe } from '@/types/chantier'
 
 export const EquipeListPage = () => {
   const { t } = useTranslation('equipe')
+  const isOnline = useIsOnline()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
@@ -46,12 +49,14 @@ export const EquipeListPage = () => {
           <h1 className="text-2xl font-bold text-gray-900">{t('list.title')}</h1>
           <p className="text-gray-500 mt-1">{t('list.totalCount', { count: totalElements })}</p>
         </div>
-        <button
-          onClick={() => navigate('/equipes/nouveau')}
-          className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          {t('list.newTeam')}
-        </button>
+        <OfflineDisabledButton>
+          <button
+            onClick={() => navigate('/equipes/nouveau')}
+            className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            {t('list.newTeam')}
+          </button>
+        </OfflineDisabledButton>
       </div>
 
       {loading ? (
@@ -91,7 +96,9 @@ export const EquipeListPage = () => {
                   <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => handleDelete(equipe.id, equipe.nom)}
-                      className="text-red-600 hover:text-red-800 text-sm"
+                      disabled={!isOnline}
+                      title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                      className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {t('list.delete')}
                     </button>

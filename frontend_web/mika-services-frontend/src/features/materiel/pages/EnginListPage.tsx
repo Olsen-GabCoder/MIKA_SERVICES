@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion'
 import { useAppDispatch } from '@/store/hooks'
 import { fetchEngins } from '@/store/slices/enginSlice'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { projetApi } from '@/api/projetApi'
 import { enginApi } from '@/api/enginApi'
@@ -701,20 +702,22 @@ export const EnginListPage = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <LiveClock />
-              <motion.button
-                type="button"
-                onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl
-                           bg-gradient-to-r from-primary to-primary-dark text-white font-bold text-sm
-                           shadow-lg shadow-primary/25"
-                whileHover={{ scale: 1.05, boxShadow: '0 12px 30px -4px rgba(232, 90, 42, 0.4)' }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                {t('engin.create')}
-              </motion.button>
+              <OfflineDisabledButton>
+                <motion.button
+                  type="button"
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl
+                             bg-gradient-to-r from-primary to-primary-dark text-white font-bold text-sm
+                             shadow-lg shadow-primary/25"
+                  whileHover={{ scale: 1.05, boxShadow: '0 12px 30px -4px rgba(232, 90, 42, 0.4)' }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  {t('engin.create')}
+                </motion.button>
+              </OfflineDisabledButton>
             </motion.div>
           </div>
 

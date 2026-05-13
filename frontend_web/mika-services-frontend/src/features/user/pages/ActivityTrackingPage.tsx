@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineBlockedPage } from '@/components/pwa/OfflineBlockedPage'
 import { auditApi, userApi } from '@/api/userApi'
 import type { AuditLogEntry, AuditFilterOptions, GlobalAuditStats } from '@/api/userApi'
 import type { User } from '@/types'
@@ -250,6 +252,9 @@ export const ActivityTrackingPage = () => {
 
   const from = page * size + 1
   const to = Math.min((page + 1) * size, totalElements)
+
+  const isOnline = useIsOnline()
+  if (!isOnline) return <OfflineBlockedPage pageNameKey="offline.pages.activite" />
 
   return (
     <PageContainer size="full" className="bg-gray-50 dark:bg-gray-950">

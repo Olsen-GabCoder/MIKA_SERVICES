@@ -4,7 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import type * as XLSXType from 'xlsx'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useIsOnline } from '@/hooks/useConnectivity'
+import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { CacheTimestampBanner } from '@/components/pwa/CacheTimestampBanner'
 import { setItemsPerPage } from '@/store/slices/uiSlice'
 import { fetchProjets, searchProjets, deleteProjet, fetchClients, clearError } from '@/store/slices/projetSlice'
 import { getProjetTypes } from '@/types/projet'
@@ -54,7 +57,7 @@ export const ProjetListPage = () => {
   const location = useLocation()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
-  const { projets, totalElements, totalPages, currentPage, loading, error, clients } = useAppSelector((state) => state.projet)
+  const { projets, totalElements, totalPages, currentPage, loading, error, clients, lastFetched } = useAppSelector((state) => state.projet)
   const currentUser = useAppSelector((state) => state.auth.user)
   const accessToken = useAppSelector((state) => state.auth.accessToken)
   const pageSize = useAppSelector((state) => state.ui.itemsPerPage)
@@ -67,6 +70,7 @@ export const ProjetListPage = () => {
   const [sortDir, setSortDir] = useState<SortDirection>('asc')
 
   const { formatMontant } = useFormatNumber()
+  const isOnline = useIsOnline()
 
   const STATUT_LABELS = useMemo(
     () =>
@@ -362,6 +366,7 @@ export const ProjetListPage = () => {
 
   return (
     <PageContainer size="full" className="h-full flex flex-col min-h-0 bg-gray-50 dark:bg-[#0d0f14]">
+      <CacheTimestampBanner lastFetched={lastFetched} />
 
       {/* ══════════ HERO HEADER ══════════ */}
       <div className="shrink-0 relative overflow-hidden">
@@ -401,28 +406,32 @@ export const ProjetListPage = () => {
             {/* Actions header */}
             <div className="flex items-center gap-3">
               {projets.length > 0 && (
-                <button
-                  onClick={exportListToExcel}
-                  title={t('list.exportExcelTitle')}
-                  className="group flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium hover:border-emerald-400 hover:text-emerald-600 dark:hover:border-emerald-500 dark:hover:text-emerald-400 hover:shadow-md hover:shadow-emerald-100 dark:hover:shadow-emerald-900/20 transition-all duration-200"
-                >
-                  <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  {t('list.exportExcel')}
-                </button>
+                <OfflineDisabledButton>
+                  <button
+                    onClick={exportListToExcel}
+                    title={t('list.exportExcelTitle')}
+                    className="group flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium hover:border-emerald-400 hover:text-emerald-600 dark:hover:border-emerald-500 dark:hover:text-emerald-400 hover:shadow-md hover:shadow-emerald-100 dark:hover:shadow-emerald-900/20 transition-all duration-200"
+                  >
+                    <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {t('list.exportExcel')}
+                  </button>
+                </OfflineDisabledButton>
               )}
               {isAdmin && (
-                <button
-                  onClick={() => navigate('/projets/nouveau')}
-                  className="group relative flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-bold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12" />
-                  <svg className="w-4 h-4 relative" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                  <span className="relative">{t('list.newProject')}</span>
-                </button>
+                <OfflineDisabledButton>
+                  <button
+                    onClick={() => navigate('/projets/nouveau')}
+                    className="group relative flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-bold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12" />
+                    <svg className="w-4 h-4 relative" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    <span className="relative">{t('list.newProject')}</span>
+                  </button>
+                </OfflineDisabledButton>
               )}
             </div>
           </div>
@@ -687,9 +696,10 @@ export const ProjetListPage = () => {
                             {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) && (
                               <button
                                 onClick={() => navigate(`/projets/${projet.id}/edit`)}
-                                title={t('list.edit')}
+                                disabled={!isOnline}
+                                title={!isOnline ? t('common:offline.actionUnavailable') : t('list.edit')}
                                 aria-label={t('list.editProject', { name: projet.nom })}
-                                className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-all duration-150 hover:scale-110"
+                                className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-all duration-150 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -699,9 +709,10 @@ export const ProjetListPage = () => {
                             {canDeleteProjetEffective(currentUser, accessToken) && (
                               <button
                                 onClick={() => handleDelete(projet.id, projet.nom)}
-                                title={t('list.delete')}
+                                disabled={!isOnline}
+                                title={!isOnline ? t('common:offline.actionUnavailable') : t('list.delete')}
                                 aria-label={t('list.deleteProject', { name: projet.nom })}
-                                className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-all duration-150 hover:scale-110"
+                                className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-all duration-150 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -770,13 +781,17 @@ export const ProjetListPage = () => {
                     <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                       {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) && (
                         <button type="button" onClick={() => navigate(`/projets/${projet.id}/edit`)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                          disabled={!isOnline}
+                          title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                           {t('list.edit')}
                         </button>
                       )}
                       {canDeleteProjetEffective(currentUser, accessToken) && (
                         <button type="button" onClick={() => handleDelete(projet.id, projet.nom)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                          disabled={!isOnline}
+                          title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                           {t('list.delete')}
                         </button>
                       )}

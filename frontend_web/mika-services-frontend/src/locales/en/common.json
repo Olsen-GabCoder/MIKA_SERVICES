@@ -255,5 +255,53 @@
     "forecast5Days": "5-day forecast",
     "unavailable": "Unable to load weather.",
     "retry": "Retry"
+  },
+  "offline": {
+    "actionUnavailable": "Action unavailable offline",
+    "pageBlockedTitle": "Page unavailable offline",
+    "pageBlockedMessage": "The {{pageName}} page requires an internet connection.",
+    "goBack": "Go back",
+    "dataFromCache": "Cached data (last sync: {{date}})",
+    "preferencesWarning": "You are offline. Preference changes won't be saved until the connection is restored.",
+    "formSubmitDisabled": "You are offline. Form submission is disabled. Your changes won't be saved if you leave this page.",
+    "profileWarning": "You are offline. Profile changes cannot be saved until the connection is restored.",
+    "pages": {
+      "messagerie": "Messaging",
+      "qsheDashboard": "QSHE Dashboard",
+      "qsheEnvironnement": "Environment",
+      "qsheProduits": "Chemical products",
+      "qualiteSynthese": "Monthly synthesis",
+      "activite": "Activity tracking"
+    }
+  },
+  "sync": {
+    "inProgress_one": "Syncing {{count}} change…",
+    "inProgress_other": "Syncing {{count}} changes…",
+    "succeeded_one": "{{count}} change synced",
+    "succeeded_other": "{{count}} changes synced",
+    "failed_one": "{{count}} change failed",
+    "failed_other": "{{count}} changes failed",
+    "viewDetails": "View details",
+    "failedDetailsTitle": "Sync failure details",
+    "failedType": "Type",
+    "failedReason": "Reason"
+  },
+  "session": {
+    "expiredTitle": "Session expired",
+    "expiredMessage": "Your session expired while you were offline. Pending changes will be synchronized after reconnection.",
+    "pendingMutations_one": "{{count}} pending change",
+    "pendingMutations_other": "{{count}} pending changes",
+    "reconnect": "Reconnect"
+  },
+  "connectivity": {
+    "offline": "You are offline — Displayed data comes from cache",
+    "reconnecting": "Reconnecting…",
+    "reconnected": "Connection restored"
+  },
+  "pwa": {
+    "updateAvailable": "A new version is available",
+    "updateNow": "Update now",
+    "dismiss": "Later",
+    "offlineReady": "App ready for offline use"
   }
 }

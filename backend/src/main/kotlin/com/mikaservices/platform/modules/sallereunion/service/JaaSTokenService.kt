@@ -74,7 +74,7 @@ class JaaSTokenService(
             .claim("aud", "jitsi")
             .claim("iss", "chat")
             .claim("sub", appId)
-            .claim("room", "*")
+            .claim("room", roomName)
             .claim("context", context)
             .issuedAt(now)
             .notBefore(now)

@@ -51,6 +51,9 @@ class SalleReunionController(
 
         val isAdmin = user.roles.any { it.code == "ADMIN" || it.code == "SUPER_ADMIN" }
         val salle = salleReunionService.getSalleEntity()
+        if (!salle.ouverte) {
+            throw BadRequestException("La salle est fermée")
+        }
         val token = jaaSTokenService.generateToken(user, isAdmin, salle.roomName)
 
         return ResponseEntity.ok(

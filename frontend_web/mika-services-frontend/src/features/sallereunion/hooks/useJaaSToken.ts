@@ -7,8 +7,7 @@ export function useJaaSToken(enabled: boolean) {
     queryKey: ['salle-reunion', 'jaas-token'] as const,
     queryFn: salleReunionApi.getJaaSToken,
     enabled,
-    staleTime: 60_000,
-    refetchInterval: 60_000,
+    staleTime: 300_000,
   })
 
   return {

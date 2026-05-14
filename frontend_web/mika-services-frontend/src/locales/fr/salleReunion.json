@@ -31,10 +31,7 @@
     "openingDescription": "Preparation de la session, chiffrement et verification des participants en cours…",
     "initialisation": "Initialisation",
     "fermeePar": "Fermee par {{name}}",
-    "notifyMe": "Me prevenir a l'ouverture",
-    "contactAdmin": "Contacter un admin",
-    "adminOnly": "Seuls les administrateurs peuvent ouvrir la Salle.",
-    "planifier": "Planifier une session"
+    "adminOnly": "Seuls les administrateurs peuvent ouvrir la Salle."
   },
   "lobby": {
     "dejaEnLigne": "Deja en ligne ({{count}})",
@@ -67,7 +64,6 @@
     "fermerCourt": "Fermer",
     "rejoindre": "Rejoindre",
     "rejoindreNow": "Rejoindre la salle maintenant",
-    "rejoindreSansCam": "Rejoindre sans camera ni micro",
     "quitter": "Quitter",
     "quitterSalle": "Quitter la salle",
     "envoyer": "Envoyer"

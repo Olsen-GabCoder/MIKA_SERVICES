@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface ConfirmModalProps {
@@ -10,11 +11,42 @@ interface ConfirmModalProps {
 export function ConfirmModal({ kind, loading, onCancel, onConfirm }: ConfirmModalProps) {
   const { t } = useTranslation('salleReunion')
   const isOpen = kind === 'open'
+  const confirmRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  // Focus le bouton confirm au montage
+  useEffect(() => {
+    confirmRef.current?.focus()
+  }, [])
+
+  // Fermer avec Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel()
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onCancel])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 salle-anim-fade">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 salle-anim-fade" role="dialog" aria-modal="true" aria-labelledby="salle-modal-title">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative w-full max-w-[480px] rounded-3xl bg-white dark:bg-neutral-900 p-7 sm:p-8 salle-anim-scale border border-neutral-200 dark:border-neutral-800 shadow-2xl">
+      <div ref={dialogRef} className="relative w-full max-w-[480px] rounded-3xl bg-white dark:bg-neutral-900 p-7 sm:p-8 salle-anim-scale border border-neutral-200 dark:border-neutral-800 shadow-2xl">
         <div className="flex items-start gap-5">
           <div className={'w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ' + (isOpen ? 'bg-[#FF6B35]/10 text-[#FF6B35]' : 'bg-rose-500/10 text-rose-500')}>
             {isOpen ? (
@@ -24,7 +56,7 @@ export function ConfirmModal({ kind, loading, onCancel, onConfirm }: ConfirmModa
             )}
           </div>
           <div className="flex-1">
-            <h3 className="text-[18px] sm:text-[20px] font-bold tracking-[-0.02em] text-neutral-900 dark:text-white">
+            <h3 id="salle-modal-title" className="text-[18px] sm:text-[20px] font-bold tracking-[-0.02em] text-neutral-900 dark:text-white">
               {isOpen ? t('modal.ouvrirTitle') : t('modal.fermerTitle')}
             </h3>
             <p className="mt-2 text-[15px] leading-relaxed text-neutral-600 dark:text-neutral-400">
@@ -43,6 +75,7 @@ export function ConfirmModal({ kind, loading, onCancel, onConfirm }: ConfirmModa
             {t('modal.annuler')}
           </button>
           <button
+            ref={confirmRef}
             onClick={onConfirm}
             disabled={loading}
             className={'inline-flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-[15px] font-semibold text-white active:scale-[0.98] transition-all duration-150 disabled:opacity-50 min-h-[44px] ' + (isOpen ? 'bg-[#FF6B35] hover:bg-[#ef5e2b] hover:shadow-lg hover:shadow-[#FF6B35]/25' : 'bg-rose-500 hover:bg-rose-600 hover:shadow-lg hover:shadow-rose-500/25')}

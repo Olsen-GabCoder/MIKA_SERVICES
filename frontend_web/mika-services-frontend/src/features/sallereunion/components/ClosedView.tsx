@@ -70,36 +70,19 @@ export function ClosedView({ salle, isAdmin, openingProgress, onOpen }: ClosedVi
               </div>
             )}
 
-            <div className="mt-10 flex items-center gap-3 flex-wrap justify-center">
-              {isAdmin ? (
-                <>
-                  <button
-                    onClick={onOpen}
-                    className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-[#FF6B35] text-white text-[15px] font-semibold hover:bg-[#ef5e2b] hover:shadow-lg hover:shadow-[#FF6B35]/25 active:scale-[0.98] transition-all duration-150 min-h-[48px]"
-                  >
-                    <span className="relative inline-flex w-2.5 h-2.5">
-                      <span className="absolute inset-0 rounded-full bg-white/80" />
-                    </span>
-                    {t('actions.ouvrir')}
-                  </button>
-                  <button className="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl text-[15px] font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 active:scale-[0.98] transition-all duration-150 min-h-[48px]">
-                    <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></svg>
-                    {t('closed.planifier')}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button className="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 text-[15px] font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/5 hover:border-neutral-300 dark:hover:border-neutral-600 active:scale-[0.98] transition-all duration-150 min-h-[48px]">
-                    <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/><line x1="12" y1="2" x2="12" y2="5"/></svg>
-                    {t('closed.notifyMe')}
-                  </button>
-                  <button className="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl text-[15px] font-medium text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 active:scale-[0.98] transition-all duration-150 min-h-[48px]">
-                    <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                    {t('closed.contactAdmin')}
-                  </button>
-                </>
-              )}
-            </div>
+            {isAdmin && (
+              <div className="mt-10 flex items-center justify-center">
+                <button
+                  onClick={onOpen}
+                  className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-[#FF6B35] text-white text-[15px] font-semibold hover:bg-[#ef5e2b] hover:shadow-lg hover:shadow-[#FF6B35]/25 active:scale-[0.98] transition-all duration-150 min-h-[48px]"
+                >
+                  <span className="relative inline-flex w-2.5 h-2.5">
+                    <span className="absolute inset-0 rounded-full bg-white/80" />
+                  </span>
+                  {t('actions.ouvrir')}
+                </button>
+              </div>
+            )}
 
             {!isAdmin && (
               <div className="mt-8 text-[13px] text-neutral-400 dark:text-neutral-500">{t('closed.adminOnly')}</div>

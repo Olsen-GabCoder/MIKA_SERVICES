@@ -31,10 +31,7 @@
     "openingDescription": "Preparing session, encrypting and verifying participants…",
     "initialisation": "Initialization",
     "fermeePar": "Closed by {{name}}",
-    "notifyMe": "Notify me when it opens",
-    "contactAdmin": "Contact an admin",
-    "adminOnly": "Only administrators can open the Room.",
-    "planifier": "Schedule a session"
+    "adminOnly": "Only administrators can open the Room."
   },
   "lobby": {
     "dejaEnLigne": "Already online ({{count}})",
@@ -67,7 +64,6 @@
     "fermerCourt": "Close",
     "rejoindre": "Join",
     "rejoindreNow": "Join the room now",
-    "rejoindreSansCam": "Join without camera or mic",
     "quitter": "Leave",
     "quitterSalle": "Leave the room",
     "envoyer": "Send"

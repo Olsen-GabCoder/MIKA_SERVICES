@@ -14,6 +14,7 @@ import { StatCard } from '../components/StatCard'
 import { Pill, Avatar } from '../components/Primitives'
 
 type RoomState = 'closed' | 'opening' | 'open'
+type ToastState = { message: string; type: 'success' | 'error' } | null
 
 function formatTime(iso: string | null): string {
   if (!iso) return ''
@@ -30,7 +31,7 @@ export function SalleReunionPage() {
   const [joined, setJoined] = useState(false)
   const [modal, setModal] = useState<'open' | 'close' | null>(null)
   const [openingProgress, setOpeningProgress] = useState<number | null>(null)
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToast] = useState<ToastState>(null)
 
   const jaasEnabled = !!salle?.ouverte && joined
   const { data: jaasToken } = useJaaSToken(jaasEnabled)
@@ -66,24 +67,24 @@ export function SalleReunionPage() {
       setOpeningProgress(0)
       try {
         await ouvrirMutation.mutateAsync()
-        setToast(t('messages.ouvertureSucces'))
+        setToast({ message: t('messages.ouvertureSucces'), type: 'success' })
       } catch (err) {
         setOpeningProgress(null)
         const msg = (err as { response?: { status?: number } })?.response?.status === 409
           ? t('messages.dejaOuverte')
           : t('messages.erreur')
-        setToast(msg)
+        setToast({ message: msg, type: 'error' })
       }
     } else {
       try {
         await fermerMutation.mutateAsync()
         setJoined(false)
-        setToast(t('messages.fermetureSucces'))
+        setToast({ message: t('messages.fermetureSucces'), type: 'success' })
       } catch (err) {
         const msg = (err as { response?: { status?: number } })?.response?.status === 409
           ? t('messages.dejaFermee')
           : t('messages.erreur')
-        setToast(msg)
+        setToast({ message: msg, type: 'error' })
       }
     }
   }, [modal, ouvrirMutation, fermerMutation, t])
@@ -206,10 +207,14 @@ export function SalleReunionPage() {
 
         {toast && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-6 py-3.5 rounded-2xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-[14px] font-semibold shadow-2xl salle-anim-up" role="status">
-            <span className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={3} strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span className={'w-6 h-6 rounded-full flex items-center justify-center shrink-0 ' + (toast.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500')}>
+              {toast.type === 'success' ? (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={3} strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={3} strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              )}
             </span>
-            {toast}
+            {toast.message}
           </div>
         )}
       </div>

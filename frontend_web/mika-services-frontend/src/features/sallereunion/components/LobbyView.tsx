@@ -18,63 +18,63 @@ export function LobbyView({ salle, onJoin }: LobbyViewProps) {
   const openedAt = formatTime(salle.dateOuverture)
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-neutral-900/70 overflow-hidden border border-neutral-200/60 dark:border-neutral-800/60 shadow-sm">
+    <div className="rounded-2xl bg-white dark:bg-neutral-900/70 overflow-hidden border border-neutral-100 dark:border-neutral-800/60 shadow-sm">
       <div className="grid grid-cols-1 lg:grid-cols-2 max-w-5xl mx-auto">
-        {/* Left — preview camera zone */}
-        <div className="p-5 lg:p-6">
-          <div className="relative aspect-video max-h-[320px] rounded-xl overflow-hidden bg-neutral-900 salle-grain">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 55%, rgba(46,82,102,0.45), rgba(0,0,0,0.92))' }} />
-              <div className="relative z-10 flex flex-col items-center text-white/80">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full" style={{ background: 'radial-gradient(circle at 30% 30%, #6d4733, #2a1a14)' }} />
-                <div className="mt-3 text-[11px] sm:text-[12px] uppercase tracking-widest opacity-50">{t('lobby.apercu')}</div>
-              </div>
+        {/* Left — camera preview zone */}
+        <div className="p-5 sm:p-7">
+          <div className="relative aspect-video rounded-2xl overflow-hidden bg-neutral-900">
+            {/* Ambient gradient */}
+            <div className="absolute inset-0 salle-grain" />
+            <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 55%, rgba(46,82,102,0.40), rgba(0,0,0,0.90))' }} />
+
+            {/* Center content */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full shadow-2xl" style={{ background: 'radial-gradient(circle at 35% 35%, rgba(255,107,53,0.6), rgba(46,82,102,0.8))' }} />
+              <div className="mt-4 text-[13px] sm:text-[14px] uppercase tracking-[0.15em] text-white/40 font-medium">{t('lobby.apercu')}</div>
             </div>
 
             {/* HUD overlays */}
-            <div className="absolute top-3 left-3 flex items-center gap-2">
+            <div className="absolute top-4 left-4">
               <Pill tone="live" dot pulse>{t('badge.enDirect')}</Pill>
             </div>
+
+            {/* Bottom ambient glow */}
+            <div className="absolute bottom-0 inset-x-0 h-20" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5), transparent)' }} />
           </div>
         </div>
 
         {/* Right — metadata + CTA */}
-        <div className="px-5 pb-6 lg:px-7 lg:py-6 lg:border-l border-neutral-200/80 dark:border-neutral-800/80 flex flex-col justify-center">
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="px-5 pb-7 sm:px-8 lg:py-8 lg:border-l border-neutral-200/80 dark:border-neutral-800/80 flex flex-col justify-center">
+          <div className="flex items-center gap-3 flex-wrap">
             <Pill tone="live" dot pulse>{t('badge.salleOuverte')}</Pill>
-            {openedAt && <span className="text-[11.5px] text-neutral-500 tabular-nums">{t('lobby.depuisTime', { time: openedAt })}</span>}
+            {openedAt && <span className="text-[13px] text-neutral-500 tabular-nums">{t('lobby.depuisTime', { time: openedAt })}</span>}
           </div>
 
-          <h2 className="mt-4 text-[24px] sm:text-[28px] leading-[1.1] tracking-[-0.03em] font-semibold text-neutral-900 dark:text-white">
+          <h2 className="mt-5 text-[24px] sm:text-[28px] lg:text-[32px] leading-[1.1] tracking-[-0.03em] font-bold text-neutral-900 dark:text-white">
             {salle.libelle}
           </h2>
 
           {openedBy && (
-            <div className="mt-3 flex items-center gap-2.5 text-[12.5px] text-neutral-500 dark:text-neutral-400">
-              <Avatar
-                initials={`${openedBy.prenom[0]}${openedBy.nom[0]}`}
-                color="#FF6B35"
-                size={20}
-                name={`${openedBy.prenom} ${openedBy.nom}`}
-              />
+            <div className="mt-4 flex items-center gap-3 text-[14px] sm:text-[15px] text-neutral-500 dark:text-neutral-400">
+              <Avatar initials={`${openedBy.prenom[0]}${openedBy.nom[0]}`} color="#FF6B35" size={28} name={`${openedBy.prenom} ${openedBy.nom}`} />
               <span>
                 {t('stats.ouvertePar')}{' '}
-                <span className="text-neutral-800 dark:text-neutral-200 font-medium">{openedBy.prenom} {openedBy.nom}</span>
+                <span className="text-neutral-800 dark:text-neutral-200 font-semibold">{openedBy.prenom} {openedBy.nom}</span>
                 {openedAt && ` · ${openedAt}`}
               </span>
             </div>
           )}
 
-          {/* CTA buttons */}
-          <div className="mt-8">
+          {/* CTA */}
+          <div className="mt-10">
             <button
               onClick={onJoin}
-              className="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-[#FF6B35] text-white text-[14px] font-medium hover:bg-[#ef5e2b] transition-all hover:shadow-lg hover:shadow-[#FF6B35]/20 min-h-[48px]"
+              className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-[#FF6B35] text-white text-[16px] font-semibold hover:bg-[#ef5e2b] hover:shadow-xl hover:shadow-[#FF6B35]/25 active:scale-[0.98] transition-all duration-150 min-h-[56px]"
             >
-              <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
               {t('actions.rejoindreNow')}
             </button>
-            <button className="mt-2.5 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[12.5px] text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors min-h-[44px]">
+            <button className="mt-3 w-full inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl text-[14px] font-medium text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 active:scale-[0.98] transition-all duration-150 min-h-[48px]">
               {t('actions.rejoindreSansCam')}
             </button>
           </div>

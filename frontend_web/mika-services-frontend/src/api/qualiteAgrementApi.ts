@@ -49,4 +49,7 @@ export const qualiteAgrementApi = {
     api.get<AgrementSummaryResponse>(
       API_ENDPOINTS.QUALITE_AGREMENTS.SUMMARY(projetId), { params: { mois } }
     ).then(r => r.data),
+
+  getStats: (): Promise<Record<string, number>> =>
+    api.get<Record<string, number>>(`${API_ENDPOINTS.QUALITE_AGREMENTS.BASE}/stats`).then(r => r.data),
 }

@@ -205,6 +205,13 @@ export const API_ENDPOINTS = {
     POINTS_PROJET: (reunionId: number) => `/reunions-hebdo/${reunionId}/points-projet`,
     POINT_PROJET: (reunionId: number, pointId: number) => `/reunions-hebdo/${reunionId}/points-projet/${pointId}`,
   },
+  SALLE_REUNION: {
+    BASE: '/salle-reunion',
+    JITSI_CONFIG: '/salle-reunion/jitsi-config',
+    JAAS_TOKEN: '/salle-reunion/jaas-token',
+    OUVRIR: '/salle-reunion/ouvrir',
+    FERMER: '/salle-reunion/fermer',
+  },
   AUDIT: {
     PAGE_VIEW: '/audit/page-view',
     GLOBAL: '/audit/global',

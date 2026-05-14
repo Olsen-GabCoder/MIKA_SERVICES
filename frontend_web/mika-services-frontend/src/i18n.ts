@@ -19,6 +19,7 @@ import frDocument from './locales/fr/document.json'
 import frFournisseur from './locales/fr/fournisseur.json'
 import frBareme from './locales/fr/bareme.json'
 import frParametres from './locales/fr/parametres.json'
+import frSalleReunion from './locales/fr/salleReunion.json'
 import enCommon from './locales/en/common.json'
 import enLayout from './locales/en/layout.json'
 import enAuth from './locales/en/auth.json'
@@ -37,6 +38,7 @@ import enDocument from './locales/en/document.json'
 import enFournisseur from './locales/en/fournisseur.json'
 import enBareme from './locales/en/bareme.json'
 import enParametres from './locales/en/parametres.json'
+import enSalleReunion from './locales/en/salleReunion.json'
 
 const LOCALE_KEY = 'mika-locale'
 export type Locale = 'fr' | 'en'
@@ -70,6 +72,7 @@ const resources = {
     fournisseur: frFournisseur as Record<string, unknown>,
     bareme: frBareme as Record<string, unknown>,
     parametres: frParametres as Record<string, unknown>,
+    salleReunion: frSalleReunion as Record<string, unknown>,
   },
   en: {
     common: enCommon as Record<string, unknown>,
@@ -90,6 +93,7 @@ const resources = {
     fournisseur: enFournisseur as Record<string, unknown>,
     bareme: enBareme as Record<string, unknown>,
     parametres: enParametres as Record<string, unknown>,
+    salleReunion: enSalleReunion as Record<string, unknown>,
   },
 }
 
@@ -101,7 +105,7 @@ export const i18nReady = i18n.use(initReactI18next).init({
   lng: initialLocale,
   fallbackLng: 'fr',
   defaultNS: 'common',
-  ns: ['common', 'layout', 'auth', 'user', 'projet', 'equipe', 'reunionHebdo', 'materiel', 'communication', 'budget', 'planning', 'qshe', 'qualite', 'reporting', 'document', 'fournisseur', 'bareme', 'parametres'],
+  ns: ['common', 'layout', 'auth', 'user', 'projet', 'equipe', 'reunionHebdo', 'materiel', 'communication', 'budget', 'planning', 'qshe', 'qualite', 'reporting', 'document', 'fournisseur', 'bareme', 'parametres', 'salleReunion'],
   interpolation: {
     escapeValue: false,
   },

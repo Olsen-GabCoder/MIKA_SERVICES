@@ -11,6 +11,7 @@ import { Sidebar } from './Sidebar'
 import { Footer } from './Footer'
 import { ThemeGate } from './ThemeGate'
 import { ConnectivityBanner } from '@/components/pwa/ConnectivityBanner'
+import { FloatingRoomBadge } from '@/features/sallereunion/components/FloatingRoomBadge'
 import { USE_MOCK } from '@/config/mock'
 
 interface LayoutProps {
@@ -62,6 +63,7 @@ export const Layout = ({ children }: LayoutProps) => {
         </main>
       </div>
       <Footer />
+      <FloatingRoomBadge />
     </div>
   )
 }

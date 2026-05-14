@@ -92,6 +92,12 @@ app:
     max-tokens: ${ANTHROPIC_MAX_TOKENS:4096}
     timeout-seconds: ${ANTHROPIC_TIMEOUT_SECONDS:60}
     max-retries: ${ANTHROPIC_MAX_RETRIES:3}
+  jaas:
+    enabled: ${JAAS_ENABLED:false}
+    app-id: ${JAAS_APP_ID:}
+    kid: ${JAAS_KID:}
+    private-key-path: ${JAAS_PRIVATE_KEY_PATH:}
+    token-validity-hours: ${JAAS_TOKEN_VALIDITY_HOURS:2}
   init:
     # Admin initial : uniquement via variables d'environnement (jamais en dur dans le code).
     # Si les deux sont définis au démarrage, un compte SUPER_ADMIN est créé (une seule fois).

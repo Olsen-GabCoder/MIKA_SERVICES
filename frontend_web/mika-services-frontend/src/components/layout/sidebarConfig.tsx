@@ -23,6 +23,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   { to: '/', label: 'sidebar.dashboard', icon: <DashboardIcon className={iconClass} /> },
   { to: '/projets', label: 'sidebar.projets', icon: <FolderIcon className={iconClass} /> },
   { to: '/reunions-hebdo', label: 'sidebar.reunionsHebdo', icon: <ReunionIcon className={iconClass} /> },
+  { to: '/reunions-hebdo/salle', label: 'salleReunion:sidebar.salleReunion', icon: <SalleIcon className={iconClass} /> },
   { to: '/equipes', label: 'sidebar.equipes', icon: <EquipeIcon className={iconClass} /> },
   { to: '/engins', label: 'sidebar.engins', icon: <EnginIcon className={iconClass} /> },
   { to: '/materiaux', label: 'sidebar.materiaux', icon: <CubeIcon className={iconClass} /> },
@@ -55,6 +56,14 @@ function ReunionIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+    </svg>
+  )
+}
+function SalleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+      <circle cx="12" cy="12" r="2" strokeWidth={2} />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.24 7.76a6 6 0 010 8.49m-8.48-.01a6 6 0 010-8.49m11.31-2.82a10 10 0 010 14.14m-14.14 0a10 10 0 010-14.14" />
     </svg>
   )
 }

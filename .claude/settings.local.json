@@ -22,7 +22,9 @@
       "Bash(mysql -u root --password=\"\" mika_services_dev 2)",
       "Bash(1:*)",
       "Bash(grep -r TypePermission /c/Projet_Mika_Services/backend/src/main/kotlin/com/mikaservices/platform --include=*.kt)",
-      "Bash(find C:/Projet_Mika_Services/backend/src/test -type f -name *.kt)"
+      "Bash(find C:/Projet_Mika_Services/backend/src/test -type f -name *.kt)",
+      "Bash(mkdir -p \"C:\\\\Projet_Mika_Services\\\\frontend_web\\\\mika-services-frontend\\\\src\\\\features\\\\dashboard\\\\data\")",
+      "Bash(mkdir -p \"C:\\\\Projet_Mika_Services\\\\frontend_web\\\\mika-services-frontend\\\\src\\\\features\\\\dashboard\\\\components\\\\premium\")"
     ]
   }
 }

@@ -21,6 +21,9 @@ temp_*.txt
 .env
 .env.*
 !.env.example
+*.pk
+*.pem
+*.pub
 
 # ── OS ────────────────────────────────────────────────────
 Thumbs.db

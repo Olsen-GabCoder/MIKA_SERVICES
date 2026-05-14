@@ -1,0 +1,124 @@
+{
+  "title": "Salle MIKA",
+  "subtitle": "Une seule salle, persistante, pour toute la plateforme. Ouverte par un administrateur, accessible a toute l'equipe.",
+  "breadcrumb": "Collaboration",
+  "espaceCollab": "Espace collaboration",
+  "statut": {
+    "ouverte": "En direct",
+    "fermee": "Fermee",
+    "ouverture": "Ouverture…"
+  },
+  "badge": {
+    "enDirect": "EN DIRECT",
+    "fermee": "FERMEE",
+    "ouverture": "OUVERTURE…",
+    "salleOuverte": "SALLE OUVERTE"
+  },
+  "stats": {
+    "etatSalle": "Etat de la salle",
+    "participantsEnLigne": "Participants en ligne",
+    "ouvertePar": "Ouverte par",
+    "sessionsWeek": "Sessions cette semaine",
+    "surInvites": "sur {{count}} invites",
+    "inactive": "Inactive",
+    "depuis": "depuis {{time}}"
+  },
+  "closed": {
+    "pilleText": "La salle est actuellement fermee",
+    "title": "Personne n'est en ligne pour l'instant.",
+    "description": "La Salle MIKA est unique et persistante. Elle sera de nouveau accessible des qu'un administrateur l'ouvrira.",
+    "openingTitle": "Ouverture de la salle",
+    "openingDescription": "Preparation de la session, chiffrement et verification des participants en cours…",
+    "initialisation": "Initialisation",
+    "fermeePar": "Fermee par {{name}}",
+    "notifyMe": "Me prevenir a l'ouverture",
+    "contactAdmin": "Contacter un admin",
+    "adminOnly": "Seuls les administrateurs peuvent ouvrir la Salle.",
+    "planifier": "Planifier une session"
+  },
+  "lobby": {
+    "dejaEnLigne": "Deja en ligne ({{count}})",
+    "voirTout": "Voir tout",
+    "depuisTime": "depuis {{time}}",
+    "reunionTitle": "Reunion hebdomadaire des chefs de chantier",
+    "apercu": "Apercu camera",
+    "camOff": "Camera desactivee",
+    "dejaCount": "{{count}} deja dans la salle",
+    "moi": "moi"
+  },
+  "meeting": {
+    "enDirect": "EN DIRECT",
+    "participants": "{{count}} participants",
+    "reunionTitle": "Reunion hebdomadaire · chefs de chantier",
+    "dansLaSalle": "Dans la salle · {{count}}",
+    "invitesPotentiels": "Invites potentiels",
+    "inviter": "Inviter",
+    "salle": "Salle",
+    "persistante": "Persistante · Jitsi",
+    "projetsLies": "Projets lies",
+    "enregistrement": "Enregistrement",
+    "nonDemarre": "Non demarre",
+    "demarrer": "Demarrer",
+    "envoyerATous": "Envoyer a tous…"
+  },
+  "actions": {
+    "ouvrir": "Ouvrir la salle",
+    "fermer": "Fermer la salle",
+    "fermerCourt": "Fermer",
+    "rejoindre": "Rejoindre",
+    "rejoindreNow": "Rejoindre la salle maintenant",
+    "rejoindreSansCam": "Rejoindre sans camera ni micro",
+    "quitter": "Quitter",
+    "quitterSalle": "Quitter la salle",
+    "envoyer": "Envoyer"
+  },
+  "admin": {
+    "controlTitle": "Controle administrateur",
+    "etatTitle": "Etat de la Salle MIKA",
+    "etatDesc": "Seuls les administrateurs et super-administrateurs peuvent modifier l'etat. Chaque action est tracee et visible par l'equipe.",
+    "ouvrirSub": "Rend la visio accessible a tous",
+    "fermerSub": "Deconnecte tous les participants",
+    "journalRecent": "Journal recent"
+  },
+  "modal": {
+    "ouvrirTitle": "Ouvrir la Salle MIKA ?",
+    "ouvrirDesc": "Tous les utilisateurs authentifies pourront rejoindre la session en cours. Votre nom et l'heure seront visibles.",
+    "ouvrirInfo": "La salle est unique pour toute la plateforme MIKA. Toute personne disposant d'un compte pourra y entrer des l'ouverture.",
+    "ouvrirConfirm": "Ouvrir maintenant",
+    "fermerTitle": "Fermer la Salle MIKA ?",
+    "fermerDesc": "La visioconference sera immediatement interrompue pour tous les participants. Cette action sera tracee dans l'historique.",
+    "fermerInfo": "Les participants actuels seront deconnectes.",
+    "fermerConfirm": "Confirmer la fermeture",
+    "annuler": "Annuler"
+  },
+  "floating": {
+    "enDirect": "Salle MIKA en direct",
+    "count": "· {{count}} en ligne"
+  },
+  "historique": "Historique",
+  "tabs": {
+    "participants": "Participants",
+    "discussion": "Discussion",
+    "details": "Details"
+  },
+  "controls": {
+    "micro": "Micro",
+    "camera": "Camera",
+    "partager": "Partager",
+    "leverMain": "Lever la main",
+    "chat": "Chat",
+    "plus": "Plus"
+  },
+  "messages": {
+    "ouvertureSucces": "Salle ouverte avec succes",
+    "fermetureSucces": "Salle fermee avec succes",
+    "dejaOuverte": "La salle est deja ouverte",
+    "dejaFermee": "La salle est deja fermee",
+    "erreur": "Une erreur est survenue",
+    "erreurChargement": "Impossible de charger l'etat de la salle",
+    "erreurJitsi": "Impossible de charger le module de visioconference"
+  },
+  "sidebar": {
+    "salleReunion": "Salle MIKA"
+  }
+}

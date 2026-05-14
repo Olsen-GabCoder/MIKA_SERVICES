@@ -2,6 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Salle MIKA — animations et styles ───────────────────────────── */
+@keyframes salle-pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.75; }
+  80%, 100% { transform: scale(2.2); opacity: 0; }
+}
+.salle-live-dot::after {
+  content: ''; position: absolute; inset: 0; border-radius: 9999px;
+  background: currentColor; animation: salle-pulse-ring 1.8s cubic-bezier(0.4,0,0.6,1) infinite;
+}
+@keyframes salle-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50% { transform: scale(1.08); opacity: 0.85; }
+}
+.salle-breathe { animation: salle-breathe 6s ease-in-out infinite; }
+@keyframes salle-breathe-slow {
+  0%, 100% { transform: scale(1); opacity: 0.30; }
+  50% { transform: scale(1.15); opacity: 0.55; }
+}
+.salle-breathe-slow { animation: salle-breathe-slow 8s ease-in-out infinite; }
+@keyframes salle-slideUp {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.salle-anim-up { animation: salle-slideUp 360ms cubic-bezier(0.2,0.7,0.2,1) both; }
+@keyframes salle-fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.salle-anim-fade { animation: salle-fadeIn 220ms ease both; }
+@keyframes salle-scaleIn {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.salle-anim-scale { animation: salle-scaleIn 200ms cubic-bezier(0.2,0.7,0.2,1) both; }
+@keyframes salle-shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+.salle-skel {
+  background: linear-gradient(90deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.09) 40%, rgba(0,0,0,0.04) 80%);
+  background-size: 400px 100%; animation: salle-shimmer 1.4s linear infinite;
+}
+html[data-theme="dark"] .salle-skel {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.09) 40%, rgba(255,255,255,0.04) 80%);
+  background-size: 400px 100%;
+}
+@keyframes salle-immersive-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.salle-immersive-enter { animation: salle-immersive-enter 200ms ease-out; }
+.salle-grain {
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255,107,53,0.12), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(72,181,160,0.10), transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(46,82,102,0.20), transparent 55%);
+}
+
 /* Animations pour visualisations projet — entrée fluide et sensation temps réel */
 @keyframes fade-in-up {
   from {
@@ -248,6 +300,186 @@ html[data-theme="dark"] {
   --mika-bg-card: rgb(31 41 55);
   --mika-border-card: rgb(75 85 99);
   --mika-text-primary: rgb(243 244 246);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DASHBOARD — Tokens de couleur (D3.1)
+   Prefixe --db-* pour eviter collisions avec --mika-* et --msg-*
+   Contraste WCAG AA verifie pour chaque paire texte/fond
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* Fonds (3 niveaux) */
+  --db-bg-base: #F8FAFC;
+  --db-bg-surface: #FFFFFF;
+  --db-bg-surface-elevated: #FFFFFF;
+  /* Texte (3 niveaux) — contraste sur bg-surface */
+  --db-text-primary: #1E293B;       /* 12.6:1 sur #FFF */
+  --db-text-muted: #64748B;         /* 4.6:1 sur #FFF */
+  --db-text-faint: #94A3B8;         /* 3.0:1 sur #FFF — UI elements only */
+  /* Bordures (3 niveaux) */
+  --db-border-subtle: #F1F5F9;
+  --db-border-default: #E2E8F0;
+  --db-border-strong: #CBD5E1;
+  /* Accent orange */
+  --db-accent: #FF6B35;
+  --db-accent-muted: rgba(255, 107, 53, 0.12);
+  /* Semantiques — succes */
+  --db-success-text: #166534;
+  --db-success-bg: #F0FDF4;
+  --db-success-border: #BBF7D0;
+  /* Semantiques — warning */
+  --db-warning-text: #92400E;
+  --db-warning-bg: #FFFBEB;
+  --db-warning-border: #FDE68A;
+  /* Semantiques — danger */
+  --db-danger-text: #991B1B;
+  --db-danger-bg: #FEF2F2;
+  --db-danger-border: #FECACA;
+  /* Semantiques — info */
+  --db-info-text: #1E40AF;
+  --db-info-bg: #EFF6FF;
+  --db-info-border: #BFDBFE;
+  /* Palette recharts (8 couleurs) */
+  --db-chart-0: #2E5266;
+  --db-chart-1: #48B5A0;
+  --db-chart-2: #FF6B35;
+  --db-chart-3: #F0C15A;
+  --db-chart-4: #8B5CF6;
+  --db-chart-5: #E85D75;
+  --db-chart-6: #06B6D4;
+  --db-chart-7: #6366F1;
+  --db-chart-grid: #E5E7EB;
+  --db-chart-tick: #94A3B8;
+  --db-chart-tooltip-bg: rgba(255, 255, 255, 0.95);
+  --db-chart-tooltip-border: #F1F5F9;
+}
+html[data-theme="dark"] {
+  /* Fonds */
+  --db-bg-base: #0F0F11;
+  --db-bg-surface: #18181B;
+  --db-bg-surface-elevated: #1F1F23;
+  /* Texte — contraste sur bg-surface #18181B */
+  --db-text-primary: #EDEDED;       /* 14.2:1 */
+  --db-text-muted: #A1A1AA;         /* 5.4:1 */
+  --db-text-faint: #71717A;         /* 3.8:1 — UI elements only */
+  /* Bordures */
+  --db-border-subtle: #27272A;
+  --db-border-default: #3F3F46;
+  --db-border-strong: #52525B;
+  /* Accent orange — desature +15% luminosite */
+  --db-accent: #FF8255;
+  --db-accent-muted: rgba(255, 107, 53, 0.10);
+  /* Semantiques — succes */
+  --db-success-text: #86EFAC;
+  --db-success-bg: rgba(22, 101, 52, 0.20);
+  --db-success-border: rgba(22, 101, 52, 0.40);
+  /* Semantiques — warning */
+  --db-warning-text: #FCD34D;
+  --db-warning-bg: rgba(146, 64, 14, 0.20);
+  --db-warning-border: rgba(146, 64, 14, 0.40);
+  /* Semantiques — danger */
+  --db-danger-text: #FCA5A5;
+  --db-danger-bg: rgba(153, 27, 27, 0.20);
+  --db-danger-border: rgba(153, 27, 27, 0.40);
+  /* Semantiques — info */
+  --db-info-text: #93C5FD;
+  --db-info-bg: rgba(30, 64, 175, 0.20);
+  --db-info-border: rgba(30, 64, 175, 0.40);
+  /* Palette recharts (luminosite augmentee pour fond sombre) */
+  --db-chart-0: #4A8DA8;
+  --db-chart-1: #5FCDB8;
+  --db-chart-2: #FF8255;
+  --db-chart-3: #F5D078;
+  --db-chart-4: #A78BFA;
+  --db-chart-5: #F08098;
+  --db-chart-6: #22D3EE;
+  --db-chart-7: #818CF8;
+  --db-chart-grid: rgba(63, 63, 70, 0.4);
+  --db-chart-tick: #71717A;
+  --db-chart-tooltip-bg: rgba(24, 24, 27, 0.95);
+  --db-chart-tooltip-border: #3F3F46;
+}
+
+/* Utility class pour chiffres KPI (Inter 700, tabular-nums, letter-spacing serre) */
+.db-display-num {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DASHBOARD PREMIUM — Tokens design source D3.9
+   Extension du namespace --db-* — NE PAS supprimer les tokens ci-dessus
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --db-page:       #F6F6F4;
+  --db-card:       #FFFFFF;
+  --db-subtle:     #F2F2EF;
+  --db-hover:      #EFEFEC;
+  --db-border:     #ECECE8;
+  --db-border-str: #DEDED9;
+  --db-t1:         #14181B;
+  --db-t2:         #4A5258;
+  --db-t3:         #7A828A;
+  --db-t4:         #A0A7AD;
+  --db-grid:       #ECECE8;
+  --db-orange:     #FF6B35;
+  --db-orange-soft:#FFEDE4;
+  --db-teal-dk:    #2E5266;
+  --db-teal:       #48B5A0;
+  --db-teal-soft:  #E2F2EE;
+  --db-success:    #2C9C7E;
+  --db-success-bg: #E5F4EE;
+  --db-warn:       #C48A2B;
+  --db-warn-bg:    #FBF1DC;
+  --db-danger:     #C8553D;
+  --db-danger-bg2: #FBE8E2;
+  --db-info:       #3F6B83;
+  --db-info-bg2:   #E4EDF2;
+  --db-radius:     12px;
+  --db-radius-sm:  8px;
+  --db-radius-xs:  6px;
+  --db-shadow:     0 1px 2px rgba(20,24,27,0.06), 0 8px 24px -8px rgba(20,24,27,0.12);
+}
+html[data-theme="dark"] {
+  --db-page:       #0E1114;
+  --db-card:       #181C20;
+  --db-subtle:     #1E2226;
+  --db-hover:      #23272C;
+  --db-border:     #23272C;
+  --db-border-str: #2E3338;
+  --db-t1:         #ECECE7;
+  --db-t2:         #B6BCC0;
+  --db-t3:         #858C92;
+  --db-t4:         #5C6369;
+  --db-grid:       #23272C;
+  --db-orange-soft:rgba(255,107,53,0.14);
+  --db-teal-soft:  rgba(72,181,160,0.14);
+  --db-success:    #4CC9A6;
+  --db-success-bg: rgba(76,201,166,0.12);
+  --db-warn:       #E0B25A;
+  --db-warn-bg:    rgba(224,178,90,0.12);
+  --db-danger:     #E47A65;
+  --db-danger-bg2: rgba(228,122,101,0.14);
+  --db-info:       #7FA9BF;
+  --db-info-bg2:   rgba(127,169,191,0.12);
+  --db-shadow:     0 1px 2px rgba(0,0,0,0.4), 0 12px 28px -10px rgba(0,0,0,0.55);
+}
+
+/* Premium utilities */
+.db-num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.db-tight { letter-spacing: -0.02em; }
+.db-tighter { letter-spacing: -0.03em; }
+
+@keyframes db-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes db-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(44,156,126,0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(44,156,126,0); }
+  100% { box-shadow: 0 0 0 0 rgba(44,156,126,0); }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,124 @@
+{
+  "title": "MIKA Room",
+  "subtitle": "A single, persistent room for the entire platform. Opened by an administrator, accessible to the whole team.",
+  "breadcrumb": "Collaboration",
+  "espaceCollab": "Collaboration space",
+  "statut": {
+    "ouverte": "Live",
+    "fermee": "Closed",
+    "ouverture": "Opening…"
+  },
+  "badge": {
+    "enDirect": "LIVE",
+    "fermee": "CLOSED",
+    "ouverture": "OPENING…",
+    "salleOuverte": "ROOM OPEN"
+  },
+  "stats": {
+    "etatSalle": "Room status",
+    "participantsEnLigne": "Participants online",
+    "ouvertePar": "Opened by",
+    "sessionsWeek": "Sessions this week",
+    "surInvites": "of {{count}} invited",
+    "inactive": "Inactive",
+    "depuis": "since {{time}}"
+  },
+  "closed": {
+    "pilleText": "The room is currently closed",
+    "title": "Nobody is online at the moment.",
+    "description": "The MIKA Room is unique and persistent. It will be available again as soon as an administrator opens it.",
+    "openingTitle": "Opening the room",
+    "openingDescription": "Preparing session, encrypting and verifying participants…",
+    "initialisation": "Initialization",
+    "fermeePar": "Closed by {{name}}",
+    "notifyMe": "Notify me when it opens",
+    "contactAdmin": "Contact an admin",
+    "adminOnly": "Only administrators can open the Room.",
+    "planifier": "Schedule a session"
+  },
+  "lobby": {
+    "dejaEnLigne": "Already online ({{count}})",
+    "voirTout": "See all",
+    "depuisTime": "since {{time}}",
+    "reunionTitle": "Weekly site managers meeting",
+    "apercu": "Camera preview",
+    "camOff": "Camera disabled",
+    "dejaCount": "{{count}} already in the room",
+    "moi": "me"
+  },
+  "meeting": {
+    "enDirect": "LIVE",
+    "participants": "{{count}} participants",
+    "reunionTitle": "Weekly meeting · site managers",
+    "dansLaSalle": "In the room · {{count}}",
+    "invitesPotentiels": "Potential guests",
+    "inviter": "Invite",
+    "salle": "Room",
+    "persistante": "Persistent · Jitsi",
+    "projetsLies": "Related projects",
+    "enregistrement": "Recording",
+    "nonDemarre": "Not started",
+    "demarrer": "Start",
+    "envoyerATous": "Send to all…"
+  },
+  "actions": {
+    "ouvrir": "Open the room",
+    "fermer": "Close the room",
+    "fermerCourt": "Close",
+    "rejoindre": "Join",
+    "rejoindreNow": "Join the room now",
+    "rejoindreSansCam": "Join without camera or mic",
+    "quitter": "Leave",
+    "quitterSalle": "Leave the room",
+    "envoyer": "Send"
+  },
+  "admin": {
+    "controlTitle": "Administrator control",
+    "etatTitle": "MIKA Room Status",
+    "etatDesc": "Only administrators and super-administrators can change the status. Every action is tracked and visible to the team.",
+    "ouvrirSub": "Makes the video call accessible to all",
+    "fermerSub": "Disconnects all participants",
+    "journalRecent": "Recent log"
+  },
+  "modal": {
+    "ouvrirTitle": "Open the MIKA Room?",
+    "ouvrirDesc": "All authenticated users will be able to join the ongoing session. Your name and time will be visible.",
+    "ouvrirInfo": "The room is unique across the entire MIKA platform. Anyone with an account can enter once opened.",
+    "ouvrirConfirm": "Open now",
+    "fermerTitle": "Close the MIKA Room?",
+    "fermerDesc": "The video conference will be immediately interrupted for all participants. This action will be tracked in the history.",
+    "fermerInfo": "Current participants will be disconnected.",
+    "fermerConfirm": "Confirm closure",
+    "annuler": "Cancel"
+  },
+  "floating": {
+    "enDirect": "MIKA Room live",
+    "count": "· {{count}} online"
+  },
+  "historique": "History",
+  "tabs": {
+    "participants": "Participants",
+    "discussion": "Discussion",
+    "details": "Details"
+  },
+  "controls": {
+    "micro": "Mic",
+    "camera": "Camera",
+    "partager": "Share",
+    "leverMain": "Raise hand",
+    "chat": "Chat",
+    "plus": "More"
+  },
+  "messages": {
+    "ouvertureSucces": "Room opened successfully",
+    "fermetureSucces": "Room closed successfully",
+    "dejaOuverte": "The room is already open",
+    "dejaFermee": "The room is already closed",
+    "erreur": "An error occurred",
+    "erreurChargement": "Unable to load room status",
+    "erreurJitsi": "Unable to load the video conference module"
+  },
+  "sidebar": {
+    "salleReunion": "MIKA Room"
+  }
+}

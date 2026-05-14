@@ -11,7 +11,6 @@ import java.security.PrivateKey
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.Base64
 import java.util.Date
-import java.util.UUID
 
 /**
  * Genere des JWT RS256 pour JaaS (Jitsi as a Service, 8x8.vc).
@@ -72,12 +71,11 @@ class JaaSTokenService(
                 .keyId(kid)
                 .type("JWT")
                 .and()
-            .audience().add("jitsi").and()
-            .issuer("chat")
-            .subject(appId)
-            .claim("room", roomName)
+            .claim("aud", "jitsi")
+            .claim("iss", "chat")
+            .claim("sub", appId)
+            .claim("room", "*")
             .claim("context", context)
-            .id(UUID.randomUUID().toString())
             .issuedAt(now)
             .notBefore(now)
             .expiration(expiry)

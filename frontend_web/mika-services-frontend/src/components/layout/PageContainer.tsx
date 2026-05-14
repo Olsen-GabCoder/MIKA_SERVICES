@@ -2,11 +2,12 @@ import type { ReactNode } from 'react'
 
 type PageContainerSize = 'narrow' | 'default' | 'wide' | 'full'
 
-interface PageContainerProps {
+export interface PageContainerProps {
   children: ReactNode
   /** narrow: formulaires simples | default: profil, fiche, formulaire multi-colonnes | wide: listes, tableaux | full: dashboard, pas de max-width */
   size?: PageContainerSize
   className?: string
+  style?: React.CSSProperties
 }
 
 const sizeClasses: Record<PageContainerSize, string> = {
@@ -16,9 +17,9 @@ const sizeClasses: Record<PageContainerSize, string> = {
   full: 'max-w-full',
 }
 
-export const PageContainer = ({ children, size = 'default', className = '' }: PageContainerProps) => {
+export const PageContainer = ({ children, size = 'default', className = '', style }: PageContainerProps) => {
   return (
-    <div className={`w-full mx-auto ${sizeClasses[size]} ${className}`.trim()} role="main">
+    <div className={`w-full mx-auto ${sizeClasses[size]} ${className}`.trim()} role="main" style={style}>
       {children}
     </div>
   )

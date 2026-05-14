@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { userApi } from '@/api/userApi'
+import { auditApi } from '@/api/userApi'
 import type { GlobalAuditStats } from '@/api/userApi'
 import { useIsOnline } from '@/hooks/useConnectivity'
 import { useIsAdmin } from './useIsAdmin'
@@ -18,7 +18,7 @@ export function useAuditStats(): {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard', 'audit-stats'] as const,
-    queryFn: () => userApi.getGlobalStats(),
+    queryFn: () => auditApi.getGlobalStats(),
     staleTime: STALE,
     refetchInterval: STALE,
     enabled: isOnline && isAdmin,

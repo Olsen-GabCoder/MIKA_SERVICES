@@ -49,9 +49,10 @@ export function TopProjets({ projets }: TopProjetsProps) {
             data={data}
             layout="vertical"
             margin={{ top: 4, right: 40, left: 10, bottom: 4 }}
-            onClick={(state) => {
-              if (state?.activePayload?.[0]?.payload?.id) {
-                navigate(`/projets/${state.activePayload[0].payload.id}`)
+            onClick={(_state, event) => {
+              const idx = (event as unknown as { activeTooltipIndex?: number })?.activeTooltipIndex
+              if (idx !== undefined && data[idx]?.id) {
+                navigate(`/projets/${data[idx].id}`)
               }
             }}
           >

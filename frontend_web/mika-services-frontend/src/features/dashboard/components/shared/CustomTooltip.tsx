@@ -1,10 +1,11 @@
 import { useChartColors } from '../../hooks/useChartColors'
-import type { TooltipProps } from 'recharts'
-import type { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent'
 
 /* ── Shared tooltip for all dashboard recharts ── */
 
-export interface DashboardTooltipProps extends TooltipProps<ValueType, NameType> {
+export interface DashboardTooltipProps {
+  active?: boolean
+  payload?: Array<{ color?: string; fill?: string; name?: string; value?: number | string; dataKey?: string }>
+  label?: string | number
   /** Custom value formatter (ex: formatMontant) */
   formatter?: (value: number) => string
 }
@@ -38,7 +39,7 @@ export function DashboardTooltip({
           {label}
         </p>
       )}
-      {payload.map((p, i) => (
+      {payload.map((p: { color?: string; fill?: string; name?: string; value?: number | string }, i: number) => (
         <div key={i} className="flex items-center gap-2 py-0.5">
           <span
             className="w-2 h-2 rounded-full shrink-0"
@@ -66,7 +67,10 @@ export interface WeeklyTooltipData {
   [key: string]: unknown
 }
 
-export interface WeeklyTooltipProps extends TooltipProps<ValueType, NameType> {
+export interface WeeklyTooltipProps {
+  active?: boolean
+  payload?: Array<{ color?: string; fill?: string; name?: string; value?: number | string; dataKey?: string; payload?: WeeklyTooltipData }>
+  label?: string | number
   /** i18next translation function */
   t: (key: string) => string
 }
@@ -100,7 +104,7 @@ export function WeeklyDashboardTooltip({
       >
         {data?.isCurrent ? `${label} — ${t('db.weekly.currentWeek')}` : label}
       </p>
-      {payload.map((p, i) => (
+      {payload.map((p: { color?: string; fill?: string; name?: string; value?: number | string; dataKey?: string }, i: number) => (
         <div key={i} className="flex items-center gap-2 py-0.5">
           <span
             className="w-2 h-2 rounded-full shrink-0"

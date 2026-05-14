@@ -94,7 +94,6 @@ function CimentCard() {
   const ptsC = d.current.map((v, i) => ({ x: xAt(i), y: yAt(v) }))
   const ptsP = d.previous.map((v, i) => ({ x: xAt(i), y: yAt(v) }))
   const pathC = smoothPath(ptsC), pathP = smoothPath(ptsP)
-  const last = ptsC[ptsC.length - 1]
   return (
     <CardShell title={t('db.premium.coutCiment')} idx={8}>
       <Row1 value="82 500" unit="FCFA / T" delta={d.delta} dir="down" />

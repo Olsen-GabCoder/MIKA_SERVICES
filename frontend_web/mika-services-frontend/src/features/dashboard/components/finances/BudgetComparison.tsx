@@ -62,7 +62,7 @@ export function BudgetComparison({ budget }: BudgetComparisonProps) {
             <LabelList
               dataKey="value"
               position="top"
-              formatter={(v: number) => formatShort(v)}
+              formatter={(v) => formatShort(v as number)}
               style={{ fontSize: 10, fontWeight: 700, fill: 'var(--db-text-muted)' }}
             />
           </Bar>

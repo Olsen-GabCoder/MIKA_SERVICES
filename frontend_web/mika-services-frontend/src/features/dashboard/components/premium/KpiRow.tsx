@@ -96,7 +96,7 @@ export interface KpiRowProps {
 
 export function KpiRow(p: KpiRowProps) {
   const { t } = useTranslation('common')
-  const { formatNumber } = useFormatNumber()
+  const _fmt = useFormatNumber()
 
   const kpis: KpiData[] = [
     {

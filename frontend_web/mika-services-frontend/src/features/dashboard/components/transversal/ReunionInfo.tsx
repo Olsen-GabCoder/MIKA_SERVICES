@@ -18,7 +18,7 @@ export function ReunionInfo({ data, loading = false, colSpan = 6 }: ReunionInfoP
     <BentoCard
       title={t('db.transversal.reunions')}
       subtitle={t('db.transversal.reunionsSubtitle')}
-      href="/reunions-hebdo"
+      href="/salle-mika/pv"
       loading={loading}
       colSpan={colSpan}
       colSpanTablet={12}

@@ -5,7 +5,8 @@ import { auditApi } from '@/api/userApi'
 const PAGE_LABELS: Record<string, string> = {
   '/': 'Tableau de bord',
   '/projets': 'Projets',
-  '/reunions-hebdo': 'Réunions hebdo',
+  '/salle-mika': 'Salle MIKA',
+  '/salle-mika/pv': 'Salle MIKA - Procès-verbaux',
   '/equipes': 'Équipes',
   '/engins': 'Engins & Matériel',
   '/materiaux': 'Matériaux & Stocks',
@@ -34,9 +35,9 @@ function getPageLabel(pathname: string): string {
   if (pathname.match(/^\/equipes\/\d+\/edit$/)) return 'Modification équipe'
   if (pathname.match(/^\/equipes\/nouveau$/)) return 'Nouvelle équipe'
   if (pathname.match(/^\/equipes\/\d+$/)) return 'Détail équipe'
-  if (pathname.match(/^\/reunions-hebdo\/\d+\/edit$/)) return 'Modification réunion'
-  if (pathname.match(/^\/reunions-hebdo\/nouveau$/)) return 'Nouvelle réunion'
-  if (pathname.match(/^\/reunions-hebdo\/\d+$/)) return 'Détail réunion'
+  if (pathname.match(/^\/salle-mika\/pv\/\d+\/edit$/)) return 'Salle MIKA - Édition PV'
+  if (pathname.match(/^\/salle-mika\/pv\/nouveau$/)) return 'Salle MIKA - Nouveau PV'
+  if (pathname.match(/^\/salle-mika\/pv\/\d+$/)) return 'Salle MIKA - Détail PV'
   return pathname
 }
 

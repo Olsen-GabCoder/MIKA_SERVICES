@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { ProtectedRoute } from './ProtectedRoute'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage'
@@ -55,6 +55,8 @@ const ReunionHebdoListPage = lazy(() => import('@/features/reunionhebdo/pages/Re
 const ReunionHebdoFormPage = lazy(() => import('@/features/reunionhebdo/pages/ReunionHebdoFormPage').then(m => ({ default: m.ReunionHebdoFormPage })))
 const ReunionHebdoPVPage = lazy(() => import('@/features/reunionhebdo/pages/ReunionHebdoPVPage').then(m => ({ default: m.ReunionHebdoPVPage })))
 const SalleReunionPage = lazy(() => import('@/features/sallereunion/pages/SalleReunionPage').then(m => ({ default: m.SalleReunionPage })))
+const SalleMikaLayout = lazy(() => import('@/features/sallereunion/layouts/SalleMikaLayout').then(m => ({ default: m.SalleMikaLayout })))
+const RedirectWithId = lazy(() => import('@/features/sallereunion/components/RedirectWithId').then(m => ({ default: m.RedirectWithId })))
 const ActivityTrackingPage = lazy(() => import('@/features/user/pages/ActivityTrackingPage').then(m => ({ default: m.ActivityTrackingPage })))
 const NotFoundPage = lazy(() => import('@/features/errors/pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })))
 const ReportingPage = lazy(() => import('@/features/reporting/pages/ReportingPage'))
@@ -150,26 +152,24 @@ const router = createBrowserRouter([
         path: 'projets/:id/edit',
         element: <ProtectedRoute><L><ProjetFormPage /></L></ProtectedRoute>,
       },
+      // ── Salle MIKA (visio + PV) ──────────────────────────────
       {
-        path: 'reunions-hebdo',
-        element: <ProtectedRoute><L><ReunionHebdoListPage /></L></ProtectedRoute>,
+        path: 'salle-mika',
+        element: <ProtectedRoute><L><SalleMikaLayout /></L></ProtectedRoute>,
+        children: [
+          { index: true, element: <SalleReunionPage /> },
+          { path: 'pv', element: <ReunionHebdoListPage /> },
+          { path: 'pv/nouveau', element: <ReunionHebdoFormPage /> },
+          { path: 'pv/:id', element: <ReunionHebdoPVPage /> },
+          { path: 'pv/:id/edit', element: <ReunionHebdoFormPage /> },
+        ],
       },
-      {
-        path: 'reunions-hebdo/nouveau',
-        element: <ProtectedRoute><L><ReunionHebdoFormPage /></L></ProtectedRoute>,
-      },
-      {
-        path: 'reunions-hebdo/salle',
-        element: <ProtectedRoute><L><SalleReunionPage /></L></ProtectedRoute>,
-      },
-      {
-        path: 'reunions-hebdo/:id',
-        element: <ProtectedRoute><L><ReunionHebdoPVPage /></L></ProtectedRoute>,
-      },
-      {
-        path: 'reunions-hebdo/:id/edit',
-        element: <ProtectedRoute><L><ReunionHebdoFormPage /></L></ProtectedRoute>,
-      },
+      // ── Redirections legacy /reunions-hebdo → /salle-mika ──
+      { path: 'reunions-hebdo', element: <Navigate to="/salle-mika/pv" replace /> },
+      { path: 'reunions-hebdo/salle', element: <Navigate to="/salle-mika" replace /> },
+      { path: 'reunions-hebdo/nouveau', element: <Navigate to="/salle-mika/pv/nouveau" replace /> },
+      { path: 'reunions-hebdo/:id', element: <L><RedirectWithId toBase="/salle-mika/pv" /></L> },
+      { path: 'reunions-hebdo/:id/edit', element: <L><RedirectWithId toBase="/salle-mika/pv" suffix="/edit" /></L> },
       {
         path: 'equipes',
         element: <ProtectedRoute><L><EquipeListPage /></L></ProtectedRoute>,

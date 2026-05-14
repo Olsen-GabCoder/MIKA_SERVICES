@@ -322,7 +322,7 @@ export const ReunionHebdoPVPage = () => {
           <p className="text-lg font-bold text-gray-900 dark:text-white mb-2">{t('pv.notFound')}</p>
           <button
             type="button"
-            onClick={() => navigate('/reunions-hebdo')}
+            onClick={() => navigate('/salle-mika/pv')}
             className="mt-4 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors"
           >
             {t('pv.backToList')}
@@ -357,7 +357,7 @@ export const ReunionHebdoPVPage = () => {
               <div className="min-w-0">
                 <button
                   type="button"
-                  onClick={() => navigate('/reunions-hebdo')}
+                  onClick={() => navigate('/salle-mika/pv')}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light transition-colors mb-1.5"
                 >
                   <IconArrowLeft />
@@ -404,7 +404,7 @@ export const ReunionHebdoPVPage = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => navigate('/reunions-hebdo/' + id + '/edit')}
+                  onClick={() => navigate('/salle-mika/pv/' + id + '/edit')}
                   disabled={!isOnline}
                   title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
                   className="border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -823,7 +823,7 @@ export const ReunionHebdoPVPage = () => {
             </Button>
             <button
               type="button"
-              onClick={() => navigate('/reunions-hebdo/' + id + '/edit')}
+              onClick={() => navigate('/salle-mika/pv/' + id + '/edit')}
               disabled={!isOnline}
               title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"

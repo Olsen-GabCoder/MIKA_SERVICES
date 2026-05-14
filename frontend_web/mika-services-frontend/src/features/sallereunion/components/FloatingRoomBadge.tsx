@@ -40,14 +40,14 @@ export function FloatingRoomBadge() {
   if (!salle?.ouverte) return null
 
   // Garde-fou 2 : masque sur la page salle elle-meme
-  if (location.pathname === '/reunions-hebdo/salle') return null
+  if (location.pathname.startsWith('/salle-mika')) return null
 
   // Garde-fou 3 : dismissible avec memoire de session
   if (dismissed || isDismissed(salle?.id, salle?.dateOuverture)) return null
 
   return (
     <button
-      onClick={() => navigate('/reunions-hebdo/salle')}
+      onClick={() => navigate('/salle-mika')}
       className="fixed bottom-6 right-6 z-40 flex items-center gap-3 pl-3 pr-2 py-2.5 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 salle-anim-up group"
       style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.18)' }}
     >

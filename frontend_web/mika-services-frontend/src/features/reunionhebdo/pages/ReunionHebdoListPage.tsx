@@ -504,7 +504,7 @@ export const ReunionHebdoListPage = () => {
               <OfflineDisabledButton>
                 <motion.button
                   type="button"
-                  onClick={() => navigate('/reunions-hebdo/nouveau')}
+                  onClick={() => navigate('/salle-mika/pv/nouveau')}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-sm transition-colors shadow-md shadow-primary/20 self-start sm:self-auto"
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
@@ -578,7 +578,7 @@ export const ReunionHebdoListPage = () => {
       <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
         {isEmpty ? (
           <EmptyState
-            onCreate={() => navigate('/reunions-hebdo/nouveau')}
+            onCreate={() => navigate('/salle-mika/pv/nouveau')}
             labelNoData={t('list.emptyTitle')}
             hintNoData={t('list.emptyHint')}
             labelCreate={t('list.createButton')}
@@ -601,8 +601,8 @@ export const ReunionHebdoListPage = () => {
                       key={r.id}
                       r={r}
                       index={idx}
-                      onNavigatePV={() => navigate(`/reunions-hebdo/${r.id}`)}
-                      onEdit={() => navigate(`/reunions-hebdo/${r.id}/edit`)}
+                      onNavigatePV={() => navigate(`/salle-mika/pv/${r.id}`)}
+                      onEdit={() => navigate(`/salle-mika/pv/${r.id}/edit`)}
                       onDelete={() => handleDelete(r.id, r.dateReunion)}
                       t={t}
                       isOnline={isOnline}

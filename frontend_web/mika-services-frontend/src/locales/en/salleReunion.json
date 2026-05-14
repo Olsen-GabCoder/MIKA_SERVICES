@@ -118,6 +118,10 @@
     "erreurChargement": "Unable to load room status",
     "erreurJitsi": "Unable to load the video conference module"
   },
+  "nav": {
+    "laSalle": "The room",
+    "procesVerbaux": "Minutes"
+  },
   "sidebar": {
     "salleReunion": "MIKA Room"
   }

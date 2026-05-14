@@ -475,7 +475,7 @@ export const ReunionHebdoFormPage = () => {
         }
         await reunionHebdoApi.create(data)
       }
-      navigate('/reunions-hebdo')
+      navigate('/salle-mika/pv')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('form.errorGeneric'))
     } finally {
@@ -563,7 +563,7 @@ export const ReunionHebdoFormPage = () => {
 
             <button
               type="button"
-              onClick={() => navigate('/reunions-hebdo')}
+              onClick={() => navigate('/salle-mika/pv')}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold backdrop-blur-sm transition-all duration-200 self-start md:self-auto flex-shrink-0"
             >
               <IconArrowLeft />
@@ -882,7 +882,7 @@ export const ReunionHebdoFormPage = () => {
               <div className="flex items-center gap-3 flex-wrap w-full sm:w-auto">
                 <button
                   type="button"
-                  onClick={() => navigate('/reunions-hebdo')}
+                  onClick={() => navigate('/salle-mika/pv')}
                   className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200"
                 >
                   {t('form.cancel')}
@@ -890,7 +890,7 @@ export const ReunionHebdoFormPage = () => {
                 {isEdit && id && (
                   <button
                     type="button"
-                    onClick={() => navigate('/reunions-hebdo/' + id)}
+                    onClick={() => navigate('/salle-mika/pv/' + id)}
                     className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
                   >
                     {t('form.viewPV')}

@@ -118,6 +118,10 @@
     "erreurChargement": "Impossible de charger l'etat de la salle",
     "erreurJitsi": "Impossible de charger le module de visioconference"
   },
+  "nav": {
+    "laSalle": "La salle",
+    "procesVerbaux": "Proces-verbaux"
+  },
   "sidebar": {
     "salleReunion": "Salle MIKA"
   }

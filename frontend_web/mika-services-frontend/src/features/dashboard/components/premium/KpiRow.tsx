@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { useFormatNumber } from '@/hooks/useFormatNumber'
+
 
 interface KpiData {
   title: string
@@ -96,7 +96,6 @@ export interface KpiRowProps {
 
 export function KpiRow(p: KpiRowProps) {
   const { t } = useTranslation('common')
-  const _fmt = useFormatNumber()
 
   const kpis: KpiData[] = [
     {

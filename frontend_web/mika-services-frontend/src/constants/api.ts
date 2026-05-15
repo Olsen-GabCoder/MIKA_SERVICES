@@ -211,6 +211,11 @@ export const API_ENDPOINTS = {
     JAAS_TOKEN: '/salle-reunion/jaas-token',
     OUVRIR: '/salle-reunion/ouvrir',
     FERMER: '/salle-reunion/fermer',
+    PARTICIPANTS_JOIN: '/salle-reunion/participants/join',
+    PARTICIPANTS_LEAVE: '/salle-reunion/participants/leave',
+    PARTICIPANTS_HEARTBEAT: '/salle-reunion/participants/heartbeat',
+    PARTICIPANTS_ONLINE: '/salle-reunion/participants/online',
+    PARTICIPANTS_COUNT_SINCE: '/salle-reunion/participants/count-since',
   },
   AUDIT: {
     PAGE_VIEW: '/audit/page-view',

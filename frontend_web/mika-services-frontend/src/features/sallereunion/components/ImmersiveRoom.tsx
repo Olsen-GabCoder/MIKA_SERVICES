@@ -1,5 +1,8 @@
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { JitsiRoom } from './JitsiRoom'
+import { ConfirmModal } from './ConfirmModal'
+import { salleReunionApi } from '@/api/salleReunionApi'
 import type { JaaSToken } from '@/types/salleReunion'
 
 interface ImmersiveRoomProps {
@@ -9,12 +12,44 @@ interface ImmersiveRoomProps {
 
 export function ImmersiveRoom({ jaasToken, onLeave }: ImmersiveRoomProps) {
   const { t } = useTranslation('salleReunion')
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
+
+  // Join participant on mount, leave on unmount
+  useEffect(() => {
+    salleReunionApi.participantsJoin().catch(() => {})
+    return () => { salleReunionApi.participantsLeave().catch(() => {}) }
+  }, [])
+
+  // Heartbeat every 2 minutes
+  useEffect(() => {
+    const id = setInterval(() => {
+      salleReunionApi.participantsHeartbeat().catch(() => {})
+    }, 120_000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Escape key → show exit confirmation
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setShowExitConfirm(true)
+      }
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [])
+
+  const handleConfirmLeave = useCallback(() => {
+    setShowExitConfirm(false)
+    onLeave()
+  }, [onLeave])
 
   return (
     <div className="fixed inset-0 z-50 bg-black salle-immersive-enter">
-      {/* Bouton Sortir premium en haut a gauche */}
+      {/* Bouton Sortir */}
       <button
-        onClick={onLeave}
+        onClick={() => setShowExitConfirm(true)}
         className="fixed top-5 left-5 z-[60] flex items-center gap-2.5 bg-white/10 backdrop-blur-xl text-white pl-4 pr-5 py-2.5 rounded-2xl text-[14px] font-semibold hover:bg-white/20 active:scale-[0.97] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[44px] border border-white/10"
         aria-label={t('actions.quitterSalle')}
       >
@@ -26,6 +61,14 @@ export function ImmersiveRoom({ jaasToken, onLeave }: ImmersiveRoomProps) {
       </button>
 
       <JitsiRoom jaasToken={jaasToken} onLeave={onLeave} immersive />
+
+      {showExitConfirm && (
+        <ConfirmModal
+          kind="leave"
+          onCancel={() => setShowExitConfirm(false)}
+          onConfirm={handleConfirmLeave}
+        />
+      )}
     </div>
   )
 }

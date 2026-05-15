@@ -40,8 +40,20 @@
     "reunionTitle": "Reunion hebdomadaire des chefs de chantier",
     "apercu": "Apercu camera",
     "camOff": "Camera desactivee",
+    "camOn": "Camera activee",
+    "camDenied": "Camera refusee",
+    "micOff": "Micro desactive",
+    "micOn": "Micro active",
+    "selectCamera": "Choisir la camera",
+    "selectMic": "Choisir le micro",
     "dejaCount": "{{count}} deja dans la salle",
-    "moi": "moi"
+    "moi": "moi",
+    "network": {
+      "excellent": "Connexion excellente",
+      "good": "Bonne connexion",
+      "limited": "Connexion limitee",
+      "measuring": "Mesure en cours…"
+    }
   },
   "meeting": {
     "enDirect": "EN DIRECT",
@@ -85,7 +97,11 @@
     "fermerDesc": "La visioconference sera immediatement interrompue pour tous les participants. Cette action sera tracee dans l'historique.",
     "fermerInfo": "Les participants actuels seront deconnectes.",
     "fermerConfirm": "Confirmer la fermeture",
-    "annuler": "Annuler"
+    "annuler": "Annuler",
+    "leaveTitle": "Quitter la salle ?",
+    "leaveDesc": "Vous serez deconnecte de la visioconference en cours.",
+    "leaveInfo": "Vous pourrez rejoindre de nouveau tant que la salle reste ouverte.",
+    "leaveConfirm": "Quitter"
   },
   "floating": {
     "enDirect": "Salle MIKA en direct",
@@ -117,6 +133,28 @@
   "nav": {
     "laSalle": "La salle",
     "procesVerbaux": "Proces-verbaux"
+  },
+  "participants": {
+    "joined": "a rejoint la salle",
+    "left": "a quitte la salle"
+  },
+  "postMeeting": {
+    "title": "Fermer la session",
+    "desc": "Voici un resume de la session en cours. Souhaitez-vous rediger un proces-verbal ?",
+    "duration": "Duree",
+    "participants": "Participants",
+    "openedAt": "Ouverture",
+    "pvQuestion": "Vous pouvez fermer la salle et rediger un proces-verbal directement, ou simplement fermer.",
+    "closeOnly": "Fermer sans PV",
+    "closeAndPV": "Fermer et rediger le PV"
+  },
+  "shortcuts": {
+    "title": "Raccourcis clavier",
+    "join": "Rejoindre la salle",
+    "leave": "Quitter la salle",
+    "open": "Ouvrir la salle (admin)",
+    "close": "Fermer la salle (admin)",
+    "help": "Afficher cette aide"
   },
   "sidebar": {
     "salleReunion": "Salle MIKA"

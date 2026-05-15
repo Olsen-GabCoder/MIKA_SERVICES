@@ -1,15 +1,20 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useIsAdmin } from '@/features/dashboard/hooks/useIsAdmin'
 import { useSalleReunion } from '../hooks/useSalleReunion'
 import { useJaaSToken } from '../hooks/useJaaSToken'
 import { useOuvrirSalle, useFermerSalle } from '../hooks/useSalleMutations'
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
+import { useSalleNotifications } from '../hooks/useSalleNotifications'
 import { ClosedView } from '../components/ClosedView'
 import { LobbyView } from '../components/LobbyView'
 import { ImmersiveRoom } from '../components/ImmersiveRoom'
 import { AdminPanel } from '../components/AdminPanel'
 import { ConfirmModal } from '../components/ConfirmModal'
+import { PostMeetingModal } from '../components/PostMeetingModal'
+import { ParticipantToasts } from '../components/ParticipantToasts'
+import { KeyboardShortcutsOverlay } from '../components/KeyboardShortcutsOverlay'
 import { StatCard } from '../components/StatCard'
 import { Pill, Avatar } from '../components/Primitives'
 
@@ -30,13 +35,32 @@ export function SalleReunionPage() {
 
   const [joined, setJoined] = useState(false)
   const [modal, setModal] = useState<'open' | 'close' | null>(null)
+  const [showPostMeeting, setShowPostMeeting] = useState(false)
   const [openingProgress, setOpeningProgress] = useState<number | null>(null)
   const [toast, setToast] = useState<ToastState>(null)
+  const [showShortcuts, setShowShortcuts] = useState(false)
+  const jitsiPrefsRef = useRef({ videoMuted: false, audioMuted: true })
 
   const jaasEnabled = !!salle?.ouverte && joined
   const { data: jaasToken } = useJaaSToken(jaasEnabled)
 
   const roomState: RoomState = openingProgress != null ? 'opening' : salle?.ouverte ? 'open' : 'closed'
+
+  // Notifications navigateur
+  useSalleNotifications(salle, salle?.ouvertePar?.id)
+
+  // Raccourcis clavier
+  useKeyboardShortcuts({
+    isAdmin,
+    roomOpen: roomState === 'open',
+    joined,
+    onJoin: useCallback(() => setJoined(true), []),
+    onOpenModal: useCallback(() => setModal('open'), []),
+    onCloseModal: useCallback(() => {
+      if (isAdmin) setShowPostMeeting(true)
+    }, [isAdmin]),
+    onToggleHelp: useCallback(() => setShowShortcuts(prev => !prev), []),
+  })
 
   useEffect(() => {
     if (!salle?.ouverte && joined) setJoined(false)
@@ -89,6 +113,21 @@ export function SalleReunionPage() {
     }
   }, [modal, ouvrirMutation, fermerMutation, t])
 
+  const handlePostMeetingClose = useCallback(async () => {
+    try {
+      await fermerMutation.mutateAsync()
+      setJoined(false)
+      setShowPostMeeting(false)
+      setToast({ message: t('messages.fermetureSucces'), type: 'success' })
+    } catch (err) {
+      const msg = (err as { response?: { status?: number } })?.response?.status === 409
+        ? t('messages.dejaFermee')
+        : t('messages.erreur')
+      setToast({ message: msg, type: 'error' })
+      setShowPostMeeting(false)
+    }
+  }, [fermerMutation, t])
+
   useEffect(() => {
     if (!toast) return
     const id = setTimeout(() => setToast(null), 3500)
@@ -96,6 +135,17 @@ export function SalleReunionPage() {
   }, [toast])
 
   const handleLeaveJitsi = useCallback(() => setJoined(false), [])
+
+  const handleLobbyJoin = useCallback((opts: { videoMuted: boolean; audioMuted: boolean }) => {
+    jitsiPrefsRef.current = opts
+    setJoined(true)
+  }, [])
+
+  const handleCloseClick = useCallback(() => {
+    if (isAdmin) {
+      setShowPostMeeting(true)
+    }
+  }, [isAdmin])
 
   if (loading && !salle) {
     return (
@@ -127,6 +177,8 @@ export function SalleReunionPage() {
         document.body
       )}
 
+      <ParticipantToasts enabled={roomState === 'open' && !joined} currentUserId={salle.ouvertePar?.id} />
+
       <div className="pb-24 salle-anim-fade">
         {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-4">
@@ -149,7 +201,7 @@ export function SalleReunionPage() {
               </button>
             )}
             {isAdmin && roomState === 'open' && (
-              <button onClick={() => setModal('close')} className="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 text-[15px] font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 hover:border-neutral-300 dark:hover:border-neutral-600 active:scale-[0.98] transition-all duration-150 min-h-[48px]">
+              <button onClick={handleCloseClick} className="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 text-[15px] font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 hover:border-neutral-300 dark:hover:border-neutral-600 active:scale-[0.98] transition-all duration-150 min-h-[48px]">
                 <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path d="M18.36 6.64A9 9 0 005.636 18.364M18.364 18.364A9 9 0 005.636 5.636"/><line x1="1" y1="1" x2="23" y2="23" strokeLinecap="round"/></svg>
                 {t('actions.fermerCourt')}
               </button>
@@ -189,7 +241,7 @@ export function SalleReunionPage() {
 
         {/* Main panel */}
         {roomState === 'open' && !joined ? (
-          <LobbyView salle={salle} onJoin={() => setJoined(true)} />
+          <LobbyView salle={salle} onJoin={handleLobbyJoin} />
         ) : roomState !== 'open' ? (
           <ClosedView salle={salle} isAdmin={isAdmin} onOpen={() => setModal('open')} openingProgress={roomState === 'opening' ? openingProgress : null} />
         ) : null}
@@ -203,6 +255,18 @@ export function SalleReunionPage() {
             onCancel={() => setModal(null)}
             onConfirm={handleConfirm}
           />
+        )}
+
+        {showPostMeeting && salle && (
+          <PostMeetingModal
+            salle={salle}
+            onCancel={() => setShowPostMeeting(false)}
+            onClose={handlePostMeetingClose}
+          />
+        )}
+
+        {showShortcuts && (
+          <KeyboardShortcutsOverlay isAdmin={isAdmin} onClose={() => setShowShortcuts(false)} />
         )}
 
         {toast && (

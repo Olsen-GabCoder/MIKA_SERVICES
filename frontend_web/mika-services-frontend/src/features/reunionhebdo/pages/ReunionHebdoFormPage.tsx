@@ -9,7 +9,7 @@ import {
   type TextareaHTMLAttributes,
 } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useIsOnline } from '@/hooks/useConnectivity'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Button } from '@/components/ui/Button'
@@ -326,6 +326,7 @@ export const ReunionHebdoFormPage = () => {
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -347,6 +348,22 @@ export const ReunionHebdoFormPage = () => {
 
   useEffect(() => {
     userApi.getAll({ page: 0, size: 500 }).then((res) => setUsers(res.content)).catch(() => setUsers([]))
+  }, [])
+
+  // Pre-fill from Salle MIKA session query params (B.14)
+  useEffect(() => {
+    if (isEdit) return
+    if (searchParams.get('from') !== 'session') return
+
+    const dateParam = searchParams.get('dateReunion')
+    if (dateParam) setDateReunion(dateParam)
+
+    const participantsParam = searchParams.get('participants')
+    if (participantsParam) {
+      const ids = participantsParam.split(',').map(Number).filter(n => !isNaN(n) && n > 0)
+      if (ids.length > 0) setParticipantIds(ids)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {

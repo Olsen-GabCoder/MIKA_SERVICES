@@ -31,3 +31,10 @@ export interface JaaSToken {
   subject: string
   moderator: boolean
 }
+
+export interface SalleParticipant {
+  id: number
+  user: UserSummary
+  joinedAt: string
+  leftAt: string | null
+}

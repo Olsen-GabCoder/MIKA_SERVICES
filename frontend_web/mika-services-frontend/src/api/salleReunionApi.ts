@@ -1,6 +1,6 @@
 import apiClient from './axios'
 import { API_ENDPOINTS } from '@/constants/api'
-import type { SalleReunion, JitsiConfig, JaaSToken } from '@/types/salleReunion'
+import type { SalleReunion, JitsiConfig, JaaSToken, SalleParticipant } from '@/types/salleReunion'
 
 export const salleReunionApi = {
   getSalle: async (): Promise<SalleReunion> => {
@@ -26,5 +26,28 @@ export const salleReunionApi = {
   getJaaSToken: async (): Promise<JaaSToken> => {
     const response = await apiClient.get<JaaSToken>(API_ENDPOINTS.SALLE_REUNION.JAAS_TOKEN)
     return response.data
+  },
+
+  participantsJoin: async (): Promise<SalleParticipant> => {
+    const response = await apiClient.post<SalleParticipant>(API_ENDPOINTS.SALLE_REUNION.PARTICIPANTS_JOIN)
+    return response.data
+  },
+
+  participantsLeave: async (): Promise<void> => {
+    await apiClient.post(API_ENDPOINTS.SALLE_REUNION.PARTICIPANTS_LEAVE)
+  },
+
+  participantsHeartbeat: async (): Promise<void> => {
+    await apiClient.post(API_ENDPOINTS.SALLE_REUNION.PARTICIPANTS_HEARTBEAT)
+  },
+
+  getOnlineParticipants: async (): Promise<SalleParticipant[]> => {
+    const response = await apiClient.get<SalleParticipant[]>(API_ENDPOINTS.SALLE_REUNION.PARTICIPANTS_ONLINE)
+    return response.data
+  },
+
+  countParticipantsSince: async (since: string): Promise<number> => {
+    const response = await apiClient.get<{ count: number }>(API_ENDPOINTS.SALLE_REUNION.PARTICIPANTS_COUNT_SINCE, { params: { since } })
+    return response.data.count
   },
 }

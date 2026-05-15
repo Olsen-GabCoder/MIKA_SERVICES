@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface ConfirmModalProps {
-  kind: 'open' | 'close'
+  kind: 'open' | 'close' | 'leave'
   loading?: boolean
   onCancel: () => void
   onConfirm: () => void
@@ -11,6 +11,7 @@ interface ConfirmModalProps {
 export function ConfirmModal({ kind, loading, onCancel, onConfirm }: ConfirmModalProps) {
   const { t } = useTranslation('salleReunion')
   const isOpen = kind === 'open'
+  const isLeave = kind === 'leave'
   const confirmRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
 
@@ -51,23 +52,25 @@ export function ConfirmModal({ kind, loading, onCancel, onConfirm }: ConfirmModa
           <div className={'w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ' + (isOpen ? 'bg-[#FF6B35]/10 text-[#FF6B35]' : 'bg-rose-500/10 text-rose-500')}>
             {isOpen ? (
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 010 8.49m-8.48-.01a6 6 0 010-8.49m11.31-2.82a10 10 0 010 14.14m-14.14 0a10 10 0 010-14.14"/></svg>
+            ) : isLeave ? (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
             ) : (
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path d="M18.36 6.64A9 9 0 005.636 18.364M18.364 18.364A9 9 0 005.636 5.636"/><line x1="1" y1="1" x2="23" y2="23" strokeLinecap="round"/></svg>
             )}
           </div>
           <div className="flex-1">
             <h3 id="salle-modal-title" className="text-[18px] sm:text-[20px] font-bold tracking-[-0.02em] text-neutral-900 dark:text-white">
-              {isOpen ? t('modal.ouvrirTitle') : t('modal.fermerTitle')}
+              {isOpen ? t('modal.ouvrirTitle') : isLeave ? t('modal.leaveTitle') : t('modal.fermerTitle')}
             </h3>
             <p className="mt-2 text-[15px] leading-relaxed text-neutral-600 dark:text-neutral-400">
-              {isOpen ? t('modal.ouvrirDesc') : t('modal.fermerDesc')}
+              {isOpen ? t('modal.ouvrirDesc') : isLeave ? t('modal.leaveDesc') : t('modal.fermerDesc')}
             </p>
           </div>
         </div>
 
         <div className="mt-6 px-4 py-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/60 dark:border-neutral-800/60 text-[14px] text-neutral-600 dark:text-neutral-400 flex items-start gap-3">
           <svg className="w-4 h-4 mt-0.5 shrink-0 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span>{isOpen ? t('modal.ouvrirInfo') : t('modal.fermerInfo')}</span>
+          <span>{isOpen ? t('modal.ouvrirInfo') : isLeave ? t('modal.leaveInfo') : t('modal.fermerInfo')}</span>
         </div>
 
         <div className="mt-7 flex items-center justify-end gap-3">
@@ -80,7 +83,7 @@ export function ConfirmModal({ kind, loading, onCancel, onConfirm }: ConfirmModa
             disabled={loading}
             className={'inline-flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-[15px] font-semibold text-white active:scale-[0.98] transition-all duration-150 disabled:opacity-50 min-h-[44px] ' + (isOpen ? 'bg-[#FF6B35] hover:bg-[#ef5e2b] hover:shadow-lg hover:shadow-[#FF6B35]/25' : 'bg-rose-500 hover:bg-rose-600 hover:shadow-lg hover:shadow-rose-500/25')}
           >
-            {isOpen ? t('modal.ouvrirConfirm') : t('modal.fermerConfirm')}
+            {isOpen ? t('modal.ouvrirConfirm') : isLeave ? t('modal.leaveConfirm') : t('modal.fermerConfirm')}
           </button>
         </div>
       </div>

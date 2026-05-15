@@ -40,8 +40,20 @@
     "reunionTitle": "Weekly site managers meeting",
     "apercu": "Camera preview",
     "camOff": "Camera disabled",
+    "camOn": "Camera enabled",
+    "camDenied": "Camera denied",
+    "micOff": "Mic muted",
+    "micOn": "Mic enabled",
+    "selectCamera": "Select camera",
+    "selectMic": "Select microphone",
     "dejaCount": "{{count}} already in the room",
-    "moi": "me"
+    "moi": "me",
+    "network": {
+      "excellent": "Excellent connection",
+      "good": "Good connection",
+      "limited": "Limited connection",
+      "measuring": "Measuring…"
+    }
   },
   "meeting": {
     "enDirect": "LIVE",
@@ -85,7 +97,11 @@
     "fermerDesc": "The video conference will be immediately interrupted for all participants. This action will be tracked in the history.",
     "fermerInfo": "Current participants will be disconnected.",
     "fermerConfirm": "Confirm closure",
-    "annuler": "Cancel"
+    "annuler": "Cancel",
+    "leaveTitle": "Leave the room?",
+    "leaveDesc": "You will be disconnected from the ongoing video conference.",
+    "leaveInfo": "You can rejoin as long as the room remains open.",
+    "leaveConfirm": "Leave"
   },
   "floating": {
     "enDirect": "MIKA Room live",
@@ -117,6 +133,28 @@
   "nav": {
     "laSalle": "The room",
     "procesVerbaux": "Minutes"
+  },
+  "participants": {
+    "joined": "joined the room",
+    "left": "left the room"
+  },
+  "postMeeting": {
+    "title": "Close the session",
+    "desc": "Here is a summary of the current session. Would you like to write meeting minutes?",
+    "duration": "Duration",
+    "participants": "Participants",
+    "openedAt": "Opened at",
+    "pvQuestion": "You can close the room and write meeting minutes directly, or simply close.",
+    "closeOnly": "Close without minutes",
+    "closeAndPV": "Close and write minutes"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "join": "Join the room",
+    "leave": "Leave the room",
+    "open": "Open the room (admin)",
+    "close": "Close the room (admin)",
+    "help": "Show this help"
   },
   "sidebar": {
     "salleReunion": "MIKA Room"

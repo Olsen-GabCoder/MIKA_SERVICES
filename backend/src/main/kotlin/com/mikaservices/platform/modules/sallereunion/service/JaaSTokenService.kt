@@ -28,7 +28,7 @@ class JaaSTokenService(
     private val logger = LoggerFactory.getLogger(JaaSTokenService::class.java)
 
     private val privateKey: PrivateKey by lazy {
-        logger.info("Chargement de la cle privee JaaS depuis: $privateKeyPath")
+        logger.debug("Chargement de la cle privee JaaS depuis: $privateKeyPath")
         loadPrivateKey(privateKeyPath)
     }
 

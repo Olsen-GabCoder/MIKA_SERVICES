@@ -10,6 +10,7 @@ import com.mikaservices.platform.modules.sallereunion.repository.SalleReunionRep
 import com.mikaservices.platform.modules.user.entity.User
 import com.mikaservices.platform.modules.user.service.CurrentUserService
 import org.slf4j.LoggerFactory
+import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -17,7 +18,8 @@ import java.time.LocalDateTime
 @Service
 class SalleReunionService(
     private val salleReunionRepository: SalleReunionRepository,
-    private val currentUserService: CurrentUserService
+    private val currentUserService: CurrentUserService,
+    private val messagingTemplate: SimpMessagingTemplate,
 ) {
     private val logger = LoggerFactory.getLogger(SalleReunionService::class.java)
 
@@ -55,7 +57,9 @@ class SalleReunionService(
         salle.fermeePar = null
         val saved = salleReunionRepository.save(salle)
         logger.info("Salle MIKA ouverte par userId=${user.id} email=${user.email}")
-        return toResponse(saved)
+        val response = toResponse(saved)
+        broadcastStateChange(response)
+        return response
     }
 
     /** Ferme la salle MIKA. Reserve aux ADMIN / SUPER_ADMIN. */
@@ -71,7 +75,17 @@ class SalleReunionService(
         salle.fermeePar = user
         val saved = salleReunionRepository.save(salle)
         logger.info("Salle MIKA fermee par userId=${user.id} email=${user.email}")
-        return toResponse(saved)
+        val response = toResponse(saved)
+        broadcastStateChange(response)
+        return response
+    }
+
+    private fun broadcastStateChange(response: SalleReunionResponse) {
+        try {
+            messagingTemplate.convertAndSend("/topic/salle-reunion", response)
+        } catch (e: Exception) {
+            logger.warn("Echec broadcast WebSocket salle-reunion: ${e.message}")
+        }
     }
 
     /** Acces brut a l'entity SalleReunion (pour JaaSTokenService). */

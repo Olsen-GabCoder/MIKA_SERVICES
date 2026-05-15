@@ -9,9 +9,10 @@ export function useSalleReunion() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['salle-reunion'] as const,
     queryFn: salleReunionApi.getSalle,
-    staleTime: 5_000,
-    refetchInterval: 10_000,
-    refetchOnWindowFocus: true,
+    staleTime: 2_000,
+    refetchInterval: 3_000,
+    refetchOnWindowFocus: 'always',
+    refetchOnMount: 'always',
     enabled: isOnline,
   })
 

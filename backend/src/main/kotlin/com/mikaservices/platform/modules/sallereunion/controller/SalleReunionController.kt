@@ -120,7 +120,11 @@ class SalleReunionController(
     fun countParticipantsSince(
         @org.springframework.web.bind.annotation.RequestParam since: String
     ): ResponseEntity<Map<String, Long>> {
-        val sinceDate = java.time.LocalDateTime.parse(since)
+        val sinceDate = try {
+            java.time.LocalDateTime.parse(since)
+        } catch (e: java.time.format.DateTimeParseException) {
+            throw BadRequestException("Format de date invalide. Attendu : ISO-8601 (ex: 2025-01-15T10:30:00)")
+        }
         val count = salleParticipantService.countDistinctParticipantsSince(sinceDate)
         return ResponseEntity.ok(mapOf("count" to count))
     }

@@ -54,6 +54,36 @@ html[data-theme="dark"] .salle-skel {
     radial-gradient(circle at 50% 50%, rgba(46,82,102,0.20), transparent 55%);
 }
 
+/* ── Lobby — barres audio + live pulse + radio pulse ────────────── */
+@keyframes lobby-pulsebar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+@keyframes lobby-live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@keyframes lobby-radiopulse {
+  0% { transform: scale(0.8); opacity: 0.7; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+.lobby-bar { animation: lobby-pulsebar 1.2s ease-in-out infinite; transform-origin: bottom; }
+.lobby-bar-d1 { animation-delay: 0s; }
+.lobby-bar-d2 { animation-delay: .1s; }
+.lobby-bar-d3 { animation-delay: .2s; }
+.lobby-bar-d4 { animation-delay: .3s; }
+.lobby-bar-d5 { animation-delay: .4s; }
+.lobby-bar-d6 { animation-delay: .5s; }
+.lobby-bar-d7 { animation-delay: .6s; }
+.lobby-bar-d8 { animation-delay: .7s; }
+.lobby-live-pulse { animation: lobby-live-pulse 1.8s ease-in-out infinite; }
+.lobby-radio-pulse {
+  position: absolute; inset: 0; border: 2px solid #FF6B35; border-radius: 50%;
+  animation: lobby-radiopulse 2.4s ease-out infinite; opacity: 0;
+}
+.lobby-radio-pulse-2 { animation-delay: .8s; }
+.lobby-radio-pulse-3 { animation-delay: 1.6s; }
+
 /* Animations pour visualisations projet — entrée fluide et sensation temps réel */
 @keyframes fade-in-up {
   from {

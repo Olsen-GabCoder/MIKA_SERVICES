@@ -23,6 +23,9 @@ class SalleParticipantService(
     fun join(): SalleParticipantResponse {
         val user = requireUser()
         val salle = salleReunionService.getSalleEntity()
+        if (!salle.ouverte) {
+            throw IllegalStateException("Impossible de rejoindre une salle fermee")
+        }
         // Si deja en session active, retourner l'existant
         val existing = salleParticipantRepository.findBySalleIdAndUserIdAndLeftAtIsNull(salle.id!!, user.id!!)
         if (existing != null) {

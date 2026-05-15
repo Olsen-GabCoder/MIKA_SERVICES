@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import apiClient from '@/api/axios'
 
 export type NetworkLevel = 'excellent' | 'good' | 'limited' | 'measuring'
 
@@ -12,7 +13,7 @@ async function measureLatency(): Promise<number> {
   for (let i = 0; i < 3; i++) {
     const start = performance.now()
     try {
-      await fetch('/health', { method: 'HEAD', cache: 'no-store' })
+      await apiClient.get('/health', { timeout: 5000 })
     } catch {
       return 9999
     }
@@ -27,25 +28,36 @@ function levelFromLatency(ms: number): NetworkLevel {
   return 'limited'
 }
 
+const REMEASURE_INTERVAL = 30_000
+
 export function useNetworkQuality(enabled: boolean): NetworkQuality {
   const [quality, setQuality] = useState<NetworkQuality>({ level: 'measuring', latencyMs: null })
+
+  const measure = useCallback(async () => {
+    const latency = await measureLatency()
+    setQuality({ level: levelFromLatency(latency), latencyMs: latency })
+  }, [])
 
   useEffect(() => {
     if (!enabled) return
 
     let cancelled = false
 
-    async function measure() {
+    async function run() {
       const latency = await measureLatency()
       if (!cancelled) {
         setQuality({ level: levelFromLatency(latency), latencyMs: latency })
       }
     }
 
-    measure()
+    run()
 
-    return () => { cancelled = true }
-  }, [enabled])
+    const id = setInterval(() => {
+      if (!cancelled) measure()
+    }, REMEASURE_INTERVAL)
+
+    return () => { cancelled = true; clearInterval(id) }
+  }, [enabled, measure])
 
   return quality
 }

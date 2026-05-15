@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface KeyboardShortcutsOverlayProps {
@@ -16,12 +16,28 @@ function Kbd({ children }: { children: string }) {
 
 export function KeyboardShortcutsOverlay({ isAdmin, onClose }: KeyboardShortcutsOverlayProps) {
   const { t } = useTranslation('salleReunion')
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' || e.key === '?') {
         e.preventDefault()
         onClose()
+      }
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
       }
     }
     document.addEventListener('keydown', handleKey)
@@ -41,7 +57,7 @@ export function KeyboardShortcutsOverlay({ isAdmin, onClose }: KeyboardShortcuts
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 salle-anim-fade" role="dialog" aria-modal="true" aria-label={t('shortcuts.title')}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-[400px] rounded-3xl bg-white dark:bg-neutral-900 p-7 salle-anim-scale border border-neutral-200 dark:border-neutral-800 shadow-2xl">
+      <div ref={dialogRef} className="relative w-full max-w-[400px] rounded-3xl bg-white dark:bg-neutral-900 p-7 salle-anim-scale border border-neutral-200 dark:border-neutral-800 shadow-2xl">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-[18px] font-bold text-neutral-900 dark:text-white">{t('shortcuts.title')}</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors" aria-label={t('modal.annuler')}>

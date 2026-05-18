@@ -56,7 +56,6 @@ export const mockProjetReport1: ProjetReport = {
   projetNom: 'Réhabilitation RN1 - Section Libreville / Owendo',
   statut: 'EN_COURS_EXECUTION',
   nbChantiers: 4,
-  nbSousProjets: 2,
   budget: {
     budgetTotalPrevu: 120_000_000,
     depensesTotales: 78_000_000,
@@ -88,7 +87,6 @@ export const mockProjetReport2: ProjetReport = {
   projetNom: 'Assainissement quartier Akébé',
   statut: 'EN_COURS_EXECUTION',
   nbChantiers: 3,
-  nbSousProjets: 1,
   budget: {
     budgetTotalPrevu: 85_000_000,
     depensesTotales: 62_500_000,

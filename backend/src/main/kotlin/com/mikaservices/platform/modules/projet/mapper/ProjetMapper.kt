@@ -85,7 +85,10 @@ object ProjetMapper {
         responsableProjet = toUserSummary(entity.responsableProjet),
         partenairePrincipal = entity.partenairePrincipal,
         actif = entity.actif,
-        nombreSousProjets = entity.sousProjets.size,
+        chantierActif = entity.chantierActif,
+        motifArretChantier = entity.motifArretChantier,
+        detailArretChantier = entity.detailArretChantier,
+        dateArretChantier = entity.dateArretChantier,
         nombrePointsBloquantsOuverts = entity.pointsBloquants.count { it.statut == StatutPointBloquant.OUVERT },
         avancementEtudes = entity.avancementEtudes.sortedBy { it.phase }.map { AvancementEtudeProjetMapper.toResponse(it) },
         createdAt = entity.createdAt,
@@ -126,7 +129,10 @@ object ProjetMapper {
                     "$prenom $nom".trim().ifBlank { null }
                 },
                 responsableProjetId = respId,
-                nombreEnginsAffectes = nombreEnginsAffectes
+                nombreEnginsAffectes = nombreEnginsAffectes,
+                chantierActif = entity.chantierActif,
+                motifArretChantier = entity.motifArretChantier,
+                dateArretChantier = entity.dateArretChantier
             )
         } catch (e: Exception) {
             throw IllegalStateException("Erreur lors du mapping du projet ID=${entity.id}: ${e.message}", e)

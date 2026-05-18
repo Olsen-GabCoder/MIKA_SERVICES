@@ -2,7 +2,7 @@ package com.mikaservices.platform.modules.qshe.service
 
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
-import com.mikaservices.platform.modules.projet.repository.SousProjetRepository
+
 import com.mikaservices.platform.modules.qshe.dto.request.ChecklistTemplateCreateRequest
 import com.mikaservices.platform.modules.qshe.dto.request.InspectionCreateRequest
 import com.mikaservices.platform.modules.qshe.dto.request.InspectionUpdateRequest
@@ -28,7 +28,6 @@ class InspectionService(
     private val inspectionRepository: InspectionRepository,
     private val templateRepository: ChecklistTemplateRepository,
     private val projetRepository: ProjetRepository,
-    private val sousProjetRepository: SousProjetRepository,
     private val userRepository: UserRepository
 ) {
     private val logger = LoggerFactory.getLogger(InspectionService::class.java)
@@ -38,9 +37,6 @@ class InspectionService(
     fun createInspection(request: InspectionCreateRequest): InspectionResponse {
         val projet = projetRepository.findById(request.projetId)
             .orElseThrow { ResourceNotFoundException("Projet introuvable : ${request.projetId}") }
-        val sousProjet = request.sousProjetId?.let {
-            sousProjetRepository.findById(it).orElseThrow { ResourceNotFoundException("Sous-projet introuvable : $it") }
-        }
         val inspecteur = request.inspecteurId?.let {
             userRepository.findById(it).orElseThrow { ResourceNotFoundException("Utilisateur introuvable : $it") }
         }
@@ -54,7 +50,7 @@ class InspectionService(
             projet = projet, reference = reference, titre = request.titre,
             description = request.description, typeInspection = request.typeInspection,
             inspecteur = inspecteur, datePlanifiee = request.datePlanifiee,
-            zoneInspecte = request.zoneInspecte, sousProjet = sousProjet,
+            zoneInspecte = request.zoneInspecte,
             checklistTemplate = template
         )
 

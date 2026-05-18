@@ -14,7 +14,6 @@ object RisqueMapper {
         probabiliteResiduelle = e.probabiliteResiduelle, graviteResiduelle = e.graviteResiduelle,
         niveauResiduel = e.niveauResiduel,
         projetId = e.projet.id!!, projetNom = e.projet.nom,
-        sousProjetId = e.sousProjet?.id, sousProjetNom = e.sousProjet?.nom,
         zoneConcernee = e.zoneConcernee, actif = e.actif,
         createdAt = e.createdAt, updatedAt = e.updatedAt
     )

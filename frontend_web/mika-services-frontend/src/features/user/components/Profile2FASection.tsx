@@ -121,7 +121,7 @@ export const Profile2FASection = () => {
     try {
       const data = await authApi.setup2FA()
       if (!data?.qrImageBase64) {
-        setError(t('twoFa.errorTitle') + ' (réponse invalide)')
+        setError(t('twoFa.errorTitle') + ' — ' + t('twoFa.errorInvalidResponse'))
         return
       }
       setSetupData({ secret: data.secret ?? '', qrImageBase64: data.qrImageBase64 })

@@ -6,6 +6,8 @@ import { useIsOnline } from '@/hooks/useConnectivity'
 import { fetchEvenementById, setCurrent } from '@/store/slices/qualiteEvenementSlice'
 import { qualiteEvenementApi } from '@/api/qualiteEvenementApi'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { handleApiError } from '@/utils/errorHandler'
+import { useConfirm } from '@/contexts/ConfirmContext'
 import { NumeroSection, RoleCollegial } from '@/types/qualiteEvenement'
 import type { SectionResponse } from '@/types/qualiteEvenement'
 
@@ -39,6 +41,7 @@ export default function EvenementDetailPage() {
   const navigate = useNavigate()
   const { current: evenement, loading } = useAppSelector(s => s.qualiteEvenement)
   const currentUser = useAppSelector(s => s.auth.user)
+  const confirm = useConfirm()
 
   const [signingSection, setSigningSection] = useState<string | null>(null)
 
@@ -53,8 +56,7 @@ export default function EvenementDetailPage() {
       const updated = await qualiteEvenementApi.signerSection(evenement.id, numSection, currentUser.id)
       dispatch(setCurrent(updated))
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Erreur de signature'
-      alert(msg)
+      await confirm({ message: handleApiError(err), alertOnly: true })
     } finally {
       setSigningSection(null)
     }
@@ -67,8 +69,7 @@ export default function EvenementDetailPage() {
       const updated = await qualiteEvenementApi.signerCollegiale(evenement.id, currentUser.id, role)
       dispatch(setCurrent(updated))
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Erreur de signature'
-      alert(msg)
+      await confirm({ message: handleApiError(err), alertOnly: true })
     } finally {
       setSigningSection(null)
     }

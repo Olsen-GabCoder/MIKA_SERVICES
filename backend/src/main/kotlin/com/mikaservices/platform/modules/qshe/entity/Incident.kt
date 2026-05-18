@@ -5,7 +5,7 @@ import com.mikaservices.platform.modules.qshe.enums.GraviteIncident
 import com.mikaservices.platform.modules.qshe.enums.StatutIncident
 import com.mikaservices.platform.modules.qshe.enums.TypeIncident
 import com.mikaservices.platform.modules.projet.entity.Projet
-import com.mikaservices.platform.modules.projet.entity.SousProjet
+
 import com.mikaservices.platform.modules.user.entity.User
 import jakarta.persistence.*
 import java.time.LocalDate
@@ -94,10 +94,6 @@ class Incident(
     var mesuresConservatoires: String? = null,
 
     // --- Rattachement ---
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sous_projet_id")
-    var sousProjet: SousProjet? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "declare_par_id")

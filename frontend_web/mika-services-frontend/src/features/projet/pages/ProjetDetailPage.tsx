@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useToast } from '@/contexts/ToastContext'
+import { useConfirm } from '@/contexts/ConfirmContext'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
+import { Modal } from '@/components/ui/Modal'
 import { useFormatDate } from '@/hooks/useFormatDate'
 import { useFormatNumber } from '@/hooks/useFormatNumber'
 import { ProjetDownloadDocumentModal } from '@/features/projet/components/ProjetDownloadDocumentModal'
@@ -10,11 +13,11 @@ import { generateProjetDocument } from '@/features/projet/export'
 import type { ProjetDocumentPayload, DocumentExportFormat } from '@/features/projet/export/types'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { ProjetChatbotDrawer, ChatbotFloatingButton } from '@/features/projet/components/ProjetChatbotDrawer'
-import { fetchProjetById, clearProjetDetail } from '@/store/slices/projetSlice'
+import { fetchProjetById, clearProjetDetail, updateProjet } from '@/store/slices/projetSlice'
 import { projetApi, pointBloquantApi } from '@/api/projetApi'
 import { reportingApi } from '@/api/reportingApi'
 import { ProjetVisualisationsSection } from '@/features/projet/components/ProjetVisualisations'
-import type { PointBloquant, Prevision, ModeSuiviMensuel, StatutPointBloquant } from '@/types/projet'
+import type { PointBloquant, Prevision, ModeSuiviMensuel, StatutPointBloquant, MotifArretChantier } from '@/types/projet'
 import { getTypeProjetDisplay, getProjetTypes } from '@/types/projet'
 import type { ProjetReport } from '@/types/reporting'
 import { canEditProjetEffective } from '@/utils/authRoles'
@@ -109,6 +112,14 @@ export const ProjetDetailPage = () => {
   const [exportingDocument, setExportingDocument] = useState(false)
   const [suiviMensuelExpanded, setSuiviMensuelExpanded] = useState(false)
   const [chatbotOpen, setChatbotOpen] = useState(false)
+  const toast = useToast()
+  const confirm = useConfirm()
+  const [arretModalOpen, setArretModalOpen] = useState(false)
+  const [arretMotif, setArretMotif] = useState<MotifArretChantier | ''>('')
+  const [arretDetail, setArretDetail] = useState('')
+  const [arretDate, setArretDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [arretSubmitting, setArretSubmitting] = useState(false)
+
   const [chatMessages, setChatMessages] = useState<Parameters<typeof ProjetChatbotDrawer>[0]['messages']>(() => {
     try {
       const stored = sessionStorage.getItem(`mika-chat-${id}`)
@@ -224,6 +235,30 @@ export const ProjetDetailPage = () => {
   })
   const budgetTrackerRowsVisible = suiviMensuelExpanded ? budgetTrackerRows : budgetTrackerRows.slice(0, SUIVI_MENSUEL_INITIAL_MOIS)
   const suiviMensuelHasMore = budgetTrackerRows.length > SUIVI_MENSUEL_INITIAL_MOIS
+
+  const handleArretChantier = async () => {
+    if (!projet || !arretMotif) return
+    setArretSubmitting(true)
+    try {
+      await dispatch(updateProjet({ id: projet.id, data: { chantierActif: false, motifArretChantier: arretMotif as MotifArretChantier, detailArretChantier: arretDetail || undefined, dateArretChantier: arretDate || undefined } })).unwrap()
+      toast({ message: t('chantier.arretSuccess'), variant: 'success' })
+      setArretModalOpen(false)
+      setArretMotif('')
+      setArretDetail('')
+      dispatch(fetchProjetById(projet.id))
+    } catch { toast({ message: t('common:error.generic', 'Erreur lors de l\'enregistrement'), variant: 'error' }) }
+    finally { setArretSubmitting(false) }
+  }
+
+  const handleRepriseChantier = async () => {
+    if (!projet) return
+    if (!(await confirm({ message: t('chantier.confirmerReprise') }))) return
+    try {
+      await dispatch(updateProjet({ id: projet.id, data: { chantierActif: true } })).unwrap()
+      toast({ message: t('chantier.repriseSuccess'), variant: 'success' })
+      dispatch(fetchProjetById(projet.id))
+    } catch { toast({ message: t('common:error.generic', 'Erreur lors de la reprise'), variant: 'error' }) }
+  }
 
   const handleDownloadDocument = async (format: DocumentExportFormat) => {
     if (!projet) return
@@ -424,6 +459,16 @@ export const ProjetDetailPage = () => {
               </svg>
               DQE
             </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/projets/${projet.id}/documents`)}
+              className="inline-flex items-center gap-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 border border-amber-200 dark:border-amber-700/40"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              {t('detail.linkDocuments')}
+            </button>
             <OfflineDisabledButton>
               <button
                 type="button"
@@ -437,6 +482,35 @@ export const ProjetDetailPage = () => {
                 {exportingDocument ? t('detail.downloadGenerating') : t('detail.downloadDocument')}
               </button>
             </OfflineDisabledButton>
+            {canEditProjet && projet.chantierActif !== false && (
+              <OfflineDisabledButton>
+                <button
+                  type="button"
+                  onClick={() => setArretModalOpen(true)}
+                  className="inline-flex items-center gap-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-700 dark:text-red-400 text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 border border-red-200 dark:border-red-700/40"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                  {t('chantier.signalerArret')}
+                </button>
+              </OfflineDisabledButton>
+            )}
+            {canEditProjet && projet.chantierActif === false && (
+              <OfflineDisabledButton>
+                <button
+                  type="button"
+                  onClick={handleRepriseChantier}
+                  className="inline-flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200 border border-emerald-200 dark:border-emerald-700/40"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {t('chantier.reprendreChantier')}
+                </button>
+              </OfflineDisabledButton>
+            )}
             {canEditProjet && (
               <OfflineDisabledButton>
                 <button
@@ -453,6 +527,125 @@ export const ProjetDetailPage = () => {
           </div>
         </div>
       </header>
+
+      {/* Bandeau arrêt chantier */}
+      {projet.chantierActif === false && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/40 rounded-xl px-5 py-4 mb-6 flex items-start gap-3">
+          <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+          </svg>
+          <div>
+            <p className="font-bold text-red-700 dark:text-red-400 text-sm">{t('chantier.inactif')}</p>
+            {projet.motifArretChantier && (
+              <p className="text-red-600 dark:text-red-300 text-sm mt-1">{t(`chantier.${projet.motifArretChantier}`)}</p>
+            )}
+            {projet.detailArretChantier && (
+              <p className="text-red-500 dark:text-red-400/80 text-xs mt-1">{projet.detailArretChantier}</p>
+            )}
+            {projet.dateArretChantier && (
+              <p className="text-red-400 dark:text-red-500 text-xs mt-1.5">{t('chantier.depuisLe')} {formatDate(projet.dateArretChantier)}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal arrêt chantier */}
+      <Modal isOpen={arretModalOpen} onClose={() => setArretModalOpen(false)} title={t('chantier.signalerArret')}>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('chantier.motif')} *</label>
+            <select
+              value={arretMotif}
+              onChange={e => setArretMotif(e.target.value as MotifArretChantier)}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            >
+              <option value="">— {t('chantier.motif')} —</option>
+              <optgroup label={t('chantier.categorieClimatique')}>
+                {(['FORTES_PLUIES','INONDATION','SOL_SATURE','GLISSEMENT_TERRAIN','CRUE_RIVIERE','CHALEUR_EXTREME','FOUDRE_ORAGE','VEGETATION_ENVAHISSANTE'] as const).map(m => (
+                  <option key={m} value={m}>{t(`chantier.${m}`)}</option>
+                ))}
+              </optgroup>
+              <optgroup label={t('chantier.categorieAdministrative')}>
+                {(['RETARD_PERMIS_CONSTRUIRE','ABSENCE_AUTORISATION_SOL','NON_CONFORMITE_URBANISME','ARRETE_PREFECTORAL','RETARD_ETUDE_IMPACT','PROBLEME_MARCHE_PUBLIC','CHANGEMENT_GOUVERNEMENT','AUDIT_COUR_COMPTES'] as const).map(m => (
+                  <option key={m} value={m}>{t(`chantier.${m}`)}</option>
+                ))}
+              </optgroup>
+              <optgroup label={t('chantier.categorieFinanciere')}>
+                {(['RETARD_PAIEMENT_MAITRE_OUVRAGE','INSUFFISANCE_TRESORERIE','GEL_BUDGETAIRE','NON_OBTENTION_CAUTION','LITIGE_DECOMPTES','DEPASSEMENT_BUDGET','DEFAILLANCE_SOUS_TRAITANT'] as const).map(m => (
+                  <option key={m} value={m}>{t(`chantier.${m}`)}</option>
+                ))}
+              </optgroup>
+              <optgroup label={t('chantier.categorieLogistique')}>
+                {(['RUPTURE_STOCK_CIMENT','RETARD_LIVRAISON_PORT','BLOCAGE_DOUANE','INDISPONIBILITE_GRANULATS','PANNE_ENGIN_SANS_PIECES','ROUTES_IMPRATICABLES','PENURIE_CARBURANT','COUPURE_ELECTRICITE','PENURIE_EAU'] as const).map(m => (
+                  <option key={m} value={m}>{t(`chantier.${m}`)}</option>
+                ))}
+              </optgroup>
+              <optgroup label={t('chantier.categorieTechnique')}>
+                {(['ERREUR_ETUDES_TECHNIQUES','MODIFICATION_PROJET_AVENANT','MALFACON_DEMOLITION','DECOUVERTE_RESEAUX_ENTERRES','SOL_FONDATION_NON_CONFORME','DEFAILLANCE_EQUIPEMENT'] as const).map(m => (
+                  <option key={m} value={m}>{t(`chantier.${m}`)}</option>
+                ))}
+              </optgroup>
+              <optgroup label={t('chantier.categorieSociale')}>
+                {(['CONFLIT_FONCIER','OPPOSITION_RIVERAINS','GREVE_OUVRIERS','PENURIE_MAIN_OEUVRE','ACCIDENT_GRAVE','EPIDEMIE_CRISE_SANITAIRE','PROBLEME_VISA_MAIN_OEUVRE'] as const).map(m => (
+                  <option key={m} value={m}>{t(`chantier.${m}`)}</option>
+                ))}
+              </optgroup>
+              <optgroup label={t('chantier.categorieSecuritaire')}>
+                {(['INSECURITE_VOL_MATERIAUX','DECOUVERTE_MUNITIONS','ORDRE_AUTORITE_SECURITE'] as const).map(m => (
+                  <option key={m} value={m}>{t(`chantier.${m}`)}</option>
+                ))}
+              </optgroup>
+              <optgroup label={t('chantier.categorieEnvironnementale')}>
+                {(['ESPECE_PROTEGEE_ZONE_CLASSEE','POLLUTION_ACCIDENTELLE','NON_RESPECT_PRESCRIPTIONS_ENV'] as const).map(m => (
+                  <option key={m} value={m}>{t(`chantier.${m}`)}</option>
+                ))}
+              </optgroup>
+              <optgroup label={t('chantier.categorieContractuelle')}>
+                {(['RESILIATION_MAITRE_OEUVRE','LIQUIDATION_JUDICIAIRE','LITIGE_PARTENAIRES_GROUPEMENT','EXPIRATION_ORDRE_SERVICE'] as const).map(m => (
+                  <option key={m} value={m}>{t(`chantier.${m}`)}</option>
+                ))}
+              </optgroup>
+              <option value="AUTRE">{t('chantier.AUTRE')}</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('chantier.dateArret')}</label>
+            <input
+              type="date"
+              value={arretDate}
+              onChange={e => setArretDate(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('chantier.detail')}</label>
+            <textarea
+              value={arretDetail}
+              onChange={e => setArretDetail(e.target.value)}
+              rows={3}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
+              placeholder={t('chantier.detail')}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setArretModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            >
+              {t('common:cancel', 'Annuler')}
+            </button>
+            <button
+              type="button"
+              onClick={handleArretChantier}
+              disabled={!arretMotif || arretSubmitting}
+              className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {arretSubmitting ? t('common:app.loading', 'Chargement...') : t('chantier.confirmerArret')}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* LAYOUT PLEINE LARGEUR - TOUTES LES CARTES */}
       <div className="space-y-6">
@@ -999,8 +1192,6 @@ export const ProjetDetailPage = () => {
               <dl className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm items-start">
                 <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 self-start">{t('detail.type')}</dt>
                 <dd className="text-sm font-semibold text-gray-900 dark:text-white min-w-0 break-words self-start">{getTypeProjetDisplay(getProjetTypes(projet), projet.typePersonnalise)}</dd>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 self-start">{t('detail.sousProjets')}</dt>
-                <dd className="text-sm font-semibold text-gray-900 dark:text-white self-start">{projet.nombreSousProjets}</dd>
                 <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 self-start">{t('detail.sourceFinancement')}</dt>
                 <dd className="text-sm font-semibold text-gray-900 dark:text-white min-w-0 break-words self-start">
                   {projet.sourceFinancement ? t(`enums.sourceFinancement.${projet.sourceFinancement}`) : '—'}
@@ -1036,11 +1227,6 @@ export const ProjetDetailPage = () => {
                     to: `/securite?projetId=${projet.id}`, label: t('detail.linkSecurite'),
                     color: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-700/40',
                     icon: <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
-                  },
-                  {
-                    to: `/projets/${projet.id}/documents`, label: t('detail.linkDocuments'),
-                    color: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700/40',
-                    icon: <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
                   },
                 ].map((link) => (
                   <Link

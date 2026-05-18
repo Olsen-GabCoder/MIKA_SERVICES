@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useAppDispatch } from '@/store/hooks'
 import { createEngin, updateEngin } from '@/store/slices/enginSlice'
 import type { Engin, EnginCreateRequest, TypeEngin } from '@/types/materiel'
+import { handleApiError } from '@/utils/errorHandler'
+import { useToast } from '@/contexts/ToastContext'
 
 const ALL_TYPES: TypeEngin[] = [
   'PELLETEUSE', 'BULLDOZER', 'NIVELEUSE', 'COMPACTEUR', 'CAMION_BENNE', 'CAMION_CITERNE',
@@ -19,6 +21,7 @@ interface Props {
 export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
   const { t } = useTranslation('materiel')
   const dispatch = useAppDispatch()
+  const toast = useToast()
   const isEdit = !!engin
 
   const [form, setForm] = useState<EnginCreateRequest>({
@@ -55,9 +58,10 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
       } else {
         await dispatch(createEngin(form)).unwrap()
       }
+      toast({ message: isEdit ? t('form.updateSuccess') : t('form.createSuccess'), variant: 'success' })
       onSuccess()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('form.errorGeneric'))
+      setError(handleApiError(err))
     } finally {
       setSubmitting(false)
     }

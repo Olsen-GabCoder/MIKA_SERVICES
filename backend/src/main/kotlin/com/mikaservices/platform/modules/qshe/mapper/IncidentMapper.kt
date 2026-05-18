@@ -27,8 +27,6 @@ object IncidentMapper {
             longitude = entity.longitude,
             projetId = entity.projet.id!!,
             projetNom = entity.projet.nom,
-            sousProjetId = entity.sousProjet?.id,
-            sousProjetNom = entity.sousProjet?.nom,
             declareParId = declarePar?.id,
             declareParNom = declarePar?.let { "${it.prenom} ${it.nom}" },
             descriptionCirconstances = entity.descriptionCirconstances,

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { qualiteAgrementApi } from '@/api/qualiteAgrementApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type {
   AgrementMarcheResponse,
   AgrementMarcheCreateRequest,
@@ -79,7 +80,7 @@ const slice = createSlice({
       s.totalPages = a.payload.totalPages
       s.currentPage = a.payload.number
     })
-    b.addCase(fetchAgrements.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchAgrements.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(fetchAgrementsByProjet.pending, (s) => { s.loading = true; s.error = null })
     b.addCase(fetchAgrementsByProjet.fulfilled, (s, a) => {
@@ -89,7 +90,7 @@ const slice = createSlice({
       s.totalPages = a.payload.totalPages
       s.currentPage = a.payload.number
     })
-    b.addCase(fetchAgrementsByProjet.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchAgrementsByProjet.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(createAgrement.fulfilled, (s, a) => { s.agrements.unshift(a.payload) })
 

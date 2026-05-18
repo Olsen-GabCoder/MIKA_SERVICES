@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input'
 import { useAppDispatch } from '@/store/hooks'
 import { createUser } from '@/store/slices/userSlice'
 import { roleApi } from '@/api/roleApi'
+import { handleApiError } from '@/utils/errorHandler'
 import { userApi } from '@/api/userApi'
 import type { Role } from '@/api/roleApi'
 import type { UserCreateRequest } from '@/api/userApi'
@@ -102,7 +103,7 @@ export const UserForm = ({ onSuccess, onCancel }: UserFormProps) => {
         onSuccess()
       }
     } catch (err: unknown) {
-      setErrorMessage((err as { message?: string })?.message || t('form.errorCreate'))
+      setErrorMessage(handleApiError(err))
     } finally {
       setIsLoading(false)
     }

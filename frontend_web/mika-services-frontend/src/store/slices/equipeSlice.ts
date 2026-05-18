@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { equipeApi } from '@/api/chantierApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { Equipe, EquipeCreateRequest, EquipeUpdateRequest, PageResponse } from '@/types/chantier'
 
 interface EquipeState {
@@ -79,7 +80,7 @@ const equipeSlice = createSlice({
       })
       .addCase(fetchEquipes.rejected, (state, action) => {
         state.loading = false
-        state.error = action.error.message || 'Erreur'
+        state.error = handleApiError(action.error)
       })
       .addCase(fetchEquipeById.pending, (state) => {
         state.loading = true
@@ -90,7 +91,7 @@ const equipeSlice = createSlice({
       })
       .addCase(fetchEquipeById.rejected, (state, action) => {
         state.loading = false
-        state.error = action.error.message || 'Erreur'
+        state.error = handleApiError(action.error)
       })
       .addCase(createEquipe.pending, (state) => {
         state.loading = true
@@ -101,7 +102,7 @@ const equipeSlice = createSlice({
       })
       .addCase(createEquipe.rejected, (state, action) => {
         state.loading = false
-        state.error = action.error.message || 'Erreur'
+        state.error = handleApiError(action.error)
       })
       .addCase(updateEquipe.pending, (state) => {
         state.loading = true
@@ -112,7 +113,7 @@ const equipeSlice = createSlice({
       })
       .addCase(updateEquipe.rejected, (state, action) => {
         state.loading = false
-        state.error = action.error.message || 'Erreur'
+        state.error = handleApiError(action.error)
       })
       .addCase(deleteEquipe.fulfilled, (state, action) => {
         state.equipes = state.equipes.filter((e) => e.id !== action.payload)

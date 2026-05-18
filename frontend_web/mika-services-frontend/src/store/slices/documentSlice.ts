@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { documentApi } from '../../api/documentApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { DocumentFile, PaginatedResponse } from '../../types/document'
 import { TypeDocument } from '../../types/document'
 
@@ -68,7 +69,7 @@ const documentSlice = createSlice({
       state.currentPage = data.number
       state.loading = false
     })
-    builder.addCase(fetchDocuments.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+    builder.addCase(fetchDocuments.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
     builder.addCase(fetchDocumentsByProjet.pending, (state) => { state.loading = true; state.error = null })
     builder.addCase(fetchDocumentsByProjet.fulfilled, (state, action) => {
@@ -79,11 +80,11 @@ const documentSlice = createSlice({
       state.currentPage = data.number
       state.loading = false
     })
-    builder.addCase(fetchDocumentsByProjet.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+    builder.addCase(fetchDocumentsByProjet.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
     builder.addCase(uploadDocument.pending, (state) => { state.uploading = true; state.error = null })
     builder.addCase(uploadDocument.fulfilled, (state, action) => { state.documents.unshift(action.payload); state.uploading = false })
-    builder.addCase(uploadDocument.rejected, (state, action) => { state.uploading = false; state.error = action.error.message || 'Erreur' })
+    builder.addCase(uploadDocument.rejected, (state, action) => { state.uploading = false; state.error = handleApiError(action.error) })
 
     builder.addCase(deleteDocument.fulfilled, (state, action) => {
       state.documents = state.documents.filter(d => d.id !== action.payload)

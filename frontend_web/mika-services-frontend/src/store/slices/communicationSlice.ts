@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { messageApi, notificationApi } from '../../api/communicationApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { Message, MessageCreateRequest, Notification, PaginatedResponse } from '../../types/communication'
 
 interface CommunicationState {
@@ -146,7 +147,7 @@ const communicationSlice = createSlice({
       state.currentPage = data.number
       state.loading = false
     })
-    builder.addCase(fetchMessagesRecus.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+    builder.addCase(fetchMessagesRecus.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
     // Messages envoyés
     builder.addCase(fetchMessagesEnvoyes.fulfilled, (state, action) => {
@@ -191,7 +192,7 @@ const communicationSlice = createSlice({
       state.currentPage = data.number
       state.loading = false
     })
-    builder.addCase(fetchNotifications.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+    builder.addCase(fetchNotifications.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
     builder.addCase(fetchNotificationsNonLues.fulfilled, (state, action) => { state.notificationsNonLues = action.payload })
 

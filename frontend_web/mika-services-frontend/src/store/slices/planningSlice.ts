@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { planningApi } from '../../api/planningApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { Tache, TacheCreateRequest, TacheUpdateRequest, PaginatedResponse } from '../../types/planning'
 
 interface PlanningState {
@@ -91,17 +92,17 @@ const planningSlice = createSlice({
       state.currentPage = data.number
       state.loading = false
     })
-    builder.addCase(fetchTachesByProjet.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+    builder.addCase(fetchTachesByProjet.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
     // fetchMesTaches
     builder.addCase(fetchMesTaches.pending, (state) => { state.loading = true; state.error = null })
     builder.addCase(fetchMesTaches.fulfilled, (state, action) => { state.mesTaches = action.payload; state.loading = false })
-    builder.addCase(fetchMesTaches.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+    builder.addCase(fetchMesTaches.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
     // fetchTachesEnRetard
     builder.addCase(fetchTachesEnRetard.pending, (state) => { state.loading = true; state.error = null })
     builder.addCase(fetchTachesEnRetard.fulfilled, (state, action) => { state.tachesEnRetard = action.payload; state.loading = false })
-    builder.addCase(fetchTachesEnRetard.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+    builder.addCase(fetchTachesEnRetard.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
     // createTache
     builder.addCase(createTache.fulfilled, (state, action) => { state.taches.unshift(action.payload) })

@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { useIsOnline } from '@/hooks/useConnectivity'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/contexts/ToastContext'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { fetchFournisseurs, fetchCommandes, createFournisseur, deleteFournisseur } from '../../../store/slices/fournisseurSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -19,6 +21,7 @@ export default function FournisseurPage() {
   const { formatMontant } = useFormatNumber()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
+  const toast = useToast()
   const { fournisseurs, commandes, loading, error, totalFournisseurs, totalCommandes } = useAppSelector(s => s.fournisseur)
   const [tab, setTab] = useState<'fournisseurs' | 'commandes'>('fournisseurs')
   const [showModal, setShowModal] = useState(false)
@@ -37,11 +40,12 @@ export default function FournisseurPage() {
       nom: formNom, telephone: formTel || undefined, email: formEmail || undefined,
       specialite: formSpec || undefined, adresse: formAdresse || undefined, contactNom: formContact || undefined,
     }))
+    toast({ message: t('createSuccess', 'Fournisseur créé avec succès'), variant: 'success' })
     setShowModal(false); resetForm()
   }
 
   const handleDelete = async (id: number) => {
-    if (await confirm({ messageKey: 'confirm.deleteFournisseur' })) await dispatch(deleteFournisseur(id))
+    if (await confirm({ messageKey: 'confirm.deleteFournisseur' })) { await dispatch(deleteFournisseur(id)); toast({ message: t('deleteSuccess', 'Fournisseur supprimé'), variant: 'success' }) }
   }
 
   const resetForm = () => { setFormNom(''); setFormTel(''); setFormEmail(''); setFormSpec(''); setFormAdresse(''); setFormContact('') }
@@ -125,10 +129,10 @@ export default function FournisseurPage() {
       )}
 
       {/* Modal création */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-none dark:border dark:border-gray-600 w-full max-w-lg mx-4 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('modalTitle')}</h2>
+      <Modal isOpen={showModal} onClose={() => { setShowModal(false); resetForm() }} title={t('modalTitle')} size="md" footer={<>
+          <button onClick={() => { setShowModal(false); resetForm() }} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium">{t('cancel')}</button>
+          <button onClick={handleCreate} disabled={!formNom.trim() || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold">{t('create')}</button>
+        </>}>
             <div className="space-y-3">
               <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('nom')}</label><input value={formNom} onChange={e => setFormNom(e.target.value)} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-gray-100" /></div>
               <div className="grid grid-cols-2 gap-3">
@@ -141,13 +145,7 @@ export default function FournisseurPage() {
               </div>
               <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('adresse')}</label><textarea value={formAdresse} onChange={e => setFormAdresse(e.target.value)} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-gray-100" rows={2} /></div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => { setShowModal(false); resetForm() }} className="px-4 py-2 border dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">{t('cancel')}</button>
-              <button onClick={handleCreate} disabled={!formNom.trim() || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed">{t('create')}</button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {error && <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4 text-red-700 dark:text-red-200">{error}</div>}
     </PageContainer>

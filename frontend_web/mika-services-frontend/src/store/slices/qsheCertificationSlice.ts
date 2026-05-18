@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { qsheCertificationApi } from '@/api/qsheCertificationApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { CertificationResponse, CertificationCreateRequest, CertificationSummaryResponse } from '@/types/qsheCertification'
 
 interface State {
@@ -20,7 +21,7 @@ const slice = createSlice({
   extraReducers: b => {
     b.addCase(fetchCertificationsByUser.pending, s => { s.loading = true; s.error = null })
      .addCase(fetchCertificationsByUser.fulfilled, (s, { payload: p }) => { s.loading = false; s.certifications = p.content; s.totalElements = p.totalElements; s.totalPages = p.totalPages; s.currentPage = p.number })
-     .addCase(fetchCertificationsByUser.rejected, (s, { error }) => { s.loading = false; s.error = error.message ?? 'Erreur' })
+     .addCase(fetchCertificationsByUser.rejected, (s, { error }) => { s.loading = false; s.error = handleApiError(error) })
      .addCase(createCertification.fulfilled, (s, { payload }) => { s.certifications = [payload, ...s.certifications] })
      .addCase(deleteCertification.fulfilled, (s, { payload: id }) => { s.certifications = s.certifications.filter(c => c.id !== id) })
      .addCase(fetchExpirant.fulfilled, (s, { payload }) => { s.expirant = payload })

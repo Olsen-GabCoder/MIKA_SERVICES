@@ -9,9 +9,13 @@ import com.mikaservices.platform.modules.materiel.repository.MateriauRepository
 import com.mikaservices.platform.modules.planning.repository.TacheRepository
 import com.mikaservices.platform.modules.projet.repository.PrevisionRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
-import com.mikaservices.platform.modules.projet.repository.SousProjetRepository
+import com.mikaservices.platform.modules.projet.repository.CAPrevisionnelRealiseRepository
+import com.mikaservices.platform.modules.qshe.repository.IncidentRepository
+import com.mikaservices.platform.modules.qshe.repository.RisqueRepository
+import com.mikaservices.platform.modules.qualite.repository.EvenementQualiteRepository
 import com.mikaservices.platform.modules.reporting.dto.response.*
-// TODO QSHE v2 — imports securite/qualite repositories retirés lors du nettoyage #0, à recâbler au livrable #4 (dashboard QSHE)
+import com.mikaservices.platform.modules.qualite.enums.StatutEvenement
+import com.mikaservices.platform.modules.qshe.enums.GraviteIncident
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -28,10 +32,12 @@ class ReportingService(
     private val depenseRepository: DepenseRepository,
     private val tacheRepository: TacheRepository,
     private val previsionRepository: PrevisionRepository,
-    // TODO QSHE v2 — repositories securite/qualite retirés lors du nettoyage #0, à recâbler au livrable #4 (dashboard QSHE)
     private val enginRepository: EnginRepository,
     private val materiauRepository: MateriauRepository,
-    private val sousProjetRepository: SousProjetRepository
+    private val incidentRepository: IncidentRepository,
+    private val risqueRepository: RisqueRepository,
+    private val evenementQualiteRepository: EvenementQualiteRepository,
+    private val caRepository: CAPrevisionnelRealiseRepository
 ) {
 
     fun getGlobalDashboard(): GlobalDashboardResponse {
@@ -40,9 +46,8 @@ class ReportingService(
             chantiers = getChantierStats(),
             budget = getGlobalBudgetStats(),
             planning = getGlobalPlanningStats(),
-            // TODO QSHE v2 — stats qualite/securite retirées lors du nettoyage #0, à reconstruire au livrable #4
-            qualite = null,
-            securite = null,
+            qualite = getGlobalQualiteStats(),
+            securite = getGlobalSecuriteStats(),
             materiel = getMaterielStats(),
             weeklyProgress = getWeeklyProgressStats()
         )
@@ -69,12 +74,13 @@ class ReportingService(
         val tachesEnCours = tacheRepository.countByProjetIdAndStatut(projetId, StatutTache.EN_COURS)
         val tauxAvancement = if (tachesTotal > 0) (tachesTerminees.toDouble() / tachesTotal * 100) else 0.0
 
-        // TODO QSHE v2 — stats qualite/securite par projet retirées lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE)
-
         val today = LocalDate.now()
         val tachesEnRetard = tacheRepository.findByProjetIdAndStatut(projetId, StatutTache.EN_COURS).count { t ->
             t.dateEcheance != null && t.dateEcheance!!.isBefore(today)
         }.toLong()
+
+        val projetSecurite = getProjetSecuriteStats(projetId)
+        val projetQualite = getProjetQualiteStats(projetId)
 
         return ProjetReportResponse(
             projetId = projet.id!!,
@@ -82,11 +88,9 @@ class ReportingService(
             statut = projet.statut.name,
             budget = BudgetStats(budgetPrevu, depenses, ecart, round(tauxConso * 100.0) / 100.0),
             planning = PlanningStats(tachesTotal, tachesTerminees, tachesEnCours, tachesEnRetard, round(tauxAvancement * 100.0) / 100.0),
-            // TODO QSHE v2 — qualite/securite retirés lors du nettoyage #0, à reconstruire au livrable #4
-            qualite = null,
-            securite = null,
-            nbChantiers = 0L,
-            nbSousProjets = sousProjetRepository.findByProjetId(projet.id!!).size.toLong()
+            qualite = projetQualite,
+            securite = projetSecurite,
+            nbChantiers = 0L
         )
     }
 
@@ -128,12 +132,54 @@ class ReportingService(
     }
 
     private fun getChantierStats(): ChantierStats {
-        return ChantierStats(total = 0L, actifs = 0L, termines = 0L)
+        val projetsEnCours = projetRepository.findAll().filter {
+            it.actif && it.statut in listOf(StatutProjet.EN_COURS_EXECUTION, StatutProjet.EN_AVANCE)
+        }
+        return ChantierStats(
+            total = projetsEnCours.size.toLong(),
+            actifs = projetsEnCours.count { it.chantierActif }.toLong(),
+            termines = projetRepository.findAll().count {
+                it.actif && it.statut == StatutProjet.RECEPTION_DEFINITIVE
+            }.toLong()
+        )
     }
 
     private fun getGlobalBudgetStats(): BudgetStats {
-        val projets = projetRepository.findAll()
-        val budgetPrevu = projets.map { it.montantRevise ?: it.montantHT ?: it.montantInitial ?: BigDecimal.ZERO }.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
+        val projets = projetRepository.findAll().filter { it.actif }
+        val statutsEnCours = listOf(StatutProjet.EN_COURS_EXECUTION, StatutProjet.EN_AVANCE)
+
+        // Montants marchés
+        val montantTotalMarches = projets
+            .map { it.montantHT ?: BigDecimal.ZERO }
+            .fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
+        val montantMarchesEnCours = projets
+            .filter { it.statut in statutsEnCours }
+            .map { it.montantHT ?: BigDecimal.ZERO }
+            .fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
+
+        // CA prévisionnel / réalisé cumulé (toutes les données en base)
+        val allCA = caRepository.findAll()
+        val caPrevisionnelCumule = allCA.fold(BigDecimal.ZERO) { acc, ca -> acc.add(ca.caPrevisionnel) }
+        val caRealiseCumule = allCA.fold(BigDecimal.ZERO) { acc, ca -> acc.add(ca.caRealise) }
+        val tauxRealisation = if (caPrevisionnelCumule > BigDecimal.ZERO) {
+            caRealiseCumule.divide(caPrevisionnelCumule, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100)).toDouble()
+        } else 0.0
+
+        // Évolution mensuelle (agrégée tous projets, triée par date)
+        val evolutionMensuelle = allCA
+            .groupBy { Pair(it.annee, it.mois) }
+            .map { (key, items) ->
+                EvolutionCA(
+                    mois = key.second,
+                    annee = key.first,
+                    previsionnel = items.fold(BigDecimal.ZERO) { acc, ca -> acc.add(ca.caPrevisionnel) },
+                    realise = items.fold(BigDecimal.ZERO) { acc, ca -> acc.add(ca.caRealise) }
+                )
+            }
+            .sortedWith(compareBy({ it.annee }, { it.mois }))
+
+        // Budget prévu (compatibilité) = montant total marchés
+        val budgetPrevu = montantTotalMarches
         val depenses = projets.mapNotNull { it.id }.fold(BigDecimal.ZERO) { acc, id ->
             acc.add(depenseRepository.sumMontantByProjetId(id))
         }
@@ -142,7 +188,18 @@ class ReportingService(
             depenses.divide(budgetPrevu, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100)).toDouble()
         } else 0.0
 
-        return BudgetStats(budgetPrevu, depenses, ecart, round(tauxConso * 100.0) / 100.0)
+        return BudgetStats(
+            budgetTotalPrevu = budgetPrevu,
+            depensesTotales = depenses,
+            ecart = ecart,
+            tauxConsommation = round(tauxConso * 100.0) / 100.0,
+            montantTotalMarches = montantTotalMarches,
+            montantMarchesEnCours = montantMarchesEnCours,
+            caPrevisionnelCumule = caPrevisionnelCumule,
+            caRealiseCumule = caRealiseCumule,
+            tauxRealisation = round(tauxRealisation * 100.0) / 100.0,
+            evolutionMensuelle = evolutionMensuelle
+        )
     }
 
     private fun getGlobalPlanningStats(): PlanningStats {
@@ -158,7 +215,81 @@ class ReportingService(
         return PlanningStats(total, terminees, enCours, enRetard, round(tauxAvancement * 100.0) / 100.0)
     }
 
-    // TODO QSHE v2 — getGlobalQualiteStats() et getGlobalSecuriteStats() retirés lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE)
+    private fun getGlobalSecuriteStats(): SecuriteStats {
+        val projetsActifs = projetRepository.findAll().filter { it.actif }.mapNotNull { it.id }
+        val gravesEtMortelles = listOf(GraviteIncident.GRAVE, GraviteIncident.MORTELLE)
+
+        var incidentsTotal = 0L
+        var incidentsGraves = 0L
+        var joursArretTotal = 0L
+        var risquesCritiques = 0L
+
+        for (projetId in projetsActifs) {
+            incidentsTotal += incidentRepository.countByProjetId(projetId)
+            incidentsGraves += incidentRepository.countByProjetIdAndGraviteIn(projetId, gravesEtMortelles)
+            joursArretTotal += incidentRepository.sumJoursArretByProjetId(projetId)
+            risquesCritiques += risqueRepository.countActifsByProjetAndNiveauBrutIn(
+                projetId, listOf(NiveauRisque.CRITIQUE, NiveauRisque.ELEVE)
+            )
+        }
+
+        return SecuriteStats(
+            incidentsTotal = incidentsTotal,
+            incidentsGraves = incidentsGraves,
+            joursArretTotal = joursArretTotal,
+            risquesCritiques = risquesCritiques
+        )
+    }
+
+    private fun getGlobalQualiteStats(): QualiteStats {
+        val statuts = evenementQualiteRepository.countAllGroupByStatut()
+        val parStatut = statuts.associate { (it[0] as StatutEvenement) to (it[1] as Long) }
+
+        val total = parStatut.values.sum()
+        val ncOuvertes = (parStatut[StatutEvenement.DETECTEE] ?: 0L) +
+                (parStatut[StatutEvenement.EN_TRAITEMENT] ?: 0L) +
+                (parStatut[StatutEvenement.EN_VERIFICATION] ?: 0L)
+        val resolues = (parStatut[StatutEvenement.LEVEE] ?: 0L) +
+                (parStatut[StatutEvenement.CLOTUREE] ?: 0L)
+        val tauxConformite = if (total > 0) round(resolues.toDouble() / total * 100 * 100.0) / 100.0 else 0.0
+
+        return QualiteStats(
+            controlesTotal = total,
+            tauxConformite = tauxConformite,
+            ncOuvertes = ncOuvertes
+        )
+    }
+
+    private fun getProjetSecuriteStats(projetId: Long): SecuriteStats {
+        val gravesEtMortelles = listOf(GraviteIncident.GRAVE, GraviteIncident.MORTELLE)
+        return SecuriteStats(
+            incidentsTotal = incidentRepository.countByProjetId(projetId),
+            incidentsGraves = incidentRepository.countByProjetIdAndGraviteIn(projetId, gravesEtMortelles),
+            joursArretTotal = incidentRepository.sumJoursArretByProjetId(projetId),
+            risquesCritiques = risqueRepository.countActifsByProjetAndNiveauBrutIn(
+                projetId, listOf(NiveauRisque.CRITIQUE, NiveauRisque.ELEVE)
+            )
+        )
+    }
+
+    private fun getProjetQualiteStats(projetId: Long): QualiteStats {
+        val statuts = evenementQualiteRepository.countByProjetGroupByStatut(projetId)
+        val parStatut = statuts.associate { (it[0] as StatutEvenement) to (it[1] as Long) }
+
+        val total = parStatut.values.sum()
+        val ncOuvertes = (parStatut[StatutEvenement.DETECTEE] ?: 0L) +
+                (parStatut[StatutEvenement.EN_TRAITEMENT] ?: 0L) +
+                (parStatut[StatutEvenement.EN_VERIFICATION] ?: 0L)
+        val resolues = (parStatut[StatutEvenement.LEVEE] ?: 0L) +
+                (parStatut[StatutEvenement.CLOTUREE] ?: 0L)
+        val tauxConformite = if (total > 0) round(resolues.toDouble() / total * 100 * 100.0) / 100.0 else 0.0
+
+        return QualiteStats(
+            controlesTotal = total,
+            tauxConformite = tauxConformite,
+            ncOuvertes = ncOuvertes
+        )
+    }
 
     private fun getMaterielStats(): MaterielStats {
         val engins = enginRepository.findAll()

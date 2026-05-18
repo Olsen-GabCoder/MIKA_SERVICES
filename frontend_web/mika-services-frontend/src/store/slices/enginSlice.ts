@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { enginApi } from '@/api/enginApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { EnginSummary, Engin, EnginCreateRequest } from '@/types/materiel'
 
 interface EnginState {
@@ -50,10 +51,10 @@ const enginSlice = createSlice({
         state.totalElements = action.payload.totalElements; state.totalPages = action.payload.totalPages
         state.currentPage = action.payload.number
       })
-      .addCase(fetchEngins.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+      .addCase(fetchEngins.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
       .addCase(fetchEnginById.pending, (state) => { state.loading = true; state.error = null })
       .addCase(fetchEnginById.fulfilled, (state, action) => { state.loading = false; state.enginDetail = action.payload })
-      .addCase(fetchEnginById.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+      .addCase(fetchEnginById.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
       .addCase(createEngin.fulfilled, (state) => { state.error = null })
       .addCase(updateEngin.fulfilled, (state, action) => {
         state.error = null

@@ -208,7 +208,7 @@ const userSlice = createSlice({
     })
     builder.addCase(fetchUsers.rejected, (state, action) => {
       state.isLoading = false
-      state.error = (typeof action.payload === 'string' ? action.payload : action.error.message) || 'Erreur lors du chargement des utilisateurs'
+      state.error = typeof action.payload === 'string' ? action.payload : handleApiError(action.error)
     })
 
     // Fetch user by ID
@@ -222,7 +222,7 @@ const userSlice = createSlice({
     })
     builder.addCase(fetchUserById.rejected, (state, action) => {
       state.isLoading = false
-      state.error = action.error.message || 'Erreur lors du chargement de l\'utilisateur'
+      state.error = handleApiError(action.error)
     })
 
     // Fetch current user
@@ -241,7 +241,7 @@ const userSlice = createSlice({
     })
     builder.addCase(createUser.rejected, (state, action) => {
       state.isLoading = false
-      state.error = (action.payload as string) || action.error.message || 'Erreur lors de la création de l\'utilisateur'
+      state.error = (action.payload as string) || handleApiError(action.error)
     })
 
     // Update user
@@ -264,7 +264,7 @@ const userSlice = createSlice({
     })
     builder.addCase(updateUser.rejected, (state, action) => {
       state.isLoading = false
-      state.error = (action.payload as string) || action.error.message || 'Erreur lors de la mise à jour de l\'utilisateur'
+      state.error = (action.payload as string) || handleApiError(action.error)
     })
 
     // Update my profile (PATCH /users/me)
@@ -281,7 +281,7 @@ const userSlice = createSlice({
     })
     builder.addCase(updateMyProfile.rejected, (state, action) => {
       state.isLoading = false
-      state.error = (action.payload as string) || action.error.message || 'Erreur lors de la mise à jour du profil'
+      state.error = (action.payload as string) || handleApiError(action.error)
     })
 
     // Delete user
@@ -298,7 +298,7 @@ const userSlice = createSlice({
     })
     builder.addCase(deleteUser.rejected, (state, action) => {
       state.isLoading = false
-      state.error = (action.payload as string) || action.error.message || 'Erreur lors de la suppression de l\'utilisateur'
+      state.error = (action.payload as string) || handleApiError(action.error)
     })
 
     // Reset currentUser on logout

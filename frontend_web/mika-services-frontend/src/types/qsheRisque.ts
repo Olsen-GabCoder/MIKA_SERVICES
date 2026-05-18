@@ -17,7 +17,7 @@ export interface RisqueResponse {
   mesuresElimination: string | null; mesuresSubstitution: string | null
   mesuresIngenierie: string | null; mesuresAdministratives: string | null; mesuresEpi: string | null
   probabiliteResiduelle: number | null; graviteResiduelle: number | null; niveauResiduel: NiveauRisque | null
-  projetId: number; projetNom: string; sousProjetId: number | null; sousProjetNom: string | null
+  projetId: number; projetNom: string
   zoneConcernee: string | null; actif: boolean
   createdAt: string | null; updatedAt: string | null
 }
@@ -29,7 +29,7 @@ export interface RisqueCreateRequest {
   mesuresElimination?: string; mesuresSubstitution?: string; mesuresIngenierie?: string
   mesuresAdministratives?: string; mesuresEpi?: string
   probabiliteResiduelle?: number; graviteResiduelle?: number
-  sousProjetId?: number; zoneConcernee?: string
+  zoneConcernee?: string
 }
 
 export interface RisqueUpdateRequest {

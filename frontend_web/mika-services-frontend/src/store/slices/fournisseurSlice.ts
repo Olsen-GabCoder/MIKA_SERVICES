@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { fournisseurApi } from '../../api/fournisseurApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { Fournisseur, Commande } from '../../types/fournisseur'
 
 interface FournisseurState {
@@ -40,11 +41,11 @@ const fournisseurSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(fetchFournisseurs.pending, (s) => { s.loading = true; s.error = null })
     builder.addCase(fetchFournisseurs.fulfilled, (s, a) => { s.fournisseurs = a.payload.content; s.totalFournisseurs = a.payload.totalElements; s.loading = false })
-    builder.addCase(fetchFournisseurs.rejected, (s, a) => { s.loading = false; s.error = a.error.message || 'Erreur' })
+    builder.addCase(fetchFournisseurs.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     builder.addCase(fetchCommandes.pending, (s) => { s.loading = true })
     builder.addCase(fetchCommandes.fulfilled, (s, a) => { s.commandes = a.payload.content; s.totalCommandes = a.payload.totalElements; s.loading = false })
-    builder.addCase(fetchCommandes.rejected, (s, a) => { s.loading = false; s.error = a.error.message || 'Erreur' })
+    builder.addCase(fetchCommandes.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     builder.addCase(createFournisseur.fulfilled, (s, a) => { s.fournisseurs.unshift(a.payload) })
     builder.addCase(deleteFournisseur.fulfilled, (s, a) => { s.fournisseurs = s.fournisseurs.filter(f => f.id !== a.payload) })

@@ -125,7 +125,7 @@ function CheckBox({
    ═══════════════════════════════════════════════════════════════════ */
 
 export function DemandeMaterielFormPage() {
-  const { t: _t } = useTranslation('materiel')
+  const { t } = useTranslation('materiel')
   const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
@@ -201,14 +201,14 @@ export function DemandeMaterielFormPage() {
     e?.preventDefault()
     setError(null)
 
-    if (!projetId) { setError('Le projet / N° d\'affaires est obligatoire.'); return }
-    if (!nomDemandeur.trim()) { setError('Le nom du demandeur est obligatoire.'); return }
+    if (!projetId) { setError(t('dmaForm.errorProjectRequired')); return }
+    if (!nomDemandeur.trim()) { setError(t('dmaForm.errorRequesterRequired')); return }
 
     const validLignes = lignes.filter((l) => l.designation.trim() !== '')
-    if (validLignes.length === 0) { setError('Au moins un article avec désignation est requis.'); return }
+    if (validLignes.length === 0) { setError(t('dmaForm.errorMinOneLine')); return }
 
     for (const l of validLignes) {
-      if (l.quantite <= 0) { setError('La quantité doit être > 0 sur tous les articles renseignés.'); return }
+      if (l.quantite <= 0) { setError(t('dmaForm.errorQuantityPositive')); return }
     }
 
     const payload = {
@@ -237,7 +237,7 @@ export function DemandeMaterielFormPage() {
       setShowSuccess(true)
       setTimeout(() => navigate(`/dma/${result.id}`), 1500)
     } catch {
-      setError('Une erreur est survenue lors de la soumission.')
+      setError(t('dmaForm.errorSubmit'))
     } finally {
       setSubmitting(false)
     }
@@ -286,7 +286,7 @@ export function DemandeMaterielFormPage() {
             type="button"
             onClick={() => { void handleSubmit() }}
             disabled={submitting || !isOnline}
-            title={!isOnline ? _t('common:offline.actionUnavailable') : undefined}
+            title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
             className="flex items-center gap-2 px-5 py-2 rounded-lg bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-bold shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed"
             whileHover={{ scale: 1.03, boxShadow: '0 12px 30px -4px rgba(232, 90, 42, 0.4)' }}
             whileTap={{ scale: 0.97 }}
@@ -342,8 +342,8 @@ export function DemandeMaterielFormPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">Demande soumise</h3>
-              <p className="text-sm text-gray-500">Redirection en cours…</p>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">{t('dmaForm.successTitle')}</h3>
+              <p className="text-sm text-gray-500">{t('dmaForm.successRedirect')}</p>
             </div>
           </motion.div>
         )}

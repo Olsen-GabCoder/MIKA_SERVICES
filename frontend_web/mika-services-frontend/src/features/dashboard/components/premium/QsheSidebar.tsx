@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import type { SecuriteStats } from '@/types/reporting'
 import type { QsheCounts } from '../../hooks/useQsheCounts'
 
@@ -15,16 +16,29 @@ const items = (s: SecuriteStats, c: QsheCounts) => [
   { label: 'EPI expirés', value: c.epi.expires, variant: 'neutral' as const, icon: <path d="M12 2l9 4v6c0 5-3.5 9.7-9 10-5.5-.3-9-5-9-10V6l9-4z" /> },
 ]
 
+function computeScore(s: SecuriteStats, c: QsheCounts): number {
+  let score = 100
+  score -= Math.min(s.incidentsGraves * 10, 30)
+  score -= Math.min(s.risquesCritiques * 5, 20)
+  score -= Math.min(c.actions.enRetard * 3, 15)
+  score -= Math.min((c.certifications.expirant + c.certifications.expirees) * 2, 15)
+  score -= Math.min(c.epi.expires * 2, 10)
+  return Math.max(0, Math.min(100, score))
+}
+
 export function QsheSidebar({ securite, counts }: QsheSidebarProps) {
   const { t } = useTranslation('common')
+  const navigate = useNavigate()
   const list = items(securite, counts)
   const colorMap = { danger: 'var(--db-danger)', warn: 'var(--db-warn)', neutral: 'var(--db-t1)' }
+  const score = computeScore(securite, counts)
+  const scoreColor = score >= 80 ? 'var(--db-success)' : score >= 50 ? 'var(--db-warn)' : 'var(--db-danger)'
 
   return (
     <div className="col-span-12 lg:col-span-4 rounded-xl p-4" style={{ background: 'var(--db-card)', animation: 'db-rise 380ms ease-out 210ms both' }}>
       <div className="flex items-center gap-2.5 mb-2">
         <span className="text-[11px] font-medium uppercase tracking-[0.08em]" style={{ color: 'var(--db-t3)' }}>{t('db.premium.securiteQshe')}</span>
-        <span className="ml-auto text-[11.5px] cursor-pointer hover:text-[var(--db-t1)] transition-colors" style={{ color: 'var(--db-t3)' }}>{t('db.premium.detail')} →</span>
+        <span onClick={() => navigate('/qshe/dashboard')} className="ml-auto text-[11.5px] cursor-pointer hover:text-[var(--db-t1)] transition-colors" style={{ color: 'var(--db-t3)' }}>{t('db.premium.detail')} →</span>
       </div>
       <div className="flex flex-col">
         {list.map((item, i) => (
@@ -40,8 +54,10 @@ export function QsheSidebar({ securite, counts }: QsheSidebarProps) {
         ))}
       </div>
       <div className="mt-3 pt-3 border-t border-dashed flex justify-between text-[11px] db-num" style={{ borderColor: 'var(--db-border)', color: 'var(--db-t3)' }}>
-        <span>Score sécurité <strong className="font-semibold" style={{ color: 'var(--db-t1)' }}>92/100</strong></span>
-        <span style={{ color: 'var(--db-success)' }}>↑ +3 pts</span>
+        <span>Score sécurité <strong className="font-semibold" style={{ color: scoreColor }}>{score}/100</strong></span>
+        {score >= 80 && <span style={{ color: 'var(--db-success)' }}>↑ {t('db.premium.bon')}</span>}
+        {score >= 50 && score < 80 && <span style={{ color: 'var(--db-warn)' }}>→ {t('db.premium.attention')}</span>}
+        {score < 50 && <span style={{ color: 'var(--db-danger)' }}>↓ {t('db.premium.critique')}</span>}
       </div>
     </div>
   )

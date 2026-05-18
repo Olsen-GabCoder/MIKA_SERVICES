@@ -15,8 +15,6 @@ data class InspectionResponse(
     val statut: StatutInspection,
     val projetId: Long,
     val projetNom: String,
-    val sousProjetId: Long?,
-    val sousProjetNom: String?,
     val inspecteurId: Long?,
     val inspecteurNom: String?,
     val datePlanifiee: LocalDate?,

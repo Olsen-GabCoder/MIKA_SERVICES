@@ -12,6 +12,8 @@ import { TypeDocument } from '@/types/document'
 import type { DocumentFile } from '@/types/document'
 import { canEditProjetEffective } from '@/utils/authRoles'
 import { useFormatDate } from '@/hooks/useFormatDate'
+import { handleApiError } from '@/utils/errorHandler'
+import { useToast } from '@/contexts/ToastContext'
 
 // ── File type config ─────────────────────────────────────────────────
 const FILE_META: Record<string, { label: string; bg: string; text: string; ring: string; gradient: string }> = {
@@ -53,6 +55,7 @@ export default function ProjetDocumentsPage() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
+  const toast = useToast()
   const formatDate = useFormatDate()
   const isOnline = useIsOnline()
   const currentUser = useAppSelector((s) => s.auth.user)
@@ -65,7 +68,11 @@ export default function ProjetDocumentsPage() {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [filterType, setFilterType] = useState<TypeDocument | ''>('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'size' | 'type'>('date')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [lightboxDoc, setLightboxDoc] = useState<DocumentFile | null>(null)
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [dragOver, setDragOver] = useState(false)
 
@@ -74,7 +81,15 @@ export default function ProjetDocumentsPage() {
   const [customType, setCustomType] = useState('')
   const [showTypeDropdown, setShowTypeDropdown] = useState(false)
   const [typeSearch, setTypeSearch] = useState('')
+  const [uploadName, setUploadName] = useState('')
   const [uploadDesc, setUploadDesc] = useState('')
+
+  /** Sélectionne un fichier et pré-remplit le nom (sans extension) */
+  const pickFile = (f: File) => {
+    setUploadFile(f)
+    const nameWithoutExt = f.name.replace(/\.[^.]+$/, '')
+    setUploadName(nameWithoutExt)
+  }
   const fileInputRef = useRef<HTMLInputElement>(null)
   const typeInputRef = useRef<HTMLInputElement>(null)
 
@@ -116,9 +131,31 @@ export default function ProjetDocumentsPage() {
   useEffect(() => { loadDocuments() }, [loadDocuments])
 
   const filtered = useMemo(() => {
-    if (!filterType) return documents
-    return documents.filter((d) => d.typeDocument === filterType)
-  }, [documents, filterType])
+    let result = documents
+    // Filtre par type
+    if (filterType) result = result.filter((d) => d.typeDocument === filterType)
+    // Recherche textuelle
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter((d) =>
+        d.nomOriginal.toLowerCase().includes(q) ||
+        (d.description ?? '').toLowerCase().includes(q) ||
+        (d.uploadeParNom ?? '').toLowerCase().includes(q)
+      )
+    }
+    // Tri
+    const dir = sortDir === 'asc' ? 1 : -1
+    result = [...result].sort((a, b) => {
+      switch (sortBy) {
+        case 'name': return dir * a.nomOriginal.localeCompare(b.nomOriginal, 'fr')
+        case 'size': return dir * (a.tailleOctets - b.tailleOctets)
+        case 'type': return dir * a.typeDocument.localeCompare(b.typeDocument)
+        case 'date':
+        default: return dir * ((a.createdAt ?? '').localeCompare(b.createdAt ?? ''))
+      }
+    })
+    return result
+  }, [documents, filterType, searchQuery, sortBy, sortDir])
 
   const stats = useMemo(() => {
     const byType: Record<string, number> = {}
@@ -149,11 +186,19 @@ export default function ProjetDocumentsPage() {
       const finalDesc = isCustom && customType
         ? (uploadDesc ? `[${customType}] ${uploadDesc}` : `[${customType}]`)
         : (uploadDesc || undefined)
-      await documentApi.upload(uploadFile, finalType, finalDesc, Number(id))
+      // Renommer le fichier si l'utilisateur a modifié le nom
+      const ext = uploadFile.name.includes('.') ? uploadFile.name.substring(uploadFile.name.lastIndexOf('.')) : ''
+      const finalName = uploadName.trim() ? `${uploadName.trim()}${ext}` : uploadFile.name
+      const fileToSend = finalName !== uploadFile.name
+        ? new File([uploadFile], finalName, { type: uploadFile.type })
+        : uploadFile
+      await documentApi.upload(fileToSend, finalType, finalDesc, Number(id))
       setUploadProgress(100)
+      toast({ message: t('document:uploadSuccess', 'Document uploadé avec succès'), variant: 'success' })
       setTimeout(() => {
         setShowUploadModal(false)
         setUploadFile(null)
+        setUploadName('')
         setUploadType('AUTRE')
         setCustomType('')
         setTypeSearch('')
@@ -162,7 +207,7 @@ export default function ProjetDocumentsPage() {
         loadDocuments()
       }, 400)
     } catch (e) {
-      setError((e as Error).message || 'Erreur lors de l\'envoi')
+      setError(handleApiError(e))
     } finally { clearInterval(interval); setUploading(false) }
   }
 
@@ -173,23 +218,23 @@ export default function ProjetDocumentsPage() {
       const a = document.createElement('a')
       a.href = url; a.download = doc.nomOriginal; a.click()
       URL.revokeObjectURL(url)
-    } catch { setError('Erreur de téléchargement') }
+    } catch (e) { toast({ message: handleApiError(e), variant: 'error' }) }
   }
 
   const handleDelete = async (doc: DocumentFile) => {
     if (!(await confirm({ messageKey: 'confirm.deleteDocument' }))) return
-    try { await documentApi.delete(doc.id); await loadDocuments() }
-    catch { setError('Erreur de suppression') }
+    try { await documentApi.delete(doc.id); toast({ message: t('document:deleteSuccess', 'Document supprimé'), variant: 'success' }); await loadDocuments() }
+    catch (e) { toast({ message: handleApiError(e), variant: 'error' }) }
   }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false)
     if (!canEdit) return
     const file = e.dataTransfer.files?.[0]
-    if (file) { setUploadFile(file); setShowUploadModal(true) }
+    if (file) { pickFile(file); setShowUploadModal(true) }
   }
 
-  if (!id) return <PageContainer><p className="text-gray-500">ID projet manquant</p></PageContainer>
+  if (!id) return <PageContainer><p className="text-gray-500">{t('document:missingProjectId', 'Projet introuvable')}</p></PageContainer>
   if (projetLoading) return (
     <PageContainer size="full" className="bg-gray-50/80 dark:bg-gray-900/80">
       <div className="animate-pulse space-y-6">
@@ -222,50 +267,98 @@ export default function ProjetDocumentsPage() {
           </div>
         )}
 
-        {/* ── Header ──────────────────────────────────────────────── */}
-        <header className="relative rounded-2xl overflow-hidden shadow-xl mb-8">
-          {/* Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-orange-600 to-rose-600 dark:from-gray-800 dark:via-gray-900 dark:to-gray-950" />
-          <div className="absolute inset-0 opacity-10 dark:opacity-5" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
-          <div className="absolute inset-0 dark:ring-1 dark:ring-inset dark:ring-amber-500/20 rounded-2xl" />
-
-          <div className="relative px-6 py-8 md:px-8 md:py-10">
-            <button
-              type="button"
-              onClick={() => navigate(`/projets/${id}`)}
-              className="text-white/70 hover:text-white text-sm mb-5 flex items-center gap-2 transition-colors group"
-            >
-              <svg className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-              {t('projet:detail.backToDetail', 'Retour au projet')}
-            </button>
-
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                  </div>
-                  <p className="text-white/80 text-sm uppercase tracking-widest font-semibold">{t('document:subtitle')}</p>
+        {/* ── Toolbar compact ──────────────────────────────────────── */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm mb-6 overflow-hidden">
+          {/* Row 1 : retour + titre + KPIs inline + upload */}
+          <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <button type="button" onClick={() => navigate(`/projets/${id}`)}
+                className="p-2 rounded-xl text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+              </button>
+              <div className="min-w-0">
+                <h1 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">{projet?.nom ?? '...'}</h1>
+                <div className="flex items-center gap-3 mt-0.5">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{stats.total} {t('document:statsTotal')}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">·</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{formatSize(stats.totalSize)}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">·</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{Object.keys(stats.byType).length} {t('document:statsTypes')}</span>
                 </div>
-                <h1 className="text-2xl md:text-3xl font-extrabold text-white leading-tight tracking-tight">
-                  {projet?.nom ?? '...'}
-                </h1>
               </div>
-              {canEdit && (
-                <OfflineDisabledButton>
-                  <button
-                    type="button"
-                    onClick={() => setShowUploadModal(true)}
-                    className="inline-flex items-center gap-2.5 px-6 py-3 bg-white text-amber-700 dark:bg-gray-800 dark:text-amber-400 rounded-xl font-bold text-sm transition-all hover:scale-[1.03] active:scale-[0.97] shadow-lg hover:shadow-xl"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                    {t('document:upload')}
-                  </button>
-                </OfflineDisabledButton>
+            </div>
+            {canEdit && (
+              <OfflineDisabledButton>
+                <button type="button" onClick={() => setShowUploadModal(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl font-bold text-sm shadow-md shadow-orange-500/20 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                  {t('document:upload')}
+                </button>
+              </OfflineDisabledButton>
+            )}
+          </div>
+
+          {/* Row 2 : recherche + tri + vue */}
+          <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700/50 flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('document:searchPlaceholder', 'Rechercher par nom, description, auteur…')}
+                className="w-full pl-10 pr-8 py-2 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700/50 dark:text-gray-100 text-sm focus:ring-2 focus:ring-primary focus:border-primary focus:bg-white dark:focus:bg-gray-700 transition" />
+              {searchQuery && (
+                <button type="button" onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
               )}
             </div>
+            <div className="flex items-center gap-2">
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700/50 dark:text-gray-100 text-sm focus:ring-2 focus:ring-primary">
+                <option value="date">{t('document:sortDate', 'Date')}</option>
+                <option value="name">{t('document:sortName', 'Nom')}</option>
+                <option value="size">{t('document:sortSize', 'Taille')}</option>
+                <option value="type">{t('document:sortType', 'Type')}</option>
+              </select>
+              <button type="button" onClick={() => setSortDir((d) => d === 'asc' ? 'desc' : 'asc')}
+                className="p-2 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                title={sortDir === 'asc' ? t('document:sortAsc', 'Croissant') : t('document:sortDesc', 'Décroissant')}>
+                <svg className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${sortDir === 'asc' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" /></svg>
+              </button>
+              <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-0.5" />
+              <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
+                <button type="button" onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition ${viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                </button>
+                <button type="button" onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+              </div>
+            </div>
           </div>
-        </header>
+
+          {/* Row 3 : filtres type (stacked bar + pills) */}
+          {stats.total > 0 && (
+            <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700/50">
+              <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 flex overflow-hidden mb-3">
+                {Object.entries(stats.byType).sort(([, a], [, b]) => b - a).map(([type, count]) => (
+                  <div key={type} className={`${TYPE_BAR_COLORS[type] ?? 'bg-gray-400'} transition-all duration-500 cursor-pointer hover:opacity-80`} style={{ width: `${(count / stats.total) * 100}%` }} title={`${t(`document:type.${type}`)} (${count})`} onClick={() => setFilterType(filterType === type ? '' : type as TypeDocument)} />
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <button type="button" onClick={() => setFilterType('')} className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${filterType === '' ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}>
+                  {t('document:filterAll')} ({stats.total})
+                </button>
+                {Object.entries(stats.byType).sort(([, a], [, b]) => b - a).map(([type, count]) => (
+                  <button key={type} type="button" onClick={() => setFilterType(filterType === type ? '' : type as TypeDocument)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${filterType === type ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm' : `${TYPE_COLORS[type] ?? TYPE_COLORS.AUTRE}`}`}>
+                    {t(`document:type.${type}`)} ({count})
+                  </button>
+                ))}
+              </div>
+              {searchQuery && <p className="mt-2 text-[11px] text-gray-400">{filtered.length} {t('document:searchResults', 'résultat(s)')}</p>}
+            </div>
+          )}
+        </div>
 
         {error && (
           <div className="mb-6 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 px-5 py-3.5 text-red-700 dark:text-red-200 text-sm flex items-center justify-between">
@@ -274,60 +367,45 @@ export default function ProjetDocumentsPage() {
           </div>
         )}
 
-        {/* ── KPIs ────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {[
-            { value: stats.total, label: t('document:statsTotal'), icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>, color: 'from-gray-600 to-gray-800 dark:from-gray-600 dark:to-gray-700' },
-            { value: formatSize(stats.totalSize), label: t('document:statsSize'), icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75" /></svg>, color: 'from-amber-500 to-orange-600' },
-            { value: Object.keys(stats.byType).length, label: t('document:statsTypes'), icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" /><path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" /></svg>, color: 'from-blue-500 to-indigo-600' },
-            { value: stats.byType['PLAN'] ?? 0, label: t('document:type.PLAN'), icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" /></svg>, color: 'from-emerald-500 to-teal-600' },
-          ].map((kpi) => (
-            <div key={kpi.label} className="relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
-              <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${kpi.color} rounded-bl-[2rem] opacity-10 group-hover:opacity-15 transition-opacity`} />
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${kpi.color} flex items-center justify-center text-white mb-3 shadow-sm`}>
-                {kpi.icon}
+        {/* ── Lightbox (aperçu plein écran images/PDF) ───────────── */}
+        {lightboxDoc && (() => {
+          const isImage = lightboxDoc.typeMime?.startsWith('image/')
+          const isPdf = lightboxDoc.typeMime?.includes('pdf')
+          const thumb = thumbnails[lightboxDoc.id]
+          if (!isImage && !isPdf) { setLightboxDoc(null); return null }
+          return (
+            <div
+              className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 salle-anim-fade"
+              onClick={() => setLightboxDoc(null)}
+            >
+              <div className="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+                {/* Header */}
+                <div className="w-full flex items-center justify-between mb-3">
+                  <p className="text-white text-sm font-semibold truncate flex-1 mr-4">{lightboxDoc.nomOriginal}</p>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => handleDownload(lightboxDoc)} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors" title={t('document:download')}>
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    </button>
+                    <button type="button" onClick={() => setLightboxDoc(null)} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                </div>
+                {/* Content */}
+                {isImage && thumb && (
+                  <img src={thumb} alt={lightboxDoc.nomOriginal} className="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl" />
+                )}
+                {isPdf && (
+                  <iframe
+                    src={`/api/documents/${lightboxDoc.id}/download`}
+                    className="w-full h-[80vh] rounded-xl bg-white"
+                    title={lightboxDoc.nomOriginal}
+                  />
+                )}
               </div>
-              <p className="text-2xl font-extrabold text-gray-900 dark:text-gray-100 tabular-nums tracking-tight">{kpi.value}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-semibold uppercase tracking-wider">{kpi.label}</p>
             </div>
-          ))}
-        </div>
-
-        {/* ── Type breakdown bar ──────────────────────────────────── */}
-        {stats.total > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 mb-8 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('document:filterLabel')}</p>
-              {/* View toggle */}
-              <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
-                <button type="button" onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition ${viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} title="Grille">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                </button>
-                <button type="button" onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`} title="Liste">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-                </button>
-              </div>
-            </div>
-            {/* Stacked bar */}
-            <div className="h-3 rounded-full bg-gray-100 dark:bg-gray-700 flex overflow-hidden mb-3">
-              {Object.entries(stats.byType).sort(([, a], [, b]) => b - a).map(([type, count]) => (
-                <div key={type} className={`${TYPE_BAR_COLORS[type] ?? 'bg-gray-400'} transition-all duration-500`} style={{ width: `${(count / stats.total) * 100}%` }} title={`${t(`document:type.${type}`)} (${count})`} />
-              ))}
-            </div>
-            {/* Filter pills */}
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => setFilterType('')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterType === '' ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}>
-                {t('document:filterAll')} ({stats.total})
-              </button>
-              {Object.entries(stats.byType).sort(([, a], [, b]) => b - a).map(([type, count]) => (
-                <button key={type} type="button" onClick={() => setFilterType(type as TypeDocument)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterType === type ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm' : `${TYPE_COLORS[type] ?? TYPE_COLORS.AUTRE}`}`}>
-                  {t(`document:type.${type}`)} ({count})
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* ── Document grid / list ────────────────────────────────── */}
         {loading ? (
@@ -362,10 +440,10 @@ export default function ProjetDocumentsPage() {
               const isImage = doc.typeMime?.startsWith('image/')
               const thumb = thumbnails[doc.id]
               return (
-                <div key={doc.id} className="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 overflow-hidden">
+                <div key={doc.id} className="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 overflow-hidden cursor-pointer" onClick={() => { const canPreview = doc.typeMime?.startsWith('image/') || doc.typeMime?.includes('pdf'); if (canPreview) setLightboxDoc(doc); else handleDownload(doc) }}>
                   {/* Image preview OR color stripe */}
                   {isImage && thumb ? (
-                    <div className="relative h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                    <div className="relative h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden cursor-pointer" onClick={() => setLightboxDoc(doc)}>
                       <img
                         src={thumb}
                         alt={doc.nomOriginal}
@@ -509,8 +587,8 @@ export default function ProjetDocumentsPage() {
 
       {/* ── Upload modal ──────────────────────────────────────────── */}
       {showUploadModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl dark:shadow-none dark:border dark:border-gray-600 w-full max-w-lg overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 salle-anim-fade">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl dark:shadow-none dark:border dark:border-gray-600 w-full max-w-lg overflow-hidden salle-anim-scale">
             {/* Modal header with gradient */}
             <div className="px-6 py-5 bg-gradient-to-r from-amber-500 to-orange-600 dark:from-gray-700 dark:to-gray-800">
               <h2 className="text-lg font-bold text-white dark:text-gray-100">{t('document:modalTitle')}</h2>
@@ -521,10 +599,10 @@ export default function ProjetDocumentsPage() {
               <div
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) setUploadFile(f) }}
+                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) pickFile(f) }}
                 className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-200 ${uploadFile ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-gray-300 dark:border-gray-600 hover:border-primary/50 hover:bg-gray-50 dark:hover:bg-gray-700/30'}`}
               >
-                <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) setUploadFile(f) }} />
+                <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) pickFile(f) }} />
                 {uploadFile ? (
                   <div>
                     <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${getFileMeta(uploadFile.type).gradient} flex items-center justify-center text-white text-lg font-extrabold shadow-lg`}>
@@ -558,6 +636,16 @@ export default function ProjetDocumentsPage() {
               )}
 
               <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{t('document:nomDocument', 'Nom du document')}</label>
+                  <input
+                    type="text"
+                    value={uploadName}
+                    onChange={(e) => setUploadName(e.target.value)}
+                    placeholder={t('document:nomDocumentPlaceholder', 'Ex : Plan masse Lot 3 — Donguila')}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-primary transition text-sm"
+                  />
+                </div>
                 <div className="relative">
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{t('document:typeDocument')}</label>
                   <div className="relative">
@@ -648,7 +736,7 @@ export default function ProjetDocumentsPage() {
               </div>
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-600">
-              <button type="button" onClick={() => { setShowUploadModal(false); setUploadFile(null); setUploadDesc(''); setUploadProgress(0) }}
+              <button type="button" onClick={() => { setShowUploadModal(false); setUploadFile(null); setUploadName(''); setUploadDesc(''); setUploadProgress(0) }}
                 className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-100 dark:hover:bg-gray-600 transition text-sm">
                 {t('document:cancel')}
               </button>

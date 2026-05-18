@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { qshePermisApi } from '@/api/qshePermisApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { PermisTravailResponse, PermisTravailCreateRequest, PermisTravailSummaryResponse } from '@/types/qshePermis'
 
 interface State {
@@ -19,7 +20,7 @@ const slice = createSlice({
   extraReducers: b => {
     b.addCase(fetchPermisByProjet.pending, s => { s.loading = true; s.error = null })
      .addCase(fetchPermisByProjet.fulfilled, (s, { payload: p }) => { s.loading = false; s.permis = p.content; s.totalElements = p.totalElements; s.totalPages = p.totalPages; s.currentPage = p.number })
-     .addCase(fetchPermisByProjet.rejected, (s, { error }) => { s.loading = false; s.error = error.message ?? 'Erreur' })
+     .addCase(fetchPermisByProjet.rejected, (s, { error }) => { s.loading = false; s.error = handleApiError(error) })
      .addCase(createPermis.fulfilled, (s, { payload }) => { s.permis = [payload, ...s.permis] })
      .addCase(deletePermis.fulfilled, (s, { payload: id }) => { s.permis = s.permis.filter(p => p.id !== id) })
      .addCase(fetchPermisSummary.fulfilled, (s, { payload }) => { s.summary = payload })

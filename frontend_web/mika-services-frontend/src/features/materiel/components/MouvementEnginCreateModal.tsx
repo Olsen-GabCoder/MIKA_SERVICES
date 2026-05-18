@@ -6,6 +6,8 @@ import { enginApi } from '@/api/enginApi'
 import { projetApi } from '@/api/projetApi'
 import type { EnginSummary } from '@/types/materiel'
 import type { ProjetSummary } from '@/types/projet'
+import { handleApiError } from '@/utils/errorHandler'
+import { useToast } from '@/contexts/ToastContext'
 
 interface Props {
   onClose: () => void
@@ -15,6 +17,7 @@ interface Props {
 export function MouvementEnginCreateModal({ onClose, onSuccess }: Props) {
   const { t } = useTranslation('materiel')
   const dispatch = useAppDispatch()
+  const toast = useToast()
 
   const [enginsDisponibles, setEnginsDisponibles] = useState<EnginSummary[]>([])
   const [projets, setProjets] = useState<ProjetSummary[]>([])
@@ -59,9 +62,10 @@ export function MouvementEnginCreateModal({ onClose, onSuccess }: Props) {
         projetDestinationId: Number(projetDestinationId),
         commentaire: commentaire.trim() || undefined,
       })).unwrap()
+      toast({ message: t('mouvement.createSuccess'), variant: 'success' })
       onSuccess()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('form.errorGeneric'))
+      setError(handleApiError(err))
     } finally {
       setSubmitting(false)
     }

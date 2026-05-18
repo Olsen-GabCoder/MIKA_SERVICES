@@ -14,7 +14,7 @@ function smoothPath(pts: { x: number; y: number }[]): string {
 
 function CardShell({ title, idx, children }: { title: string; idx: number; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl p-4 flex flex-col" style={{ background: 'var(--db-card)', animation: `db-rise 380ms ease-out ${idx * 30}ms both` }}>
+    <div className="rounded-xl p-4 flex flex-col transition-all duration-200 hover:scale-[1.015] hover:shadow-lg" style={{ background: 'var(--db-card)', animation: `db-rise 380ms ease-out ${idx * 30}ms both` }}>
       <div className="flex items-center gap-2.5 mb-1">
         <span className="text-[11px] font-medium uppercase tracking-[0.08em]" style={{ color: 'var(--db-t3)' }}>{title}</span>
       </div>

@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { reportingApi } from '../../api/reportingApi'
 import type { GlobalDashboard, ProjetReport } from '../../types/reporting'
 import { setDashboardCache, getDashboardCache } from '../../utils/offlineCache'
-import { isNetworkError } from '../../utils/errorHandler'
+import { isNetworkError, handleApiError } from '../../utils/errorHandler'
 
 interface ReportingState {
   dashboard: GlobalDashboard | null
@@ -54,11 +54,11 @@ const reportingSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(fetchGlobalDashboard.pending, (state) => { state.loading = true; state.error = null })
     builder.addCase(fetchGlobalDashboard.fulfilled, (state, action) => { state.dashboard = action.payload; state.loading = false; state.lastFetched = new Date().toISOString() })
-    builder.addCase(fetchGlobalDashboard.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+    builder.addCase(fetchGlobalDashboard.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
     builder.addCase(fetchProjetReport.pending, (state) => { state.loading = true; state.error = null })
     builder.addCase(fetchProjetReport.fulfilled, (state, action) => { state.projetReport = action.payload; state.loading = false })
-    builder.addCase(fetchProjetReport.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+    builder.addCase(fetchProjetReport.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
   },
 })
 

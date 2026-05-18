@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { mouvementEnginApi } from '@/api/mouvementEnginApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type {
   MouvementEnginSummary,
   MouvementEnginCreateRequest,
@@ -93,7 +94,7 @@ const mouvementEnginSlice = createSlice({
       })
       .addCase(fetchMouvements.rejected, (state, action) => {
         state.loading = false
-        state.error = action.error.message || 'Erreur chargement mouvements'
+        state.error = handleApiError(action.error)
       })
       // create
       .addCase(createMouvement.fulfilled, (state, action) => {
@@ -110,7 +111,7 @@ const mouvementEnginSlice = createSlice({
       })
       .addCase(confirmerDepartMouvement.rejected, (state, action) => {
         state.actionLoading = null
-        state.error = action.error.message || 'Erreur confirmation départ'
+        state.error = handleApiError(action.error)
       })
       // confirmerReception
       .addCase(confirmerReceptionMouvement.pending, (state, action) => {
@@ -122,7 +123,7 @@ const mouvementEnginSlice = createSlice({
       })
       .addCase(confirmerReceptionMouvement.rejected, (state, action) => {
         state.actionLoading = null
-        state.error = action.error.message || 'Erreur confirmation réception'
+        state.error = handleApiError(action.error)
       })
       // annuler
       .addCase(annulerMouvement.pending, (state, action) => {
@@ -134,7 +135,7 @@ const mouvementEnginSlice = createSlice({
       })
       .addCase(annulerMouvement.rejected, (state, action) => {
         state.actionLoading = null
-        state.error = action.error.message || 'Erreur annulation'
+        state.error = handleApiError(action.error)
       })
   },
 })

@@ -24,7 +24,6 @@ export interface InspectionResponse {
   id: number; reference: string; titre: string; description: string | null
   typeInspection: TypeInspection; statut: StatutInspection
   projetId: number; projetNom: string
-  sousProjetId: number | null; sousProjetNom: string | null
   inspecteurId: number | null; inspecteurNom: string | null
   datePlanifiee: string | null; dateRealisation: string | null
   zoneInspecte: string | null; observations: string | null
@@ -50,7 +49,7 @@ export interface InspectionCreateRequest {
   projetId: number; titre: string; description?: string
   typeInspection: TypeInspection; inspecteurId?: number
   datePlanifiee?: string; zoneInspecte?: string
-  sousProjetId?: number; checklistTemplateId?: number
+  checklistTemplateId?: number
 }
 
 export interface InspectionItemUpdateRequest {

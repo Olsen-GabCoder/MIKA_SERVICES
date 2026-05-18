@@ -130,7 +130,9 @@
     "update": "Enregistrer",
     "saving": "Enregistrement…",
     "errorRequired": "Le code et le nom sont obligatoires.",
-    "errorGeneric": "Une erreur est survenue."
+    "errorGeneric": "Une erreur est survenue.",
+    "createSuccess": "Engin créé avec succès",
+    "updateSuccess": "Engin mis à jour avec succès"
   },
   "detail": {
     "infoTitle": "Informations",
@@ -155,6 +157,7 @@
     "errorLoadData": "Impossible de charger les données.",
     "errorRequired": "L'engin et le chantier de destination sont obligatoires.",
     "errorSameProjet": "Le chantier d'origine et de destination doivent être distincts.",
+    "createSuccess": "Mouvement créé avec succès",
     "noEnginDisponible": "Aucun engin disponible pour le moment.",
     "commentaire": "Commentaire / Observations",
     "commentairePlaceholder": "Optionnel — état de l'engin, instructions particulières…",
@@ -357,5 +360,14 @@
         "btn": "Rejeter"
       }
     }
+  },
+  "dmaForm": {
+    "errorProjectRequired": "Le projet / N° d'affaires est obligatoire.",
+    "errorRequesterRequired": "Le nom du demandeur est obligatoire.",
+    "errorMinOneLine": "Au moins un article avec désignation est requis.",
+    "errorQuantityPositive": "La quantité doit être supérieure à 0 sur tous les articles renseignés.",
+    "errorSubmit": "Une erreur est survenue lors de la soumission.",
+    "successTitle": "Demande soumise",
+    "successRedirect": "Redirection en cours…"
   }
 }

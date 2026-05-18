@@ -7,6 +7,7 @@ import com.mikaservices.platform.common.enums.SourceFinancement
 import com.mikaservices.platform.common.enums.StatutProjet
 import com.mikaservices.platform.common.enums.TypeProjet
 import com.mikaservices.platform.common.enums.ZoneClimatique
+import com.mikaservices.platform.common.enums.MotifArretChantier
 import com.mikaservices.platform.modules.user.entity.User
 import jakarta.persistence.*
 import java.math.BigDecimal
@@ -169,6 +170,19 @@ class Projet(
     @Column(name = "actif", nullable = false)
     var actif: Boolean = true,
 
+    @Column(name = "chantier_actif", nullable = false)
+    var chantierActif: Boolean = true,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "motif_arret_chantier", length = 50)
+    var motifArretChantier: MotifArretChantier? = null,
+
+    @Column(name = "detail_arret_chantier", columnDefinition = "TEXT")
+    var detailArretChantier: String? = null,
+
+    @Column(name = "date_arret_chantier")
+    var dateArretChantier: LocalDate? = null,
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "projet_partenaires",
@@ -176,9 +190,6 @@ class Projet(
         inverseJoinColumns = [JoinColumn(name = "partenaire_id")]
     )
     var partenaires: MutableSet<Partenaire> = mutableSetOf(),
-
-    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var sousProjets: MutableList<SousProjet> = mutableListOf(),
 
     @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var caPrevisionnelsRealises: MutableList<CAPrevisionnelRealise> = mutableListOf(),

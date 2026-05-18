@@ -35,7 +35,6 @@ data class IncidentCreateRequest(
     val zoneChantier: String? = null,
     val latitude: Double? = null,
     val longitude: Double? = null,
-    val sousProjetId: Long? = null,
     val declareParId: Long? = null,
 
     val descriptionCirconstances: String? = null,
@@ -65,7 +64,6 @@ data class IncidentUpdateRequest(
     val zoneChantier: String? = null,
     val latitude: Double? = null,
     val longitude: Double? = null,
-    val sousProjetId: Long? = null,
     val descriptionCirconstances: String? = null,
     val activiteEnCours: String? = null,
     val equipementImplique: String? = null,

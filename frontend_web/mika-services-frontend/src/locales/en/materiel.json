@@ -130,7 +130,9 @@
     "update": "Save",
     "saving": "Saving…",
     "errorRequired": "Code and name are required.",
-    "errorGeneric": "An error occurred."
+    "errorGeneric": "An error occurred.",
+    "createSuccess": "Equipment created successfully",
+    "updateSuccess": "Equipment updated successfully"
   },
   "detail": {
     "infoTitle": "Information",
@@ -155,6 +157,7 @@
     "errorLoadData": "Unable to load data.",
     "errorRequired": "Equipment and destination site are required.",
     "errorSameProjet": "Origin and destination sites must be different.",
+    "createSuccess": "Movement created successfully",
     "noEnginDisponible": "No equipment available at the moment.",
     "commentaire": "Comment / Notes",
     "commentairePlaceholder": "Optional — equipment condition, special instructions…",
@@ -357,5 +360,14 @@
         "btn": "Reject"
       }
     }
+  },
+  "dmaForm": {
+    "errorProjectRequired": "Project / business reference is required.",
+    "errorRequesterRequired": "Requester name is required.",
+    "errorMinOneLine": "At least one item with a description is required.",
+    "errorQuantityPositive": "Quantity must be greater than 0 for all filled items.",
+    "errorSubmit": "An error occurred while submitting the request.",
+    "successTitle": "Request submitted",
+    "successRedirect": "Redirecting…"
   }
 }

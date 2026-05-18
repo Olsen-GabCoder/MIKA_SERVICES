@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { useIsOnline } from '@/hooks/useConnectivity'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/contexts/ToastContext'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import {
@@ -37,6 +39,7 @@ export default function IncidentsPage() {
   const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
+  const toast = useToast()
   const { incidents, summary, loading, totalPages } = useAppSelector(s => s.qsheIncident)
   const projets = useAppSelector(s => s.projet.projets)
   const userRoles: string[] = useAppSelector((s: any) => s.auth.user?.roles?.map((r: any) => r.code ?? r) ?? [])
@@ -95,6 +98,7 @@ export default function IncidentsPage() {
       mesuresConservatoires: fMesures.trim() || undefined,
     }
     await dispatch(createIncident(req))
+    toast({ message: t('incidents.form.createSuccess', 'Incident créé avec succès'), variant: 'success' })
     setShowForm(false); resetForm()
     dispatch(fetchIncidentsByProjet({ projetId }))
     dispatch(fetchIncidentSummary(projetId))
@@ -103,6 +107,7 @@ export default function IncidentsPage() {
   const handleDelete = async (id: number) => {
     if (await confirm({ messageKey: 'incidents.confirm.delete' })) {
       await dispatch(deleteIncident(id))
+      toast({ message: t('incidents.form.deleteSuccess', 'Incident supprimé'), variant: 'success' })
       if (projetId) dispatch(fetchIncidentSummary(projetId))
     }
   }
@@ -249,10 +254,10 @@ export default function IncidentsPage() {
       )}
 
       {/* Create modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center z-50 p-3 overflow-y-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:border dark:border-gray-600 w-full max-w-lg p-5 sm:p-6 my-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('incidents.form.title')}</h2>
+      <Modal isOpen={showForm} onClose={() => { setShowForm(false); resetForm() }} title={t('incidents.form.title')} size="lg" footer={<>
+          <button onClick={() => { setShowForm(false); resetForm() }} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 text-sm font-medium">{t('incidents.form.cancel')}</button>
+          <button onClick={handleCreate} disabled={!fTitre.trim() || !fDate} className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 text-sm font-semibold">{t('incidents.form.submit')}</button>
+        </>}>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('incidents.form.titre')}</label>
@@ -320,15 +325,7 @@ export default function IncidentsPage() {
                   className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-5">
-              <button onClick={() => { setShowForm(false); resetForm() }}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">{t('incidents.form.cancel')}</button>
-              <button onClick={handleCreate} disabled={!fTitre.trim() || !fDate}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 text-sm font-medium">{t('incidents.form.submit')}</button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </PageContainer>
   )
 }

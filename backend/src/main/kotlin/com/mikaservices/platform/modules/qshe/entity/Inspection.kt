@@ -2,7 +2,7 @@ package com.mikaservices.platform.modules.qshe.entity
 
 import com.mikaservices.platform.common.entity.BaseEntity
 import com.mikaservices.platform.modules.projet.entity.Projet
-import com.mikaservices.platform.modules.projet.entity.SousProjet
+
 import com.mikaservices.platform.modules.user.entity.User
 import com.mikaservices.platform.modules.qshe.enums.StatutInspection
 import com.mikaservices.platform.modules.qshe.enums.TypeInspection
@@ -57,10 +57,6 @@ class Inspection(
     /** Score global calcule automatiquement a partir des items (0-100) */
     @Column(name = "score_global")
     var scoreGlobal: Int? = null,
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sous_projet_id")
-    var sousProjet: SousProjet? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "checklist_template_id")

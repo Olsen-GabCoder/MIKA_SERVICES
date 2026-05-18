@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { qualiteReceptionApi } from '@/api/qualiteReceptionApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type {
   DemandeReceptionResponse,
   DemandeReceptionCreateRequest,
@@ -81,7 +82,7 @@ const slice = createSlice({
       s.totalPages = a.payload.totalPages
       s.currentPage = a.payload.number
     })
-    b.addCase(fetchReceptions.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchReceptions.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(fetchReceptionsByProjet.pending, (s) => { s.loading = true; s.error = null })
     b.addCase(fetchReceptionsByProjet.fulfilled, (s, a) => {
@@ -91,7 +92,7 @@ const slice = createSlice({
       s.totalPages = a.payload.totalPages
       s.currentPage = a.payload.number
     })
-    b.addCase(fetchReceptionsByProjet.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchReceptionsByProjet.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(createReception.fulfilled, (s, a) => { s.demandes.unshift(a.payload) })
 

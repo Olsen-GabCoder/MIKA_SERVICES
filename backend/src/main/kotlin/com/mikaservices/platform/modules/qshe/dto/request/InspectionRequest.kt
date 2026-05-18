@@ -16,7 +16,6 @@ data class InspectionCreateRequest(
     val inspecteurId: Long? = null,
     val datePlanifiee: LocalDate? = null,
     val zoneInspecte: String? = null,
-    val sousProjetId: Long? = null,
     val checklistTemplateId: Long? = null
 )
 

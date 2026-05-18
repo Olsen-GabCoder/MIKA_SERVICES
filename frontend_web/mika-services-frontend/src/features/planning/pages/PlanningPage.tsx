@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useIsOnline } from '@/hooks/useConnectivity'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/contexts/ToastContext'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import {
@@ -83,6 +85,7 @@ export default function PlanningPage() {
   const formatDate = useFormatDate()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
+  const toast = useToast()
   const currentUser = useAppSelector((state) => state.auth.user)
   const { taches, tachesEnRetard, loading, error, totalPages, currentPage } = useAppSelector(
     (state) => state.planning
@@ -121,6 +124,7 @@ export default function PlanningPage() {
       dateEcheance: newDateEcheance || undefined,
     }
     await dispatch(createTache(request))
+    toast({ message: t('modalCreateSuccess', 'Tâche créée avec succès'), variant: 'success' })
     setShowCreateModal(false)
     resetForm()
     dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
@@ -426,13 +430,11 @@ export default function PlanningPage() {
           )}
 
           {/* Modal création */}
-          {showCreateModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-none dark:border dark:border-gray-600 w-full max-w-lg overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('modalTitle')}</h2>
-                </div>
-                <div className="p-6 space-y-4">
+          <Modal isOpen={showCreateModal} onClose={() => { setShowCreateModal(false); resetForm() }} title={t('modalTitle')} size="md" footer={<>
+              <button type="button" onClick={() => { setShowCreateModal(false); resetForm() }} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition text-sm">{t('modalCancel')}</button>
+              <button type="button" onClick={handleCreate} disabled={!newTitre.trim() || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} className="px-4 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition text-sm">{t('modalCreate')}</button>
+            </>}>
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('modalTitre')}</label>
                     <input
@@ -477,27 +479,7 @@ export default function PlanningPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-600">
-                  <button
-                    type="button"
-                    onClick={() => { setShowCreateModal(false); resetForm() }}
-                    className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition"
-                  >
-                    {t('modalCancel')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCreate}
-                    disabled={!newTitre.trim() || !isOnline}
-                    title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
-                    className="px-4 py-2.5 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  >
-                    {t('modalCreate')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          </Modal>
         </>
       )}
     </PageContainer>

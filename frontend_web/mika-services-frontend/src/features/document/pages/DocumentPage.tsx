@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { useIsOnline } from '@/hooks/useConnectivity'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/contexts/ToastContext'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { fetchDocuments, fetchDocumentsByProjet, uploadDocument, deleteDocument } from '../../../store/slices/documentSlice'
@@ -31,6 +33,7 @@ export default function DocumentPage() {
   const formatDate = useFormatDate()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
+  const toast = useToast()
   const { documents, loading, uploading, error, totalPages, currentPage } = useAppSelector((state) => state.document)
   const projets = useAppSelector((state) => state.projet.projets)
   const currentUser = useAppSelector((state) => state.auth.user)
@@ -62,6 +65,7 @@ export default function DocumentPage() {
       projetId: selectedProjetId ? Number(selectedProjetId) : undefined,
       userId: currentUser?.id,
     }))
+    toast({ message: t('uploadSuccess', 'Document uploadé avec succès'), variant: 'success' })
     setShowUploadModal(false)
     resetUploadForm()
   }
@@ -83,6 +87,7 @@ export default function DocumentPage() {
   const handleDelete = async (id: number) => {
     if (await confirm({ messageKey: 'confirm.deleteDocument' })) {
       await dispatch(deleteDocument(id))
+      toast({ message: t('deleteSuccess', 'Document supprimé'), variant: 'success' })
     }
   }
 
@@ -186,10 +191,12 @@ export default function DocumentPage() {
       </div>
 
       {/* Modal upload */}
-      {showUploadModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-none dark:border dark:border-gray-600 w-full max-w-lg mx-4 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('modalTitle')}</h2>
+      <Modal isOpen={showUploadModal} onClose={() => { setShowUploadModal(false); resetUploadForm() }} title={t('modalTitle')} size="md" footer={<>
+          <button onClick={() => { setShowUploadModal(false); resetUploadForm() }} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium">{t('cancel')}</button>
+          <button onClick={handleUpload} disabled={!selectedFile || uploading || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold">
+            {uploading ? t('uploading') : t('send')}
+          </button>
+        </>}>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('file')}</label>
@@ -220,15 +227,7 @@ export default function DocumentPage() {
                 <textarea value={upDescription} onChange={(e) => setUpDescription(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-gray-100" rows={2} />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => { setShowUploadModal(false); resetUploadForm() }} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">{t('cancel')}</button>
-              <button onClick={handleUpload} disabled={!selectedFile || uploading || !isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                {uploading ? t('uploading') : t('send')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {error && <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4 text-red-700 dark:text-red-200">{error}</div>}
     </PageContainer>

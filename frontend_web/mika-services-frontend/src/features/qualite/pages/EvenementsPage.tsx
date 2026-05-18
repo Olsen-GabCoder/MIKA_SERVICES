@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { useIsOnline } from '@/hooks/useConnectivity'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/contexts/ToastContext'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchEvenements, createEvenement, deleteEvenement, fetchEvenementStats } from '@/store/slices/qualiteEvenementSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
@@ -42,6 +44,7 @@ export default function EvenementsPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const confirm = useConfirm()
+  const toast = useToast()
 
   const { evenements, stats, totalPages, loading } = useAppSelector(s => s.qualiteEvenement)
   const projets = useAppSelector(s => s.projet.projets)
@@ -98,6 +101,7 @@ export default function EvenementsPage() {
       numeroBl: formBl || undefined,
     }
     await dispatch(createEvenement(req))
+    toast({ message: t('evenements.createSuccess', 'Événement créé avec succès'), variant: 'success' })
     setShowModal(false)
     setFormDescription(''); setFormOuvrage(''); setFormFournisseur(''); setFormBc(''); setFormBl('')
     setFormCctp(false); setFormCategories(new Set([CategorieEvenement.QUALITE]))
@@ -106,7 +110,7 @@ export default function EvenementsPage() {
 
   const handleDelete = async (id: number) => {
     if (await confirm({ messageKey: 'evenements.confirmDelete', ns: 'qualite' })) {
-      await dispatch(deleteEvenement(id)); loadData()
+      await dispatch(deleteEvenement(id)); toast({ message: t('evenements.deleteSuccess', 'Événement supprimé'), variant: 'success' }); loadData()
     }
   }
 
@@ -256,10 +260,10 @@ export default function EvenementsPage() {
       </div>
 
       {/* Create Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center z-50 overflow-y-auto p-3">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:border dark:border-gray-600 w-full max-w-2xl p-5 sm:p-6 my-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('evenements.create')}</h2>
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={t('evenements.create')} size="lg" footer={<>
+          <button onClick={() => setShowModal(false)} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 text-sm font-medium">{t('evenements.cancel')}</button>
+          <button onClick={handleSubmit} disabled={!formDescription.trim()} className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 text-sm font-semibold">{t('evenements.create')}</button>
+        </>}>
 
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
@@ -327,19 +331,7 @@ export default function EvenementsPage() {
               </details>
             </div>
 
-            <div className="flex justify-end gap-3 mt-5">
-              <button onClick={() => setShowModal(false)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm transition">
-                {t('evenements.cancel')}
-              </button>
-              <button onClick={handleSubmit} disabled={!formDescription.trim()}
-                className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#e55a2b] disabled:opacity-50 text-sm font-medium shadow-sm transition">
-                {t('evenements.create')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </PageContainer>
   )
 }

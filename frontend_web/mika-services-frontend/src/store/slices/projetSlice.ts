@@ -7,7 +7,7 @@ import type {
 } from '@/types/projet'
 import type { PageResponse } from '@/types/projet'
 import { getProjetsCache, setProjetsCache, clearProjetsCache } from '@/utils/offlineCache'
-import { isNetworkError } from '@/utils/errorHandler'
+import { isNetworkError, handleApiError } from '@/utils/errorHandler'
 
 /** Normalise le champ types pour l’affichage liste (API peut renvoyer type et/ou types). */
 function normalizeProjetTypes(p: ProjetSummary): ProjetSummary {
@@ -219,7 +219,7 @@ const projetSlice = createSlice({
       .addCase(fetchProjets.rejected, (state, action) => {
         state.loading = false
         state.pendingListPage = null
-        state.error = (typeof action.payload === 'string' ? action.payload : action.error.message) || 'Erreur lors du chargement des projets'
+        state.error = typeof action.payload === 'string' ? action.payload : handleApiError(action.error)
       })
       // Fetch projet by ID
       .addCase(fetchProjetById.pending, (state) => {
@@ -233,7 +233,7 @@ const projetSlice = createSlice({
       })
       .addCase(fetchProjetById.rejected, (state, action) => {
         state.loading = false
-        state.error = action.error.message || 'Erreur lors du chargement du projet'
+        state.error = handleApiError(action.error)
       })
       // Search projets
       .addCase(searchProjets.pending, (state, action) => {
@@ -262,14 +262,14 @@ const projetSlice = createSlice({
       .addCase(searchProjets.rejected, (state, action) => {
         state.loading = false
         state.pendingListPage = null
-        state.error = (typeof action.payload === 'string' ? action.payload : action.error.message) || 'Erreur lors de la recherche'
+        state.error = typeof action.payload === 'string' ? action.payload : handleApiError(action.error)
       })
       // Create projet
       .addCase(createProjet.fulfilled, (state) => {
         state.loading = false
       })
       .addCase(createProjet.rejected, (state, action) => {
-        state.error = action.error.message || 'Erreur lors de la création du projet'
+        state.error = handleApiError(action.error)
       })
       // Update projet
       .addCase(updateProjet.fulfilled, (state, action) => {

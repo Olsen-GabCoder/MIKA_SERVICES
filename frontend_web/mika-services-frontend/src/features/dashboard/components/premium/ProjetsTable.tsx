@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useFormatNumber } from '@/hooks/useFormatNumber'
+import { useFormatDate } from '@/hooks/useFormatDate'
+import { HoverCard } from '@/components/ui/HoverCard'
 import { STATUT_LABELS } from '../../constants/projetStatuts'
 import type { ProjetSummary, StatutProjet } from '@/types/projet'
 
@@ -19,6 +21,7 @@ export function ProjetsTable({ projets }: ProjetsTableProps) {
   const { t } = useTranslation('common')
   const navigate = useNavigate()
   const { formatShort } = useFormatNumber()
+  const formatDate = useFormatDate()
 
   const rows = useMemo(() =>
     [...projets].filter(p => ['EN_COURS_EXECUTION', 'EN_AVANCE', 'SUSPENSION', 'RECEPTION_PROVISOIRE'].includes(p.statut))
@@ -52,15 +55,38 @@ export function ProjetsTable({ projets }: ProjetsTableProps) {
                   {p.clientNom && <span className="block text-[10.5px] tracking-[0.04em] mt-0.5" style={{ color: 'var(--db-t4)' }}>{p.clientNom}</span>}
                 </td>
                 <td className="py-3 pr-2">
-                  <span className={`inline-flex items-center gap-[5px] text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${statusCls[p.statut] ?? 'bg-[var(--db-subtle)] text-[var(--db-t2)]'}`}>
-                    <span className="w-[5px] h-[5px] rounded-full bg-current" />
-                    {STATUT_LABELS[p.statut as StatutProjet] ?? p.statut}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`inline-flex items-center gap-[5px] text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${statusCls[p.statut] ?? 'bg-[var(--db-subtle)] text-[var(--db-t2)]'}`}>
+                      <span className="w-[5px] h-[5px] rounded-full bg-current" />
+                      {STATUT_LABELS[p.statut as StatutProjet] ?? p.statut}
+                    </span>
+                    {p.chantierActif === false && (
+                      <HoverCard
+                        side="bottom"
+                        trigger={
+                          <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-700/40 cursor-default" style={{ animation: 'db-alert-ping 2.5s ease-in-out infinite' }}>
+                            <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                            {t('projet:chantier.inactif')}
+                          </span>
+                        }
+                      >
+                        <div className="space-y-1.5">
+                          <p className="font-semibold text-red-600 dark:text-red-400 text-[12px]">{t('projet:chantier.inactif')}</p>
+                          {p.motifArretChantier && (
+                            <p className="text-[11.5px]" style={{ color: 'var(--db-t2)' }}>{t(`projet:chantier.${p.motifArretChantier}`)}</p>
+                          )}
+                          {p.dateArretChantier && (
+                            <p className="text-[10.5px]" style={{ color: 'var(--db-t4)' }}>{t('projet:chantier.depuisLe')} {formatDate(p.dateArretChantier)}</p>
+                          )}
+                        </div>
+                      </HoverCard>
+                    )}
+                  </div>
                 </td>
                 <td className="py-3 pr-2">
                   <div className="flex items-center gap-2.5 min-w-[130px]">
                     <div className="flex-1 h-1 rounded-sm overflow-hidden" style={{ background: 'var(--db-subtle)' }}>
-                      <div className={`h-full rounded-sm ${fillCls}`} style={{ width: `${pct}%`, background: fillCls ? undefined : 'var(--db-t1)' }} />
+                      <div className={`h-full rounded-sm db-progress-fill ${fillCls}`} style={{ width: `${pct}%`, background: fillCls ? undefined : 'var(--db-t1)' }} />
                     </div>
                     <span className="text-[11.5px] db-num min-w-[28px] text-right" style={{ color: 'var(--db-t2)' }}>{pct}%</span>
                   </div>

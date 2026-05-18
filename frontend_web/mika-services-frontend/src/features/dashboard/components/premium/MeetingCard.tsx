@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { useFormatDate } from '@/hooks/useFormatDate'
 import type { ReunionHebdoSummary } from '@/types/reunionHebdo'
 
@@ -9,6 +10,7 @@ export interface MeetingCardProps {
 
 export function MeetingCard({ data, loading = false }: MeetingCardProps) {
   const { t } = useTranslation('common')
+  const navigate = useNavigate()
   const formatDate = useFormatDate()
 
   if (loading) {
@@ -34,7 +36,7 @@ export function MeetingCard({ data, loading = false }: MeetingCardProps) {
   const month = d.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase()
 
   return (
-    <div className="col-span-12 lg:col-span-4 rounded-xl p-4" style={{ background: 'var(--db-card)', animation: 'db-rise 380ms ease-out 360ms both' }}>
+    <div className="col-span-12 lg:col-span-4 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/salle-mika/pv')} style={{ background: 'var(--db-card)', animation: 'db-rise 380ms ease-out 360ms both' }}>
       <div className="flex items-center gap-2.5 mb-2">
         <span className="text-[11px] font-medium uppercase tracking-[0.08em]" style={{ color: 'var(--db-t3)' }}>{t('db.transversal.reunions')}</span>
         <span className="ml-auto text-[11.5px] cursor-pointer hover:text-[var(--db-t1)] transition-colors" style={{ color: 'var(--db-t3)' }}>Archives →</span>

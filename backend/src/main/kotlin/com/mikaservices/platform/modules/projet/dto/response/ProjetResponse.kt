@@ -4,6 +4,7 @@ import com.mikaservices.platform.common.enums.SourceFinancement
 import com.mikaservices.platform.common.enums.StatutProjet
 import com.mikaservices.platform.common.enums.TypeProjet
 import com.mikaservices.platform.common.enums.ModeSuiviMensuel
+import com.mikaservices.platform.common.enums.MotifArretChantier
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -47,7 +48,10 @@ data class ProjetResponse(
     val responsableProjet: ProjetUserSummary?,
     val partenairePrincipal: String?,
     val actif: Boolean,
-    val nombreSousProjets: Int = 0,
+    val chantierActif: Boolean = true,
+    val motifArretChantier: MotifArretChantier? = null,
+    val detailArretChantier: String? = null,
+    val dateArretChantier: LocalDate? = null,
     val nombrePointsBloquantsOuverts: Int = 0,
     val avancementEtudes: List<AvancementEtudeProjetResponse> = emptyList(),
     val createdAt: LocalDateTime?,
@@ -76,7 +80,10 @@ data class ProjetSummaryResponse(
     /** ID du chef de projet (pour droits UI liste) */
     val responsableProjetId: Long? = null,
     /** Nombre d'engins affectés au projet */
-    val nombreEnginsAffectes: Int = 0
+    val nombreEnginsAffectes: Int = 0,
+    val chantierActif: Boolean = true,
+    val motifArretChantier: MotifArretChantier? = null,
+    val dateArretChantier: LocalDate? = null
 )
 
 data class ProjetUserSummary(

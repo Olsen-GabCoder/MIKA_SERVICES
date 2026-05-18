@@ -3,7 +3,7 @@ package com.mikaservices.platform.modules.qshe.service
 import com.mikaservices.platform.common.enums.NiveauRisque
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
-import com.mikaservices.platform.modules.projet.repository.SousProjetRepository
+
 import com.mikaservices.platform.modules.qshe.dto.request.RisqueCreateRequest
 import com.mikaservices.platform.modules.qshe.dto.request.RisqueUpdateRequest
 import com.mikaservices.platform.modules.qshe.dto.response.RisqueResponse
@@ -22,17 +22,12 @@ import org.springframework.transaction.annotation.Transactional
 class RisqueService(
     private val risqueRepository: RisqueRepository,
     private val projetRepository: ProjetRepository,
-    private val sousProjetRepository: SousProjetRepository
 ) {
     private val logger = LoggerFactory.getLogger(RisqueService::class.java)
 
     fun create(request: RisqueCreateRequest): RisqueResponse {
         val projet = projetRepository.findById(request.projetId)
             .orElseThrow { ResourceNotFoundException("Projet introuvable : ${request.projetId}") }
-        val sousProjet = request.sousProjetId?.let {
-            sousProjetRepository.findById(it).orElseThrow { ResourceNotFoundException("Sous-projet introuvable : $it") }
-        }
-
         val reference = "RSK-%05d".format(risqueRepository.count() + 1)
 
         val risque = Risque(
@@ -45,7 +40,7 @@ class RisqueService(
             mesuresEpi = request.mesuresEpi,
             probabiliteResiduelle = request.probabiliteResiduelle,
             graviteResiduelle = request.graviteResiduelle,
-            sousProjet = sousProjet, zoneConcernee = request.zoneConcernee
+            zoneConcernee = request.zoneConcernee
         )
         risque.calculerNiveauBrut()
         risque.calculerNiveauResiduel()

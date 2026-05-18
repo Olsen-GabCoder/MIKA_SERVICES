@@ -11,6 +11,7 @@ import type { BaremeListParams } from '../hooks/useBaremeListParams'
 import { parseBaremeCatalogSortField } from '../baremeCatalogSort'
 import { useAppSelector } from '@/store/hooks'
 import { handleApiError } from '@/utils/errorHandler'
+import { useConfirm } from '@/contexts/ConfirmContext'
 
 function buildListSearchParams(params: Partial<BaremeListParams>): string {
   const sp = new URLSearchParams()
@@ -57,6 +58,7 @@ export function BaremeArticleDetailPage() {
   const articleId = id != null ? parseInt(id, 10) : null
   const { data: article, isLoading, isError } = useBaremeArticle(articleId)
   const deleteMutation = useDeleteBaremeArticle()
+  const confirm = useConfirm()
   const fromListParams = location.state as { fromListParams?: Partial<BaremeListParams> } | null
   const stickySentinelRef = useRef<HTMLDivElement | null>(null)
   const [isStickyPinned, setIsStickyPinned] = useState(false)
@@ -87,13 +89,13 @@ export function BaremeArticleDetailPage() {
 
   const onDelete = async () => {
     if (articleId == null || Number.isNaN(articleId)) return
-    const ok = window.confirm(t('detail.confirmDelete'))
+    const ok = await confirm({ messageKey: 'detail.confirmDelete', ns: 'bareme', variant: 'danger' })
     if (!ok) return
     try {
       await deleteMutation.mutateAsync(articleId)
       navigate('/bareme')
     } catch (err) {
-      window.alert(handleApiError(err))
+      await confirm({ message: handleApiError(err), alertOnly: true })
     }
   }
 

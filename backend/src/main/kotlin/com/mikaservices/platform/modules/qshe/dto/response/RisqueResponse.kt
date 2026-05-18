@@ -12,7 +12,6 @@ data class RisqueResponse(
     val mesuresIngenierie: String?, val mesuresAdministratives: String?, val mesuresEpi: String?,
     val probabiliteResiduelle: Int?, val graviteResiduelle: Int?, val niveauResiduel: NiveauRisque?,
     val projetId: Long, val projetNom: String,
-    val sousProjetId: Long?, val sousProjetNom: String?,
     val zoneConcernee: String?, val actif: Boolean,
     val createdAt: LocalDateTime?, val updatedAt: LocalDateTime?
 )

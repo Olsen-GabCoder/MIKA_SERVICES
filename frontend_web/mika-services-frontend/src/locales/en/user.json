@@ -266,5 +266,27 @@
     "pagination": {
       "showing": "{{count}} results of {{total}}"
     }
+  },
+  "twoFa": {
+    "errorTitle": "2FA configuration error",
+    "errorInvalidResponse": "Invalid server response",
+    "setupSuccess": "Two-factor authentication enabled successfully",
+    "disableSuccess": "Two-factor authentication disabled",
+    "codeMinLength": "Code must be at least 6 digits",
+    "setupTitle": "Two-factor authentication",
+    "setupSubtitle": "Scan the QR code with your authenticator app",
+    "setupCodeLabel": "Verification code",
+    "setupSubmit": "Enable 2FA",
+    "cancel": "Cancel",
+    "enabled": "Enabled",
+    "notEnabled": "Not enabled",
+    "enabledDesc": "Two-factor authentication is active. Your account is better protected.",
+    "notEnabledDesc": "Enable 2FA to strengthen your account security with a TOTP app.",
+    "disableTitle": "Disable 2FA",
+    "disableSubtitle": "Enter your password to disable 2FA",
+    "disablePasswordLabel": "Current password",
+    "disableSubmit": "Disable",
+    "step1": "Scan",
+    "step2": "Verify"
   }
 }

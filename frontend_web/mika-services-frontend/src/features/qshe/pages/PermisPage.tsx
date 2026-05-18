@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { useIsOnline } from '@/hooks/useConnectivity'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/contexts/ToastContext'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { fetchPermisByProjet, createPermis, deletePermis, fetchPermisSummary } from '@/store/slices/qshePermisSlice'
@@ -27,6 +29,7 @@ export default function PermisPage() {
   const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
+  const toast = useToast()
   const { permis, summary, loading, totalPages } = useAppSelector(s => s.qshePermis)
   const projets = useAppSelector(s => s.projet.projets)
 
@@ -55,13 +58,14 @@ export default function PermisPage() {
       mesuresSecurite: fMesures.trim() || undefined,
     }
     await dispatch(createPermis(req))
+    toast({ message: 'Permis créé avec succès', variant: 'success' })
     setShowForm(false); setFDesc(''); setFZone(''); setFDateDebut(''); setFDateFin(''); setFMesures('')
     dispatch(fetchPermisByProjet({ projetId })); dispatch(fetchPermisSummary(projetId))
   }
 
   const handleDelete = async (id: number) => {
     if (await confirm({ messageKey: 'incidents.confirm.delete' })) {
-      await dispatch(deletePermis(id)); if (projetId) dispatch(fetchPermisSummary(projetId))
+      await dispatch(deletePermis(id)); toast({ message: 'Permis supprimé', variant: 'success' }); if (projetId) dispatch(fetchPermisSummary(projetId))
     }
   }
 
@@ -151,10 +155,10 @@ export default function PermisPage() {
         </>
       )}
 
-      {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center z-50 p-3 overflow-y-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:border dark:border-gray-600 w-full max-w-lg p-5 sm:p-6 my-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Nouveau permis de travail</h2>
+      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Nouveau permis de travail" size="md" footer={<>
+          <button onClick={() => setShowForm(false)} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 text-sm font-medium">Annuler</button>
+          <button onClick={handleCreate} disabled={!fDesc.trim()} className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 text-sm font-semibold">Créer</button>
+        </>}>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type *</label>
@@ -191,13 +195,7 @@ export default function PermisPage() {
                   className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-5">
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 text-sm">Annuler</button>
-              <button onClick={handleCreate} disabled={!fDesc.trim()} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 text-sm font-medium">Créer</button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </PageContainer>
   )
 }

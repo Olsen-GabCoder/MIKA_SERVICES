@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { useIsOnline } from '@/hooks/useConnectivity'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/contexts/ToastContext'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchAgrements, createAgrement, updateAgrement, deleteAgrement } from '@/store/slices/qualiteAgrementSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
@@ -27,6 +29,7 @@ export default function AgrementsPage() {
   const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
+  const toast = useToast()
 
   const { agrements, totalPages, loading } = useAppSelector(s => s.qualiteAgrement)
   const projets = useAppSelector(s => s.projet.projets)
@@ -86,12 +89,13 @@ export default function AgrementsPage() {
         statut: formStatut,
       }))
     }
+    toast({ message: editingItem ? t('agrements.updateSuccess', 'Agrément mis à jour') : t('agrements.createSuccess', 'Agrément créé avec succès'), variant: 'success' })
     setShowModal(false); resetForm(); loadData()
   }
 
   const handleDelete = async (id: number) => {
     if (await confirm({ messageKey: 'agrements.confirmDelete', ns: 'qualite' })) {
-      await dispatch(deleteAgrement(id)); loadData()
+      await dispatch(deleteAgrement(id)); toast({ message: t('agrements.deleteSuccess', 'Agrément supprimé'), variant: 'success' }); loadData()
     }
   }
 
@@ -228,56 +232,49 @@ export default function AgrementsPage() {
           </div>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center z-50 overflow-y-auto p-3">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:border dark:border-gray-600 w-full max-w-lg p-5 sm:p-6 my-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              {editingItem ? t('agrements.editTitle') : t('agrements.create')}
-            </h2>
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('agrements.objet')}</label>
-                <input value={formObjet} onChange={e => setFormObjet(e.target.value)}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('agrements.titre')}</label>
-                <input value={formTitre} onChange={e => setFormTitre(e.target.value)}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('agrements.statut')}</label>
-                <select value={formStatut} onChange={e => setFormStatut(e.target.value as StatutAgrement)}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent">
-                  {Object.values(StatutAgrement).map(s => (
-                    <option key={s} value={s}>{t(`agrements.statuts.${s}`)}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('agrements.description')}</label>
-                <textarea value={formDescription} onChange={e => setFormDescription(e.target.value)} rows={2}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent" />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-5">
-              <button onClick={() => { setShowModal(false); resetForm() }}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm transition">
-                {t('agrements.cancel')}
-              </button>
-              <button onClick={handleSubmit} disabled={!formObjet.trim() || !formTitre.trim()}
-                className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#e55a2b] disabled:opacity-50 text-sm font-medium shadow-sm transition">
-                {editingItem ? t('agrements.save') : t('agrements.create')}
-              </button>
-            </div>
+      <Modal
+        isOpen={showModal}
+        onClose={() => { setShowModal(false); resetForm() }}
+        title={editingItem ? t('agrements.editTitle') : t('agrements.create')}
+        size="md"
+        footer={<>
+          <button onClick={() => { setShowModal(false); resetForm() }}
+            className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition">
+            {t('agrements.cancel')}
+          </button>
+          <button onClick={handleSubmit} disabled={!formObjet.trim() || !formTitre.trim()}
+            className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 text-sm font-semibold transition">
+            {editingItem ? t('agrements.save') : t('agrements.create')}
+          </button>
+        </>}
+      >
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('agrements.objet')}</label>
+            <input value={formObjet} onChange={e => setFormObjet(e.target.value)}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-transparent" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('agrements.titre')}</label>
+            <input value={formTitre} onChange={e => setFormTitre(e.target.value)}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-transparent" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('agrements.statut')}</label>
+            <select value={formStatut} onChange={e => setFormStatut(e.target.value as StatutAgrement)}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-transparent">
+              {Object.values(StatutAgrement).map(s => (
+                <option key={s} value={s}>{t(`agrements.statuts.${s}`)}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('agrements.description')}</label>
+            <textarea value={formDescription} onChange={e => setFormDescription(e.target.value)} rows={2}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary focus:border-transparent" />
           </div>
         </div>
-      )}
+      </Modal>
     </PageContainer>
   )
 }

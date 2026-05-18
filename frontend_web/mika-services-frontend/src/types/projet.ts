@@ -9,7 +9,6 @@ export type TypeClient = 'ETAT_GABON' | 'MINISTERE' | 'COLLECTIVITE' | 'ENTREPRI
 export type SourceFinancement = 'ETAT_GABONAIS' | 'BGFIBANK' | 'BAD' | 'BM' | 'AFD' | 'PARTENARIAT_PUBLIC_PRIVE' | 'FONDS_PROPRES' | 'MIXTE'
 export type TypePartenaire = 'SOUS_TRAITANT' | 'CO_TRAITANT' | 'FOURNISSEUR_STRATEGIQUE' | 'BUREAU_CONTROLE' | 'PARTENAIRE_TECHNIQUE'
 export type TypeTravaux = 'TERRASSEMENT' | 'VOIRIE' | 'ASSAINISSEMENT' | 'GENIE_CIVIL' | 'BATIMENT' | 'PONT' | 'OUVRAGE_ART' | 'AMENAGEMENT' | 'REHABILITATION'
-export type StatutSousProjet = 'PLANIFIE' | 'EN_COURS' | 'TERMINE' | 'SUSPENDU'
 export type Priorite = 'BASSE' | 'NORMALE' | 'HAUTE' | 'CRITIQUE' | 'URGENTE'
 export type StatutPointBloquant = 'OUVERT' | 'EN_COURS' | 'RESOLU' | 'FERME' | 'ESCALADE'
 export type TypePrevision = 'HEBDOMADAIRE' | 'MENSUELLE' | 'TRIMESTRIELLE' | 'PRODUCTION' | 'APPROVISIONNEMENT' | 'RESSOURCES_HUMAINES' | 'MATERIEL'
@@ -17,6 +16,18 @@ export type PhaseEtude = 'APS' | 'APD' | 'EXE' | 'GEOTECHNIQUE' | 'HYDRAULIQUE' 
 /** État de validation par l'administration (liste déroulante dans l'avancement des études) */
 export type EtatValidationEtude = 'NON_DEPOSE' | 'EN_ATTENTE' | 'EN_COURS' | 'VALIDE' | 'REFUSE'
 export type ModeSuiviMensuel = 'AUTO' | 'MANUEL'
+
+export type MotifArretChantier =
+  | 'FORTES_PLUIES' | 'INONDATION' | 'SOL_SATURE' | 'GLISSEMENT_TERRAIN' | 'CRUE_RIVIERE' | 'CHALEUR_EXTREME' | 'FOUDRE_ORAGE' | 'VEGETATION_ENVAHISSANTE'
+  | 'RETARD_PERMIS_CONSTRUIRE' | 'ABSENCE_AUTORISATION_SOL' | 'NON_CONFORMITE_URBANISME' | 'ARRETE_PREFECTORAL' | 'RETARD_ETUDE_IMPACT' | 'PROBLEME_MARCHE_PUBLIC' | 'CHANGEMENT_GOUVERNEMENT' | 'AUDIT_COUR_COMPTES'
+  | 'RETARD_PAIEMENT_MAITRE_OUVRAGE' | 'INSUFFISANCE_TRESORERIE' | 'GEL_BUDGETAIRE' | 'NON_OBTENTION_CAUTION' | 'LITIGE_DECOMPTES' | 'DEPASSEMENT_BUDGET' | 'DEFAILLANCE_SOUS_TRAITANT'
+  | 'RUPTURE_STOCK_CIMENT' | 'RETARD_LIVRAISON_PORT' | 'BLOCAGE_DOUANE' | 'INDISPONIBILITE_GRANULATS' | 'PANNE_ENGIN_SANS_PIECES' | 'ROUTES_IMPRATICABLES' | 'PENURIE_CARBURANT' | 'COUPURE_ELECTRICITE' | 'PENURIE_EAU'
+  | 'ERREUR_ETUDES_TECHNIQUES' | 'MODIFICATION_PROJET_AVENANT' | 'MALFACON_DEMOLITION' | 'DECOUVERTE_RESEAUX_ENTERRES' | 'SOL_FONDATION_NON_CONFORME' | 'DEFAILLANCE_EQUIPEMENT'
+  | 'CONFLIT_FONCIER' | 'OPPOSITION_RIVERAINS' | 'GREVE_OUVRIERS' | 'PENURIE_MAIN_OEUVRE' | 'ACCIDENT_GRAVE' | 'EPIDEMIE_CRISE_SANITAIRE' | 'PROBLEME_VISA_MAIN_OEUVRE'
+  | 'INSECURITE_VOL_MATERIAUX' | 'DECOUVERTE_MUNITIONS' | 'ORDRE_AUTORITE_SECURITE'
+  | 'ESPECE_PROTEGEE_ZONE_CLASSEE' | 'POLLUTION_ACCIDENTELLE' | 'NON_RESPECT_PRESCRIPTIONS_ENV'
+  | 'RESILIATION_MAITRE_OEUVRE' | 'LIQUIDATION_JUDICIAIRE' | 'LITIGE_PARTENAIRES_GROUPEMENT' | 'EXPIRATION_ORDRE_SERVICE'
+  | 'AUTRE'
 
 /** Libellés des types de projet (affichage liste, détail, export) */
 export const TYPE_PROJET_LABELS: Record<string, string> = {
@@ -144,7 +155,10 @@ export interface Projet {
   responsableProjetId?: number
   partenairePrincipal?: string
   actif: boolean
-  nombreSousProjets: number
+  chantierActif: boolean
+  motifArretChantier?: MotifArretChantier
+  detailArretChantier?: string
+  dateArretChantier?: string
   nombrePointsBloquantsOuverts: number
   avancementEtudes?: AvancementEtudeProjet[]
   createdAt?: string
@@ -173,26 +187,9 @@ export interface ProjetSummary {
   responsableProjetId?: number
   /** Nombre d'engins affectés au projet */
   nombreEnginsAffectes?: number
-}
-
-export interface SousProjet {
-  id: number
-  projetId: number
-  projetNom: string
-  code: string
-  nom: string
-  description?: string
-  typeTravaux: TypeTravaux
-  statut: StatutSousProjet
-  montantHT?: number
-  montantTTC?: number
-  delaiMois?: number
-  dateDebut?: string
-  dateFin?: string
-  avancementPhysique: number
-  responsable?: ProjetUserSummary
-  createdAt?: string
-  updatedAt?: string
+  chantierActif?: boolean
+  motifArretChantier?: MotifArretChantier
+  dateArretChantier?: string
 }
 
 export interface PointBloquant {
@@ -355,6 +352,10 @@ export interface ProjetUpdateRequest {
   responsableProjetId?: number
   partenairePrincipal?: string
   partenaireIds?: number[]
+  chantierActif?: boolean
+  motifArretChantier?: MotifArretChantier
+  detailArretChantier?: string
+  dateArretChantier?: string
 }
 
 export interface ClientCreateRequest {
@@ -378,21 +379,6 @@ export interface ClientUpdateRequest {
   adresse?: string
   contactPrincipal?: string
   telephoneContact?: string
-}
-
-export interface SousProjetCreateRequest {
-  projetId: number
-  code: string
-  nom: string
-  description?: string
-  typeTravaux: TypeTravaux
-  statut?: StatutSousProjet
-  montantHT?: number
-  montantTTC?: number
-  delaiMois?: number
-  dateDebut?: string
-  dateFin?: string
-  responsableId?: number
 }
 
 export interface PointBloquantCreateRequest {

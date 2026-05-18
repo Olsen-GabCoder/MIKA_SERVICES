@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { qsheIncidentApi } from '@/api/qsheIncidentApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type {
   IncidentResponse,
   IncidentCreateRequest,
@@ -88,7 +89,7 @@ const qsheIncidentSlice = createSlice({
         state.currentPage = payload.number
       })
       .addCase(fetchIncidentsByProjet.rejected, (state, { error }) => {
-        state.loading = false; state.error = error.message ?? 'Erreur de chargement'
+        state.loading = false; state.error = handleApiError(error)
       })
       // fetch one
       .addCase(fetchIncidentById.fulfilled, (state, { payload }) => { state.selectedIncident = payload })

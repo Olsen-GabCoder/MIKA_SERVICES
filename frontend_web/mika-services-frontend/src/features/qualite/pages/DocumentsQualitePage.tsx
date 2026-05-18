@@ -7,6 +7,8 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { useIsOnline } from '@/hooks/useConnectivity'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/contexts/ToastContext'
 import type { VersionDocumentResponse } from '@/types/qualiteDocument'
 
 const CARD = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm overflow-hidden'
@@ -113,6 +115,7 @@ export default function DocumentsQualitePage() {
   const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
+  const toast = useToast()
 
   const { documents, current, totalPages, loading } = useAppSelector(s => s.qualiteDocument)
 
@@ -144,6 +147,7 @@ export default function DocumentsQualitePage() {
       description: formDesc || undefined,
       file: formFile ?? undefined,
     }))
+    toast({ message: t('documents.createSuccess', 'Document créé avec succès'), variant: 'success' })
     setShowCreate(false)
     setFormTitre(''); setFormDesc(''); setFormFile(null)
     loadData()
@@ -156,7 +160,7 @@ export default function DocumentsQualitePage() {
       ns: 'qualite',
     })
     if (!ok) return
-    await dispatch(deleteDocument(id)); loadData()
+    await dispatch(deleteDocument(id)); toast({ message: t('documents.deleteSuccess', 'Document supprimé'), variant: 'success' }); loadData()
   }
 
   const openDetail = async (id: number) => {
@@ -286,10 +290,10 @@ export default function DocumentsQualitePage() {
       )}
 
       {/* Create Modal */}
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/50 overflow-y-auto p-3">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:border dark:border-gray-600 w-full max-w-lg p-6 space-y-4">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('documents.create')}</h2>
+      <Modal isOpen={showCreate} onClose={() => { setShowCreate(false); setFormFile(null) }} title={t('documents.create')} size="md" footer={<>
+          <button onClick={() => { setShowCreate(false); setFormFile(null) }} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 text-sm font-medium">{t('documents.cancel')}</button>
+          <button onClick={handleCreate} disabled={!formTitre.trim()} className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 text-sm font-semibold">{t('documents.save')}</button>
+        </>}>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('documents.titre')}</label>
               <input value={formTitre} onChange={e => setFormTitre(e.target.value)}
@@ -306,28 +310,10 @@ export default function DocumentsQualitePage() {
               onRemove={() => setFormFile(null)}
               label={t('documents.fileSelected')}
             />
-            <div className="flex justify-end gap-3 pt-2">
-              <button onClick={() => { setShowCreate(false); setFormFile(null) }}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                {t('documents.cancel')}
-              </button>
-              <button onClick={handleCreate} disabled={!formTitre.trim()}
-                className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#e55a2b] disabled:opacity-50 transition-colors shadow-sm">
-                {t('documents.save')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Detail Modal */}
-      {showDetail && current && (
-        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/50 overflow-y-auto p-3">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:border dark:border-gray-600 w-full max-w-2xl p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{current.codeDocument} — {current.titre}</h2>
-              <button onClick={() => setShowDetail(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl">&times;</button>
-            </div>
+      <Modal isOpen={!!(showDetail && current)} onClose={() => setShowDetail(false)} title={current ? `${current.codeDocument} — ${current.titre}` : ''} size="lg">
             {current.description && <p className="text-sm text-gray-600 dark:text-gray-400">{current.description}</p>}
             <div className="text-sm text-gray-700 dark:text-gray-300"><strong>{t('documents.versionCourante')}:</strong> v{current.versionCourante}</div>
 
@@ -369,15 +355,13 @@ export default function DocumentsQualitePage() {
                 )
               })}
             </div>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {/* New Version Modal */}
-      {showVersion && (
-        <div className="fixed inset-0 z-[60] flex items-start sm:items-center justify-center bg-black/50 overflow-y-auto p-3">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:border dark:border-gray-600 w-full max-w-md p-6 space-y-4">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('documents.nouvelleVersion')}</h2>
+      <Modal isOpen={showVersion} onClose={() => { setShowVersion(false); setVersionFile(null) }} title={t('documents.nouvelleVersion')} size="sm" footer={<>
+          <button onClick={() => { setShowVersion(false); setVersionFile(null) }} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 text-sm font-medium">{t('documents.cancel')}</button>
+          <button onClick={handleAddVersion} disabled={!versionFile} className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 text-sm font-semibold">{t('documents.save')}</button>
+        </>}>
             <DropZone
               file={versionFile}
               onFileChange={setVersionFile}
@@ -389,19 +373,7 @@ export default function DocumentsQualitePage() {
               <textarea value={versionComment} onChange={e => setVersionComment(e.target.value)} rows={2}
                 className={INPUT} />
             </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <button onClick={() => { setShowVersion(false); setVersionFile(null) }}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                {t('documents.cancel')}
-              </button>
-              <button onClick={handleAddVersion} disabled={!versionFile}
-                className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#e55a2b] disabled:opacity-50 transition-colors shadow-sm">
-                {t('documents.save')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </PageContainer>
   )
 }

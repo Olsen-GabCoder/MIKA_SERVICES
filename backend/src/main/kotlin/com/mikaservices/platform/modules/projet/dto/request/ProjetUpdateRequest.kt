@@ -4,6 +4,7 @@ import com.mikaservices.platform.common.enums.SourceFinancement
 import com.mikaservices.platform.common.enums.StatutProjet
 import com.mikaservices.platform.common.enums.TypeProjet
 import com.mikaservices.platform.common.enums.ModeSuiviMensuel
+import com.mikaservices.platform.common.enums.MotifArretChantier
 import jakarta.validation.constraints.Size
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -49,5 +50,9 @@ data class ProjetUpdateRequest(
     val propositionsAmelioration: String? = null,
     val responsableProjetId: Long? = null,
     val partenairePrincipal: String? = null,
-    val partenaireIds: List<Long>? = null
+    val partenaireIds: List<Long>? = null,
+    val chantierActif: Boolean? = null,
+    val motifArretChantier: MotifArretChantier? = null,
+    val detailArretChantier: String? = null,
+    val dateArretChantier: LocalDate? = null
 )

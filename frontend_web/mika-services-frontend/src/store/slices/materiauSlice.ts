@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { materiauApi } from '@/api/materiauApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { MateriauSummary, Materiau, MateriauCreateRequest } from '@/types/materiel'
 
 interface MateriauState {
@@ -50,7 +51,7 @@ const materiauSlice = createSlice({
         state.totalElements = action.payload.totalElements; state.totalPages = action.payload.totalPages
         state.currentPage = action.payload.number
       })
-      .addCase(fetchMateriaux.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+      .addCase(fetchMateriaux.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
       .addCase(fetchMateriauById.fulfilled, (state, action) => { state.materiauDetail = action.payload })
       .addCase(fetchStockBas.fulfilled, (state, action) => { state.stockBasList = action.payload })
       .addCase(deleteMateriau.fulfilled, (state, action) => { state.materiaux = state.materiaux.filter((m) => m.id !== action.payload) })

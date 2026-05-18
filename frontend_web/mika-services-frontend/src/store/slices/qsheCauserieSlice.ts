@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { qsheCauserieApi } from '@/api/qsheCauserieApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { CauserieResponse, CauserieCreateRequest, CauserieSummaryResponse } from '@/types/qsheCauserie'
 
 interface State {
@@ -19,7 +20,7 @@ const slice = createSlice({
   extraReducers: b => {
     b.addCase(fetchCauseriesByProjet.pending, s => { s.loading = true; s.error = null })
      .addCase(fetchCauseriesByProjet.fulfilled, (s, { payload: p }) => { s.loading = false; s.causeries = p.content; s.totalElements = p.totalElements; s.totalPages = p.totalPages; s.currentPage = p.number })
-     .addCase(fetchCauseriesByProjet.rejected, (s, { error }) => { s.loading = false; s.error = error.message ?? 'Erreur' })
+     .addCase(fetchCauseriesByProjet.rejected, (s, { error }) => { s.loading = false; s.error = handleApiError(error) })
      .addCase(createCauserie.fulfilled, (s, { payload }) => { s.causeries = [payload, ...s.causeries] })
      .addCase(deleteCauserie.fulfilled, (s, { payload: id }) => { s.causeries = s.causeries.filter(c => c.id !== id) })
      .addCase(fetchCauserieSummary.fulfilled, (s, { payload }) => { s.summary = payload })

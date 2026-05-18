@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { qsheRisqueApi } from '@/api/qsheRisqueApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { RisqueResponse, RisqueCreateRequest, RisqueUpdateRequest, RisqueSummaryResponse } from '@/types/qsheRisque'
 
 interface State {
@@ -21,7 +22,7 @@ const slice = createSlice({
   extraReducers: b => {
     b.addCase(fetchRisquesByProjet.pending, s => { s.loading = true; s.error = null })
      .addCase(fetchRisquesByProjet.fulfilled, (s, { payload: p }) => { s.loading = false; s.risques = p.content; s.totalElements = p.totalElements; s.totalPages = p.totalPages; s.currentPage = p.number })
-     .addCase(fetchRisquesByProjet.rejected, (s, { error }) => { s.loading = false; s.error = error.message ?? 'Erreur' })
+     .addCase(fetchRisquesByProjet.rejected, (s, { error }) => { s.loading = false; s.error = handleApiError(error) })
      .addCase(createRisque.fulfilled, (s, { payload }) => { s.risques = [payload, ...s.risques] })
      .addCase(updateRisque.fulfilled, (s, { payload }) => { s.risques = s.risques.map(r => r.id === payload.id ? payload : r) })
      .addCase(deleteRisque.fulfilled, (s, { payload: id }) => { s.risques = s.risques.filter(r => r.id !== id) })

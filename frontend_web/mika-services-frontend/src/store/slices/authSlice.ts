@@ -9,7 +9,7 @@ import { clearResponseCache } from '@/utils/responseCache'
 import { clearOfflineCredentials } from '@/utils/offlineAuth'
 import { clearQueue } from '@/utils/offlineQueue'
 import { queryClient } from '@/services/queryClient'
-import { isNetworkError } from '@/utils/errorHandler'
+import { isNetworkError, handleApiError } from '@/utils/errorHandler'
 
 /** État intermédiaire après login quand 2FA est requis */
 export interface TwoFactorPending {
@@ -187,7 +187,7 @@ const authSlice = createSlice({
           ? 'RATE_LIMIT'
           : payload?.code === 'ACCOUNT_LOCKED'
             ? 'ACCOUNT_LOCKED'
-            : action.error.message || 'Erreur de connexion'
+            : handleApiError(action.error)
       state.isAuthenticated = false
     })
 
@@ -207,7 +207,7 @@ const authSlice = createSlice({
     })
     builder.addCase(verify2FA.rejected, (state, action) => {
       state.isLoading = false
-      state.error = action.error.message || 'Code 2FA invalide'
+      state.error = handleApiError(action.error)
     })
 
     // Refresh token

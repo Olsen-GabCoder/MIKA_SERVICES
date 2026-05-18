@@ -3,7 +3,7 @@ package com.mikaservices.platform.modules.qshe.entity
 import com.mikaservices.platform.common.entity.BaseEntity
 import com.mikaservices.platform.common.enums.NiveauRisque
 import com.mikaservices.platform.modules.projet.entity.Projet
-import com.mikaservices.platform.modules.projet.entity.SousProjet
+
 import com.mikaservices.platform.modules.qshe.enums.CategorieRisque
 import jakarta.persistence.*
 
@@ -88,10 +88,6 @@ class Risque(
     var niveauResiduel: NiveauRisque? = null,
 
     // --- Rattachement ---
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sous_projet_id")
-    var sousProjet: SousProjet? = null,
 
     @Column(name = "zone_concernee", length = 200)
     var zoneConcernee: String? = null,

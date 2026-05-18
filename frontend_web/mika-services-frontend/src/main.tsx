@@ -6,6 +6,7 @@ import { store } from './store/store'
 import { queryClient } from './services/queryClient'
 import { AppRouter } from './router/Router'
 import { ConfirmProvider } from './contexts/ConfirmContext'
+import { ToastProvider } from './contexts/ToastContext'
 import { PWAUpdatePrompt } from './components/pwa/PWAUpdatePrompt'
 import { ReconnectionOrchestrator } from './components/pwa/ReconnectionOrchestrator'
 import { SyncStatusBadge } from './components/pwa/SyncStatusBadge'
@@ -67,12 +68,14 @@ killResidualServiceWorkers().finally(() => {
     <StrictMode>
       <Provider store={store}>
         <QueryClientProvider client={queryClient}>
-          <ConfirmProvider>
-            <AppRouter />
-            <PWAUpdatePrompt />
-            <ReconnectionOrchestrator />
-            <SyncStatusBadge />
-          </ConfirmProvider>
+          <ToastProvider>
+            <ConfirmProvider>
+              <AppRouter />
+              <PWAUpdatePrompt />
+              <ReconnectionOrchestrator />
+              <SyncStatusBadge />
+            </ConfirmProvider>
+          </ToastProvider>
         </QueryClientProvider>
       </Provider>
     </StrictMode>,

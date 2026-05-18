@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { qsheInspectionApi } from '@/api/qsheInspectionApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { InspectionResponse, InspectionCreateRequest, InspectionUpdateRequest, ChecklistTemplateResponse } from '@/types/qsheInspection'
 
 interface State {
@@ -34,7 +35,7 @@ const slice = createSlice({
      .addCase(fetchInspectionsByProjet.fulfilled, (s, { payload: p }) => {
        s.loading = false; s.inspections = p.content; s.totalElements = p.totalElements; s.totalPages = p.totalPages; s.currentPage = p.number
      })
-     .addCase(fetchInspectionsByProjet.rejected, (s, { error }) => { s.loading = false; s.error = error.message ?? 'Erreur' })
+     .addCase(fetchInspectionsByProjet.rejected, (s, { error }) => { s.loading = false; s.error = handleApiError(error) })
      .addCase(fetchInspectionById.fulfilled, (s, { payload }) => { s.selected = payload })
      .addCase(createInspection.fulfilled, (s, { payload }) => { s.inspections = [payload, ...s.inspections] })
      .addCase(updateInspection.fulfilled, (s, { payload }) => {

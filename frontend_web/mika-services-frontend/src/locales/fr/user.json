@@ -266,5 +266,27 @@
     "pagination": {
       "showing": "{{count}} résultats sur {{total}}"
     }
+  },
+  "twoFa": {
+    "errorTitle": "Erreur de configuration 2FA",
+    "errorInvalidResponse": "Réponse du serveur invalide",
+    "setupSuccess": "Authentification à deux facteurs activée avec succès",
+    "disableSuccess": "Authentification à deux facteurs désactivée",
+    "codeMinLength": "Le code doit contenir au moins 6 chiffres",
+    "setupTitle": "Authentification à deux facteurs",
+    "setupSubtitle": "Scannez le QR code avec votre application d'authentification",
+    "setupCodeLabel": "Code de vérification",
+    "setupSubmit": "Activer la 2FA",
+    "cancel": "Annuler",
+    "enabled": "Activée",
+    "notEnabled": "Non activée",
+    "enabledDesc": "L'authentification à deux facteurs est active. Votre compte est mieux protégé.",
+    "notEnabledDesc": "Activez la 2FA pour renforcer la sécurité de votre compte avec une application TOTP.",
+    "disableTitle": "Désactiver la 2FA",
+    "disableSubtitle": "Saisissez votre mot de passe pour désactiver la 2FA",
+    "disablePasswordLabel": "Mot de passe actuel",
+    "disableSubmit": "Désactiver",
+    "step1": "Scanner",
+    "step2": "Vérifier"
   }
 }

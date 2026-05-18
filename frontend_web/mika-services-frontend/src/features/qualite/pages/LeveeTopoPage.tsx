@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { useIsOnline } from '@/hooks/useConnectivity'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/contexts/ToastContext'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchLevees, createLevee, updateLevee, deleteLevee } from '@/store/slices/qualiteLeveeTopoSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
@@ -22,6 +24,7 @@ export default function LeveeTopoPage() {
   const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
+  const toast = useToast()
 
   const { levees, totalPages, loading } = useAppSelector(s => s.qualiteLeveeTopo)
   const projets = useAppSelector(s => s.projet.projets)
@@ -90,6 +93,7 @@ export default function LeveeTopoPage() {
         observations: formObs || undefined,
       }))
     }
+    toast({ message: editingId ? t('leveeTopo.updateSuccess', 'Levée mise à jour') : t('leveeTopo.createSuccess', 'Levée créée avec succès'), variant: 'success' })
     setShowModal(false)
     resetForm()
     loadData()
@@ -98,6 +102,7 @@ export default function LeveeTopoPage() {
   const handleDelete = async (id: number) => {
     if (await confirm({ messageKey: 'leveeTopo.confirmDelete', ns: 'qualite' })) {
       await dispatch(deleteLevee(id))
+      toast({ message: t('leveeTopo.deleteSuccess', 'Levée supprimée'), variant: 'success' })
       loadData()
     }
   }
@@ -229,12 +234,10 @@ export default function LeveeTopoPage() {
       </div>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center z-50 overflow-y-auto p-3">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:border dark:border-gray-600 w-full max-w-lg p-5 sm:p-6 my-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              {editingId ? t('leveeTopo.editTitle') : t('leveeTopo.create')}
-            </h2>
+      <Modal isOpen={showModal} onClose={() => { setShowModal(false); resetForm() }} title={editingId ? t('leveeTopo.editTitle') : t('leveeTopo.create')} size="md" footer={<>
+          <button onClick={() => { setShowModal(false); resetForm() }} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 text-sm font-medium">{t('leveeTopo.cancel')}</button>
+          <button onClick={handleSubmit} className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 text-sm font-semibold">{editingId ? t('leveeTopo.save') : t('leveeTopo.create')}</button>
+        </>}>
 
             <div className="space-y-3">
               {!editingId && (
@@ -265,19 +268,7 @@ export default function LeveeTopoPage() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 mt-5">
-              <button onClick={() => { setShowModal(false); resetForm() }}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">
-                {t('leveeTopo.cancel')}
-              </button>
-              <button onClick={handleSubmit}
-                className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#e55a2b] disabled:opacity-50 text-sm font-medium shadow-sm transition">
-                {editingId ? t('leveeTopo.save') : t('leveeTopo.create')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </PageContainer>
   )
 }

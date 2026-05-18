@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { budgetApi } from '@/api/budgetApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { Depense, BudgetSummary, DepenseCreateRequest } from '@/types/budget'
 
 interface BudgetState {
@@ -54,7 +55,7 @@ const budgetSlice = createSlice({
         state.totalElements = action.payload.totalElements; state.totalPages = action.payload.totalPages
         state.currentPage = action.payload.number
       })
-      .addCase(fetchDepensesByProjet.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+      .addCase(fetchDepensesByProjet.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
       .addCase(fetchBudgetSummary.fulfilled, (state, action) => { state.budgetSummary = action.payload })
       .addCase(deleteDepense.fulfilled, (state, action) => { state.depenses = state.depenses.filter((d) => d.id !== action.payload) })
   },

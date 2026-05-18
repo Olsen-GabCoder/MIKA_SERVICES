@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { qualiteEssaiLaboApi } from '@/api/qualiteEssaiLaboApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type {
   EssaiLaboBetonResponse,
   EssaiLaboBetonCreateRequest,
@@ -77,7 +78,7 @@ const slice = createSlice({
       s.totalPages = a.payload.totalPages
       s.currentPage = a.payload.number
     })
-    b.addCase(fetchEssais.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchEssais.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(fetchEssaisByProjet.pending, (s) => { s.loading = true; s.error = null })
     b.addCase(fetchEssaisByProjet.fulfilled, (s, a) => {
@@ -87,14 +88,14 @@ const slice = createSlice({
       s.totalPages = a.payload.totalPages
       s.currentPage = a.payload.number
     })
-    b.addCase(fetchEssaisByProjet.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchEssaisByProjet.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(fetchEssaiByProjetAndMois.pending, (s) => { s.loading = true; s.error = null })
     b.addCase(fetchEssaiByProjetAndMois.fulfilled, (s, a) => {
       s.loading = false
       s.current = a.payload
     })
-    b.addCase(fetchEssaiByProjetAndMois.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchEssaiByProjetAndMois.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(createEssai.fulfilled, (s, a) => { s.essais.unshift(a.payload); s.current = a.payload })
 

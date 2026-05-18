@@ -34,7 +34,20 @@ data class BudgetStats(
     val budgetTotalPrevu: BigDecimal,
     val depensesTotales: BigDecimal,
     val ecart: BigDecimal,
-    val tauxConsommation: Double
+    val tauxConsommation: Double,
+    val montantTotalMarches: BigDecimal = BigDecimal.ZERO,
+    val montantMarchesEnCours: BigDecimal = BigDecimal.ZERO,
+    val caPrevisionnelCumule: BigDecimal = BigDecimal.ZERO,
+    val caRealiseCumule: BigDecimal = BigDecimal.ZERO,
+    val tauxRealisation: Double = 0.0,
+    val evolutionMensuelle: List<EvolutionCA> = emptyList()
+)
+
+data class EvolutionCA(
+    val mois: Int,
+    val annee: Int,
+    val previsionnel: BigDecimal,
+    val realise: BigDecimal
 )
 
 data class PlanningStats(
@@ -74,8 +87,7 @@ data class ProjetReportResponse(
     // TODO QSHE v2 — champs qualite/securite retirés lors du nettoyage #0, à reconstruire au livrable #4 (dashboard QSHE)
     val qualite: QualiteStats? = null,
     val securite: SecuriteStats? = null,
-    val nbChantiers: Long,
-    val nbSousProjets: Long
+    val nbChantiers: Long
 )
 
 data class EvolutionMensuelle(

@@ -436,9 +436,6 @@ function ProjetReportSection({ report }: { report: ProjetReport }) {
             <span className="rounded-full bg-blue-50 dark:bg-blue-900/50 px-3 py-1 text-sm font-medium text-blue-700 dark:text-blue-200">
               {report.nbChantiers} {t('sitesCount')}
             </span>
-            <span className="rounded-full bg-purple-50 dark:bg-purple-900/50 px-3 py-1 text-sm font-medium text-purple-700 dark:text-purple-200">
-              {report.nbSousProjets} {t('subprojects')}
-            </span>
           </div>
         </div>
 

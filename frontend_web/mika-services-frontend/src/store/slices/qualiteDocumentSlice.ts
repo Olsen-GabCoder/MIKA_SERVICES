@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { qualiteDocumentApi } from '@/api/qualiteDocumentApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type {
   DocumentQualiteListResponse,
   DocumentQualiteResponse,
@@ -70,7 +71,7 @@ const slice = createSlice({
       s.totalPages = a.payload.totalPages
       s.currentPage = a.payload.number
     })
-    b.addCase(fetchDocuments.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchDocuments.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(fetchDocumentById.fulfilled, (s, a) => { s.current = a.payload })
 

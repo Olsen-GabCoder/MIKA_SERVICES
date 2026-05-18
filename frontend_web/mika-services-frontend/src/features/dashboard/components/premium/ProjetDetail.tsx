@@ -18,10 +18,10 @@ export function ProjetDetail({ projets, report, selectedId, onSelect }: ProjetDe
   const { formatShort } = useFormatNumber()
 
   const minis = report ? [
-    { label: t('db.transversal.kpiAvancement'), value: `${report.planning?.tauxAvancement ?? 0}%`, sub: `${report.planning?.tachesTerminees ?? 0} / ${report.planning?.tachesTotal ?? 0} tâches terminées`, fill: 'var(--db-t1)', pct: report.planning?.tauxAvancement ?? 0 },
-    { label: t('db.transversal.kpiBudget'), value: `${report.budget?.tauxConsommation ?? 0}%`, sub: `${formatShort(report.budget?.depensesTotales ?? 0)} / ${formatShort(report.budget?.budgetTotalPrevu ?? 0)} consommé`, fill: 'var(--db-orange)', pct: report.budget?.tauxConsommation ?? 0 },
-    { label: t('db.transversal.kpiQualite'), value: `${report.qualite?.tauxConformite ?? 0}%`, sub: `${report.qualite?.ncOuvertes ?? 0} non-conformités ouvertes`, fill: 'var(--db-success)', pct: report.qualite?.tauxConformite ?? 0, success: (report.qualite?.tauxConformite ?? 0) >= 80 },
-    { label: `${t('db.transversal.kpiSecurite')} — Incidents`, value: String(report.securite?.incidentsGraves ?? 0), sub: `${report.securite?.risquesCritiques ?? 0} risque critique en suivi`, fill: 'var(--db-success)', pct: 100, success: (report.securite?.incidentsGraves ?? 0) === 0 },
+    { label: t('db.transversal.kpiAvancement'), value: `${report.planning?.tauxAvancement ?? 0}%`, sub: t('db.transversal.subTaches', { terminees: report.planning?.tachesTerminees ?? 0, total: report.planning?.tachesTotal ?? 0 }), fill: 'var(--db-t1)', pct: report.planning?.tauxAvancement ?? 0 },
+    { label: t('db.transversal.kpiBudget'), value: `${report.budget?.tauxConsommation ?? 0}%`, sub: `${formatShort(report.budget?.depensesTotales ?? 0)} / ${formatShort(report.budget?.budgetTotalPrevu ?? 0)} ${t('db.transversal.subConsomme').toLowerCase()}`, fill: 'var(--db-orange)', pct: report.budget?.tauxConsommation ?? 0 },
+    { label: t('db.transversal.kpiQualite'), value: `${report.qualite?.tauxConformite ?? 0}%`, sub: t('db.transversal.subNcOuvertes', { count: report.qualite?.ncOuvertes ?? 0 }), fill: 'var(--db-success)', pct: report.qualite?.tauxConformite ?? 0, success: (report.qualite?.tauxConformite ?? 0) >= 80 },
+    { label: `${t('db.transversal.kpiSecurite')} — Incidents`, value: String(report.securite?.incidentsGraves ?? 0), sub: t('db.transversal.subRisqueCritique', { count: report.securite?.risquesCritiques ?? 0 }), fill: 'var(--db-success)', pct: 100, success: (report.securite?.incidentsGraves ?? 0) === 0 },
   ] : []
 
   return (
@@ -49,7 +49,7 @@ export function ProjetDetail({ projets, report, selectedId, onSelect }: ProjetDe
           </select>
           {report && (
             <button type="button" onClick={() => navigate(`/projets/${report.projetId}`)} className="text-[11.5px] whitespace-nowrap hover:text-[var(--db-t1)] transition-colors" style={{ color: 'var(--db-t3)' }}>
-              Rapport complet →
+              {t('db.transversal.rapportComplet')} →
             </button>
           )}
         </div>
@@ -73,7 +73,7 @@ export function ProjetDetail({ projets, report, selectedId, onSelect }: ProjetDe
               </div>
               <div className="text-[11.5px] db-num" style={{ color: 'var(--db-t3)' }}>{m.sub}</div>
               <div className="h-[3px] rounded-sm mt-2.5 overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
-                <div className="h-full rounded-sm" style={{ width: `${Math.min(m.pct, 100)}%`, background: m.fill }} />
+                <div className="h-full rounded-sm db-progress-fill" style={{ width: `${Math.min(m.pct, 100)}%`, background: m.fill }} />
               </div>
             </div>
           ))}

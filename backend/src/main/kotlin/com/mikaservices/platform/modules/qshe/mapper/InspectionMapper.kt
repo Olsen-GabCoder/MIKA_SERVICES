@@ -17,8 +17,6 @@ object InspectionMapper {
             statut = e.statut,
             projetId = e.projet.id!!,
             projetNom = e.projet.nom,
-            sousProjetId = e.sousProjet?.id,
-            sousProjetNom = e.sousProjet?.nom,
             inspecteurId = insp?.id,
             inspecteurNom = insp?.let { "${it.prenom} ${it.nom}" },
             datePlanifiee = e.datePlanifiee,

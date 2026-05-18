@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input'
 import { useAppDispatch } from '@/store/hooks'
 import { updateUser } from '@/store/slices/userSlice'
 import { roleApi } from '@/api/roleApi'
+import { handleApiError } from '@/utils/errorHandler'
 import { userApi } from '@/api/userApi'
 import type { Role } from '@/api/roleApi'
 import type { UserUpdateRequest } from '@/api/userApi'
@@ -94,7 +95,7 @@ export const UserEditForm = ({ user, onSuccess, onCancel }: UserEditFormProps) =
       await dispatch(updateUser({ id: user.id, data: payload })).unwrap()
       onSuccess()
     } catch (err: unknown) {
-      setErrorMessage((err as { message?: string })?.message || t('profile.errorUpdate'))
+      setErrorMessage(handleApiError(err))
     } finally {
       setIsLoading(false)
     }

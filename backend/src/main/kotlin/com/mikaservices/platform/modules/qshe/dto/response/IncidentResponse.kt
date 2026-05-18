@@ -21,8 +21,6 @@ data class IncidentResponse(
     val longitude: Double?,
     val projetId: Long,
     val projetNom: String,
-    val sousProjetId: Long?,
-    val sousProjetNom: String?,
     val declareParId: Long?,
     val declareParNom: String?,
     val descriptionCirconstances: String?,

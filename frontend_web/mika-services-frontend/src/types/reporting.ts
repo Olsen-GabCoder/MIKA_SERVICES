@@ -19,6 +19,19 @@ export interface BudgetStats {
   depensesTotales: number
   ecart: number
   tauxConsommation: number
+  montantTotalMarches: number
+  montantMarchesEnCours: number
+  caPrevisionnelCumule: number
+  caRealiseCumule: number
+  tauxRealisation: number
+  evolutionMensuelle: EvolutionCA[]
+}
+
+export interface EvolutionCA {
+  mois: number
+  annee: number
+  previsionnel: number
+  realise: number
 }
 
 export interface PlanningStats {
@@ -86,7 +99,6 @@ export interface ProjetReport {
   qualite: QualiteStats
   securite: SecuriteStats
   nbChantiers: number
-  nbSousProjets: number
 }
 
 /** Point de données pour graphiques d'évolution temporelle */

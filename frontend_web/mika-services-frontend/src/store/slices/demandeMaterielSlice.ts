@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { demandeMaterielApi } from '@/api/demandeMaterielApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type {
   DemandeMateriel,
   DemandeMaterielHistorique,
@@ -137,11 +138,11 @@ const demandeMaterielSlice = createSlice({
         state.totalPages = action.payload.totalPages
         state.currentPage = action.payload.number
       })
-      .addCase(fetchDmas.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+      .addCase(fetchDmas.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
       .addCase(fetchDmaById.pending, (state) => { state.loading = true; state.error = null })
       .addCase(fetchDmaById.fulfilled, (state, action) => { state.loading = false; state.dmaDetail = action.payload })
-      .addCase(fetchDmaById.rejected, (state, action) => { state.loading = false; state.error = action.error.message || 'Erreur' })
+      .addCase(fetchDmaById.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
       .addCase(fetchDmaHistorique.fulfilled, (state, action) => { state.historique = action.payload })
 
@@ -153,39 +154,39 @@ const demandeMaterielSlice = createSlice({
       // Toutes les actions workflow suivent le même pattern
       .addCase(validerChantierDma.pending, (state, a) => { state.actionLoading = a.meta.arg.id })
       .addCase(validerChantierDma.fulfilled, (state, a) => updateDetail(state, a.payload))
-      .addCase(validerChantierDma.rejected, (state, a) => { state.actionLoading = null; state.error = a.error.message || 'Erreur' })
+      .addCase(validerChantierDma.rejected, (state, a) => { state.actionLoading = null; state.error = handleApiError(a.error) })
 
       .addCase(validerProjetDma.pending, (state, a) => { state.actionLoading = a.meta.arg.id })
       .addCase(validerProjetDma.fulfilled, (state, a) => updateDetail(state, a.payload))
-      .addCase(validerProjetDma.rejected, (state, a) => { state.actionLoading = null; state.error = a.error.message || 'Erreur' })
+      .addCase(validerProjetDma.rejected, (state, a) => { state.actionLoading = null; state.error = handleApiError(a.error) })
 
       .addCase(prendreEnChargeDma.pending, (state, a) => { state.actionLoading = a.meta.arg.id })
       .addCase(prendreEnChargeDma.fulfilled, (state, a) => updateDetail(state, a.payload))
-      .addCase(prendreEnChargeDma.rejected, (state, a) => { state.actionLoading = null; state.error = a.error.message || 'Erreur' })
+      .addCase(prendreEnChargeDma.rejected, (state, a) => { state.actionLoading = null; state.error = handleApiError(a.error) })
 
       .addCase(demanderComplementDma.pending, (state, a) => { state.actionLoading = a.meta.arg.id })
       .addCase(demanderComplementDma.fulfilled, (state, a) => updateDetail(state, a.payload))
-      .addCase(demanderComplementDma.rejected, (state, a) => { state.actionLoading = null; state.error = a.error.message || 'Erreur' })
+      .addCase(demanderComplementDma.rejected, (state, a) => { state.actionLoading = null; state.error = handleApiError(a.error) })
 
       .addCase(completerDma.pending, (state, a) => { state.actionLoading = a.meta.arg.id })
       .addCase(completerDma.fulfilled, (state, a) => updateDetail(state, a.payload))
-      .addCase(completerDma.rejected, (state, a) => { state.actionLoading = null; state.error = a.error.message || 'Erreur' })
+      .addCase(completerDma.rejected, (state, a) => { state.actionLoading = null; state.error = handleApiError(a.error) })
 
       .addCase(commanderDma.pending, (state, a) => { state.actionLoading = a.meta.arg.id })
       .addCase(commanderDma.fulfilled, (state, a) => updateDetail(state, a.payload))
-      .addCase(commanderDma.rejected, (state, a) => { state.actionLoading = null; state.error = a.error.message || 'Erreur' })
+      .addCase(commanderDma.rejected, (state, a) => { state.actionLoading = null; state.error = handleApiError(a.error) })
 
       .addCase(livrerDma.pending, (state, a) => { state.actionLoading = a.meta.arg.id })
       .addCase(livrerDma.fulfilled, (state, a) => updateDetail(state, a.payload))
-      .addCase(livrerDma.rejected, (state, a) => { state.actionLoading = null; state.error = a.error.message || 'Erreur' })
+      .addCase(livrerDma.rejected, (state, a) => { state.actionLoading = null; state.error = handleApiError(a.error) })
 
       .addCase(cloturerDma.pending, (state, a) => { state.actionLoading = a.meta.arg.id })
       .addCase(cloturerDma.fulfilled, (state, a) => updateDetail(state, a.payload))
-      .addCase(cloturerDma.rejected, (state, a) => { state.actionLoading = null; state.error = a.error.message || 'Erreur' })
+      .addCase(cloturerDma.rejected, (state, a) => { state.actionLoading = null; state.error = handleApiError(a.error) })
 
       .addCase(rejeterDma.pending, (state, a) => { state.actionLoading = a.meta.arg.id })
       .addCase(rejeterDma.fulfilled, (state, a) => updateDetail(state, a.payload))
-      .addCase(rejeterDma.rejected, (state, a) => { state.actionLoading = null; state.error = a.error.message || 'Erreur' })
+      .addCase(rejeterDma.rejected, (state, a) => { state.actionLoading = null; state.error = handleApiError(a.error) })
   },
 })
 

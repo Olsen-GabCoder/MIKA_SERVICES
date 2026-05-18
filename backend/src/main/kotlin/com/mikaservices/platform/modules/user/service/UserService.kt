@@ -526,7 +526,6 @@ class UserService(
             "UPDATE equipes SET chef_equipe_id = NULL WHERE chef_equipe_id = :id",
             "UPDATE revisions_budget SET valide_par_id = NULL WHERE valide_par_id = :id",
             "UPDATE points_bloquants SET detecte_par_id = NULL, assigne_a_id = NULL WHERE detecte_par_id = :id OR assigne_a_id = :id",
-            "UPDATE sous_projets SET responsable_id = NULL WHERE responsable_id = :id",
             "UPDATE departements SET responsable_id = NULL WHERE responsable_id = :id"
         )
         updates.forEach { sql ->

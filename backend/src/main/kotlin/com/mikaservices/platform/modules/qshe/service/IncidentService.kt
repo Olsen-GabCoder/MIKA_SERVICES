@@ -5,7 +5,7 @@ import com.mikaservices.platform.modules.qshe.enums.StatutIncident
 import com.mikaservices.platform.common.exception.BadRequestException
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
-import com.mikaservices.platform.modules.projet.repository.SousProjetRepository
+
 import com.mikaservices.platform.modules.qshe.dto.request.IncidentCreateRequest
 import com.mikaservices.platform.modules.qshe.dto.request.IncidentUpdateRequest
 import com.mikaservices.platform.modules.qshe.dto.response.IncidentResponse
@@ -28,7 +28,6 @@ import java.time.LocalDate
 class IncidentService(
     private val incidentRepository: IncidentRepository,
     private val projetRepository: ProjetRepository,
-    private val sousProjetRepository: SousProjetRepository,
     private val userRepository: UserRepository,
     private val qsheNotificationService: QsheNotificationService
 ) {
@@ -39,11 +38,6 @@ class IncidentService(
     fun createIncident(request: IncidentCreateRequest): IncidentResponse {
         val projet = projetRepository.findById(request.projetId)
             .orElseThrow { ResourceNotFoundException("Projet introuvable : ${request.projetId}") }
-
-        val sousProjet = request.sousProjetId?.let {
-            sousProjetRepository.findById(it)
-                .orElseThrow { ResourceNotFoundException("Sous-projet introuvable : $it") }
-        }
 
         val declarePar = request.declareParId?.let {
             userRepository.findById(it).orElseThrow { ResourceNotFoundException("Utilisateur introuvable : $it") }
@@ -64,7 +58,6 @@ class IncidentService(
             zoneChantier = request.zoneChantier,
             latitude = request.latitude,
             longitude = request.longitude,
-            sousProjet = sousProjet,
             declarePar = declarePar,
             descriptionCirconstances = request.descriptionCirconstances,
             activiteEnCours = request.activiteEnCours,
@@ -147,10 +140,6 @@ class IncidentService(
         request.zoneChantier?.let { incident.zoneChantier = it }
         request.latitude?.let { incident.latitude = it }
         request.longitude?.let { incident.longitude = it }
-        request.sousProjetId?.let { spId ->
-            incident.sousProjet = sousProjetRepository.findById(spId)
-                .orElseThrow { ResourceNotFoundException("Sous-projet introuvable : $spId") }
-        }
         request.descriptionCirconstances?.let { incident.descriptionCirconstances = it }
         request.activiteEnCours?.let { incident.activiteEnCours = it }
         request.equipementImplique?.let { incident.equipementImplique = it }

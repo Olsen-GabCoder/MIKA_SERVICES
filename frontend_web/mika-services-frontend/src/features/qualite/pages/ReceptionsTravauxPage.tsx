@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useIsOnline } from '@/hooks/useConnectivity'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/contexts/ToastContext'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import {
   fetchReceptions,
@@ -75,6 +77,7 @@ export default function ReceptionsTravauxPage() {
       dateDemande: formDate || undefined,
     }
     await dispatch(createReception(req))
+    toast({ message: t('receptions.createSuccess', 'Réception créée avec succès'), variant: 'success' })
     setShowCreate(false)
     setFormTitre('')
     setFormZone('')
@@ -85,6 +88,7 @@ export default function ReceptionsTravauxPage() {
   const handleDelete = async (id: number) => {
     if (!confirm(t('receptions.confirmDelete'))) return
     await dispatch(deleteReception(id))
+    toast({ message: t('receptions.deleteSuccess', 'Réception supprimée'), variant: 'success' })
     loadData()
   }
 
@@ -229,10 +233,10 @@ export default function ReceptionsTravauxPage() {
       </div>
 
       {/* Modal création */}
-      {showCreate && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowCreate(false)}>
-          <div className={CARD + ' w-full max-w-lg p-6'} onClick={e => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{t('receptions.create')}</h2>
+      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title={t('receptions.create')} size="md" footer={<>
+          <button onClick={() => setShowCreate(false)} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 text-sm font-medium">Annuler</button>
+          <button onClick={handleCreate} disabled={!formTitre.trim()} className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 text-sm font-semibold">Créer</button>
+        </>}>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('receptions.titre')} *</label>
@@ -282,19 +286,7 @@ export default function ReceptionsTravauxPage() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setShowCreate(false)}
-                className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                Annuler
-              </button>
-              <button onClick={handleCreate} disabled={!formTitre.trim()}
-                className="px-4 py-2 rounded-lg bg-[#FF6B35] text-white text-sm font-medium hover:bg-[#e55a28] transition disabled:opacity-50">
-                Créer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   )
 }

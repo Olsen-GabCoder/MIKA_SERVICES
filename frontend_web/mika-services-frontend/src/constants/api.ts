@@ -54,11 +54,6 @@ export const API_ENDPOINTS = {
     SUIVI_MENSUEL_REPLACE: (id: number) => `/projets/${id}/suivi-mensuel/replace`,
     ANALYSE_RAPPORT: (id: number) => `/projets/${id}/analyse-rapport`,
   },
-  SOUS_PROJETS: {
-    BASE: '/sous-projets',
-    BY_ID: (id: number) => `/sous-projets/${id}`,
-    BY_PROJET: (projetId: number) => `/sous-projets/projet/${projetId}`,
-  },
   CLIENTS: {
     BASE: '/clients',
     BY_ID: (id: number) => `/clients/${id}`,

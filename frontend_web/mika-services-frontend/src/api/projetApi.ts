@@ -3,7 +3,6 @@ import { API_ENDPOINTS } from '@/constants/api'
 import type {
   Projet, ProjetSummary, ProjetCreateRequest, ProjetUpdateRequest,
   Client, ClientCreateRequest, ClientUpdateRequest,
-  SousProjet, SousProjetCreateRequest,
   PointBloquant, PointBloquantCreateRequest, PointBloquantUpdateRequest,
   AvancementEtudeProjet, Prevision, CAPrevisionnelRealise,
   ProjetHistoriqueResponse,
@@ -258,36 +257,6 @@ export const clientApi = {
 }
 
 // ============================================
-// Sous-Projets API
-// ============================================
-export const sousProjetApi = {
-  create: async (data: SousProjetCreateRequest): Promise<SousProjet> => {
-    const response = await apiClient.post<SousProjet>(API_ENDPOINTS.SOUS_PROJETS.BASE, data)
-    return response.data
-  },
-
-  findByProjet: async (projetId: number, page = 0, size = 20): Promise<PageResponse<SousProjet>> => {
-    const response = await apiClient.get<PageResponse<SousProjet>>(API_ENDPOINTS.SOUS_PROJETS.BY_PROJET(projetId), {
-      params: { page, size }
-    })
-    return response.data
-  },
-
-  findById: async (id: number): Promise<SousProjet> => {
-    const response = await apiClient.get<SousProjet>(API_ENDPOINTS.SOUS_PROJETS.BY_ID(id))
-    return response.data
-  },
-
-  update: async (id: number, data: Partial<SousProjet>): Promise<SousProjet> => {
-    const response = await apiClient.put<SousProjet>(API_ENDPOINTS.SOUS_PROJETS.BY_ID(id), data)
-    return response.data
-  },
-
-  delete: async (id: number): Promise<void> => {
-    await apiClient.delete(API_ENDPOINTS.SOUS_PROJETS.BY_ID(id))
-  },
-}
-
 // ============================================
 // Points Bloquants API
 // ============================================

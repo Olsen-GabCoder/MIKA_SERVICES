@@ -158,7 +158,6 @@ export function ProjetPdfRapportComplet({ data }: { data: ProjetPdfData }) {
         <View style={s.section}>
           <Text style={s.sectionTitle}>Synthèse projet</Text>
           <View style={s.row}><Text style={s.label}>Type</Text><Text style={s.value}>{(projet.type ?? '—').replace(/_/g, ' ')}</Text></View>
-          <View style={s.row}><Text style={s.label}>Sous-projets</Text><Text style={s.value}>{projet.nombreSousProjets}</Text></View>
           <View style={s.row}><Text style={s.label}>Points bloquants ouverts</Text><Text style={s.value}>{projet.nombrePointsBloquantsOuverts}</Text></View>
           <View style={s.row}><Text style={s.label}>Délai consommé</Text><Text style={s.value}>{projet.delaiConsommePct != null ? `${projet.delaiConsommePct} %` : '—'}</Text></View>
           <View style={s.row}><Text style={s.label}>Partenaire principal</Text><Text style={s.value}>{projet.partenairePrincipal ?? '—'}</Text></View>

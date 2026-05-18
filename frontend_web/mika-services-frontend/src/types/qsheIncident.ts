@@ -88,8 +88,6 @@ export interface IncidentResponse {
   longitude: number | null
   projetId: number
   projetNom: string
-  sousProjetId: number | null
-  sousProjetNom: string | null
   declareParId: number | null
   declareParNom: string | null
   descriptionCirconstances: string | null
@@ -164,7 +162,6 @@ export interface IncidentCreateRequest {
   zoneChantier?: string
   latitude?: number
   longitude?: number
-  sousProjetId?: number
   declareParId?: number
   descriptionCirconstances?: string
   activiteEnCours?: string
@@ -189,7 +186,6 @@ export interface IncidentUpdateRequest {
   zoneChantier?: string
   latitude?: number
   longitude?: number
-  sousProjetId?: number
   descriptionCirconstances?: string
   activiteEnCours?: string
   equipementImplique?: string

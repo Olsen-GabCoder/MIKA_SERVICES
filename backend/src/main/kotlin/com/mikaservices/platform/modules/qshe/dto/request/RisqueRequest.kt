@@ -23,7 +23,6 @@ data class RisqueCreateRequest(
     val mesuresEpi: String? = null,
     @field:Min(1) @field:Max(5) val probabiliteResiduelle: Int? = null,
     @field:Min(1) @field:Max(5) val graviteResiduelle: Int? = null,
-    val sousProjetId: Long? = null,
     val zoneConcernee: String? = null
 )
 

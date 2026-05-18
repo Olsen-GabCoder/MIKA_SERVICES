@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { useIsOnline } from '@/hooks/useConnectivity'
+import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/contexts/ToastContext'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { fetchCertificationsByUser, createCertification, deleteCertification, fetchExpirant, fetchCertSummary } from '@/store/slices/qsheCertificationSlice'
 import { TypeCertification, StatutCertification } from '@/types/qsheCertification'
@@ -24,6 +26,7 @@ export default function FormationsPage() {
   const isOnline = useIsOnline()
   const dispatch = useAppDispatch()
   const confirm = useConfirm()
+  const toast = useToast()
   const { certifications, expirant, summary, loading } = useAppSelector(s => s.qsheCertification)
   const users = useAppSelector(s => s.user.users ?? [])
 
@@ -48,6 +51,7 @@ export default function FormationsPage() {
       dateObtention: fDateObt || undefined, dateExpiration: fDateExp || undefined,
     }
     await dispatch(createCertification(req))
+    toast({ message: 'Certification créée avec succès', variant: 'success' })
     setShowForm(false); setFLibelle(''); setFOrg(''); setFDateObt(''); setFDateExp('')
     dispatch(fetchCertificationsByUser({ userId: selectedUserId })); dispatch(fetchCertSummary())
   }
@@ -153,10 +157,10 @@ export default function FormationsPage() {
         )}
       </div>
 
-      {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center z-50 p-3 overflow-y-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:border dark:border-gray-600 w-full max-w-lg p-5 sm:p-6 my-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Nouvelle certification</h2>
+      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Nouvelle certification" size="md" footer={<>
+          <button onClick={() => setShowForm(false)} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 text-sm font-medium">Annuler</button>
+          <button onClick={handleCreate} disabled={!fLibelle.trim()} className="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50 text-sm font-semibold">Créer</button>
+        </>}>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type *</label>
@@ -188,13 +192,7 @@ export default function FormationsPage() {
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-5">
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">Annuler</button>
-              <button onClick={handleCreate} disabled={!fLibelle.trim()} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 text-sm font-medium">Créer</button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </PageContainer>
   )
 }

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { qualiteEvenementApi } from '@/api/qualiteEvenementApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type {
   EvenementQualiteListResponse,
   EvenementQualiteResponse,
@@ -83,7 +84,7 @@ const slice = createSlice({
       s.totalPages = a.payload.totalPages
       s.currentPage = a.payload.number
     })
-    b.addCase(fetchEvenements.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchEvenements.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(fetchEvenementsByProjet.pending, (s) => { s.loading = true; s.error = null })
     b.addCase(fetchEvenementsByProjet.fulfilled, (s, a) => {
@@ -93,11 +94,11 @@ const slice = createSlice({
       s.totalPages = a.payload.totalPages
       s.currentPage = a.payload.number
     })
-    b.addCase(fetchEvenementsByProjet.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchEvenementsByProjet.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(fetchEvenementById.pending, (s) => { s.loading = true; s.error = null })
     b.addCase(fetchEvenementById.fulfilled, (s, a) => { s.loading = false; s.current = a.payload })
-    b.addCase(fetchEvenementById.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchEvenementById.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(createEvenement.fulfilled, (s, a) => {
       s.evenements.unshift(a.payload as unknown as EvenementQualiteListResponse)

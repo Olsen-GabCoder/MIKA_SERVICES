@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { fetchGlobalDashboard, fetchProjetReport, clearProjetReport } from '@/store/slices/reportingSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
@@ -41,6 +41,18 @@ export default function DashboardPage() {
   const { counts: qsheCounts } = useQsheCounts()
   const reunion = useReunionLatest()
   const [selectedProjetId, setSelectedProjetId] = useState<number | null>(null)
+  const userSelected = useRef(false)
+  const rotationTimer = useRef<ReturnType<typeof setInterval>>(null)
+
+  const projetsActifs = useMemo(() =>
+    projets.filter(p => ['EN_COURS_EXECUTION', 'EN_AVANCE'].includes(p.statut)),
+    [projets])
+
+  const handleUserSelect = useCallback((id: number | null) => {
+    userSelected.current = true
+    if (rotationTimer.current) clearInterval(rotationTimer.current)
+    setSelectedProjetId(id)
+  }, [])
 
   usePollDispatch(() => fetchGlobalDashboard(), 60_000)
 
@@ -51,6 +63,20 @@ export default function DashboardPage() {
       dispatch(fetchMessagesNonLusCount(user.id))
     }
   }, [dispatch, user?.id])
+
+  // Auto-sélection + rotation toutes les 3 minutes
+  useEffect(() => {
+    if (projetsActifs.length === 0 || userSelected.current) return
+    // Sélection initiale
+    setSelectedProjetId(projetsActifs[0].id)
+    let idx = 0
+    rotationTimer.current = setInterval(() => {
+      idx = (idx + 1) % projetsActifs.length
+      setSelectedProjetId(projetsActifs[idx].id)
+    }, 180_000) // 3 minutes
+    return () => { if (rotationTimer.current) clearInterval(rotationTimer.current) }
+  }, [projetsActifs])
+
   useEffect(() => {
     if (selectedProjetId !== null) dispatch(fetchProjetReport(selectedProjetId))
     else dispatch(clearProjetReport())
@@ -89,17 +115,16 @@ export default function DashboardPage() {
             projetsActifs={d?.projets?.enCours ?? 0}
             projetsTotal={d?.projets?.total ?? 0}
             projetsDelta={2}
-            chantiersActifs={d?.chantiers?.actifs ?? 0}
-            chantiersTotal={d?.chantiers?.total ?? 0}
-            chantiersDelta={5}
+            projetsEnRetard={d?.projets?.enRetard ?? 0}
             dmaEnAttente={dmaCounts.total}
             enginsAffectes={projets.reduce((s, p) => s + (p.nombreEnginsAffectes ?? 0), 0)}
             enginsTotal={d?.materiel?.enginsTotal ?? 0}
+            projets={projets}
           />
 
           {/* Row 2: Hero Budget (8) + Gauge (4) */}
           {d?.budget && <HeroBudget budget={d.budget} />}
-          <GaugeAvancement value={d?.planning?.tauxAvancement ?? 0} />
+          <GaugeAvancement planning={d?.planning ?? null} projets={projets} />
 
           {/* Row 3: 4-up Operations metrics */}
           <OpsMetricsRow />
@@ -120,7 +145,7 @@ export default function DashboardPage() {
             projets={projets}
             report={projetReport}
             selectedId={selectedProjetId}
-            onSelect={setSelectedProjetId}
+            onSelect={handleUserSelect}
           />
 
           {/* Row 8: Quick Access (8) + Meeting (4) */}

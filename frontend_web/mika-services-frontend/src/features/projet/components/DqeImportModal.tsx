@@ -3,8 +3,10 @@
  * Upload fichier → analyse IA → édition/validation → création en base.
  */
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { dqeApi } from '@/api/dqeApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type { DqeChapitreExtrait, DqeLigneExtraite } from '@/types/dqe'
 
 // ── Types internes (copies éditables) ─────────────────────────────────
@@ -42,6 +44,7 @@ interface Props {
 }
 
 export function DqeImportModal({ projetId, open, onClose, onImported }: Props) {
+  const { t } = useTranslation('projet')
   const fileRef = useRef<HTMLInputElement>(null)
 
   // Étapes : upload → analyzing → review → saving → done
@@ -69,8 +72,7 @@ export function DqeImportModal({ projetId, open, onClose, onImported }: Props) {
       setWarnings(result.avertissements)
       setStep('review')
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Erreur lors de l\'analyse'
-      setError(msg)
+      setError(handleApiError(e))
       setStep('upload')
     }
   }
@@ -109,7 +111,7 @@ export function DqeImportModal({ projetId, open, onClose, onImported }: Props) {
       onImported()
       onClose()
     } catch {
-      setError('Erreur lors de la sauvegarde du DQE')
+      setError(t('dqeImport.errorSave'))
       setStep('review')
     }
   }

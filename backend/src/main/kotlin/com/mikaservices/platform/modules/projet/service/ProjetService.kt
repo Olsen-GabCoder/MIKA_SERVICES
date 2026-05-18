@@ -336,6 +336,20 @@ class ProjetService(
         request.propositionsAmelioration?.let { projet.propositionsAmelioration = it }
         request.partenairePrincipal?.let { projet.partenairePrincipal = it }
 
+        request.chantierActif?.let { actif ->
+            projet.chantierActif = actif
+            if (actif) {
+                projet.motifArretChantier = null
+                projet.detailArretChantier = null
+                projet.dateArretChantier = null
+            }
+        }
+        if (request.chantierActif == false) {
+            request.motifArretChantier?.let { projet.motifArretChantier = it }
+            request.detailArretChantier?.let { projet.detailArretChantier = it }
+            request.dateArretChantier?.let { projet.dateArretChantier = it }
+        }
+
         request.clientId?.let { clientId ->
             projet.client = clientService.getClientById(clientId)
         }

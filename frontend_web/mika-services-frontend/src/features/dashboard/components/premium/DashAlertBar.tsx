@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 
 export interface DashAlertBarProps {
   projetsEnRetard: number
@@ -8,11 +9,15 @@ export interface DashAlertBarProps {
   stocksBas: number
 }
 
-function Item({ value, label, variant }: { value: number; label: string; variant: 'danger' | 'warn' | 'muted' }) {
+function Item({ value, label, variant, onClick }: { value: number; label: string; variant: 'danger' | 'warn' | 'muted'; onClick?: () => void }) {
   const colorMap = { danger: 'var(--db-danger)', warn: 'var(--db-warn)', muted: 'var(--db-t1)' }
   return (
-    <span className="inline-flex items-baseline gap-[7px] px-3.5 relative text-[12px]" style={{ color: 'var(--db-t2)' }}>
-      <span className="font-semibold text-[13.5px] db-num db-tight" style={{ color: colorMap[variant] }}>{value}</span>
+    <span
+      onClick={onClick}
+      className={`inline-flex items-baseline gap-[7px] px-3.5 relative text-[12px] ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+      style={{ color: 'var(--db-t2)' }}
+    >
+      <span className="font-semibold text-[13.5px] db-num db-tight" style={{ color: colorMap[variant], animation: value > 0 ? 'db-alert-ping 2s ease-in-out infinite' : undefined }}>{value}</span>
       {label}
     </span>
   )
@@ -20,6 +25,7 @@ function Item({ value, label, variant }: { value: number; label: string; variant
 
 export function DashAlertBar({ projetsEnRetard, tachesEnRetard, incidentsGraves, risquesCritiques, stocksBas }: DashAlertBarProps) {
   const { t } = useTranslation('common')
+  const navigate = useNavigate()
 
   return (
     <div
@@ -34,11 +40,11 @@ export function DashAlertBar({ projetsEnRetard, tachesEnRetard, incidentsGraves,
       </span>
 
       <div className="flex items-center divide-x" style={{ '--tw-divide-color': 'var(--db-border)' } as React.CSSProperties}>
-        {projetsEnRetard > 0 && <Item value={projetsEnRetard} label={t('db.premium.projetsRetard')} variant="danger" />}
-        {tachesEnRetard > 0 && <Item value={tachesEnRetard} label={t('db.premium.tachesRetard')} variant="warn" />}
-        {incidentsGraves > 0 && <Item value={incidentsGraves} label={t('db.premium.incidentsGraves')} variant="danger" />}
-        {risquesCritiques > 0 && <Item value={risquesCritiques} label={t('db.premium.risqueCritique')} variant="danger" />}
-        {stocksBas > 0 && <Item value={stocksBas} label={t('db.premium.stocksBas')} variant="warn" />}
+        {projetsEnRetard > 0 && <Item value={projetsEnRetard} label={t('db.premium.projetsRetard')} variant="danger" onClick={() => navigate('/projets')} />}
+        {tachesEnRetard > 0 && <Item value={tachesEnRetard} label={t('db.premium.tachesRetard')} variant="warn" onClick={() => navigate('/planning')} />}
+        {incidentsGraves > 0 && <Item value={incidentsGraves} label={t('db.premium.incidentsGraves')} variant="danger" onClick={() => navigate('/qshe/incidents')} />}
+        {risquesCritiques > 0 && <Item value={risquesCritiques} label={t('db.premium.risqueCritique')} variant="danger" onClick={() => navigate('/qshe/risques')} />}
+        {stocksBas > 0 && <Item value={stocksBas} label={t('db.premium.stocksBas')} variant="warn" onClick={() => navigate('/materiaux')} />}
       </div>
 
       <span className="ml-auto inline-flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.08em]" style={{ color: 'var(--db-t3)' }}>

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { qualiteLeveeTopoApi } from '@/api/qualiteLeveeTopoApi'
+import { handleApiError } from '@/utils/errorHandler'
 import type {
   LeveeTopoResponse,
   LeveeTopoCreateRequest,
@@ -76,7 +77,7 @@ const slice = createSlice({
       s.totalPages = a.payload.totalPages
       s.currentPage = a.payload.number
     })
-    b.addCase(fetchLevees.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchLevees.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(fetchLeveesByProjet.pending, (s) => { s.loading = true; s.error = null })
     b.addCase(fetchLeveesByProjet.fulfilled, (s, a) => {
@@ -86,14 +87,14 @@ const slice = createSlice({
       s.totalPages = a.payload.totalPages
       s.currentPage = a.payload.number
     })
-    b.addCase(fetchLeveesByProjet.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchLeveesByProjet.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(fetchLeveeByProjetAndMois.pending, (s) => { s.loading = true; s.error = null })
     b.addCase(fetchLeveeByProjetAndMois.fulfilled, (s, a) => {
       s.loading = false
       s.current = a.payload
     })
-    b.addCase(fetchLeveeByProjetAndMois.rejected, (s, a) => { s.loading = false; s.error = a.error.message ?? 'Erreur' })
+    b.addCase(fetchLeveeByProjetAndMois.rejected, (s, a) => { s.loading = false; s.error = handleApiError(a.error) })
 
     b.addCase(createLevee.fulfilled, (s, a) => { s.levees.unshift(a.payload); s.current = a.payload })
 

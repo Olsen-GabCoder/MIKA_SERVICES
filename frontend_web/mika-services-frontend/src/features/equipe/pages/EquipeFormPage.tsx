@@ -4,6 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useIsOnline } from '@/hooks/useConnectivity'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { handleApiError } from '@/utils/errorHandler'
+import { useToast } from '@/contexts/ToastContext'
 import {
   createEquipe,
   updateEquipe,
@@ -23,6 +25,7 @@ export const EquipeFormPage = () => {
   const isEdit = !!id
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const toast = useToast()
   const { equipeDetail, loading } = useAppSelector((state) => state.equipe)
   const [users, setUsers] = useState<User[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -87,6 +90,7 @@ export const EquipeFormPage = () => {
             },
           })
         ).unwrap()
+        toast({ message: t('form.updateSuccess'), variant: 'success' })
         navigate(`/equipes/${id}`)
       } else {
         await dispatch(
@@ -95,10 +99,11 @@ export const EquipeFormPage = () => {
             chefEquipeId: createForm.chefEquipeId ? Number(createForm.chefEquipeId) : undefined,
           })
         ).unwrap()
+        toast({ message: t('form.createSuccess'), variant: 'success' })
         navigate('/equipes')
       }
     } catch (err: unknown) {
-      setError((err as { message?: string })?.message || t('form.errorSave'))
+      setError(handleApiError(err))
     }
   }
 

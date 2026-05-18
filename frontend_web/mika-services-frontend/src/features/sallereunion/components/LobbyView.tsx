@@ -21,11 +21,6 @@ function fmtTime(iso: string | null): string {
 function ini(p?: string, n?: string): string { return ((p?.[0] ?? '') + (n?.[0] ?? '')) || '?' }
 
 const NC: Record<NetworkLevel, string> = { excellent: 'text-[#48B5A0]', good: 'text-amber-500', limited: 'text-rose-500', measuring: 'text-neutral-400' }
-const BARS = [
-  { h: 8, c: '#48B5A0' }, { h: 14, c: '#48B5A0' }, { h: 20, c: '#48B5A0' },
-  { h: 28, c: '#FF6B35' }, { h: 24, c: '#FF6B35' }, { h: 18, c: '#FF6B35' },
-  { h: 12, c: '#48B5A0' }, { h: 8, c: '#48B5A0' },
-]
 
 export function LobbyView({ salle, onJoin, isAdmin, onCloseClick }: LobbyViewProps) {
   const { t } = useTranslation('salleReunion')
@@ -35,7 +30,7 @@ export function LobbyView({ salle, onJoin, isAdmin, onCloseClick }: LobbyViewPro
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const media = useMediaDevices()
-  const audioLevel = useAudioLevel(media.stream, media.audioEnabled)
+  useAudioLevel(media.stream, media.audioEnabled)
   const network = useNetworkQuality(true)
   const { participants } = useSalleParticipants(true)
 
@@ -53,7 +48,6 @@ export function LobbyView({ salle, onJoin, isAdmin, onCloseClick }: LobbyViewPro
   }, [devOpen])
 
   const handleJoin = useCallback(() => { media.cleanup(); onJoin({ videoMuted: !media.videoEnabled, audioMuted: !media.audioEnabled }) }, [media, onJoin])
-  const barsOn = media.audioEnabled && audioLevel > 0.01
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-5 h-full">

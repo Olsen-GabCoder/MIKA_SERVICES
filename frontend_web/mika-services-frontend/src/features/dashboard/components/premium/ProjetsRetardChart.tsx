@@ -67,11 +67,6 @@ export function ProjetsRetardChart({ projets }: ProjetsRetardChartProps) {
     )
   }
 
-  const barH = 32
-  const gapY = 8
-  const padL = 4
-  const chartH = retards.length * (barH + gapY) - gapY + 8
-
   return (
     <div className="col-span-12 lg:col-span-6 rounded-2xl p-5 relative overflow-hidden" style={{ background: 'var(--db-card)', animation: 'db-rise 380ms ease-out 180ms both' }}>
       <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: 'var(--db-danger)' }} />
@@ -105,7 +100,6 @@ export function ProjetsRetardChart({ projets }: ProjetsRetardChartProps) {
       <div className="space-y-0" onMouseLeave={() => setHoverIdx(null)}>
         {retards.map((r, i) => {
           const prevuPct = (r.joursPrevus / maxJours) * 100
-          const ecoulesPct = (r.joursEcoules / maxJours) * 100
           const retardPct = (r.joursRetard / maxJours) * 100
           const avancPct = (r.avancement / 100) * prevuPct
           const isHovered = hoverIdx === i

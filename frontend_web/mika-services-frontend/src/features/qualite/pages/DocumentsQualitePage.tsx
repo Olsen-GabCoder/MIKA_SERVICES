@@ -314,8 +314,8 @@ export default function DocumentsQualitePage() {
 
       {/* Detail Modal */}
       <Modal isOpen={!!(showDetail && current)} onClose={() => setShowDetail(false)} title={current ? `${current.codeDocument} — ${current.titre}` : ''} size="lg">
-            {current.description && <p className="text-sm text-gray-600 dark:text-gray-400">{current.description}</p>}
-            <div className="text-sm text-gray-700 dark:text-gray-300"><strong>{t('documents.versionCourante')}:</strong> v{current.versionCourante}</div>
+            {current?.description && <p className="text-sm text-gray-600 dark:text-gray-400">{current.description}</p>}
+            <div className="text-sm text-gray-700 dark:text-gray-300"><strong>{t('documents.versionCourante')}:</strong> v{current?.versionCourante}</div>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <h3 className="font-medium text-gray-900 dark:text-white">{t('documents.historique')}</h3>
@@ -328,7 +328,7 @@ export default function DocumentsQualitePage() {
             </div>
 
             <div className="space-y-2">
-              {current.versions.map(v => {
+              {current?.versions.map(v => {
                 const ft = getFileTypeInfo(v.typeMime)
                 return (
                   <div key={v.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 text-sm">

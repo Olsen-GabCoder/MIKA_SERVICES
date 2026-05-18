@@ -32,6 +32,7 @@ const statutColors: Record<string, string> = {
 export default function ReceptionsTravauxPage() {
   const { t } = useTranslation('qualite')
   const isOnline = useIsOnline()
+  const toast = useToast()
   const dispatch = useAppDispatch()
   const projets = useAppSelector(s => s.projet.projets)
   const { demandes, summary, loading, totalPages, currentPage } = useAppSelector(s => s.qualiteReception)

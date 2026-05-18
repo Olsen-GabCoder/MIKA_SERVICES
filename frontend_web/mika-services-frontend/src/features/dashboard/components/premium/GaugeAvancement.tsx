@@ -98,7 +98,7 @@ export function GaugeAvancement({ planning, projets }: GaugeAvancementProps) {
         <div className="text-[9.5px] uppercase tracking-[0.08em] font-medium" style={{ color: 'var(--db-t4)' }}>
           {t('db.premium.topProjetsAvancement')}
         </div>
-        {top5.map((p, i) => {
+        {top5.map((p) => {
           const pct = p.avancementGlobal ?? 0
           const barColor = pct >= 70 ? 'var(--db-success)' : pct >= 40 ? 'var(--db-orange)' : pct > 0 ? 'var(--db-warn)' : 'var(--db-t4)'
           return (

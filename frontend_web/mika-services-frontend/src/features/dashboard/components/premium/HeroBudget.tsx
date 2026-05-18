@@ -57,7 +57,6 @@ export function HeroBudget({ budget }: HeroBudgetProps) {
     return allValues.length > 0 ? Math.max(...allValues) * 1.12 : 1
   }, [evolution, hasEvolution])
 
-  const yAt = (v: number) => padTop + (1 - v / mx) * (H - padTop - padBot)
   const baseline = H - padBot
 
   const yTicks = [0, 1, 2, 3].map(g => ({

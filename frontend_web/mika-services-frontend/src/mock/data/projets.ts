@@ -117,6 +117,7 @@ export function getMockProjetById(id: number): (Projet & { _fromMock?: boolean }
     responsableProjet: s.responsableNom ? { id: 1, nom: nom || prenom, prenom: prenom, email: 'chef@mika.ga' } : undefined,
     partenairePrincipal: 'Bureau d\'études associé',
     actif: true,
+    chantierActif: true,
     nombrePointsBloquantsOuverts: s.id === 1 ? 2 : s.id === 2 ? 1 : 0,
     avancementEtudes: mockAvancementEtudes(s.id),
     createdAt: '2024-01-10T08:00:00',

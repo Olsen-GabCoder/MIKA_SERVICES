@@ -8,7 +8,7 @@ import { BaremeInfoCard } from './BaremeInfoCard'
 import { useBaremeInfo } from '../../hooks/useBaremeInfo'
 import type { GlobalDashboard, BudgetStats } from '@/types/reporting'
 
-const EMPTY_BUDGET: BudgetStats = { budgetTotalPrevu: 0, depensesTotales: 0, ecart: 0, tauxConsommation: 0 }
+const EMPTY_BUDGET: BudgetStats = { budgetTotalPrevu: 0, depensesTotales: 0, ecart: 0, tauxConsommation: 0, montantTotalMarches: 0, montantMarchesEnCours: 0, caPrevisionnelCumule: 0, caRealiseCumule: 0, tauxRealisation: 0, evolutionMensuelle: [] }
 
 export interface FinancesRegionProps {
   dashboard: GlobalDashboard | null

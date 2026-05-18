@@ -1,10 +1,11 @@
 /**
- * Mode mock et fallback :
- * - USE_MOCK = true : on n'appelle jamais le backend, on renvoie toujours les données mock.
- * - USE_MOCK = false : on appelle le backend ; en cas d'échec (réseau, 404, 500), on renvoie les données mock (fallback).
- * Ainsi les données s'affichent que le backend tourne ou non.
+ * Mode mock :
+ * - USE_MOCK = true : on n'appelle jamais le backend, on renvoie toujours les données mock (dev uniquement).
+ * - USE_MOCK = false (défaut) : on appelle le backend. En cas d'échec, l'erreur remonte normalement.
+ * - USE_MOCK_FALLBACK = true : en cas d'échec backend, on retombe sur les données mock (dev uniquement).
+ * - USE_MOCK_FALLBACK = false (défaut) : en cas d'échec, l'erreur est affichée.
  */
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
-/** Utiliser les données mock en secours quand le backend échoue (true par défaut). */
-export const USE_MOCK_FALLBACK = import.meta.env.VITE_USE_MOCK_FALLBACK !== 'false'
+/** Désactivé par défaut — activer explicitement avec VITE_USE_MOCK_FALLBACK=true en dev si besoin. */
+export const USE_MOCK_FALLBACK = import.meta.env.VITE_USE_MOCK_FALLBACK === 'true'

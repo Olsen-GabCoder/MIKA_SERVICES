@@ -5,6 +5,7 @@ import { useMediaDevices } from '../hooks/useMediaDevices'
 import { useAudioLevel } from '../hooks/useAudioLevel'
 import { useNetworkQuality, type NetworkLevel } from '../hooks/useNetworkQuality'
 import { useSalleParticipants } from '../hooks/useSalleParticipants'
+import { AudioVUMeter } from './AudioVUMeter'
 import type { SalleReunion } from '@/types/salleReunion'
 
 interface LobbyViewProps {
@@ -30,7 +31,7 @@ export function LobbyView({ salle, onJoin, isAdmin, onCloseClick }: LobbyViewPro
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const media = useMediaDevices()
-  useAudioLevel(media.stream, media.audioEnabled)
+  const audioLevel = useAudioLevel(media.stream, media.audioEnabled)
   const network = useNetworkQuality(true)
   const { participants } = useSalleParticipants(true)
 
@@ -106,6 +107,9 @@ export function LobbyView({ salle, onJoin, isAdmin, onCloseClick }: LobbyViewPro
               <span className="text-[9px] font-medium text-neutral-500 dark:text-white/50">{t('controls.micro')}</span>
             </div>
           </div>
+
+          {/* VU-metre audio */}
+          <AudioVUMeter level={audioLevel} muted={!media.audioEnabled} />
 
           {/* Périphériques */}
           <div className="flex flex-col items-center gap-1 relative">

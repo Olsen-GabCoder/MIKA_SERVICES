@@ -25,7 +25,8 @@
     "surInvites": "sur {{count}} invites",
     "inactive": "Inactive",
     "depuis": "depuis {{time}}",
-    "descriptionOuverte": "La salle est ouverte et prete a accueillir vos participants."
+    "descriptionOuverte": "La salle est ouverte et prete a accueillir vos participants.",
+    "descriptionFermee": "La salle est fermee. Un administrateur peut l'ouvrir a tout moment."
   },
   "closed": {
     "pilleText": "La salle est actuellement fermee",
@@ -71,6 +72,9 @@
     "micOnLabel": "Desactiver le microphone",
     "micOffLabel": "Activer le microphone",
     "rejoindreLong": "Rejoindre la salle maintenant",
+    "microTestHint": "Parlez pour verifier le micro",
+    "microMutedHint": "Activez le micro pour tester",
+    "microTested": "Micro OK",
     "network": {
       "excellent": "Connexion excellente",
       "good": "Bonne connexion",

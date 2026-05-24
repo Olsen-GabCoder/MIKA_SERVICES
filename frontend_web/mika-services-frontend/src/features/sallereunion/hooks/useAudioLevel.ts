@@ -1,15 +1,13 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 
 /**
- * Analyse le niveau audio d'un MediaStream en temps reel via Web Audio API.
+ * Analyse le niveau audio du micro en temps reel via Web Audio API.
+ * Acquiert son propre stream audio dedie pour eviter les conflits
+ * avec le stream partage (video preview, StrictMode, etc.).
  * Retourne un niveau normalise entre 0 et 1.
  */
 export function useAudioLevel(stream: MediaStream | null, enabled: boolean): number {
   const [level, setLevel] = useState(0)
-  const contextRef = useRef<AudioContext | null>(null)
-  const analyserRef = useRef<AnalyserNode | null>(null)
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
-  const rafRef = useRef<number>(0)
 
   useEffect(() => {
     if (!stream || !enabled) {
@@ -23,44 +21,62 @@ export function useAudioLevel(stream: MediaStream | null, enabled: boolean): num
       return
     }
 
-    const ctx = new AudioContext()
-    const analyser = ctx.createAnalyser()
-    analyser.fftSize = 256
-    analyser.smoothingTimeConstant = 0.7
+    let cancelled = false
+    let ctx: AudioContext | null = null
+    let ownStream: MediaStream | null = null
+    let rafId = 0
 
-    const source = ctx.createMediaStreamSource(stream)
-    source.connect(analyser)
+    // Stream audio dedie pour l'analyse — evite les conflits avec le stream partage
+    // et le deviceId special Windows "communications" qui donne des streams silencieux.
+    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      .then(s => {
+        if (cancelled) {
+          s.getTracks().forEach(t => t.stop())
+          return
+        }
 
-    contextRef.current = ctx
-    analyserRef.current = analyser
-    sourceRef.current = source
+        ownStream = s
+        ctx = new AudioContext()
+        const analyser = ctx.createAnalyser()
+        analyser.fftSize = 256
+        analyser.smoothingTimeConstant = 0.5
 
-    const dataArray = new Uint8Array(analyser.frequencyBinCount)
+        const source = ctx.createMediaStreamSource(s)
+        source.connect(analyser)
 
-    function tick() {
-      if (!analyserRef.current) return
-      analyserRef.current.getByteFrequencyData(dataArray)
-      // Average of frequencies as volume indicator
-      let sum = 0
-      for (let i = 0; i < dataArray.length; i++) {
-        sum += dataArray[i]
-      }
-      const avg = sum / dataArray.length / 255
-      setLevel(avg)
-      rafRef.current = requestAnimationFrame(tick)
-    }
+        // Chrome exige un graph audio complet pour traiter les donnees
+        const silentGain = ctx.createGain()
+        silentGain.gain.value = 0
+        analyser.connect(silentGain)
+        silentGain.connect(ctx.destination)
 
-    rafRef.current = requestAnimationFrame(tick)
+        const dataArray = new Uint8Array(analyser.frequencyBinCount)
+
+        function tick() {
+          if (cancelled) return
+          analyser.getByteTimeDomainData(dataArray)
+          let sumSquares = 0
+          for (let i = 0; i < dataArray.length; i++) {
+            const deviation = (dataArray[i] - 128) / 128
+            sumSquares += deviation * deviation
+          }
+          setLevel(Math.sqrt(sumSquares / dataArray.length))
+          rafId = requestAnimationFrame(tick)
+        }
+
+        rafId = requestAnimationFrame(tick)
+      })
+      .catch(() => {
+        // Permission refusee ou erreur — le VU-metre reste a 0
+      })
 
     return () => {
-      cancelAnimationFrame(rafRef.current)
-      sourceRef.current?.disconnect()
-      sourceRef.current = null
-      analyserRef.current = null
-      if (contextRef.current?.state !== 'closed') {
-        contextRef.current?.close()
+      cancelled = true
+      cancelAnimationFrame(rafId)
+      ownStream?.getTracks().forEach(t => t.stop())
+      if (ctx?.state !== 'closed') {
+        ctx?.close()
       }
-      contextRef.current = null
       setLevel(0)
     }
   }, [stream, enabled])

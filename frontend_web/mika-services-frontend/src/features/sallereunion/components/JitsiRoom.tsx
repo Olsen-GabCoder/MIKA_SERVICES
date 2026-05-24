@@ -36,13 +36,19 @@ function loadJitsiScript(appId: string): Promise<void> {
   })
 }
 
+interface MediaPrefs {
+  videoMuted: boolean
+  audioMuted: boolean
+}
+
 interface JitsiRoomProps {
   jaasToken: JaaSToken
   onLeave: () => void
   immersive?: boolean
+  mediaPrefs?: MediaPrefs
 }
 
-export function JitsiRoom({ jaasToken, onLeave, immersive = false }: JitsiRoomProps) {
+export function JitsiRoom({ jaasToken, onLeave, immersive = false, mediaPrefs }: JitsiRoomProps) {
   const { t } = useTranslation('salleReunion')
   const containerRef = useRef<HTMLDivElement>(null)
   const apiRef = useRef<JitsiMeetApi | null>(null)
@@ -66,8 +72,8 @@ export function JitsiRoom({ jaasToken, onLeave, immersive = false }: JitsiRoomPr
           configOverwrite: {
             subject: jaasToken.subject,
             prejoinPageEnabled: false,
-            startWithAudioMuted: true,
-            startWithVideoMuted: false,
+            startWithAudioMuted: mediaPrefs?.audioMuted ?? true,
+            startWithVideoMuted: mediaPrefs?.videoMuted ?? false,
             disableModeratorIndicator: false,
             enableInsecureRoomNameWarning: false,
             hideConferenceSubject: false,

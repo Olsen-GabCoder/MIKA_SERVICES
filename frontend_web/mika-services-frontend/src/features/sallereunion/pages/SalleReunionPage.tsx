@@ -122,7 +122,7 @@ export function SalleReunionPage() {
 
   return (
     <>
-      {joined && roomState === 'open' && jaasToken && createPortal(<ImmersiveRoom jaasToken={jaasToken} onLeave={handleLeaveJitsi} />, document.body)}
+      {joined && roomState === 'open' && jaasToken && createPortal(<ImmersiveRoom jaasToken={jaasToken} onLeave={handleLeaveJitsi} mediaPrefs={jitsiPrefsRef.current} />, document.body)}
       <ParticipantToasts enabled={roomState === 'open' && !joined} currentUserId={authUser?.id} />
 
       <div className="salle-anim-fade flex flex-col xl:h-[calc(100vh-var(--layout-header-height,4.5rem)-var(--layout-footer-height,3.5rem)-5rem)]">
@@ -155,7 +155,7 @@ export function SalleReunionPage() {
                 </div>
               </div>
             </div>
-            <p className="mt-3.5 text-[11px] leading-relaxed text-neutral-500 dark:text-white/50">{t('stats.descriptionOuverte')}</p>
+            <p className="mt-3.5 text-[11px] leading-relaxed text-neutral-500 dark:text-white/50">{roomState === 'open' ? t('stats.descriptionOuverte') : t('stats.descriptionFermee')}</p>
           </div>
 
           {/* Ouverte par */}

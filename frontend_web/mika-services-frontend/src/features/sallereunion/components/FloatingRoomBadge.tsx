@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSalleReunion } from '../hooks/useSalleReunion'
+import { useSalleParticipants } from '../hooks/useSalleParticipants'
 
 const DISMISS_KEY = 'salle-badge-dismissed'
 
@@ -23,6 +24,7 @@ function dismiss(salleId: number, dateOuverture: string): void {
 
 export function FloatingRoomBadge() {
   const { data: salle } = useSalleReunion()
+  const { participants } = useSalleParticipants(!!salle?.ouverte)
   const location = useLocation()
   const navigate = useNavigate()
   const { t } = useTranslation('salleReunion')
@@ -55,7 +57,10 @@ export function FloatingRoomBadge() {
         <span className="absolute inset-0 rounded-full bg-emerald-500" />
         <span className="absolute inset-0 rounded-full salle-live-dot text-emerald-500" />
       </span>
-      <span className="text-[12.5px] font-medium tracking-[-0.02em]">{t('floating.enDirect')}</span>
+      <span className="text-[12.5px] font-medium tracking-[-0.02em]">
+        {t('floating.enDirect')}
+        {participants.length > 0 && <span className="opacity-70"> {t('floating.count', { count: participants.length })}</span>}
+      </span>
       <svg className="w-3.5 h-3.5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
       {/* dismiss X */}
       <span

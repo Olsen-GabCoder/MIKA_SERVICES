@@ -25,7 +25,8 @@
     "surInvites": "of {{count}} invited",
     "inactive": "Inactive",
     "depuis": "since {{time}}",
-    "descriptionOuverte": "The room is open and ready to welcome your participants."
+    "descriptionOuverte": "The room is open and ready to welcome your participants.",
+    "descriptionFermee": "The room is closed. An administrator can open it at any time."
   },
   "closed": {
     "pilleText": "The room is currently closed",
@@ -71,6 +72,9 @@
     "micOnLabel": "Disable microphone",
     "micOffLabel": "Enable microphone",
     "rejoindreLong": "Join the room now",
+    "microTestHint": "Speak to test your mic",
+    "microMutedHint": "Enable mic to test",
+    "microTested": "Mic OK",
     "network": {
       "excellent": "Excellent connection",
       "good": "Good connection",

@@ -8,9 +8,10 @@ import type { JaaSToken } from '@/types/salleReunion'
 interface ImmersiveRoomProps {
   jaasToken: JaaSToken
   onLeave: () => void
+  mediaPrefs?: { videoMuted: boolean; audioMuted: boolean }
 }
 
-export function ImmersiveRoom({ jaasToken, onLeave }: ImmersiveRoomProps) {
+export function ImmersiveRoom({ jaasToken, onLeave, mediaPrefs }: ImmersiveRoomProps) {
   const { t } = useTranslation('salleReunion')
   const [showExitConfirm, setShowExitConfirm] = useState(false)
 
@@ -60,7 +61,7 @@ export function ImmersiveRoom({ jaasToken, onLeave }: ImmersiveRoomProps) {
         <span>{t('actions.quitterSalle')}</span>
       </button>
 
-      <JitsiRoom jaasToken={jaasToken} onLeave={onLeave} immersive />
+      <JitsiRoom jaasToken={jaasToken} onLeave={onLeave} immersive mediaPrefs={mediaPrefs} />
 
       {showExitConfirm && (
         <ConfirmModal

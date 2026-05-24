@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Avatar } from './Primitives'
 import { useSalleParticipants } from '../hooks/useSalleParticipants'
-import type { SalleParticipant } from '@/types/salleReunion'
 
 interface ParticipantToastsProps {
   enabled: boolean
@@ -21,6 +20,8 @@ export function ParticipantToasts({ enabled, currentUserId }: ParticipantToastsP
   const { participants } = useSalleParticipants(enabled)
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const prevIdsRef = useRef<Set<number> | null>(null)
+  // Cache des participants vus — permet d'afficher le nom au leave
+  const knownUsersRef = useRef<Map<number, { name: string; initials: string }>>(new Map())
 
   const addToast = useCallback((item: ToastItem) => {
     setToasts(prev => [...prev.slice(-2), item])
@@ -33,6 +34,14 @@ export function ParticipantToasts({ enabled, currentUserId }: ParticipantToastsP
     if (!enabled) {
       prevIdsRef.current = null
       return
+    }
+
+    // Alimenter le cache avec tous les participants visibles
+    for (const p of participants) {
+      knownUsersRef.current.set(p.user.id, {
+        name: `${p.user.prenom} ${p.user.nom}`,
+        initials: `${p.user.prenom[0]}${p.user.nom[0]}`,
+      })
     }
 
     const currentIds = new Set(participants.map(p => p.user.id))
@@ -48,24 +57,24 @@ export function ParticipantToasts({ enabled, currentUserId }: ParticipantToastsP
     // Detect joins
     currentIds.forEach(id => {
       if (!prevIds.has(id) && id !== currentUserId) {
-        const p = participants.find(pp => pp.user.id === id) as SalleParticipant
+        const cached = knownUsersRef.current.get(id)
         addToast({
           id: `join-${id}-${Date.now()}`,
-          name: `${p.user.prenom} ${p.user.nom}`,
-          initials: `${p.user.prenom[0]}${p.user.nom[0]}`,
+          name: cached?.name ?? `Participant #${id}`,
+          initials: cached?.initials ?? '??',
           type: 'joined',
         })
       }
     })
 
-    // Detect leaves
+    // Detect leaves — lookup dans le cache pour garder le nom
     prevIds.forEach(id => {
       if (!currentIds.has(id) && id !== currentUserId) {
-        // We no longer have the participant data — use stored ref
+        const cached = knownUsersRef.current.get(id)
         addToast({
           id: `leave-${id}-${Date.now()}`,
-          name: `Participant #${id}`,
-          initials: '??',
+          name: cached?.name ?? `Participant #${id}`,
+          initials: cached?.initials ?? '??',
           type: 'left',
         })
       }

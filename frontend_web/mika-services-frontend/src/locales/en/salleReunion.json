@@ -105,7 +105,36 @@
     "rejoindreNow": "Join the room now",
     "quitter": "Leave",
     "quitterSalle": "Leave the room",
+    "reduire": "Minimize",
+    "naviguer": "Navigate",
     "envoyer": "Send"
+  },
+  "navigate": {
+    "title": "Navigate the platform",
+    "subtitle": "The meeting will continue in a floating window",
+    "pipBadge": "Meeting in progress — auto switch to mini-player"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projets": "Projects",
+    "equipes": "Teams",
+    "equipements": "Equipment",
+    "materiaux": "Materials",
+    "budget": "Budget",
+    "planning": "Planning",
+    "qualite": "Quality",
+    "qshe": "QSHE",
+    "pvReunions": "Meeting Minutes",
+    "documents": "Documents",
+    "bareme": "Price Schedule"
+  },
+  "mini": {
+    "ariaLabel": "Meeting mini-window",
+    "toggleMicro": "Toggle microphone",
+    "toggleCamera": "Toggle camera",
+    "agrandir": "Expand meeting",
+    "quitter": "Leave meeting",
+    "confirmLeave": "Are you sure you want to leave the meeting?"
   },
   "admin": {
     "controlTitle": "Administrator control",

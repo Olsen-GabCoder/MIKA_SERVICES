@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useRoomSession } from '@/contexts/RoomSessionContext'
 import { useSalleReunion } from '../hooks/useSalleReunion'
 import { useSalleParticipants } from '../hooks/useSalleParticipants'
 
@@ -25,6 +26,7 @@ function dismiss(salleId: number, dateOuverture: string): void {
 export function FloatingRoomBadge() {
   const { data: salle } = useSalleReunion()
   const { participants } = useSalleParticipants(!!salle?.ouverte)
+  const { state: roomSession } = useRoomSession()
   const location = useLocation()
   const navigate = useNavigate()
   const { t } = useTranslation('salleReunion')
@@ -41,7 +43,10 @@ export function FloatingRoomBadge() {
   // Garde-fou 1 : invisible si salle fermee
   if (!salle?.ouverte) return null
 
-  // Garde-fou 2 : masque sur la page salle elle-meme
+  // Garde-fou 2 : masque quand l'utilisateur est en session active (mini ou immersive)
+  if (roomSession.phase === 'mini' || roomSession.phase === 'immersive') return null
+
+  // Garde-fou 3 : masque sur la page salle elle-meme
   if (location.pathname.startsWith('/salle-mika')) return null
 
   // Garde-fou 3 : dismissible avec memoire de session

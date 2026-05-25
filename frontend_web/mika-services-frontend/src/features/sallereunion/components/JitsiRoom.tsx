@@ -46,9 +46,12 @@ interface JitsiRoomProps {
   onLeave: () => void
   immersive?: boolean
   mediaPrefs?: MediaPrefs
+  onApiReady?: (api: JitsiMeetApi) => void
 }
 
-export function JitsiRoom({ jaasToken, onLeave, immersive = false, mediaPrefs }: JitsiRoomProps) {
+export type { JitsiMeetApi }
+
+export function JitsiRoom({ jaasToken, onLeave, immersive = false, mediaPrefs, onApiReady }: JitsiRoomProps) {
   const { t } = useTranslation('salleReunion')
   const containerRef = useRef<HTMLDivElement>(null)
   const apiRef = useRef<JitsiMeetApi | null>(null)
@@ -103,6 +106,7 @@ export function JitsiRoom({ jaasToken, onLeave, immersive = false, mediaPrefs }:
         })
         apiRef.current = api
         setLoading(false)
+        onApiReady?.(api)
 
         api.addListener('readyToClose', () => {
           if (!disposed) onLeave()

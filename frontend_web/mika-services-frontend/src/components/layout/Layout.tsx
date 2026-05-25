@@ -12,6 +12,11 @@ import { Footer } from './Footer'
 import { ThemeGate } from './ThemeGate'
 import { ConnectivityBanner } from '@/components/pwa/ConnectivityBanner'
 import { FloatingRoomBadge } from '@/features/sallereunion/components/FloatingRoomBadge'
+import { GuidanceProvider } from '@/contexts/GuidanceContext'
+import { RoomSessionProvider } from '@/contexts/RoomSessionContext'
+import { MikaAssistantButton } from '@/components/mika-assistant/MikaAssistantButton'
+import { MikaAssistantDrawer } from '@/components/mika-assistant/MikaAssistantDrawer'
+import { RoomSessionLayer } from '@/components/room/RoomSessionLayer'
 import { USE_MOCK } from '@/config/mock'
 
 interface LayoutProps {
@@ -45,25 +50,32 @@ export const Layout = ({ children }: LayoutProps) => {
   } as React.CSSProperties
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={layoutVars}>
-      <Header />
-      <ConnectivityBanner />
-      <div className="flex flex-1 min-h-0 overflow-hidden relative">
-        {/* Backdrop mobile */}
-        {mobileMenuOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-30 md:hidden"
-            onClick={() => dispatch(closeMobileMenu())}
-            aria-hidden
-          />
-        )}
-        <Sidebar />
-        <main className="flex-1 mika-theme-bg dark:text-gray-100 min-w-0 p-3 sm:p-6 lg:p-8 relative overflow-auto" data-theme={theme}>
-          <ThemeGate key={location.pathname}>{children}</ThemeGate>
-        </main>
-      </div>
-      <Footer />
-      <FloatingRoomBadge />
-    </div>
+    <RoomSessionProvider>
+      <GuidanceProvider>
+        <div className="h-screen flex flex-col overflow-hidden" style={layoutVars}>
+          <Header />
+          <ConnectivityBanner />
+          <div className="flex flex-1 min-h-0 overflow-hidden relative">
+            {/* Backdrop mobile */}
+            {mobileMenuOpen && (
+              <div
+                className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                onClick={() => dispatch(closeMobileMenu())}
+                aria-hidden
+              />
+            )}
+            <Sidebar />
+            <main className="flex-1 mika-theme-bg dark:text-gray-100 min-w-0 p-3 sm:p-6 lg:p-8 relative overflow-auto" data-theme={theme}>
+              <ThemeGate key={location.pathname}>{children}</ThemeGate>
+            </main>
+          </div>
+          <Footer />
+          <FloatingRoomBadge />
+          <MikaAssistantButton />
+          <MikaAssistantDrawer />
+          <RoomSessionLayer />
+        </div>
+      </GuidanceProvider>
+    </RoomSessionProvider>
   )
 }

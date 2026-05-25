@@ -105,7 +105,36 @@
     "rejoindreNow": "Rejoindre la salle maintenant",
     "quitter": "Quitter",
     "quitterSalle": "Quitter la salle",
+    "reduire": "Reduire",
+    "naviguer": "Naviguer",
     "envoyer": "Envoyer"
+  },
+  "navigate": {
+    "title": "Naviguer dans la plateforme",
+    "subtitle": "La reunion continuera dans une fenetre flottante",
+    "pipBadge": "Reunion en cours — passage auto en mini-player"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "projets": "Projets",
+    "equipes": "Equipes",
+    "equipements": "Equipements",
+    "materiaux": "Materiaux",
+    "budget": "Budget",
+    "planning": "Planning",
+    "qualite": "Qualite",
+    "qshe": "QSHE",
+    "pvReunions": "PV Reunions",
+    "documents": "Documents",
+    "bareme": "Bareme"
+  },
+  "mini": {
+    "ariaLabel": "Mini-fenetre de reunion en cours",
+    "toggleMicro": "Activer/desactiver le micro",
+    "toggleCamera": "Activer/desactiver la camera",
+    "agrandir": "Agrandir la reunion",
+    "quitter": "Quitter la reunion",
+    "confirmLeave": "Voulez-vous vraiment quitter la reunion ?"
   },
   "admin": {
     "controlTitle": "Controle administrateur",

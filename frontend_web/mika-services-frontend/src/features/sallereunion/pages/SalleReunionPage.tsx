@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useIsAdmin } from '@/features/dashboard/hooks/useIsAdmin'
 import { useAppSelector } from '@/store/hooks'
+import { useRoomSession } from '@/contexts/RoomSessionContext'
 import { useSalleReunion } from '../hooks/useSalleReunion'
 import { useJaaSToken } from '../hooks/useJaaSToken'
 import { useOuvrirSalle, useFermerSalle } from '../hooks/useSalleMutations'
@@ -13,7 +13,7 @@ import { useNetworkQuality } from '../hooks/useNetworkQuality'
 import { useSalleParticipants } from '../hooks/useSalleParticipants'
 import { ClosedView } from '../components/ClosedView'
 import { LobbyView } from '../components/LobbyView'
-import { ImmersiveRoom } from '../components/ImmersiveRoom'
+
 import { AdminPanel } from '../components/AdminPanel'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { PostMeetingModal } from '../components/PostMeetingModal'
@@ -33,38 +33,50 @@ export function SalleReunionPage() {
   const { t } = useTranslation('salleReunion')
   const isAdmin = useIsAdmin()
   const authUser = useAppSelector(s => s.auth.user)
+  const { state: roomSession, dispatch: roomDispatch } = useRoomSession()
   const { data: salle, loading, error } = useSalleReunion()
   const ouvrirMutation = useOuvrirSalle()
   const fermerMutation = useFermerSalle()
   const network = useNetworkQuality(true)
   const { participants } = useSalleParticipants(!!salle?.ouverte)
 
-  const [joined, setJoined] = useState(false)
+  const joined = roomSession.phase === 'immersive' || roomSession.phase === 'mini'
   const [modal, setModal] = useState<'open' | 'close' | null>(null)
   const [showPostMeeting, setShowPostMeeting] = useState(false)
   const [openingProgress, setOpeningProgress] = useState<number | null>(null)
   const [toast, setToast] = useState<ToastState>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
-  const jitsiPrefsRef = useRef({ videoMuted: false, audioMuted: true })
 
-  const jaasEnabled = !!salle?.ouverte && joined
+  const jaasEnabled = !!salle?.ouverte && (joined || roomSession.phase === 'joining')
   const { data: jaasToken } = useJaaSToken(jaasEnabled)
   const roomState: RoomState = openingProgress != null ? 'opening' : salle?.ouverte ? 'open' : 'closed'
 
   useSalleWebSocket(true)
   useSalleNotifications(salle, authUser?.id)
 
+  // Sync jaasToken into context when it arrives
+  useEffect(() => {
+    if (jaasToken && roomSession.phase === 'joining') {
+      roomDispatch({ type: 'JOIN_SUCCESS', payload: { jaasToken } })
+    }
+  }, [jaasToken, roomSession.phase, roomDispatch])
+
+  // Sync salle ouverte state into context
+  useEffect(() => {
+    roomDispatch({ type: 'SYNC_SALLE_OUVERTE', payload: !!salle?.ouverte })
+  }, [salle?.ouverte, roomDispatch])
+
   useKeyboardShortcuts({
     isAdmin,
     roomOpen: roomState === 'open',
     joined,
-    onJoin: useCallback(() => setJoined(true), []),
+    onJoin: useCallback(() => roomDispatch({ type: 'JOIN_REQUEST' }), [roomDispatch]),
     onOpenModal: useCallback(() => setModal('open'), []),
     onCloseModal: useCallback(() => { if (isAdmin) setShowPostMeeting(true) }, [isAdmin]),
     onToggleHelp: useCallback(() => setShowShortcuts(prev => !prev), []),
   })
 
-  useEffect(() => { if (!salle?.ouverte && joined) setJoined(false) }, [salle?.ouverte, joined])
+  useEffect(() => { if (!salle?.ouverte && joined) roomDispatch({ type: 'SALLE_CLOSED' }) }, [salle?.ouverte, joined, roomDispatch])
 
   useEffect(() => {
     if (openingProgress === null || openingProgress >= 100) return
@@ -87,20 +99,22 @@ export function SalleReunionPage() {
       try { await ouvrirMutation.mutateAsync(); setToast({ message: t('messages.ouvertureSucces'), type: 'success' }) }
       catch (err) { setOpeningProgress(null); setToast({ message: (err as { response?: { status?: number } })?.response?.status === 409 ? t('messages.dejaOuverte') : t('messages.erreur'), type: 'error' }) }
     } else {
-      try { await fermerMutation.mutateAsync(); setJoined(false); setToast({ message: t('messages.fermetureSucces'), type: 'success' }) }
+      try { await fermerMutation.mutateAsync(); roomDispatch({ type: 'LEAVE' }); setToast({ message: t('messages.fermetureSucces'), type: 'success' }) }
       catch (err) { setToast({ message: (err as { response?: { status?: number } })?.response?.status === 409 ? t('messages.dejaFermee') : t('messages.erreur'), type: 'error' }) }
     }
-  }, [modal, ouvrirMutation, fermerMutation, t])
+  }, [modal, ouvrirMutation, fermerMutation, t, roomDispatch])
 
   const handlePostMeetingClose = useCallback(async () => {
-    try { await fermerMutation.mutateAsync(); setJoined(false); setShowPostMeeting(false); setToast({ message: t('messages.fermetureSucces'), type: 'success' }) }
+    try { await fermerMutation.mutateAsync(); roomDispatch({ type: 'LEAVE' }); setShowPostMeeting(false); setToast({ message: t('messages.fermetureSucces'), type: 'success' }) }
     catch (err) { setToast({ message: (err as { response?: { status?: number } })?.response?.status === 409 ? t('messages.dejaFermee') : t('messages.erreur'), type: 'error' }); setShowPostMeeting(false) }
-  }, [fermerMutation, t])
+  }, [fermerMutation, t, roomDispatch])
 
   useEffect(() => { if (!toast) return; const id = setTimeout(() => setToast(null), 3500); return () => clearTimeout(id) }, [toast])
 
-  const handleLeaveJitsi = useCallback(() => setJoined(false), [])
-  const handleLobbyJoin = useCallback((opts: { videoMuted: boolean; audioMuted: boolean }) => { jitsiPrefsRef.current = opts; setJoined(true) }, [])
+  const handleLobbyJoin = useCallback((opts: { videoMuted: boolean; audioMuted: boolean }) => {
+    roomDispatch({ type: 'SET_MEDIA_PREFS', payload: opts })
+    roomDispatch({ type: 'JOIN_REQUEST' })
+  }, [roomDispatch])
   const handleCloseClick = useCallback(() => { if (isAdmin) setShowPostMeeting(true) }, [isAdmin])
 
   if (loading && !salle) {
@@ -122,7 +136,6 @@ export function SalleReunionPage() {
 
   return (
     <>
-      {joined && roomState === 'open' && jaasToken && createPortal(<ImmersiveRoom jaasToken={jaasToken} onLeave={handleLeaveJitsi} mediaPrefs={jitsiPrefsRef.current} />, document.body)}
       <ParticipantToasts enabled={roomState === 'open' && !joined} currentUserId={authUser?.id} />
 
       <div className="salle-anim-fade flex flex-col xl:h-[calc(100vh-var(--layout-header-height,4.5rem)-var(--layout-footer-height,3.5rem)-5rem)]">

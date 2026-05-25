@@ -49,7 +49,7 @@ export function ImmersiveRoom({ onLeave }: ImmersiveToolbarProps) {
         {/* Bouton Reduire */}
         <button
           onClick={handleMinimize}
-          className="flex items-center gap-2.5 bg-white/10 backdrop-blur-xl text-white pl-4 pr-5 py-2.5 rounded-2xl text-[14px] font-semibold hover:bg-white/20 active:scale-[0.97] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[44px] border border-white/10"
+          className="flex items-center gap-2.5 bg-black/60 backdrop-blur-xl text-white pl-4 pr-5 py-2.5 rounded-2xl text-[14px] font-semibold hover:bg-black/75 active:scale-[0.97] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[44px] border border-white/15 shadow-lg"
           aria-label={t('actions.reduire')}
         >
           <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -60,7 +60,7 @@ export function ImmersiveRoom({ onLeave }: ImmersiveToolbarProps) {
         {/* Bouton Naviguer */}
         <button
           onClick={() => setShowNavigate(true)}
-          className="flex items-center gap-2.5 bg-white/10 backdrop-blur-xl text-white pl-4 pr-5 py-2.5 rounded-2xl text-[14px] font-semibold hover:bg-white/20 active:scale-[0.97] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[44px] border border-white/10"
+          className="flex items-center gap-2.5 bg-black/60 backdrop-blur-xl text-white pl-4 pr-5 py-2.5 rounded-2xl text-[14px] font-semibold hover:bg-black/75 active:scale-[0.97] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[44px] border border-white/15 shadow-lg"
           aria-label={t('actions.naviguer')}
         >
           <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -71,7 +71,7 @@ export function ImmersiveRoom({ onLeave }: ImmersiveToolbarProps) {
         {/* Bouton Sortir */}
         <button
           onClick={() => setShowExitConfirm(true)}
-          className="flex items-center gap-2.5 bg-white/10 backdrop-blur-xl text-white pl-4 pr-5 py-2.5 rounded-2xl text-[14px] font-semibold hover:bg-white/20 active:scale-[0.97] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[44px] border border-white/10"
+          className="flex items-center gap-2.5 bg-black/60 backdrop-blur-xl text-white pl-4 pr-5 py-2.5 rounded-2xl text-[14px] font-semibold hover:bg-black/75 active:scale-[0.97] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[44px] border border-white/15 shadow-lg"
           aria-label={t('actions.quitterSalle')}
         >
           <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

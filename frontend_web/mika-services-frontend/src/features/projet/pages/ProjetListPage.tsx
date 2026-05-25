@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useProjetListUrlState } from '../hooks/useProjetListUrlState'
 import { useTranslation } from 'react-i18next'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import type * as XLSXType from 'xlsx'
@@ -69,6 +70,8 @@ export const ProjetListPage = () => {
   const [chefUsers, setChefUsers] = useState<UserSummary[]>([])
   const [sortBy, setSortBy] = useState<ProjetSortKey | ''>('nom')
   const [sortDir, setSortDir] = useState<SortDirection>('asc')
+
+  const { readFromUrl, syncToUrl } = useProjetListUrlState()
 
   const { formatMontant } = useFormatNumber()
   const isOnline = useIsOnline()
@@ -155,6 +158,7 @@ export const ProjetListPage = () => {
     const params = { page: 0, size: pageSize, ...buildListQueryFilters(), sortBy: column, sortDir: nextDir }
     if (searchQuery.trim()) dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
     else dispatch(fetchProjets(params))
+    syncToUrl({ page: 0, size: pageSize, searchQuery, filters, sortBy: column, sortDir: nextDir })
   }
 
   const hasActiveFilters =
@@ -197,20 +201,50 @@ export const ProjetListPage = () => {
       } else {
         dispatch(fetchProjets(params))
       }
+      syncToUrl({
+        page: fromListState.page ?? 0,
+        size: fromListState.size ?? 20,
+        searchQuery: fromListState.searchQuery ?? '',
+        filters: fromListState.filters ?? {},
+        sortBy: (fromListState.sortBy as ProjetSortKey) ?? '',
+        sortDir: fromListState.sortDir ?? 'asc',
+      })
       navigate('.', { replace: true, state: {} })
     }
-  }, [location.state, dispatch, navigate])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state])
 
   useEffect(() => {
     const fromListState = (location.state as { fromListState?: ListStateToRestore } | null)?.fromListState
     if (fromListState) return
-    dispatch(fetchProjets({ page: 0, size: pageSize, ...sortParams() }))
+
+    const urlState = readFromUrl()
+    if (urlState) {
+      if (urlState.searchQuery != null) setSearchQuery(urlState.searchQuery)
+      if (urlState.filters) setFilters(urlState.filters)
+      if (urlState.sortBy != null) setSortBy(urlState.sortBy)
+      if (urlState.sortDir != null) setSortDir(urlState.sortDir)
+      if (urlState.size != null) dispatch(setItemsPerPage(urlState.size))
+      const s = urlState.size ?? pageSize
+      const srt = urlState.sortBy && urlState.sortDir ? { sortBy: urlState.sortBy, sortDir: urlState.sortDir } : sortParams()
+      const f = urlState.filters ?? {}
+      const params = { page: urlState.page ?? 0, size: s, ...f, ...srt }
+      if (urlState.searchQuery?.trim()) {
+        dispatch(searchProjets({ q: urlState.searchQuery.trim(), ...params }))
+      } else {
+        dispatch(fetchProjets(params))
+      }
+    } else {
+      dispatch(fetchProjets({ page: 0, size: pageSize, ...sortParams() }))
+    }
+
     dispatch(fetchClients({ page: 0, size: 200 }))
     userApi
       .getChefsProjet()
       .then((r) => setChefUsers(r ?? []))
       .catch(() => setChefUsers([]))
-  }, [dispatch, pageSize, sortBy, sortDir, location.state])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const applyFilters = useCallback(() => {
     const params = { page: 0, size: pageSize, ...buildListQueryFilters(), ...sortParams() }
@@ -219,7 +253,8 @@ export const ProjetListPage = () => {
     } else {
       dispatch(fetchProjets(params))
     }
-  }, [dispatch, searchQuery, buildListQueryFilters, sortBy, sortDir, pageSize])
+    syncToUrl({ page: 0, size: pageSize, searchQuery, filters, sortBy, sortDir })
+  }, [dispatch, searchQuery, buildListQueryFilters, sortBy, sortDir, pageSize, syncToUrl, filters])
 
   const resetFilters = useCallback(() => {
     setFilters({})
@@ -227,7 +262,8 @@ export const ProjetListPage = () => {
     setSortBy('nom')
     setSortDir('asc')
     dispatch(fetchProjets({ page: 0, size: pageSize, sortBy: 'nom', sortDir: 'asc' }))
-  }, [dispatch, pageSize])
+    syncToUrl({ page: 0, size: pageSize, searchQuery: '', filters: {}, sortBy: 'nom', sortDir: 'asc' })
+  }, [dispatch, pageSize, syncToUrl])
 
   const handleSearch = () => {
     const params = { page: 0, size: pageSize, ...buildListQueryFilters(), ...sortParams() }
@@ -236,6 +272,7 @@ export const ProjetListPage = () => {
     } else {
       dispatch(fetchProjets(params))
     }
+    syncToUrl({ page: 0, size: pageSize, searchQuery, filters, sortBy, sortDir })
   }
 
   const handlePageChange = (page: number) => {
@@ -246,6 +283,7 @@ export const ProjetListPage = () => {
     } else {
       dispatch(fetchProjets(params))
     }
+    syncToUrl({ page, size: pageSize, searchQuery, filters, sortBy, sortDir })
   }
 
   const handleDelete = async (id: number, nom: string) => {
@@ -477,7 +515,7 @@ export const ProjetListPage = () => {
             />
             {searchQuery && (
               <button
-                onClick={() => { setSearchQuery(''); dispatch(fetchProjets({ page: 0, size: pageSize, ...buildListQueryFilters(), ...sortParams() })) }}
+                onClick={() => { setSearchQuery(''); dispatch(fetchProjets({ page: 0, size: pageSize, ...buildListQueryFilters(), ...sortParams() })); syncToUrl({ page: 0, size: pageSize, searchQuery: '', filters, sortBy, sortDir }) }}
                 className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs transition-colors flex-shrink-0"
               >✕</button>
             )}
@@ -822,6 +860,7 @@ export const ProjetListPage = () => {
                     const params = { page: 0, size: newSize, ...buildListQueryFilters(), ...sortParams() }
                     if (searchQuery.trim()) dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
                     else dispatch(fetchProjets(params))
+                    syncToUrl({ page: 0, size: newSize, searchQuery, filters, sortBy, sortDir })
                   }}
                   className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all cursor-pointer"
                 >

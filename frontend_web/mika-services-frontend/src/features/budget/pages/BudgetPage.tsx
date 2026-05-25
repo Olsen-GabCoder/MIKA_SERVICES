@@ -5,6 +5,7 @@ import { fetchBudgetSummary } from '@/store/slices/budgetSlice'
 import { fetchProjets } from '@/store/slices/projetSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { useFormatNumber } from '@/hooks/useFormatNumber'
+import { PageGuide, useFirstVisit } from '@/components/ui/PageGuide'
 
 export const BudgetPage = () => {
   const { t } = useTranslation('budget')
@@ -24,8 +25,25 @@ export const BudgetPage = () => {
     }
   }, [dispatch, selectedProjetId])
 
+  const { isFirstVisit } = useFirstVisit('budget')
+  const tauxConso = budgetSummary ? Math.round((budgetSummary.totalDepenses / (budgetSummary.montantRevise || budgetSummary.montantHT || 1)) * 100) : 0
+
   return (
     <PageContainer size="wide" className="space-y-6">
+      {isFirstVisit && (
+        <PageGuide
+          variant="welcome"
+          message="Suivez la consommation budgetaire de chaque projet. Selectionnez un projet pour voir son budget. Seuil d'alerte : vert < 70%, orange 70-90%, rouge > 90%."
+          dismissKey="budget-welcome"
+        />
+      )}
+      {!isFirstVisit && selectedProjetId && budgetSummary && tauxConso > 90 && (
+        <PageGuide
+          variant="warning"
+          message={`Consommation a ${tauxConso}% — le budget de ce projet est en zone critique. Verifiez les depenses recentes.`}
+        />
+      )}
+
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('title')}</h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1">{t('subtitle')}</p>

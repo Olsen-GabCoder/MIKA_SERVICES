@@ -28,3 +28,7 @@ temp_*.txt
 # ── OS ────────────────────────────────────────────────────
 Thumbs.db
 Desktop.ini
+
+# ── Mockups / fichiers de travail internes ───────────────
+mockups/
+.cursor/

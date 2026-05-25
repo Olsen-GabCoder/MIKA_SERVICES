@@ -22,6 +22,7 @@ import {
   canEditProjetEffective,
   hasGlobalAdminRoleEffective,
 } from '@/utils/authRoles'
+import { PageGuide, useFirstVisit } from '@/components/ui/PageGuide'
 
 const STATUT_COLORS: Record<string, string> = {
   INITIALISATION: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200',
@@ -363,10 +364,18 @@ export const ProjetListPage = () => {
   }
   const getAvatarColor = (nom?: string): string => !nom ? 'bg-gray-400' : AVATAR_COLORS[nom.charCodeAt(0) % AVATAR_COLORS.length]
 
+  const { isFirstVisit: isFirstProjets } = useFirstVisit('projets')
 
   return (
     <PageContainer size="full" className="h-full flex flex-col min-h-0 bg-gray-50 dark:bg-[#0d0f14]">
       <CacheTimestampBanner lastFetched={lastFetched} />
+      {isFirstProjets && (
+        <PageGuide
+          variant="welcome"
+          message="Gerez tous vos projets BTP depuis cette page. Filtrez par statut, type ou client. Cliquez sur un projet pour acceder a ses details, son budget et son planning."
+          dismissKey="projets-welcome"
+        />
+      )}
 
       {/* ══════════ HERO HEADER ══════════ */}
       <div className="shrink-0 relative overflow-hidden">

@@ -10,6 +10,7 @@ import apiClient from '@/api/axios'
 import { API_ENDPOINTS } from '@/constants/api'
 import type { QsheDashboardResponse } from '@/types/qsheDashboard'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { SmartTooltip } from '@/components/ui/SmartTooltip'
 
 const CARD = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm overflow-hidden'
 const BODY = 'p-4 sm:p-5'
@@ -86,7 +87,7 @@ export default function QsheDashboardPage() {
   return (
     <PageContainer size="full" className="space-y-4 sm:space-y-6 bg-gray-50/80 dark:bg-gray-900/80">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{t('sidebar.dashboard')} QSHE</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{t('sidebar.dashboard')} <SmartTooltip term="qshe">QSHE</SmartTooltip></h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Indicateurs transversaux Qualite, Securite, Hygiene, Environnement</p>
       </div>
 

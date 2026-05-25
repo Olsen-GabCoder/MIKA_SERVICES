@@ -27,6 +27,7 @@ import { useDmaCounts } from '../hooks/useDmaCounts'
 import { useQsheCounts } from '../hooks/useQsheCounts'
 import { useReunionLatest } from '../hooks/useReunionLatest'
 import { computeGreeting } from '../utils/greeting'
+import { PageGuide, useFirstVisit } from '@/components/ui/PageGuide'
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch()
@@ -85,12 +86,21 @@ export default function DashboardPage() {
   const greetingInfo = useMemo(() => computeGreeting(user, 'Utilisateur'), [user])
 
   const d = dashboard
+  const { isFirstVisit } = useFirstVisit('dashboard')
 
   return (
     <PageContainer size="full" className="pb-8" style={{ background: 'var(--db-page)' }}>
       <CacheTimestampBanner lastFetched={lastFetched} />
 
       <div className="px-1 sm:px-2">
+        {isFirstVisit && (
+          <PageGuide
+            variant="welcome"
+            message="Votre tableau de bord resume l'etat de tous vos projets. Cliquez sur un projet pour voir ses details. L'assistant Mika (en bas a droite) peut repondre a vos questions."
+            dismissKey="dashboard-welcome"
+          />
+        )}
+
         {/* Header */}
         <DashHeader
           greetingKey={greetingInfo.key}

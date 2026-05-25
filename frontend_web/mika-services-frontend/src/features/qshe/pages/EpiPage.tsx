@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/contexts/ToastContext'
 import type { EpiCreateRequest, EpiResponse } from '@/types/qsheEpi'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { SmartTooltip } from '@/components/ui/SmartTooltip'
 
 const CARD = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm overflow-hidden'
 const BODY = 'p-4 sm:p-5'
@@ -74,7 +75,7 @@ export default function EpiPage() {
     <PageContainer size="full" className="space-y-4 sm:space-y-6 bg-gray-50/80 dark:bg-gray-900/80">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Équipements de Protection Individuelle</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100"><SmartTooltip term="epi">Equipements de Protection Individuelle</SmartTooltip></h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Inventaire, dotation, expiration, stock</p>
         </div>
         <OfflineDisabledButton>

@@ -10,6 +10,7 @@ import { fetchEssais, createEssai, updateEssai, deleteEssai } from '@/store/slic
 import { fetchProjets } from '@/store/slices/projetSlice'
 import type { EssaiLaboBetonResponse } from '@/types/qualiteEssaiLabo'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { SmartTooltip } from '@/components/ui/SmartTooltip'
 
 const CARD = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm overflow-hidden'
 const BODY = 'p-4 sm:p-5'
@@ -187,7 +188,7 @@ export default function EssaisLaboBetonPage() {
                   {!projetId && <th className="py-3 px-4 font-medium">{t('essaisLabo.projet')}</th>}
                   <th className="py-3 px-4 font-medium">{t('essaisLabo.mois')}</th>
                   <th className="py-3 px-4 font-medium text-right">{t('essaisLabo.fields.camions')}</th>
-                  <th className="py-3 px-4 font-medium text-right">{t('essaisLabo.fields.slump')}</th>
+                  <th className="py-3 px-4 font-medium text-right"><SmartTooltip term="slump">{t('essaisLabo.fields.slump')}</SmartTooltip></th>
                   <th className="py-3 px-4 font-medium text-right">{t('essaisLabo.fields.jours')}</th>
                   <th className="py-3 px-4 font-medium text-right">{t('essaisLabo.fields.prelevements')}</th>
                   <th className="py-3 px-4 font-medium">{t('essaisLabo.fields.observations')}</th>

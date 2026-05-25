@@ -16,6 +16,7 @@ import {
 } from '@/types/qsheIncident'
 import type { IncidentCreateRequest, IncidentResponse } from '@/types/qsheIncident'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { PageGuide, useFirstVisit } from '@/components/ui/PageGuide'
 
 const CARD = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm overflow-hidden'
 const BODY = 'p-4 sm:p-5'
@@ -132,8 +133,25 @@ export default function IncidentsPage() {
       : 0))
     : 0
 
+  const { isFirstVisit: isFirstIncidents } = useFirstVisit('incidents')
+  const enInvestigation = incidents.filter(i => i.statut === 'EN_INVESTIGATION').length
+
   return (
     <PageContainer size="full" className="space-y-4 sm:space-y-6 bg-gray-50/80 dark:bg-gray-900/80">
+      {isFirstIncidents && (
+        <PageGuide
+          variant="welcome"
+          message="Cette page permet de declarer et suivre les incidents de securite. Chaque incident suit un workflow : Brouillon, Declare, En investigation, Cloture."
+          dismissKey="incidents-welcome"
+        />
+      )}
+      {!isFirstIncidents && enInvestigation > 0 && (
+        <PageGuide
+          variant="warning"
+          message={`${enInvestigation} incident${enInvestigation > 1 ? 's' : ''} en investigation — pensez a les cloturer pour le rapport hebdomadaire.`}
+        />
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>

@@ -15,6 +15,7 @@ import {
 } from '@/store/slices/planningSlice'
 import { fetchProjetsByResponsable } from '@/store/slices/projetSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { PageGuide, useFirstVisit } from '@/components/ui/PageGuide'
 import { StatutTache, Priorite } from '@/types/planning'
 import type { TacheCreateRequest, TacheUpdateRequest, Tache } from '@/types/planning'
 import { useFormatDate } from '@/hooks/useFormatDate'
@@ -162,8 +163,24 @@ export default function PlanningPage() {
     enRetard: tachesEnRetard.length,
   }
 
+  const { isFirstVisit: isFirstPlanning } = useFirstVisit('planning')
+
   return (
     <PageContainer size="full" className="bg-gray-50/80 dark:bg-transparent">
+      {isFirstPlanning && (
+        <PageGuide
+          variant="welcome"
+          message="Planifiez et suivez vos taches. Les taches en rouge sont en retard. Priorites : Critique > Haute > Normale > Basse."
+          dismissKey="planning-welcome"
+        />
+      )}
+      {!isFirstPlanning && tachesEnRetard.length > 0 && (
+        <PageGuide
+          variant="warning"
+          message={`${tachesEnRetard.length} tache${tachesEnRetard.length > 1 ? 's' : ''} en retard — verifiez les echeances et mettez a jour les statuts.`}
+        />
+      )}
+
       {/* En-tête premium */}
       <header className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark dark:from-gray-800 dark:to-gray-900 dark:ring-1 dark:ring-primary/40 text-white shadow-lg mb-6 overflow-hidden">
         <div className="px-6 py-6 md:py-8">

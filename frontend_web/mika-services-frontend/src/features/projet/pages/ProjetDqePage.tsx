@@ -13,6 +13,7 @@ import { useFormatNumber } from '@/hooks/useFormatNumber'
 import { useIsOnline } from '@/hooks/useConnectivity'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
 import { useConfirm } from '@/contexts/ConfirmContext'
+import { SmartTooltip } from '@/components/ui/SmartTooltip'
 import { dqeApi } from '@/api/dqeApi'
 import { projetApi } from '@/api/projetApi'
 import { canEditProjetEffective } from '@/utils/authRoles'
@@ -559,8 +560,9 @@ export const ProjetDqePage = () => {
             <span className="group-hover:underline underline-offset-2">Retour au projet</span>
           </button>
 
-          <h1 className="text-xl lg:text-2xl font-black uppercase tracking-wide mb-1">
+          <h1 className="text-xl lg:text-2xl font-black uppercase tracking-wide mb-1 inline-flex items-center gap-2">
             Devis Quantitatif et Estimatif
+            <SmartTooltip term="dqe" side="bottom"><span /></SmartTooltip>
           </h1>
           <p className="text-white/70 text-sm font-medium">
             {projet.nom}

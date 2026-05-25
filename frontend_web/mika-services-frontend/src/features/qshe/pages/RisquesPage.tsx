@@ -11,6 +11,7 @@ import { useToast } from '@/contexts/ToastContext'
 import { CategorieRisque } from '@/types/qsheRisque'
 import type { RisqueCreateRequest, RisqueResponse } from '@/types/qsheRisque'
 import { PageContainer } from '@/components/layout/PageContainer'
+import { SmartTooltip } from '@/components/ui/SmartTooltip'
 
 const CARD = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm overflow-hidden'
 const BODY = 'p-4 sm:p-5'
@@ -81,7 +82,7 @@ export default function RisquesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Évaluation des risques</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">DUERP — Matrice probabilité × gravité, risque brut et résiduel</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5"><SmartTooltip term="duerp">DUERP</SmartTooltip> — Matrice <SmartTooltip term="pxg">probabilite x gravite</SmartTooltip>, risque brut et residuel</p>
         </div>
         {projetId && (
           <OfflineDisabledButton>

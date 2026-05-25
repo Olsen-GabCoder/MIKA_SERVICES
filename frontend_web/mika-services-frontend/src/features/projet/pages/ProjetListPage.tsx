@@ -423,7 +423,7 @@ export const ProjetListPage = () => {
         <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-primary/5 dark:bg-primary/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-10 left-10 w-40 h-40 rounded-full bg-amber-400/10 blur-2xl pointer-events-none" />
 
-        <div className="relative px-8 py-7 border-b border-orange-100/60 dark:border-gray-800">
+        <div className="relative px-4 md:px-8 py-7 border-b border-orange-100/60 dark:border-gray-800">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
 
             {/* Titre */}
@@ -457,12 +457,13 @@ export const ProjetListPage = () => {
                   <button
                     onClick={exportListToExcel}
                     title={t('list.exportExcelTitle')}
-                    className="group flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium hover:border-emerald-400 hover:text-emerald-600 dark:hover:border-emerald-500 dark:hover:text-emerald-400 hover:shadow-md hover:shadow-emerald-100 dark:hover:shadow-emerald-900/20 transition-all duration-200"
+                    aria-label={t('list.exportExcelTitle')}
+                    className="group flex items-center justify-center gap-2 min-h-[44px] md:min-h-0 px-3 md:px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium hover:border-emerald-400 hover:text-emerald-600 dark:hover:border-emerald-500 dark:hover:text-emerald-400 hover:shadow-md hover:shadow-emerald-100 dark:hover:shadow-emerald-900/20 transition-all duration-200"
                   >
                     <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    {t('list.exportExcel')}
+                    <span className="hidden md:inline">{t('list.exportExcel')}</span>
                   </button>
                 </OfflineDisabledButton>
               )}
@@ -486,7 +487,7 @@ export const ProjetListPage = () => {
       </div>
 
       {/* ══════════ ZONE DÉFILABLE ══════════ */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-8 py-6 space-y-5">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-6 space-y-5">
 
         {/* Erreur */}
         {error && (
@@ -516,12 +517,12 @@ export const ProjetListPage = () => {
             {searchQuery && (
               <button
                 onClick={() => { setSearchQuery(''); dispatch(fetchProjets({ page: 0, size: pageSize, ...buildListQueryFilters(), ...sortParams() })); syncToUrl({ page: 0, size: pageSize, searchQuery: '', filters, sortBy, sortDir }) }}
-                className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs transition-colors flex-shrink-0"
+                className="w-6 h-6 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs transition-colors flex-shrink-0"
               >✕</button>
             )}
             <button
               onClick={handleSearch}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-xs font-bold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex-shrink-0"
+              className="px-4 py-2 min-h-[44px] md:min-h-0 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-xs font-bold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex-shrink-0"
             >
               {t('list.search')}
             </button>
@@ -562,7 +563,7 @@ export const ProjetListPage = () => {
                 key={i}
                 value={f.value}
                 onChange={(e) => f.onChange(e.target.value)}
-                className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-primary/40 focus:border-primary/60 focus:bg-white dark:focus:bg-gray-700 transition-all cursor-pointer hover:border-primary/40"
+                className="px-3 py-1.5 min-h-[44px] md:min-h-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-primary/40 focus:border-primary/60 focus:bg-white dark:focus:bg-gray-700 transition-all cursor-pointer hover:border-primary/40"
               >
                 <option value="">{f.placeholder} — {t('list.all')}</option>
                 {f.options.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
@@ -570,14 +571,14 @@ export const ProjetListPage = () => {
             ))}
             <button
               onClick={applyFilters}
-              className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-xs font-bold shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/30 hover:scale-[1.03] active:scale-[0.97] transition-all duration-200"
+              className="px-4 py-1.5 min-h-[44px] md:min-h-0 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-xs font-bold shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/30 hover:scale-[1.03] active:scale-[0.97] transition-all duration-200"
             >
               {t('list.applyFilters')}
             </button>
             {hasActiveFilters && (
               <button
                 onClick={resetFilters}
-                className="px-4 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 transition-all duration-200"
+                className="px-4 py-1.5 min-h-[44px] md:min-h-0 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 transition-all duration-200"
               >
                 {t('list.reset')}
               </button>
@@ -830,7 +831,7 @@ export const ProjetListPage = () => {
                         <button type="button" onClick={() => navigate(`/projets/${projet.id}/edit`)}
                           disabled={!isOnline}
                           title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                          className="px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                           {t('list.edit')}
                         </button>
                       )}
@@ -838,7 +839,7 @@ export const ProjetListPage = () => {
                         <button type="button" onClick={() => handleDelete(projet.id, projet.nom)}
                           disabled={!isOnline}
                           title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                          className="px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                           {t('list.delete')}
                         </button>
                       )}
@@ -849,8 +850,8 @@ export const ProjetListPage = () => {
             </div>
 
             {/* ── PAGINATION ── */}
-            <div className="flex flex-wrap items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 gap-4">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between px-4 md:px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 gap-3 md:gap-4">
+              <div className="flex items-center justify-between md:justify-start gap-3">
                 <span className="text-sm text-gray-500 dark:text-gray-400 tabular-nums">{paginationRange}</span>
                 <select
                   value={pageSize}
@@ -862,16 +863,16 @@ export const ProjetListPage = () => {
                     else dispatch(fetchProjets(params))
                     syncToUrl({ page: 0, size: newSize, searchQuery, filters, sortBy, sortDir })
                   }}
-                  className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all cursor-pointer"
+                  className="px-3 py-1.5 min-h-[44px] md:min-h-0 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all cursor-pointer"
                 >
                   {[10, 20, 25, 50, 100].map((n) => <option key={n} value={n}>{n} / page</option>)}
                 </select>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center md:justify-end gap-2">
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 0}
-                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-gray-800 hover:border-primary/40 hover:text-primary dark:hover:text-orange-400 hover:shadow-sm transition-all duration-200"
+                  className="flex-1 md:flex-none px-4 py-2 min-h-[44px] md:min-h-0 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-gray-800 hover:border-primary/40 hover:text-primary dark:hover:text-orange-400 hover:shadow-sm transition-all duration-200"
                 >
                   {t('list.pagination.prev')}
                 </button>
@@ -881,7 +882,7 @@ export const ProjetListPage = () => {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage >= (totalPages || 1) - 1}
-                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-gray-800 hover:border-primary/40 hover:text-primary dark:hover:text-orange-400 hover:shadow-sm transition-all duration-200"
+                  className="flex-1 md:flex-none px-4 py-2 min-h-[44px] md:min-h-0 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-gray-800 hover:border-primary/40 hover:text-primary dark:hover:text-orange-400 hover:shadow-sm transition-all duration-200"
                 >
                   {t('list.pagination.next')}
                 </button>

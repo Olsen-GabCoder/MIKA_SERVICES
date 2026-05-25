@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useRoomSession } from '@/contexts/RoomSessionContext'
@@ -12,7 +12,7 @@ interface NavShortcut {
   route: string
   labelFr: string
   labelEn: string
-  icon: JSX.Element
+  icon: ReactNode
   color: string
 }
 

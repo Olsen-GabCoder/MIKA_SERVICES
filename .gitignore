@@ -32,3 +32,6 @@ Desktop.ini
 # ── Mockups / fichiers de travail internes ───────────────
 mockups/
 .cursor/
+
+# ── Rapport de stage PFE (CONFIDENTIEL) ─────────────────
+rapport-stage/

@@ -940,45 +940,56 @@ export const ProjetDetailPage = () => {
                   <div>
                     <h3 className="text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200 mb-3">
                       {t('detail.section4Realise')}
+                      <span className="ml-2 font-normal text-[10px] text-gray-400 dark:text-gray-500">
+                        {tachesSemaineCourante.length + tachesReportees.length + tachesSansSemaine.length}
+                      </span>
                     </h3>
 
-                    {/* Tâches planifiées cette semaine */}
-                    {tachesSemaineCourante.length > 0 && (
-                      <ul className="space-y-2">
-                        {tachesSemaineCourante.map((p) => renderTache(p, 'default'))}
-                      </ul>
-                    )}
+                    <div className="relative">
+                      <div className="max-h-[400px] overflow-y-auto pr-1 space-y-0">
+                        {/* Tâches planifiées cette semaine */}
+                        {tachesSemaineCourante.length > 0 && (
+                          <ul className="space-y-2">
+                            {tachesSemaineCourante.map((p) => renderTache(p, 'default'))}
+                          </ul>
+                        )}
 
-                    {/* Tâches reportées (non terminées de semaines passées) */}
-                    {tachesReportees.length > 0 && (
-                      <div className={tachesSemaineCourante.length > 0 ? 'mt-4' : ''}>
-                        <h4 className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-2">
-                          {t('detail.section4ReporteesCetteSemaine')}
-                        </h4>
-                        <ul className="space-y-2">
-                          {tachesReportees.map((p) => renderTache(p, 'reportee'))}
-                        </ul>
-                        <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400">
-                          {t('detail.section4CarryOverNote')}
-                        </p>
+                        {/* Tâches reportées (non terminées de semaines passées) */}
+                        {tachesReportees.length > 0 && (
+                          <div className={tachesSemaineCourante.length > 0 ? 'mt-4' : ''}>
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-2">
+                              {t('detail.section4ReporteesCetteSemaine')}
+                            </h4>
+                            <ul className="space-y-2">
+                              {tachesReportees.map((p) => renderTache(p, 'reportee'))}
+                            </ul>
+                            <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400">
+                              {t('detail.section4CarryOverNote')}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Tâches sans semaine assignée */}
+                        {tachesSansSemaine.length > 0 && (
+                          <div className={tachesSemaineCourante.length > 0 || tachesReportees.length > 0 ? 'mt-4' : ''}>
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-2">
+                              {t('detail.section4NonPlanifiees')}
+                            </h4>
+                            <ul className="space-y-2">
+                              {tachesSansSemaine.map((p) => renderTache(p, 'nonplanifiee'))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {tachesSemaineCourante.length === 0 && tachesReportees.length === 0 && tachesSansSemaine.length === 0 && (
+                          <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.section4NoRealise')}</p>
+                        )}
                       </div>
-                    )}
-
-                    {/* Tâches sans semaine assignée */}
-                    {tachesSansSemaine.length > 0 && (
-                      <div className={tachesSemaineCourante.length > 0 || tachesReportees.length > 0 ? 'mt-4' : ''}>
-                        <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-2">
-                          {t('detail.section4NonPlanifiees')}
-                        </h4>
-                        <ul className="space-y-2">
-                          {tachesSansSemaine.map((p) => renderTache(p, 'nonplanifiee'))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {tachesSemaineCourante.length === 0 && tachesReportees.length === 0 && tachesSansSemaine.length === 0 && (
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.section4NoRealise')}</p>
-                    )}
+                      {/* Indicateur scroll si contenu dépasse */}
+                      {(tachesSemaineCourante.length + tachesReportees.length + tachesSansSemaine.length) > 5 && (
+                        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-gray-800 to-transparent rounded-b-lg" />
+                      )}
+                    </div>
                   </div>
 
                   {/* Colonne droite : Prévisions (semaine suivante + futures) */}
@@ -988,26 +999,37 @@ export const ProjetDetailPage = () => {
                       <span className="ml-2 font-normal normal-case text-primary">
                         — {t('detail.weekLabel', { week: semaineProchaine, year: anneeProchaine })}
                       </span>
+                      <span className="ml-2 font-normal text-[10px] text-gray-400 dark:text-gray-500">
+                        {tachesPrevuesExplicites.length + tachesFutures.length}
+                      </span>
                     </h3>
-                    {tachesPrevuesExplicites.length > 0 ? (
-                      <ul className="space-y-2">
-                        {tachesPrevuesExplicites.map((p) => renderTache(p, 'future'))}
-                      </ul>
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.section4NoPrevisions')}</p>
-                    )}
 
-                    {/* Tâches planifiées au-delà de S+1 */}
-                    {tachesFutures.length > 0 && (
-                      <div className="mt-4">
-                        <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-2">
-                          {t('detail.section4AVenir')}
-                        </h4>
-                        <ul className="space-y-2">
-                          {tachesFutures.map((p) => renderTache(p, 'future'))}
-                        </ul>
+                    <div className="relative">
+                      <div className="max-h-[400px] overflow-y-auto pr-1 space-y-0">
+                        {tachesPrevuesExplicites.length > 0 ? (
+                          <ul className="space-y-2">
+                            {tachesPrevuesExplicites.map((p) => renderTache(p, 'future'))}
+                          </ul>
+                        ) : (
+                          <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.section4NoPrevisions')}</p>
+                        )}
+
+                        {/* Tâches planifiées au-delà de S+1 */}
+                        {tachesFutures.length > 0 && (
+                          <div className="mt-4">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-2">
+                              {t('detail.section4AVenir')}
+                            </h4>
+                            <ul className="space-y-2">
+                              {tachesFutures.map((p) => renderTache(p, 'future'))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
-                    )}
+                      {(tachesPrevuesExplicites.length + tachesFutures.length) > 5 && (
+                        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-gray-800 to-transparent rounded-b-lg" />
+                      )}
+                    </div>
                   </div>
                 </div>
 

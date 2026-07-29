@@ -184,12 +184,22 @@ export default function PlanningPage() {
   }), [taches, tachesEnRetard, selectedProjetId])
 
   // Séparer tâches actives / historique (terminées + annulées)
+  const triParSemaine = (a: Tache, b: Tache) => {
+    const aAbs = (a.annee ?? 9999) * 53 + (a.semaine ?? 99)
+    const bAbs = (b.annee ?? 9999) * 53 + (b.semaine ?? 99)
+    return aAbs - bAbs
+  }
+
   const tachesActives = useMemo(
-    () => taches.filter((t) => t.statut !== StatutTache.TERMINEE && t.statut !== StatutTache.ANNULEE),
+    () => taches
+      .filter((t) => t.statut !== StatutTache.TERMINEE && t.statut !== StatutTache.ANNULEE)
+      .sort(triParSemaine),
     [taches]
   )
   const tachesHistorique = useMemo(
-    () => taches.filter((t) => t.statut === StatutTache.TERMINEE || t.statut === StatutTache.ANNULEE),
+    () => taches
+      .filter((t) => t.statut === StatutTache.TERMINEE || t.statut === StatutTache.ANNULEE)
+      .sort(triParSemaine),
     [taches]
   )
 

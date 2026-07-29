@@ -224,13 +224,18 @@ export interface Prevision {
   id: number
   projetId: number
   projetNom: string
-  semaine?: number
+  semaine?: number | null
   annee: number
   description?: string
-  type: TypePrevision
+  type?: TypePrevision | null
   dateDebut?: string
   dateFin?: string
+  dateEcheance?: string | null
   avancementPct?: number | null
+  statut?: string | null
+  priorite?: string | null
+  assigneNom?: string | null
+  enRetard?: boolean | null
   createdAt?: string
 }
 

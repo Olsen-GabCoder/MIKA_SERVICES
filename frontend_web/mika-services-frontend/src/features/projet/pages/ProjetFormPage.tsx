@@ -1741,8 +1741,25 @@ export const ProjetFormPage = () => {
           </div>
         )}
 
-        {/* Prévisions (tâches planifiées) — toute semaine, passée, en cours ou future */}
-        {isEdit && !readOnly && id && (() => {
+        {/* Prévisions — redirige vers le module Planning & Tâches */}
+        {isEdit && id && (
+          <div id="sec-previsions" ref={setSectionRef('sec-previsions')} className="mika-theme-card rounded-xl shadow-sm border p-6 scroll-mt-28">
+            <h2 className="text-base font-bold text-secondary dark:text-secondary-light pl-3 border-l-[3px] border-primary mb-2">{t('form.previsionsTitle')}</h2>
+            <p className="text-sm text-gray-500 mb-3">{t('form.previsionsCentralized')}</p>
+            <a
+              href={`/planning`}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {t('form.goToPlanning')}
+            </a>
+          </div>
+        )}
+
+        {/* ANCIEN CODE PREVISIONS RETIRE — gestion centralisee dans Planning & Taches */}
+        {false && isEdit && !readOnly && id && (() => {
           const addPrevision = async (semaine: number, annee: number, description: string, type: TypePrevision = 'HEBDOMADAIRE') => {
             try {
               const created = await projetApi.createPrevision(Number(id), { semaine, annee, description, type })

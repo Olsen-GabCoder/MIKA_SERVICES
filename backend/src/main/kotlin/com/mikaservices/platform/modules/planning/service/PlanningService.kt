@@ -38,8 +38,10 @@ class PlanningService(
 
         val tache = Tache(
             projet = projet, titre = request.titre,
-            description = request.description, priorite = request.priorite,
-            dateDebut = request.dateDebut, dateFin = request.dateFin, dateEcheance = request.dateEcheance
+            description = request.description, statut = request.statut, priorite = request.priorite,
+            dateDebut = request.dateDebut, dateFin = request.dateFin, dateEcheance = request.dateEcheance,
+            semaine = request.semaine, annee = request.annee, typePrevision = request.typePrevision,
+            pourcentageAvancement = request.pourcentageAvancement ?: 0
         )
 
         request.assigneAId?.let { userId ->
@@ -99,6 +101,9 @@ class PlanningService(
             tache.assigneA = userRepository.findById(userId)
                 .orElseThrow { ResourceNotFoundException("Utilisateur non trouvé avec l'ID: $userId") }
         }
+        request.semaine?.let { tache.semaine = it }
+        request.annee?.let { tache.annee = it }
+        request.typePrevision?.let { tache.typePrevision = it }
 
         // Si terminée, mettre avancement à 100
         if (tache.statut == StatutTache.TERMINEE) {
@@ -109,6 +114,30 @@ class PlanningService(
         val saved = tacheRepository.save(tache)
         logger.info("Tâche mise à jour: ${saved.titre} (statut: ${saved.statut})")
         return TacheMapper.toResponse(saved)
+    }
+
+    @Transactional(readOnly = true)
+    fun findAllByProjet(projetId: Long): List<TacheResponse> {
+        return tacheRepository.findByProjetId(projetId).map { TacheMapper.toResponse(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun findPrevisionsByProjet(projetId: Long): List<TacheResponse> {
+        return tacheRepository.findPrevisionsByProjetId(projetId).map { TacheMapper.toResponse(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun findPrevisionsByProjetAndAnnee(projetId: Long, annee: Int): List<TacheResponse> {
+        return tacheRepository.findByProjetIdAndAnnee(projetId, annee)
+            .filter { it.typePrevision != null }
+            .map { TacheMapper.toResponse(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun findPrevisionsByProjetAndSemaineAndAnnee(projetId: Long, semaine: Int, annee: Int): List<TacheResponse> {
+        return tacheRepository.findByProjetIdAndSemaineAndAnnee(projetId, semaine, annee)
+            .filter { it.typePrevision != null }
+            .map { TacheMapper.toResponse(it) }
     }
 
     fun deleteTache(id: Long) {

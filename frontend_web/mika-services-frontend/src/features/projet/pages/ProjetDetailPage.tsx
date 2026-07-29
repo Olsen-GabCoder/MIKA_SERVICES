@@ -823,34 +823,101 @@ export const ProjetDetailPage = () => {
 
         {/* 4. Avancement des travaux — pilotage hebdomadaire */}
         {(() => {
-          const tachesRealiseSemaine = previsions.filter(
-            (p) => p.semaine === semaineCalendaire && p.annee === anneeCalendaire
+          // Exclure les tâches terminées et annulées — elles restent dans Planning comme historique
+          const tachesActives = previsions.filter(
+            (p) => p.statut !== 'TERMINEE' && p.statut !== 'ANNULEE'
           )
+
           const semaineProchaine = semaineCalendaire < 53 ? semaineCalendaire + 1 : 1
           const anneeProchaine = semaineCalendaire < 53 ? anneeCalendaire : anneeCalendaire + 1
-          const tachesPrevuesExplicites = previsions.filter(
-            (p) => p.semaine === semaineProchaine && p.annee === anneeProchaine
+
+          // Tâches planifiées pour la semaine en cours
+          const tachesSemaineCourante = tachesActives.filter(
+            (p) => p.semaine === semaineCalendaire && p.annee === anneeCalendaire
           )
-          // Limite le report à 4 semaines en arrière pour éviter de noyer l'affichage
-          const MAX_SEMAINES_REPORT = 4
-          const tachesReportees = previsions.filter((p) => {
+
+          // Tâches reportées : passées et non terminées (toutes, sans limite de semaines)
+          const tachesReportees = tachesActives.filter((p) => {
+            if (p.semaine == null) return false
             const a = p.annee ?? 0
             const s = p.semaine ?? 0
-            const isPast = a < anneeCalendaire || (a === anneeCalendaire && s < semaineCalendaire)
-            if (!isPast) return false
-            const isIncomplete = p.avancementPct == null || p.avancementPct < 100
-            if (!isIncomplete) return false
-            // Exclure les tâches antérieures à MAX_SEMAINES_REPORT semaines
-            const weekAbs = a * 53 + s
-            const minWeekAbs = anneeCalendaire * 53 + semaineCalendaire - MAX_SEMAINES_REPORT
-            return weekAbs >= minWeekAbs
+            return a < anneeCalendaire || (a === anneeCalendaire && s < semaineCalendaire)
           })
-          const avancementsGlobaux = [...tachesRealiseSemaine, ...tachesReportees]
+
+          // Tâches sans semaine assignée (non planifiées mais actives)
+          const tachesSansSemaine = tachesActives.filter((p) => p.semaine == null)
+
+          // Prévisions semaine suivante
+          const tachesPrevuesExplicites = tachesActives.filter(
+            (p) => p.semaine === semaineProchaine && p.annee === anneeProchaine
+          )
+
+          // Tâches futures (au-delà de semaine prochaine)
+          const tachesFutures = tachesActives.filter((p) => {
+            if (p.semaine == null) return false
+            const a = p.annee ?? 0
+            const s = p.semaine ?? 0
+            const nextAbs = anneeProchaine * 53 + semaineProchaine
+            const taskAbs = a * 53 + s
+            return taskAbs > nextAbs
+          })
+
+          // Taux global = toutes les tâches de la semaine en cours (planifiées + reportées + sans semaine)
+          const tachesCourantesMerged = [...tachesSemaineCourante, ...tachesReportees, ...tachesSansSemaine]
+          const avancementsGlobaux = tachesCourantesMerged
             .map((p) => p.avancementPct)
             .filter((v): v is number => v != null)
           const globalPct = avancementsGlobaux.length > 0
             ? Math.round((avancementsGlobaux.reduce((a, b) => a + b, 0) / avancementsGlobaux.length) * 100) / 100
             : null
+
+          // Helper pour rendre une tâche en card
+          const renderTache = (p: typeof previsions[0], variant: 'default' | 'reportee' | 'future' | 'nonplanifiee') => {
+            const bgClass = variant === 'reportee'
+              ? 'bg-amber-50 dark:bg-amber-900/25 border-amber-200 dark:border-amber-700/50'
+              : variant === 'future'
+              ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/30'
+              : variant === 'nonplanifiee'
+              ? 'bg-purple-50 dark:bg-purple-900/15 border-purple-200 dark:border-purple-700/40'
+              : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600'
+            return (
+              <li key={p.id} className={`flex items-start gap-3 p-2.5 rounded-lg border ${bgClass}`}>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {p.description || p.type?.replace(/_/g, ' ') || '—'}
+                  </p>
+                  {variant === 'reportee' && p.semaine != null && p.annee != null && (
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5 block">
+                      {t('detail.section4Reportee', { week: p.semaine, year: p.annee })}
+                    </span>
+                  )}
+                  {variant === 'nonplanifiee' && (
+                    <span className="text-[10px] text-purple-600 dark:text-purple-400 mt-0.5 block">
+                      {t('detail.section4NonPlanifiee')}
+                    </span>
+                  )}
+                  {variant === 'future' && p.semaine != null && (
+                    <span className="text-[10px] text-blue-600 dark:text-blue-400 mt-0.5 block">
+                      S{p.semaine}/{p.annee}
+                    </span>
+                  )}
+                </div>
+                {p.avancementPct != null && (
+                  <div className="flex-shrink-0 flex items-center gap-1.5">
+                    <div className="w-16 h-2 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${p.avancementPct >= 100 ? 'bg-green-500' : p.avancementPct >= 50 ? 'bg-primary' : 'bg-amber-500'}`}
+                        style={{ width: `${Math.min(100, p.avancementPct)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                      {p.avancementPct} %
+                    </span>
+                  </div>
+                )}
+              </li>
+            )
+          }
 
           return (
             <section className={CARD}>
@@ -869,86 +936,52 @@ export const ProjetDetailPage = () => {
               </div>
               <div className={CARD_BODY}>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Colonne gauche : Réalisé semaine en cours + Reportées à faire cette semaine */}
+                  {/* Colonne gauche : Semaine en cours (planifiées + reportées + non planifiées) */}
                   <div>
                     <h3 className="text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200 mb-3">
                       {t('detail.section4Realise')}
                     </h3>
-                    {tachesRealiseSemaine.length > 0 ? (
+
+                    {/* Tâches planifiées cette semaine */}
+                    {tachesSemaineCourante.length > 0 && (
                       <ul className="space-y-2">
-                        {tachesRealiseSemaine.map((p) => (
-                          <li key={p.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                {p.description || p.type.replace(/_/g, ' ')}
-                              </p>
-                            </div>
-                            {p.avancementPct != null && (
-                              <div className="flex-shrink-0 flex items-center gap-1.5">
-                                <div className="w-16 h-2 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full ${p.avancementPct >= 100 ? 'bg-green-500' : p.avancementPct >= 50 ? 'bg-primary' : 'bg-amber-500'}`}
-                                    style={{ width: `${Math.min(100, p.avancementPct)}%` }}
-                                  />
-                                </div>
-                                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                  {p.avancementPct} %
-                                </span>
-                              </div>
-                            )}
-                          </li>
-                        ))}
+                        {tachesSemaineCourante.map((p) => renderTache(p, 'default'))}
                       </ul>
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.section4NoRealise')}</p>
                     )}
 
-                    {/* Reportées à faire cette semaine */}
+                    {/* Tâches reportées (non terminées de semaines passées) */}
                     {tachesReportees.length > 0 && (
-                      <div className="mt-5">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-3">
+                      <div className={tachesSemaineCourante.length > 0 ? 'mt-4' : ''}>
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-2">
                           {t('detail.section4ReporteesCetteSemaine')}
-                        </h3>
+                        </h4>
                         <ul className="space-y-2">
-                          {tachesReportees.map((p) => (
-                            <li
-                              key={p.id}
-                              className="flex items-start gap-3 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/25 border border-amber-200 dark:border-amber-700/50"
-                            >
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                  {p.description || p.type.replace(/_/g, ' ')}
-                                </p>
-                                {p.semaine != null && p.annee != null && (
-                                  <span className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5 block">
-                                    {t('detail.section4Reportee', { week: p.semaine, year: p.annee })}
-                                  </span>
-                                )}
-                              </div>
-                              {p.avancementPct != null && (
-                                <div className="flex-shrink-0 flex items-center gap-1.5">
-                                  <div className="w-16 h-2 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
-                                    <div
-                                      className={`h-full rounded-full ${p.avancementPct >= 100 ? 'bg-green-500' : p.avancementPct >= 50 ? 'bg-primary' : 'bg-amber-500'}`}
-                                      style={{ width: `${Math.min(100, p.avancementPct)}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                    {p.avancementPct} %
-                                  </span>
-                                </div>
-                              )}
-                            </li>
-                          ))}
+                          {tachesReportees.map((p) => renderTache(p, 'reportee'))}
                         </ul>
                         <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400">
                           {t('detail.section4CarryOverNote')}
                         </p>
                       </div>
                     )}
+
+                    {/* Tâches sans semaine assignée */}
+                    {tachesSansSemaine.length > 0 && (
+                      <div className={tachesSemaineCourante.length > 0 || tachesReportees.length > 0 ? 'mt-4' : ''}>
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-2">
+                          {t('detail.section4NonPlanifiees')}
+                        </h4>
+                        <ul className="space-y-2">
+                          {tachesSansSemaine.map((p) => renderTache(p, 'nonplanifiee'))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {tachesSemaineCourante.length === 0 && tachesReportees.length === 0 && tachesSansSemaine.length === 0 && (
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.section4NoRealise')}</p>
+                    )}
                   </div>
 
-                  {/* Colonne droite : Prévisions semaine suivante (explicites uniquement) */}
+                  {/* Colonne droite : Prévisions (semaine suivante + futures) */}
                   <div>
                     <h3 className="text-xs font-bold uppercase tracking-wide text-gray-700 dark:text-gray-200 mb-3">
                       {t('detail.section4Previsions')}
@@ -958,34 +991,22 @@ export const ProjetDetailPage = () => {
                     </h3>
                     {tachesPrevuesExplicites.length > 0 ? (
                       <ul className="space-y-2">
-                        {tachesPrevuesExplicites.map((p) => (
-                          <li
-                            key={p.id}
-                            className="flex items-start gap-3 p-2.5 rounded-lg border bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/30"
-                          >
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                {p.description || p.type.replace(/_/g, ' ')}
-                              </p>
-                            </div>
-                            {p.avancementPct != null && (
-                              <div className="flex-shrink-0 flex items-center gap-1.5">
-                                <div className="w-14 h-2 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full ${p.avancementPct >= 100 ? 'bg-green-500' : p.avancementPct >= 50 ? 'bg-primary' : 'bg-amber-500'}`}
-                                    style={{ width: `${Math.min(100, p.avancementPct)}%` }}
-                                  />
-                                </div>
-                                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                  {p.avancementPct} %
-                                </span>
-                              </div>
-                            )}
-                          </li>
-                        ))}
+                        {tachesPrevuesExplicites.map((p) => renderTache(p, 'future'))}
                       </ul>
                     ) : (
                       <p className="text-gray-500 dark:text-gray-400 text-sm">{t('detail.section4NoPrevisions')}</p>
+                    )}
+
+                    {/* Tâches planifiées au-delà de S+1 */}
+                    {tachesFutures.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-2">
+                          {t('detail.section4AVenir')}
+                        </h4>
+                        <ul className="space-y-2">
+                          {tachesFutures.map((p) => renderTache(p, 'future'))}
+                        </ul>
+                      </div>
                     )}
                   </div>
                 </div>

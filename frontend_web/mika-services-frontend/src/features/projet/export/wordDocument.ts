@@ -354,7 +354,7 @@ export async function buildProjetWord(payload: ProjetDocumentPayload): Promise<B
       rows: [
         new TableRow({ children: [cHdr('Tâche / Description', 75), cHdrR('Avancement', 25)] }),
         ...tachesRealiseSemaine.map((p, i) => shadedRow([
-          cBody(p.description ?? p.type.replace(/_/g, ' '), 75),
+          cBody(p.description ?? p.type?.replace(/_/g, ' ') ?? '—', 75),
           cBodyR(p.avancementPct != null ? `${p.avancementPct} %` : '—', 25),
         ], i % 2 === 1)),
       ],
@@ -375,7 +375,7 @@ export async function buildProjetWord(payload: ProjetDocumentPayload): Promise<B
         new TableRow({ children: [cHdr('Tâche / Description', 75), cHdrR('Avancement', 25)] }),
         ...tachesPrevuesSuivante.map((p, i) => {
           const isRep = tachesReportees.some((r) => r.id === p.id)
-          const desc = (p.description ?? p.type.replace(/_/g, ' ')) + (isRep && p.semaine != null && p.annee != null ? ` ← reportée S${p.semaine} (${p.annee})` : '')
+          const desc = (p.description ?? p.type?.replace(/_/g, ' ') ?? '—') + (isRep && p.semaine != null && p.annee != null ? ` ← reportée S${p.semaine} (${p.annee})` : '')
           const row = shadedRow([cBody(desc, 75), cBodyR(p.avancementPct != null ? `${p.avancementPct} %` : '—', 25)], i % 2 === 1)
           if (isRep) {
             ;(row as unknown as { children: Array<{ shading?: unknown }> }).children.forEach((c: { shading?: unknown }) => { c.shading = { fill: 'FFFBEB', type: ShadingType.CLEAR } })
@@ -431,7 +431,7 @@ export async function buildProjetWord(payload: ProjetDocumentPayload): Promise<B
         rows: [
           new TableRow({ children: [cHdr('Tâche / Description', 75), cHdrR('Avancement', 25)] }),
           ...taches.map((p, i) => shadedRow([
-            cBody(p.description ?? p.type.replace(/_/g, ' '), 75),
+            cBody(p.description ?? p.type?.replace(/_/g, ' ') ?? '—', 75),
             cBodyR(p.avancementPct != null ? `${p.avancementPct} %` : '—', 25),
           ], i % 2 === 1)),
         ],

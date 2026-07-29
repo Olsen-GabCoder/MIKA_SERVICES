@@ -122,13 +122,13 @@ export function ProjetPdfRapportComplet({ data }: { data: ProjetPdfData }) {
               <Text style={[s.paragraph, { fontWeight: 'bold', marginTop: 6 }]}>Réalisé — S{semaineCalendaire}</Text>
               {tachesRealiseSemaine.length > 0 ? tachesRealiseSemaine.map((p) => (
                 <View key={p.id} style={s.row}>
-                  <Text style={s.value}>{p.description ?? p.type.replace(/_/g, ' ')}{p.avancementPct != null ? ` · ${p.avancementPct} %` : ''}</Text>
+                  <Text style={s.value}>{p.description ?? p.type?.replace(/_/g, ' ') ?? '—'}{p.avancementPct != null ? ` · ${p.avancementPct} %` : ''}</Text>
                 </View>
               )) : <Text style={s.paragraph}>Aucune tâche enregistrée.</Text>}
               <Text style={[s.paragraph, { fontWeight: 'bold', marginTop: 6 }]}>Prévisions — S{semaineSuivante} ({anneeSuivante})</Text>
               {tachesPrevuesSuivante.length > 0 ? tachesPrevuesSuivante.map((p) => (
                 <View key={p.id} style={s.row}>
-                  <Text style={s.value}>{p.description ?? p.type.replace(/_/g, ' ')}</Text>
+                  <Text style={s.value}>{p.description ?? p.type?.replace(/_/g, ' ') ?? '—'}</Text>
                 </View>
               )) : <Text style={s.paragraph}>Aucune tâche planifiée.</Text>}
               {pointsBloquants.length > 0 && (

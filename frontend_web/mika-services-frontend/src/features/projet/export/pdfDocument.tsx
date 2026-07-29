@@ -409,7 +409,7 @@ export function ProjetDocumentPdf({ payload }: { payload: ProjetDocumentPayload 
             </View>
             {tachesRealiseSemaine.map((p, i) => (
               <View key={p.id} style={i % 2 === 1 ? s.tRowAlt : s.tRow}>
-                <Text style={[s.tCell, { flex: 2 }]}>{p.description ?? p.type.replace(/_/g, ' ')}</Text>
+                <Text style={[s.tCell, { flex: 2 }]}>{p.description ?? p.type?.replace(/_/g, ' ') ?? '—'}</Text>
                 <Text style={[s.tCellR, { width: 65 }]}>{p.avancementPct != null ? `${p.avancementPct} %` : '—'}</Text>
               </View>
             ))}
@@ -434,7 +434,7 @@ export function ProjetDocumentPdf({ payload }: { payload: ProjetDocumentPayload 
               return (
                 <View key={p.id} style={[i % 2 === 1 ? s.tRowAlt : s.tRow, isRep ? { backgroundColor: C.warningBg } : {}]}>
                   <Text style={[s.tCell, { flex: 2 }]}>
-                    {p.description ?? p.type.replace(/_/g, ' ')}
+                    {p.description ?? p.type?.replace(/_/g, ' ') ?? '—'}
                     {isRep && p.semaine != null && p.annee != null ? ` ← reportée S${p.semaine} (${p.annee})` : ''}
                   </Text>
                   <Text style={[s.tCellR, { width: 65 }]}>{p.avancementPct != null ? `${p.avancementPct} %` : '—'}</Text>
@@ -491,7 +491,7 @@ export function ProjetDocumentPdf({ payload }: { payload: ProjetDocumentPayload 
                   <Text style={s.histTitle}>Semaine {semaine} ({annee})</Text>
                   {taches.map((p) => (
                     <View key={p.id} style={s.histRow}>
-                      <Text style={s.histTask}>{p.description ?? p.type.replace(/_/g, ' ')}</Text>
+                      <Text style={s.histTask}>{p.description ?? p.type?.replace(/_/g, ' ') ?? '—'}</Text>
                       <Text style={s.histPct}>{p.avancementPct != null ? `${p.avancementPct} %` : '—'}</Text>
                     </View>
                   ))}

@@ -28,6 +28,9 @@ object TacheMapper {
             pourcentageAvancement = entity.pourcentageAvancement,
             enRetard = enRetard,
             tacheParentId = entity.tacheParent?.id,
+            semaine = entity.semaine,
+            annee = entity.annee,
+            typePrevision = entity.typePrevision,
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt
         )

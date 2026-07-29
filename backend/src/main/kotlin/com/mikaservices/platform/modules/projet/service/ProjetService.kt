@@ -462,10 +462,35 @@ class ProjetService(
         return saveSuiviMensuel(projetId, requests)
     }
 
+    /**
+     * Retro-compatible : lit desormais depuis la table taches (typePrevision != null).
+     */
+    private fun tacheToPrevisionResponse(tache: com.mikaservices.platform.modules.planning.dto.response.TacheResponse): PrevisionResponse {
+        val assigneNom = tache.assigneA?.let { "${it.prenom} ${it.nom}" }
+        return PrevisionResponse(
+            id = tache.id,
+            projetId = tache.projetId,
+            projetNom = tache.projetNom,
+            semaine = tache.semaine,
+            annee = tache.annee ?: 0,
+            description = tache.titre,
+            type = tache.typePrevision,
+            dateDebut = tache.dateDebut,
+            dateFin = tache.dateFin,
+            dateEcheance = tache.dateEcheance,
+            avancementPct = tache.pourcentageAvancement,
+            statut = tache.statut,
+            priorite = tache.priorite,
+            assigneNom = assigneNom,
+            enRetard = tache.enRetard,
+            createdAt = tache.createdAt
+        )
+    }
+
     @Transactional(readOnly = true)
     fun getPrevisions(projetId: Long): List<PrevisionResponse> {
         requireCanViewProjet(projetId)
-        return previsionRepository.findByProjetId(projetId).map { PrevisionMapper.toResponse(it) }
+        return planningService.findAllByProjet(projetId).map { tacheToPrevisionResponse(it) }
     }
 
     fun createPrevision(projetId: Long, request: PrevisionCreateRequest): PrevisionResponse {
@@ -473,72 +498,49 @@ class ProjetService(
         if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
             throw ForbiddenException("Seul le chef de projet peut ajouter des prévisions pour ce projet.")
         }
-        val prevision = Prevision(
-            projet = projet,
-            semaine = request.semaine,
-            annee = request.annee,
-            description = request.description,
-            type = request.type ?: com.mikaservices.platform.common.enums.TypePrevision.HEBDOMADAIRE,
-            dateDebut = request.dateDebut,
-            dateFin = request.dateFin,
-            avancementPct = request.avancementPct
-        )
-        val saved = previsionRepository.save(prevision)
-        // Synchronisation automatique avec Planning : créer une tâche correspondante
-        try {
-            val (dateDebut, dateFin) = when {
-                request.dateDebut != null && request.dateFin != null -> request.dateDebut to request.dateFin
-                request.semaine != null -> {
-                    val firstDay = LocalDate.of(request.annee, 1, 1).plusDays((request.semaine - 1) * 7L)
-                    firstDay to firstDay.plusDays(6)
-                }
-                else -> null to null
+        val (dateDebut, dateFin) = when {
+            request.dateDebut != null && request.dateFin != null -> request.dateDebut to request.dateFin
+            request.semaine != null -> {
+                val firstDay = LocalDate.of(request.annee, 1, 1).plusDays((request.semaine - 1) * 7L)
+                firstDay to firstDay.plusDays(6)
             }
-            planningService.createTache(
-                TacheCreateRequest(
-                    projetId = projetId,
-                    titre = request.description?.take(300) ?: "Tâche planifiée (S${request.semaine ?: "?"} ${request.annee})",
-                    description = request.description,
-                    dateDebut = dateDebut,
-                    dateFin = dateFin,
-                    dateEcheance = dateFin
-                )
-            )
-            logger.info("Tâche Planning créée automatiquement pour la prévision ${saved.id} (projet $projetId)")
-        } catch (e: Exception) {
-            logger.warn("Impossible de créer la tâche Planning pour la prévision: ${e.message}")
+            else -> null to null
         }
-        return PrevisionMapper.toResponse(saved)
+        val tache = planningService.createTache(
+            TacheCreateRequest(
+                projetId = projetId,
+                titre = request.description?.take(300) ?: "Prevision S${request.semaine ?: "?"} ${request.annee}",
+                description = request.description,
+                dateDebut = dateDebut,
+                dateFin = dateFin,
+                dateEcheance = dateFin,
+                semaine = request.semaine,
+                annee = request.annee,
+                typePrevision = request.type ?: com.mikaservices.platform.common.enums.TypePrevision.HEBDOMADAIRE
+            )
+        )
+        logger.info("Prevision creee via tache ${tache.id} (projet $projetId)")
+        return tacheToPrevisionResponse(tache)
     }
 
     fun updatePrevision(projetId: Long, previsionId: Long, request: PrevisionUpdateRequest): PrevisionResponse {
-        val projet = requireCanViewProjet(projetId)
-        if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
-            throw ForbiddenException("Seul le chef de projet peut modifier les prévisions de ce projet.")
-        }
-        val prevision = previsionRepository.findById(previsionId)
-            .orElseThrow { ResourceNotFoundException("Prévision non trouvée avec l'ID: $previsionId") }
-        if (prevision.projet.id != projetId) throw ResourceNotFoundException("Prévision non rattachée à ce projet")
-        request.semaine?.let { prevision.semaine = it }
-        request.annee?.let { prevision.annee = it }
-        request.description?.let { prevision.description = it }
-        request.type?.let { prevision.type = it }
-        request.dateDebut?.let { prevision.dateDebut = it }
-        request.dateFin?.let { prevision.dateFin = it }
-        request.avancementPct?.let { prevision.avancementPct = it }
-        val saved = previsionRepository.save(prevision)
-        return PrevisionMapper.toResponse(saved)
+        requireCanViewProjet(projetId)
+        val tache = planningService.updateTache(previsionId, com.mikaservices.platform.modules.planning.dto.request.TacheUpdateRequest(
+            titre = request.description?.take(300),
+            description = request.description,
+            dateDebut = request.dateDebut,
+            dateFin = request.dateFin,
+            pourcentageAvancement = request.avancementPct,
+            semaine = request.semaine,
+            annee = request.annee,
+            typePrevision = request.type
+        ))
+        return tacheToPrevisionResponse(tache)
     }
 
     fun deletePrevision(projetId: Long, previsionId: Long) {
-        val projet = requireCanViewProjet(projetId)
-        if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
-            throw ForbiddenException("Seul le chef de projet peut supprimer les prévisions de ce projet.")
-        }
-        val prevision = previsionRepository.findById(previsionId)
-            .orElseThrow { ResourceNotFoundException("Prévision non trouvée avec l'ID: $previsionId") }
-        if (prevision.projet.id != projetId) throw ResourceNotFoundException("Prévision non rattachée à ce projet")
-        previsionRepository.delete(prevision)
+        requireCanViewProjet(projetId)
+        planningService.deleteTache(previsionId)
     }
 
     internal fun getProjetById(id: Long): Projet {

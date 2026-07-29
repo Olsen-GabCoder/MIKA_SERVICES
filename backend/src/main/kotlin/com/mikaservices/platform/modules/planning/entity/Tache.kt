@@ -3,6 +3,7 @@ package com.mikaservices.platform.modules.planning.entity
 import com.mikaservices.platform.common.entity.BaseEntity
 import com.mikaservices.platform.common.enums.Priorite
 import com.mikaservices.platform.common.enums.StatutTache
+import com.mikaservices.platform.common.enums.TypePrevision
 import com.mikaservices.platform.modules.projet.entity.Projet
 import com.mikaservices.platform.modules.user.entity.User
 import jakarta.persistence.*
@@ -12,7 +13,8 @@ import java.time.LocalDate
 @Table(name = "taches", indexes = [
     Index(name = "idx_tache_projet", columnList = "projet_id"),
     Index(name = "idx_tache_statut", columnList = "statut"),
-    Index(name = "idx_tache_assigne", columnList = "assigne_a_id")
+    Index(name = "idx_tache_assigne", columnList = "assigne_a_id"),
+    Index(name = "idx_tache_semaine_annee", columnList = "semaine, annee")
 ])
 class Tache(
     @ManyToOne(fetch = FetchType.LAZY)
@@ -51,7 +53,17 @@ class Tache(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tache_parent_id")
-    var tacheParent: Tache? = null
+    var tacheParent: Tache? = null,
+
+    @Column(name = "semaine")
+    var semaine: Int? = null,
+
+    @Column(name = "annee")
+    var annee: Int? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_prevision", length = 30)
+    var typePrevision: TypePrevision? = null
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

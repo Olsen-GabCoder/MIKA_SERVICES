@@ -14,10 +14,14 @@ import java.time.LocalDate
 @Repository
 interface TacheRepository : JpaRepository<Tache, Long> {
     fun findByProjetId(projetId: Long, pageable: Pageable): Page<Tache>
+    fun findByProjetId(projetId: Long): List<Tache>
     fun findByAssigneAId(userId: Long): List<Tache>
     fun findByStatut(statut: StatutTache): List<Tache>
     fun findByProjetIdAndStatut(projetId: Long, statut: StatutTache): List<Tache>
     fun findByPriorite(priorite: Priorite): List<Tache>
+
+    fun findByProjetIdAndSemaineAndAnnee(projetId: Long, semaine: Int, annee: Int): List<Tache>
+    fun findByProjetIdAndAnnee(projetId: Long, annee: Int): List<Tache>
 
     @Query("SELECT t FROM Tache t WHERE t.assigneA.id = :userId AND t.statut IN ('A_FAIRE', 'EN_COURS', 'EN_ATTENTE')")
     fun findTachesEnCoursParUtilisateur(@Param("userId") userId: Long): List<Tache>
@@ -27,4 +31,18 @@ interface TacheRepository : JpaRepository<Tache, Long> {
 
     @Query("SELECT COUNT(t) FROM Tache t WHERE t.projet.id = :projetId AND t.statut = :statut")
     fun countByProjetIdAndStatut(@Param("projetId") projetId: Long, @Param("statut") statut: StatutTache): Long
+
+    @Query("SELECT t FROM Tache t WHERE t.typePrevision IS NOT NULL AND t.projet.id = :projetId")
+    fun findPrevisionsByProjetId(@Param("projetId") projetId: Long): List<Tache>
+
+    @Query("""
+        SELECT t FROM Tache t WHERE t.typePrevision IS NOT NULL
+        AND t.semaine BETWEEN :semaineDebut AND :semaineFin
+        AND t.annee = :annee
+    """)
+    fun findPrevisionsByWeekRange(
+        @Param("semaineDebut") semaineDebut: Int,
+        @Param("semaineFin") semaineFin: Int,
+        @Param("annee") annee: Int
+    ): List<Tache>
 }

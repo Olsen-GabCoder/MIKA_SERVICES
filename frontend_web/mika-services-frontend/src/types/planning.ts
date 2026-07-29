@@ -25,6 +25,18 @@ export interface UserSummary {
   email: string
 }
 
+export const TypePrevision = {
+  HEBDOMADAIRE: 'HEBDOMADAIRE',
+  MENSUELLE: 'MENSUELLE',
+  TRIMESTRIELLE: 'TRIMESTRIELLE',
+  PRODUCTION: 'PRODUCTION',
+  APPROVISIONNEMENT: 'APPROVISIONNEMENT',
+  RESSOURCES_HUMAINES: 'RESSOURCES_HUMAINES',
+  MATERIEL: 'MATERIEL',
+} as const
+
+export type TypePrevision = (typeof TypePrevision)[keyof typeof TypePrevision]
+
 export interface Tache {
   id: number
   projetId: number
@@ -40,6 +52,9 @@ export interface Tache {
   pourcentageAvancement: number
   enRetard: boolean
   tacheParentId: number | null
+  semaine: number | null
+  annee: number | null
+  typePrevision: TypePrevision | null
   createdAt: string
   updatedAt: string
 }
@@ -48,12 +63,17 @@ export interface TacheCreateRequest {
   projetId: number
   titre: string
   description?: string
+  statut?: StatutTache
   priorite?: Priorite
   assigneAId?: number
   dateDebut?: string
   dateFin?: string
   dateEcheance?: string
   tacheParentId?: number
+  semaine?: number
+  annee?: number
+  typePrevision?: TypePrevision
+  pourcentageAvancement?: number
 }
 
 export interface TacheUpdateRequest {
@@ -66,6 +86,9 @@ export interface TacheUpdateRequest {
   dateFin?: string
   dateEcheance?: string
   pourcentageAvancement?: number
+  semaine?: number
+  annee?: number
+  typePrevision?: TypePrevision
 }
 
 export interface PaginatedResponse<T> {

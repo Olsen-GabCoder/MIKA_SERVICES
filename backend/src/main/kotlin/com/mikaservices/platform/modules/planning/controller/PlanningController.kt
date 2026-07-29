@@ -50,6 +50,27 @@ class PlanningController(
         return ResponseEntity.ok(planningService.findTachesEnRetard())
     }
 
+    @GetMapping("/taches/projet/{projetId}/all")
+    @Operation(summary = "Lister toutes les tâches d'un projet (sans pagination)")
+    fun findAllByProjet(@PathVariable projetId: Long): ResponseEntity<List<TacheResponse>> {
+        return ResponseEntity.ok(planningService.findAllByProjet(projetId))
+    }
+
+    @GetMapping("/taches/projet/{projetId}/previsions")
+    @Operation(summary = "Lister les prévisions (tâches avec typePrevision) d'un projet")
+    fun findPrevisionsByProjet(
+        @PathVariable projetId: Long,
+        @RequestParam(required = false) annee: Int?,
+        @RequestParam(required = false) semaine: Int?
+    ): ResponseEntity<List<TacheResponse>> {
+        val result = when {
+            annee != null && semaine != null -> planningService.findPrevisionsByProjetAndSemaineAndAnnee(projetId, semaine, annee)
+            annee != null -> planningService.findPrevisionsByProjetAndAnnee(projetId, annee)
+            else -> planningService.findPrevisionsByProjet(projetId)
+        }
+        return ResponseEntity.ok(result)
+    }
+
     @PutMapping("/taches/{id}")
     @Operation(summary = "Mettre à jour une tâche")
     fun updateTache(@PathVariable id: Long, @Valid @RequestBody request: TacheUpdateRequest): ResponseEntity<TacheResponse> {

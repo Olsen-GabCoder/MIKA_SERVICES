@@ -380,12 +380,12 @@ export default function PlanningPage() {
     try {
       await dispatch(deleteTache(id)).unwrap()
       toast({ message: t('deleteSuccess'), variant: 'success' })
-      refreshSecondaryData()
     } catch {
       toast({ message: t('deleteError', { defaultValue: 'Erreur lors de la suppression. Veuillez réessayer.' }), variant: 'error' })
-      // Re-fetch pour resynchroniser avec le serveur
-      if (selectedProjetId) dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
     }
+    // Toujours re-fetch pour resynchroniser le cache Workbox avec le serveur
+    if (selectedProjetId) dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
+    refreshSecondaryData()
   }
 
   const handleDeleteMultiple = async (ids: number[]) => {

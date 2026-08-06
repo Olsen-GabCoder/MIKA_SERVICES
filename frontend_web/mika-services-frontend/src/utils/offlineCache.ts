@@ -222,14 +222,28 @@ export function getPlanningCache(projetId: number): CachedPage<unknown> | null {
 export function clearPlanningCache(projetId?: number): void {
   if (typeof window === 'undefined') return
   try {
+    // 1. Purger le cache localStorage
     if (projetId) {
       localStorage.removeItem(`${PLANNING_CACHE_KEY}-${projetId}`)
     } else {
-      // Nettoyer tous les caches planning
       for (let i = localStorage.length - 1; i >= 0; i--) {
         const key = localStorage.key(i)
         if (key?.startsWith(PLANNING_CACHE_KEY)) localStorage.removeItem(key)
       }
+    }
+    // 2. Purger le cache Workbox (Cache API) pour les endpoints planning
+    if ('caches' in window) {
+      caches.open('mika-api-cache').then(async (cache) => {
+        const keys = await cache.keys()
+        for (const request of keys) {
+          const url = request.url
+          if (url.includes('/planning/taches')) {
+            if (!projetId || url.includes(`/projet/${projetId}`)) {
+              await cache.delete(request)
+            }
+          }
+        }
+      }).catch(() => { /* ignore */ })
     }
   } catch { /* ignore */ }
 }

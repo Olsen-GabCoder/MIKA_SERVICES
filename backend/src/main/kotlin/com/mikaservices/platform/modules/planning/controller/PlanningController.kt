@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -21,7 +22,8 @@ class PlanningController(
     private val planningService: PlanningService
 ) {
     @PostMapping("/taches")
-    @Operation(summary = "Créer une tâche")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Créer une tâche (chef de projet ou admin)")
     fun createTache(@Valid @RequestBody request: TacheCreateRequest): ResponseEntity<TacheResponse> {
         return ResponseEntity.status(HttpStatus.CREATED).body(planningService.createTache(request))
     }
@@ -39,13 +41,13 @@ class PlanningController(
     }
 
     @GetMapping("/taches/mes-taches/{userId}")
-    @Operation(summary = "Lister les tâches en cours d'un utilisateur")
+    @Operation(summary = "Lister les tâches en cours d'un utilisateur (propres tâches ou admin)")
     fun findMesTaches(@PathVariable userId: Long): ResponseEntity<List<TacheResponse>> {
         return ResponseEntity.ok(planningService.findMesTaches(userId))
     }
 
     @GetMapping("/taches/en-retard")
-    @Operation(summary = "Lister les tâches en retard")
+    @Operation(summary = "Lister les tâches en retard (filtrées par accès utilisateur)")
     fun findTachesEnRetard(): ResponseEntity<List<TacheResponse>> {
         return ResponseEntity.ok(planningService.findTachesEnRetard())
     }
@@ -72,13 +74,15 @@ class PlanningController(
     }
 
     @PutMapping("/taches/{id}")
-    @Operation(summary = "Mettre à jour une tâche")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Mettre à jour une tâche (chef de projet ou admin)")
     fun updateTache(@PathVariable id: Long, @Valid @RequestBody request: TacheUpdateRequest): ResponseEntity<TacheResponse> {
         return ResponseEntity.ok(planningService.updateTache(id, request))
     }
 
     @DeleteMapping("/taches/{id}")
-    @Operation(summary = "Supprimer une tâche")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Supprimer une tâche (chef de projet ou admin)")
     fun deleteTache(@PathVariable id: Long): ResponseEntity<Map<String, String>> {
         planningService.deleteTache(id)
         return ResponseEntity.ok(mapOf("message" to "Tâche supprimée avec succès"))

@@ -55,6 +55,9 @@ class Tache(
     @JoinColumn(name = "tache_parent_id")
     var tacheParent: Tache? = null,
 
+    @OneToMany(mappedBy = "tacheParent", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+    var tachesEnfants: MutableList<Tache> = mutableListOf(),
+
     @Column(name = "semaine")
     var semaine: Int? = null,
 

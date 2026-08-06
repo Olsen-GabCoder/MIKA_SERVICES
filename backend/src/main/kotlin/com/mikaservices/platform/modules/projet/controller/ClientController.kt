@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -22,7 +23,8 @@ class ClientController(
 ) {
 
     @PostMapping
-    @Operation(summary = "Créer un client")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @Operation(summary = "Créer un client (administrateurs uniquement)")
     fun create(@Valid @RequestBody request: ClientCreateRequest): ResponseEntity<ClientResponse> {
         return ResponseEntity.status(HttpStatus.CREATED).body(clientService.create(request))
     }
@@ -52,13 +54,15 @@ class ClientController(
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Mettre à jour un client")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @Operation(summary = "Mettre à jour un client (administrateurs uniquement)")
     fun update(@PathVariable id: Long, @Valid @RequestBody request: ClientUpdateRequest): ResponseEntity<ClientResponse> {
         return ResponseEntity.ok(clientService.update(id, request))
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Désactiver un client")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @Operation(summary = "Désactiver un client (administrateurs uniquement)")
     fun delete(@PathVariable id: Long): ResponseEntity<Map<String, String>> {
         clientService.delete(id)
         return ResponseEntity.ok(mapOf("message" to "Client désactivé avec succès"))

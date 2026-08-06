@@ -89,6 +89,7 @@ export interface TacheUpdateRequest {
   semaine?: number
   annee?: number
   typePrevision?: TypePrevision
+  tacheParentId?: number
 }
 
 export interface PaginatedResponse<T> {

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { planningApi } from '../../api/planningApi'
 import { handleApiError } from '@/utils/errorHandler'
+import { setPlanningCache, getPlanningCache, clearPlanningCache } from '@/utils/offlineCache'
 import type { Tache, TacheCreateRequest, TacheUpdateRequest, PaginatedResponse } from '../../types/planning'
 
 interface PlanningState {
@@ -29,8 +30,16 @@ const initialState: PlanningState = {
 
 export const fetchTachesByProjet = createAsyncThunk(
   'planning/fetchByProjet',
-  async ({ projetId, page, size }: { projetId: number; page?: number; size?: number }) => {
-    return await planningApi.getTachesByProjet(projetId, page, size)
+  async ({ projetId, page, size }: { projetId: number; page?: number; size?: number }, { rejectWithValue }) => {
+    try {
+      const result = await planningApi.getTachesByProjet(projetId, page, size)
+      setPlanningCache(projetId, result)
+      return result
+    } catch (err) {
+      const cached = getPlanningCache(projetId)
+      if (cached) return cached as PaginatedResponse<Tache>
+      return rejectWithValue(handleApiError(err))
+    }
   }
 )
 
@@ -105,18 +114,24 @@ const planningSlice = createSlice({
     builder.addCase(fetchTachesEnRetard.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
     // createTache
-    builder.addCase(createTache.fulfilled, (state, action) => { state.taches.unshift(action.payload) })
+    builder.addCase(createTache.fulfilled, (state, action) => {
+      state.taches.unshift(action.payload)
+      clearPlanningCache(action.payload.projetId)
+    })
 
     // updateTache
     builder.addCase(updateTache.fulfilled, (state, action) => {
       const idx = state.taches.findIndex(t => t.id === action.payload.id)
       if (idx !== -1) state.taches[idx] = action.payload
       if (state.tacheDetail?.id === action.payload.id) state.tacheDetail = action.payload
+      clearPlanningCache(action.payload.projetId)
     })
 
     // deleteTache
     builder.addCase(deleteTache.fulfilled, (state, action) => {
+      const deleted = state.taches.find(t => t.id === action.payload)
       state.taches = state.taches.filter(t => t.id !== action.payload)
+      if (deleted) clearPlanningCache(deleted.projetId)
     })
   },
 })

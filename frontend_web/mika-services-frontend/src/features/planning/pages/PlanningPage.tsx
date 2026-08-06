@@ -108,6 +108,8 @@ export default function PlanningPage() {
   const [formSemaine, setFormSemaine] = useState<string>('')
   const [formAnnee, setFormAnnee] = useState<string>('')
   const [formTypePrevision, setFormTypePrevision] = useState<string>('')
+  const [formTacheParentId, setFormTacheParentId] = useState<string>('')
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
   // ---------- Data loading ----------
   useEffect(() => {
@@ -250,6 +252,8 @@ export default function PlanningPage() {
     setFormSemaine('')
     setFormAnnee('')
     setFormTypePrevision('')
+    setFormTacheParentId('')
+    setFormErrors({})
     setEditingTache(null)
   }
 
@@ -279,11 +283,28 @@ export default function PlanningPage() {
     setFormSemaine(tache.semaine != null ? String(tache.semaine) : '')
     setFormAnnee(tache.annee != null ? String(tache.annee) : '')
     setFormTypePrevision(tache.typePrevision ?? '')
+    setFormTacheParentId(tache.tacheParentId != null ? String(tache.tacheParentId) : '')
+    setFormErrors({})
     setShowModal(true)
   }
 
   const handleSubmit = async () => {
     if (!selectedProjetId || !formTitre.trim()) return
+
+    // Validation côté client
+    const errors: Record<string, string> = {}
+    if (formDateDebut && formDateFin && formDateFin < formDateDebut) {
+      errors.dateFin = t('validationDateFinAvantDebut', { defaultValue: 'La date de fin ne peut pas être antérieure à la date de début' })
+    }
+    if (formDateDebut && formDateEcheance && formDateEcheance < formDateDebut) {
+      errors.dateEcheance = t('validationDateEcheanceAvantDebut', { defaultValue: "La date d'échéance ne peut pas être antérieure à la date de début" })
+    }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors)
+      return
+    }
+    setFormErrors({})
+
     // Si semaine ou annee renseignee, forcer typePrevision par defaut
     const effectiveTypePrevision = (formTypePrevision as TypePrevision)
       || ((formSemaine || formAnnee) ? TypePrevision.HEBDOMADAIRE : undefined)
@@ -302,6 +323,7 @@ export default function PlanningPage() {
         semaine: formSemaine ? Number(formSemaine) : undefined,
         annee: formAnnee ? Number(formAnnee) : undefined,
         typePrevision: effectiveTypePrevision,
+        tacheParentId: formTacheParentId ? Number(formTacheParentId) : undefined,
       }
       await dispatch(updateTache({ id: editingTache.id, request: req }))
       toast({ message: t('modalUpdateSuccess'), variant: 'success' })
@@ -320,6 +342,7 @@ export default function PlanningPage() {
         annee: formAnnee ? Number(formAnnee) : undefined,
         typePrevision: effectiveTypePrevision,
         pourcentageAvancement: formAvancement || undefined,
+        tacheParentId: formTacheParentId ? Number(formTacheParentId) : undefined,
       }
       await dispatch(createTache(req))
       toast({ message: t('modalCreateSuccess'), variant: 'success' })
@@ -610,6 +633,30 @@ export default function PlanningPage() {
             </select>
           </div>
 
+          {/* Tâche parente */}
+          {taches.length > 0 && (
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--db-t3)' }}>
+                {t('modalTacheParente', { defaultValue: 'Tâche parente' })}
+              </label>
+              <select
+                value={formTacheParentId}
+                onChange={(e) => setFormTacheParentId(e.target.value)}
+                className="w-full px-4 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
+                style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
+              >
+                <option value="">{t('modalTacheParenteNone', { defaultValue: 'Aucune (tâche principale)' })}</option>
+                {taches
+                  .filter((t) => t.id !== editingTache?.id)
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.titre}{t.semaine ? ` (S${t.semaine})` : ''}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
+
           {/* Dates : debut, fin, echeance */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
@@ -617,7 +664,7 @@ export default function PlanningPage() {
               <input
                 type="date"
                 value={formDateDebut}
-                onChange={(e) => setFormDateDebut(e.target.value)}
+                onChange={(e) => { setFormDateDebut(e.target.value); setFormErrors((prev) => { const { dateFin, dateEcheance, ...rest } = prev; return rest }) }}
                 className="w-full px-3 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
                 style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
               />
@@ -627,20 +674,22 @@ export default function PlanningPage() {
               <input
                 type="date"
                 value={formDateFin}
-                onChange={(e) => setFormDateFin(e.target.value)}
-                className="w-full px-3 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-                style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
+                onChange={(e) => { setFormDateFin(e.target.value); setFormErrors((prev) => { const { dateFin, ...rest } = prev; return rest }) }}
+                className={`w-full px-3 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40 ${formErrors.dateFin ? 'border-red-500' : ''}`}
+                style={{ background: 'var(--db-subtle)', borderColor: formErrors.dateFin ? undefined : 'var(--db-border)', color: 'var(--db-t1)' }}
               />
+              {formErrors.dateFin && <p className="text-xs text-red-500 mt-1">{formErrors.dateFin}</p>}
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--db-t3)' }}>{t('modalDateEcheance')}</label>
               <input
                 type="date"
                 value={formDateEcheance}
-                onChange={(e) => setFormDateEcheance(e.target.value)}
-                className="w-full px-3 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-                style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
+                onChange={(e) => { setFormDateEcheance(e.target.value); setFormErrors((prev) => { const { dateEcheance, ...rest } = prev; return rest }) }}
+                className={`w-full px-3 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40 ${formErrors.dateEcheance ? 'border-red-500' : ''}`}
+                style={{ background: 'var(--db-subtle)', borderColor: formErrors.dateEcheance ? undefined : 'var(--db-border)', color: 'var(--db-t1)' }}
               />
+              {formErrors.dateEcheance && <p className="text-xs text-red-500 mt-1">{formErrors.dateEcheance}</p>}
             </div>
           </div>
 

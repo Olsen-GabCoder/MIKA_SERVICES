@@ -1,6 +1,7 @@
 package com.mikaservices.platform.modules.planning.service
 
 import com.mikaservices.platform.common.enums.StatutTache
+import com.mikaservices.platform.common.exception.BadRequestException
 import com.mikaservices.platform.common.exception.ForbiddenException
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
 import com.mikaservices.platform.modules.planning.dto.request.TacheCreateRequest
@@ -35,6 +36,7 @@ class PlanningService(
         if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
             throw ForbiddenException("Seul le chef de projet peut créer des tâches pour ce projet.")
         }
+        validateDates(request.dateDebut, request.dateFin, request.dateEcheance)
 
         val tache = Tache(
             projet = projet, titre = request.titre,
@@ -73,12 +75,27 @@ class PlanningService(
 
     @Transactional(readOnly = true)
     fun findMesTaches(userId: Long): List<TacheResponse> {
-        return tacheRepository.findTachesEnCoursParUtilisateur(userId).map { TacheMapper.toResponse(it) }
+        // Sécurité : un utilisateur ne peut voir que ses propres tâches, sauf admin
+        val currentUserId = currentUserService.getCurrentUserId()
+        if (currentUserId != userId && !currentUserService.hasGlobalAdminRole()) {
+            throw ForbiddenException("Vous ne pouvez consulter que vos propres tâches")
+        }
+        val statuts = listOf(StatutTache.A_FAIRE, StatutTache.EN_COURS, StatutTache.EN_ATTENTE)
+        return tacheRepository.findTachesEnCoursParUtilisateur(userId, statuts).map { TacheMapper.toResponse(it) }
     }
 
     @Transactional(readOnly = true)
     fun findTachesEnRetard(): List<TacheResponse> {
-        return tacheRepository.findTachesEnRetard(LocalDate.now()).map { TacheMapper.toResponse(it) }
+        val statutsEnRetard = listOf(StatutTache.A_FAIRE, StatutTache.EN_COURS)
+        val allEnRetard = tacheRepository.findTachesEnRetard(LocalDate.now(), statutsEnRetard)
+        // Admin voit tout, sinon filtrer par projets dont l'utilisateur est responsable ou assigné
+        if (currentUserService.hasGlobalAdminRole()) {
+            return allEnRetard.map { TacheMapper.toResponse(it) }
+        }
+        val currentUserId = currentUserService.getCurrentUserId()
+        return allEnRetard
+            .filter { it.projet.responsableProjet?.id == currentUserId || it.assigneA?.id == currentUserId }
+            .map { TacheMapper.toResponse(it) }
     }
 
     fun updateTache(id: Long, request: TacheUpdateRequest): TacheResponse {
@@ -104,6 +121,21 @@ class PlanningService(
         request.semaine?.let { tache.semaine = it }
         request.annee?.let { tache.annee = it }
         request.typePrevision?.let { tache.typePrevision = it }
+
+        request.tacheParentId?.let { parentId ->
+            if (parentId == tache.id) {
+                throw BadRequestException("Une tâche ne peut pas être son propre parent")
+            }
+            tache.tacheParent = tacheRepository.findById(parentId)
+                .orElseThrow { ResourceNotFoundException("Tâche parente non trouvée avec l'ID: $parentId") }
+        }
+
+        // Valider la cohérence des dates après application des modifications
+        validateDates(
+            request.dateDebut ?: tache.dateDebut,
+            request.dateFin ?: tache.dateFin,
+            request.dateEcheance ?: tache.dateEcheance
+        )
 
         // Si terminée, mettre avancement à 100
         if (tache.statut == StatutTache.TERMINEE) {
@@ -147,6 +179,15 @@ class PlanningService(
             throw ForbiddenException("Seul le chef de projet peut supprimer les tâches de ce projet.")
         }
         tacheRepository.delete(tache)
-        logger.info("Tâche supprimée: ${tache.titre}")
+        logger.info("Tâche supprimée: ${tache.titre} (+ ${tache.tachesEnfants.size} sous-tâches)")
+    }
+
+    private fun validateDates(dateDebut: LocalDate?, dateFin: LocalDate?, dateEcheance: LocalDate?) {
+        if (dateDebut != null && dateFin != null && dateFin.isBefore(dateDebut)) {
+            throw BadRequestException("La date de fin ne peut pas être antérieure à la date de début")
+        }
+        if (dateDebut != null && dateEcheance != null && dateEcheance.isBefore(dateDebut)) {
+            throw BadRequestException("La date d'échéance ne peut pas être antérieure à la date de début")
+        }
     }
 }

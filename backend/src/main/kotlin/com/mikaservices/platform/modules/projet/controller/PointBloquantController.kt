@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -23,7 +24,8 @@ class PointBloquantController(
 ) {
 
     @PostMapping
-    @Operation(summary = "Créer un point bloquant")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Créer un point bloquant (chef de projet ou admin)")
     fun create(@Valid @RequestBody request: PointBloquantCreateRequest): ResponseEntity<PointBloquantResponse> {
         return ResponseEntity.status(HttpStatus.CREATED).body(pointBloquantService.create(request))
     }
@@ -53,13 +55,15 @@ class PointBloquantController(
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Mettre à jour un point bloquant")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Mettre à jour un point bloquant (chef de projet ou admin)")
     fun update(@PathVariable id: Long, @Valid @RequestBody request: PointBloquantUpdateRequest): ResponseEntity<PointBloquantResponse> {
         return ResponseEntity.ok(pointBloquantService.update(id, request))
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Supprimer un point bloquant")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Supprimer un point bloquant (chef de projet ou admin)")
     fun delete(@PathVariable id: Long): ResponseEntity<Map<String, String>> {
         pointBloquantService.delete(id)
         return ResponseEntity.ok(mapOf("message" to "Point bloquant supprimé avec succès"))

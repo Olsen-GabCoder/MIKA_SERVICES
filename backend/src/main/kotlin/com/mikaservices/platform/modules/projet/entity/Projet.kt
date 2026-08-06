@@ -8,6 +8,7 @@ import com.mikaservices.platform.common.enums.StatutProjet
 import com.mikaservices.platform.common.enums.TypeProjet
 import com.mikaservices.platform.common.enums.ZoneClimatique
 import com.mikaservices.platform.common.enums.MotifArretChantier
+import com.mikaservices.platform.modules.planning.entity.Tache
 import com.mikaservices.platform.modules.user.entity.User
 import jakarta.persistence.*
 import java.math.BigDecimal
@@ -191,23 +192,26 @@ class Projet(
     )
     var partenaires: MutableSet<Partenaire> = mutableSetOf(),
 
-    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
     var caPrevisionnelsRealises: MutableList<CAPrevisionnelRealise> = mutableListOf(),
 
-    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
     var pointsBloquants: MutableList<PointBloquant> = mutableListOf(),
 
-    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
     var previsions: MutableList<Prevision> = mutableListOf(),
 
-    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
     var revisionsBudget: MutableList<RevisionBudget> = mutableListOf(),
 
-    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
     var avancementEtudes: MutableList<AvancementEtudeProjet> = mutableListOf(),
 
-    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var dqeChapitres: MutableList<DqeChapitre> = mutableListOf()
+    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+    var dqeChapitres: MutableList<DqeChapitre> = mutableListOf(),
+
+    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+    var taches: MutableList<Tache> = mutableListOf()
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

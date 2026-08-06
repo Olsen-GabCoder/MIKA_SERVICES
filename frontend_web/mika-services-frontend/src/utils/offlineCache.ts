@@ -5,6 +5,7 @@
  */
 
 const PROJETS_CACHE_KEY = 'mika-offline-cache-projets'
+const PLANNING_CACHE_KEY = 'mika-offline-cache-planning'
 const USERS_CACHE_KEY = 'mika-offline-cache-users'
 const DASHBOARD_CACHE_KEY = 'mika-offline-cache-dashboard'
 const CURRENT_USER_CACHE_KEY = 'mika-offline-cache-current-user'
@@ -197,6 +198,40 @@ export function getCurrentUserCache(): unknown | null {
 export function clearCurrentUserCache(): void {
   if (typeof window === 'undefined') return
   try { localStorage.removeItem(CURRENT_USER_CACHE_KEY) } catch { /* ignore */ }
+}
+
+// --- Planning cache ---
+
+export function setPlanningCache(projetId: number, data: CachedPage<unknown>): void {
+  if (typeof window === 'undefined') return
+  try {
+    const stored: StoredCache<unknown> = { data, cachedAt: Date.now() }
+    localStorage.setItem(`${PLANNING_CACHE_KEY}-${projetId}`, JSON.stringify(stored))
+  } catch { /* quota exceeded */ }
+}
+
+export function getPlanningCache(projetId: number): CachedPage<unknown> | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(`${PLANNING_CACHE_KEY}-${projetId}`)
+    if (!raw) return null
+    return parseStored(raw)
+  } catch { return null }
+}
+
+export function clearPlanningCache(projetId?: number): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (projetId) {
+      localStorage.removeItem(`${PLANNING_CACHE_KEY}-${projetId}`)
+    } else {
+      // Nettoyer tous les caches planning
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i)
+        if (key?.startsWith(PLANNING_CACHE_KEY)) localStorage.removeItem(key)
+      }
+    }
+  } catch { /* ignore */ }
 }
 
 /** Durées en ms pour le cache « Réseau » (5 min, 30 min, 1 h). */

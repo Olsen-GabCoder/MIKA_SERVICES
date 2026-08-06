@@ -122,7 +122,8 @@ class ProjetController(
     }
 
     @RequestMapping(value = ["/{id}"], method = [RequestMethod.PUT, RequestMethod.POST])
-    @Operation(summary = "Mettre à jour un projet (PUT ou POST pour compatibilité)")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Mettre à jour un projet (chef de projet responsable ou admin)")
     fun update(@PathVariable id: Long, @Valid @RequestBody request: ProjetUpdateRequest): ResponseEntity<ProjetResponse> {
         return ResponseEntity.ok<ProjetResponse>(projetService.update(id, request))
     }
@@ -142,6 +143,7 @@ class ProjetController(
     }
 
     @PutMapping("/{id}/avancement-etudes")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
     @Operation(summary = "Mettre à jour l'avancement des études par phase")
     fun saveAvancementEtudes(
         @PathVariable id: Long,
@@ -157,6 +159,7 @@ class ProjetController(
     }
 
     @PostMapping("/{id}/previsions")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
     @Operation(summary = "Créer une prévision (tâche planifiée)")
     fun createPrevision(
         @PathVariable id: Long,
@@ -166,6 +169,7 @@ class ProjetController(
     }
 
     @PutMapping("/{id}/previsions/{previsionId}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
     @Operation(summary = "Modifier une prévision")
     fun updatePrevision(
         @PathVariable id: Long,
@@ -176,6 +180,7 @@ class ProjetController(
     }
 
     @DeleteMapping("/{id}/previsions/{previsionId}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
     @Operation(summary = "Supprimer une prévision")
     fun deletePrevision(
         @PathVariable id: Long,
@@ -192,6 +197,7 @@ class ProjetController(
     }
 
     @PutMapping("/{id}/suivi-mensuel")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
     @Operation(summary = "Mettre à jour le tableau de suivi mensuel")
     fun saveSuiviMensuel(
         @PathVariable id: Long,
@@ -201,6 +207,7 @@ class ProjetController(
     }
 
     @PutMapping("/{id}/suivi-mensuel/replace")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
     @Operation(summary = "Remplacer le tableau de suivi mensuel (mode manuel)")
     fun replaceSuiviMensuel(
         @PathVariable id: Long,

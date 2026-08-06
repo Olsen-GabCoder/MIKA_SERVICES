@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -26,7 +27,8 @@ class DqeController(
     // ── Chapitres ─────────────────────────────────────────────────────────
 
     @PostMapping("/chapitres")
-    @Operation(summary = "Créer un chapitre DQE")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Créer un chapitre DQE (chef de projet ou admin)")
     fun createChapitre(@Valid @RequestBody request: DqeChapitreCreateRequest): ResponseEntity<DqeChapitreResponse> {
         return ResponseEntity.status(HttpStatus.CREATED).body(dqeService.createChapitre(request))
     }
@@ -50,19 +52,22 @@ class DqeController(
     }
 
     @PutMapping("/chapitres/{id}")
-    @Operation(summary = "Mettre à jour un chapitre DQE")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Mettre à jour un chapitre DQE (chef de projet ou admin)")
     fun updateChapitre(@PathVariable id: Long, @Valid @RequestBody request: DqeChapitreUpdateRequest): ResponseEntity<DqeChapitreResponse> {
         return ResponseEntity.ok(dqeService.updateChapitre(id, request))
     }
 
     @DeleteMapping("/chapitres/{id}")
-    @Operation(summary = "Supprimer un chapitre DQE (et toutes ses lignes)")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Supprimer un chapitre DQE et ses lignes (chef de projet ou admin)")
     fun deleteChapitre(@PathVariable id: Long): ResponseEntity<Map<String, String>> {
         dqeService.deleteChapitre(id)
         return ResponseEntity.ok(mapOf("message" to "Chapitre DQE supprimé avec succès"))
     }
 
     @PutMapping("/chapitres/reorder")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
     @Operation(summary = "Réordonner les chapitres DQE d'un projet")
     fun reorderChapitres(@RequestBody items: List<DqeReorderItem>): ResponseEntity<Map<String, String>> {
         dqeService.reorderChapitres(items)
@@ -72,7 +77,8 @@ class DqeController(
     // ── Lignes ────────────────────────────────────────────────────────────
 
     @PostMapping("/lignes")
-    @Operation(summary = "Créer une ligne DQE")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Créer une ligne DQE (chef de projet ou admin)")
     fun createLigne(@Valid @RequestBody request: DqeLigneCreateRequest): ResponseEntity<DqeLigneResponse> {
         return ResponseEntity.status(HttpStatus.CREATED).body(dqeService.createLigne(request))
     }
@@ -90,19 +96,22 @@ class DqeController(
     }
 
     @PutMapping("/lignes/{id}")
-    @Operation(summary = "Mettre à jour une ligne DQE")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Mettre à jour une ligne DQE (chef de projet ou admin)")
     fun updateLigne(@PathVariable id: Long, @Valid @RequestBody request: DqeLigneUpdateRequest): ResponseEntity<DqeLigneResponse> {
         return ResponseEntity.ok(dqeService.updateLigne(id, request))
     }
 
     @DeleteMapping("/lignes/{id}")
-    @Operation(summary = "Supprimer une ligne DQE")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Supprimer une ligne DQE (chef de projet ou admin)")
     fun deleteLigne(@PathVariable id: Long): ResponseEntity<Map<String, String>> {
         dqeService.deleteLigne(id)
         return ResponseEntity.ok(mapOf("message" to "Ligne DQE supprimée avec succès"))
     }
 
     @PutMapping("/lignes/reorder")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
     @Operation(summary = "Réordonner les lignes DQE d'un chapitre")
     fun reorderLignes(@RequestBody items: List<DqeReorderItem>): ResponseEntity<Map<String, String>> {
         dqeService.reorderLignes(items)

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquette Login — MIKA Services</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #0a0f1a; color: #fff; overflow-x: hidden; }
+
+  /* ═══ LAYOUT ═══ */
+  .login-page {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ═══ LEFT — Slideshow photos ═══ */
+  .login-left {
+    flex: 1 1 55%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1.2s ease-in-out;
+    will-change: opacity;
+  }
+  .slide.active { opacity: 1; }
+
+  .slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* Overlay gradient bas */
+  .login-left::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0%,
+      rgba(0,0,0,0) 40%,
+      rgba(0,0,0,0.35) 65%,
+      rgba(0,0,0,0.75) 100%
+    );
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* Overlay gradient côté droit (fondu vers le formulaire) */
+  .login-left::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(10,15,26,0.95));
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  /* Contenu en bas à gauche */
+  .left-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 4;
+    padding: 0 48px 48px;
+  }
+
+  .left-logo img {
+    width: 160px;
+    margin-bottom: 20px;
+    filter: brightness(0) invert(1) drop-shadow(0 2px 8px rgba(0,0,0,.5));
+  }
+
+  .left-slogan {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #fff;
+    text-shadow: 0 2px 12px rgba(0,0,0,.5);
+    max-width: 500px;
+    margin-bottom: 6px;
+    min-height: 70px;
+  }
+
+  .left-slogan .highlight {
+    color: #F47C20;
+  }
+
+  .left-sub {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,.7);
+    text-shadow: 0 1px 6px rgba(0,0,0,.5);
+    margin-bottom: 24px;
+    min-height: 22px;
+  }
+
+  /* Dots */
+  .slide-dots {
+    display: flex;
+    gap: 10px;
+  }
+  .slide-dot {
+    width: 32px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,.3);
+    cursor: pointer;
+    transition: all .4s ease;
+  }
+  .slide-dot.active {
+    background: #F47C20;
+    width: 48px;
+  }
+  .slide-dot:hover { background: rgba(255,255,255,.6); }
+  .slide-dot.active:hover { background: #F47C20; }
+
+  /* ═══ RIGHT — Formulaire ═══ */
+  .login-right {
+    flex: 1 1 45%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0d1320 0%, #111927 50%, #0f1722 100%);
+    position: relative;
+    z-index: 5;
+    padding: 40px;
+  }
+
+  /* Subtil glow en arrière */
+  .login-right::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: -60px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(244,124,32,.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .form-card {
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+  }
+
+  .form-greeting {
+    font-size: 0.85rem;
+    color: rgba(244,124,32,.7);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .form-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .form-sub {
+    font-size: 0.9rem;
+    color: rgba(200,216,234,.5);
+    margin-bottom: 32px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(200,216,234,.6);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-input-wrap {
+    position: relative;
+  }
+
+  .form-input-wrap .icon {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 48px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(244,124,32,.5);
+    font-size: 1.1rem;
+    pointer-events: none;
+    border-right: 1px solid rgba(255,255,255,.06);
+    background: rgba(244,124,32,.04);
+    border-radius: 10px 0 0 10px;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 14px 16px 14px 60px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    transition: all .3s ease;
+  }
+
+  .form-input::placeholder { color: rgba(200,216,234,.25); }
+  .form-input:focus {
+    border-color: rgba(244,124,32,.5);
+    background: rgba(244,124,32,.04);
+    box-shadow: 0 0 0 3px rgba(244,124,32,.1);
+  }
+
+  .form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: rgba(200,216,234,.5);
+  }
+
+  .remember-me input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #F47C20;
+  }
+
+  .forgot-link {
+    font-size: 0.85rem;
+    color: rgba(244,124,32,.65);
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .forgot-link:hover { color: #F47C20; }
+
+  .btn-login {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #F47C20 0%, #e06010 100%);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all .3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .btn-login:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(244,124,32,.3);
+  }
+
+  .btn-login::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,.15) 50%, transparent 60%);
+    transform: translateX(-100%);
+    transition: transform .6s ease;
+  }
+  .btn-login:hover::after { transform: translateX(100%); }
+
+  .security-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,.06);
+  }
+
+  .security-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34,197,94,.4);
+  }
+
+  .security-text {
+    font-size: 0.75rem;
+    color: rgba(200,216,234,.35);
+    letter-spacing: 0.5px;
+  }
+
+  .footer-copy {
+    text-align: center;
+    margin-top: 32px;
+    font-size: 0.72rem;
+    color: rgba(200,216,234,.2);
+  }
+
+  /* ═══ RESPONSIVE ═══ */
+  @media (max-width: 1024px) {
+    .login-page { flex-direction: column; }
+    .login-left {
+      flex: none;
+      height: 35vh;
+      min-height: 240px;
+    }
+    .login-left::before { display: none; }
+    .login-left::after {
+      background: linear-gradient(
+        to bottom,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0) 30%,
+        rgba(10,15,26,0.85) 85%,
+        rgba(10,15,26,1) 100%
+      );
+    }
+    .left-content { padding: 0 24px 24px; }
+    .left-slogan { font-size: 1.3rem; min-height: auto; }
+    .left-sub { font-size: 0.82rem; margin-bottom: 16px; }
+    .left-logo img { width: 120px; margin-bottom: 12px; }
+    .login-right { flex: 1; padding: 24px; }
+    .form-title { font-size: 1.4rem; }
+  }
+
+  @media (max-width: 640px) {
+    .login-left { height: 28vh; min-height: 200px; }
+    .left-content { padding: 0 16px 16px; }
+    .left-slogan { font-size: 1.1rem; }
+    .slide-dots { gap: 6px; }
+    .slide-dot { width: 24px; height: 3px; }
+    .slide-dot.active { width: 36px; }
+    .login-right { padding: 20px 16px; }
+    .form-card { max-width: 100%; }
+  }
+
+  /* ═══ BADGE MAQUETTE ═══ */
+  .maquette-badge {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 999;
+    background: rgba(244,124,32,.9);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  }
+</style>
+</head>
+<body>
+
+<div class="maquette-badge">MAQUETTE — Proposition Login</div>
+
+<div class="login-page">
+  <!-- LEFT — Slideshow -->
+  <div class="login-left">
+    <div class="slide active">
+      <img src="../../soutenance-mika/app/dist/images/mika-route-perspective.jpg" alt="Route perspective">
+    </div>
+    <div class="slide">
+      <img src="../../soutenance-mika/app/dist/images/mika-equipe-marche.jpg" alt="Equipe en marche">
+    </div>
+    <div class="slide">
+      <img src="../../soutenance-mika/app/dist/images/mika-ouvrier-macon.jpg" alt="Ouvrier macon">
+    </div>
+    <div class="slide">
+      <img src="../../soutenance-mika/app/dist/images/mika-route-courbe-1.jpg" alt="Route courbe">
+    </div>
+    <div class="slide">
+      <img src="../../soutenance-mika/app/dist/images/mika-visite-officielle.jpg" alt="Visite officielle">
+    </div>
+
+    <div class="left-content">
+      <div class="left-logo">
+        <img src="public/Logo_mika_services.png" alt="MIKA Services">
+      </div>
+      <div class="left-slogan" id="slogan">
+        Construire <span class="highlight">l'avenir</span>,<br>route par route.
+      </div>
+      <div class="left-sub" id="sub-slogan">
+        Infrastructure, BTP & ingenierie au Gabon
+      </div>
+      <div class="slide-dots" id="dots">
+        <div class="slide-dot active" data-index="0"></div>
+        <div class="slide-dot" data-index="1"></div>
+        <div class="slide-dot" data-index="2"></div>
+        <div class="slide-dot" data-index="3"></div>
+        <div class="slide-dot" data-index="4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT — Formulaire -->
+  <div class="login-right">
+    <div class="form-card">
+      <div class="form-greeting">Bienvenue</div>
+      <h2 class="form-title">Connexion</h2>
+      <p class="form-sub">Accedez a votre espace de travail MIKA Services</p>
+
+      <form onsubmit="return false">
+        <div class="form-group">
+          <label class="form-label">Adresse email</label>
+          <div class="form-input-wrap">
+            <div class="icon">&#9993;</div>
+            <input type="email" class="form-input" placeholder="nom@mikaservices.com">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <div class="form-input-wrap">
+            <div class="icon">&#128274;</div>
+            <input type="password" class="form-input" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;">
+          </div>
+        </div>
+
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox"> Se souvenir de moi
+          </label>
+          <a href="#" class="forgot-link">Mot de passe oublie ?</a>
+        </div>
+
+        <button type="submit" class="btn-login">Se connecter</button>
+      </form>
+
+      <div class="security-badge">
+        <div class="security-dot"></div>
+        <span class="security-text">Connexion securisee — TLS 1.3 + 2FA</span>
+      </div>
+
+      <p class="footer-copy">&copy; 2026 MIKA Services. Tous droits reserves.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dots = document.querySelectorAll('.slide-dot');
+  const sloganEl = document.getElementById('slogan');
+  const subEl = document.getElementById('sub-slogan');
+
+  const slogans = [
+    { text: 'Construire <span class="highlight">l\'avenir</span>,<br>route par route.', sub: 'Infrastructure, BTP & ingenierie au Gabon' },
+    { text: 'Une equipe,<br>une <span class="highlight">vision</span>.', sub: 'Ensemble sur chaque chantier' },
+    { text: 'L\'excellence<br>au bout des <span class="highlight">mains</span>.', sub: 'Savoir-faire et precision sur le terrain' },
+    { text: 'Des routes qui<br><span class="highlight">connectent</span> le Gabon.', sub: 'Amenagement routier & signalisation' },
+    { text: 'Batir avec<br><span class="highlight">confiance</span>.', sub: 'Partenaire de reference des grands projets' },
+  ];
+
+  let current = 0;
+  let interval;
+
+  function goTo(index) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = index;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    sloganEl.innerHTML = slogans[current].text;
+    subEl.textContent = slogans[current].sub;
+  }
+
+  function next() {
+    goTo((current + 1) % slides.length);
+  }
+
+  function startAuto() {
+    interval = setInterval(next, 6000);
+  }
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      clearInterval(interval);
+      goTo(Number(dot.dataset.index));
+      startAuto();
+    });
+  });
+
+  startAuto();
+</script>
+
+</body>
+</html>

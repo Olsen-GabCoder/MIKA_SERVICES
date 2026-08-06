@@ -15,9 +15,6 @@ export interface TachesTableProps {
   onEdit: (tache: Tache) => void
   onDelete: (id: number) => void
   onDeleteMultiple?: (ids: number[]) => void
-  totalPages: number
-  currentPage: number
-  onPageChange: (page: number) => void
   colSpanClass?: string
   title?: string
   filterStatuts?: StatutTache[]
@@ -43,7 +40,6 @@ export function TachesTable({
   taches, loading, canEdit, isOnline,
   filterStatut, onFilterChange,
   onStatusChange, onEdit, onDelete, onDeleteMultiple,
-  totalPages, currentPage, onPageChange,
   colSpanClass = 'col-span-12 lg:col-span-6',
   title,
   filterStatuts,
@@ -358,25 +354,6 @@ export function TachesTable({
         </div>
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-1.5 pt-4 mt-4 border-t" style={{ borderColor: 'var(--db-border)' }}>
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => onPageChange(i)}
-              className="min-w-[32px] h-8 px-2.5 rounded-lg text-xs font-semibold db-num transition-all duration-150"
-              style={{
-                background: currentPage === i ? 'var(--db-t1)' : 'transparent',
-                color: currentPage === i ? 'var(--db-card)' : 'var(--db-t3)',
-              }}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

@@ -18,7 +18,12 @@ export const planningApi = {
     } catch {
       if (USE_MOCK_FALLBACK) return Promise.resolve(getMockTachesByProjet(projetId, page, size))
       throw new Error('Erreur chargement tâches')
-    } 
+    }
+  },
+
+  getAllTachesByProjet: async (projetId: number): Promise<Tache[]> => {
+    const response = await api.get(API_ENDPOINTS.PLANNING.ALL_BY_PROJET(projetId))
+    return response.data
   },
 
   getTacheById: async (id: number): Promise<Tache> => {

@@ -67,7 +67,7 @@ export default function PlanningPage() {
 
   const currentUser = useAppSelector((s) => s.auth.user)
   const accessToken = useAppSelector((s) => s.auth.accessToken)
-  const { taches, tachesEnRetard, mesTaches, loading, totalPages, currentPage } = useAppSelector((s) => s.planning)
+  const { taches, tachesEnRetard, mesTaches, loading } = useAppSelector((s) => s.planning)
   const allProjets = useAppSelector((s) => s.projet.projets)
 
   // Persister le projet sélectionné dans l'URL (?projet=14) pour survivre au HMR et refresh
@@ -486,9 +486,6 @@ export default function PlanningPage() {
               onEdit={openEdit}
               onDelete={handleDelete}
               onDeleteMultiple={handleDeleteMultiple}
-              totalPages={totalPages}
-              currentPage={currentPage}
-              onPageChange={(page) => dispatch(fetchTachesByProjet({ projetId: selectedProjetId, page }))}
               colSpanClass="col-span-12 lg:col-span-6"
               title={t('tachesActivesTitle')}
               filterStatuts={[StatutTache.A_FAIRE, StatutTache.EN_COURS, StatutTache.EN_ATTENTE]}
@@ -504,9 +501,6 @@ export default function PlanningPage() {
               onEdit={openEdit}
               onDelete={handleDelete}
               onDeleteMultiple={handleDeleteMultiple}
-              totalPages={0}
-              currentPage={0}
-              onPageChange={() => {}}
               colSpanClass="col-span-12 lg:col-span-6"
               title={t('tachesHistoriqueTitle')}
               filterStatuts={[StatutTache.TERMINEE, StatutTache.ANNULEE]}
@@ -553,18 +547,21 @@ export default function PlanningPage() {
             <input
               type="text"
               value={formTitre}
-              onChange={(e) => { setFormTitre(e.target.value); setShowSuggestions(true) }}
+              onChange={(e) => setFormTitre(e.target.value)}
               onFocus={() => setShowSuggestions(true)}
               className="w-full px-4 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
               style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
               placeholder={t('modalTitrePlaceholder')}
               autoFocus
             />
-            {showSuggestions && suggestionGroups.length > 0 && (
-              <div
-                className="absolute z-50 top-full left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-xl shadow-xl border"
-                style={{ background: 'var(--db-card)', borderColor: 'var(--db-border)' }}
-              >
+            <div
+              className="absolute z-50 top-full left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-xl shadow-xl border"
+              style={{
+                background: 'var(--db-card)',
+                borderColor: 'var(--db-border)',
+                display: showSuggestions && suggestionGroups.length > 0 ? 'block' : 'none',
+              }}
+            >
                 {suggestionGroups.map((g) => (
                   <div key={g.label}>
                     <div
@@ -598,7 +595,6 @@ export default function PlanningPage() {
                   </div>
                 )}
               </div>
-            )}
           </div>
 
           {/* Description */}

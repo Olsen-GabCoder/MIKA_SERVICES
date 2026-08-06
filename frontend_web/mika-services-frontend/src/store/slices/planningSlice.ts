@@ -1,17 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { planningApi } from '../../api/planningApi'
 import { handleApiError } from '@/utils/errorHandler'
-import { setPlanningCache, getPlanningCache, clearPlanningCache } from '@/utils/offlineCache'
-import type { Tache, TacheCreateRequest, TacheUpdateRequest, PaginatedResponse } from '../../types/planning'
+import { clearPlanningCache } from '@/utils/offlineCache'
+import type { Tache, TacheCreateRequest, TacheUpdateRequest } from '../../types/planning'
 
 interface PlanningState {
   taches: Tache[]
   tacheDetail: Tache | null
   mesTaches: Tache[]
   tachesEnRetard: Tache[]
-  totalElements: number
-  totalPages: number
-  currentPage: number
   loading: boolean
   loadingMesTaches: boolean
   loadingEnRetard: boolean
@@ -23,9 +20,6 @@ const initialState: PlanningState = {
   tacheDetail: null,
   mesTaches: [],
   tachesEnRetard: [],
-  totalElements: 0,
-  totalPages: 0,
-  currentPage: 0,
   loading: false,
   loadingMesTaches: false,
   loadingEnRetard: false,
@@ -34,14 +28,10 @@ const initialState: PlanningState = {
 
 export const fetchTachesByProjet = createAsyncThunk(
   'planning/fetchByProjet',
-  async ({ projetId, page, size }: { projetId: number; page?: number; size?: number }, { rejectWithValue }) => {
+  async ({ projetId }: { projetId: number }, { rejectWithValue }) => {
     try {
-      const result = await planningApi.getTachesByProjet(projetId, page, size)
-      setPlanningCache(projetId, result)
-      return result
+      return await planningApi.getAllTachesByProjet(projetId)
     } catch (err) {
-      const cached = getPlanningCache(projetId)
-      if (cached) return cached as PaginatedResponse<Tache>
       return rejectWithValue(handleApiError(err))
     }
   }
@@ -95,14 +85,10 @@ const planningSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // fetchTachesByProjet
+    // fetchTachesByProjet (toutes les tâches, sans pagination)
     builder.addCase(fetchTachesByProjet.pending, (state) => { state.loading = true; state.error = null })
     builder.addCase(fetchTachesByProjet.fulfilled, (state, action) => {
-      const data = action.payload as PaginatedResponse<Tache>
-      state.taches = data.content
-      state.totalElements = data.totalElements
-      state.totalPages = data.totalPages
-      state.currentPage = data.number
+      state.taches = action.payload
       state.loading = false
     })
     builder.addCase(fetchTachesByProjet.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
@@ -129,7 +115,6 @@ const planningSlice = createSlice({
       const idx = state.taches.findIndex(t => t.id === updated.id)
       if (idx !== -1) state.taches[idx] = updated
       if (state.tacheDetail?.id === updated.id) state.tacheDetail = updated
-      // Mettre à jour aussi mesTaches et tachesEnRetard pour les KPIs
       const idxMes = state.mesTaches.findIndex(t => t.id === updated.id)
       if (idxMes !== -1) state.mesTaches[idxMes] = updated
       const idxRetard = state.tachesEnRetard.findIndex(t => t.id === updated.id)
@@ -145,7 +130,6 @@ const planningSlice = createSlice({
       const deletedId = action.payload
       const deleted = state.taches.find(t => t.id === deletedId)
       state.taches = state.taches.filter(t => t.id !== deletedId)
-      // Retirer aussi de mesTaches et tachesEnRetard pour mise à jour immédiate des KPIs
       state.mesTaches = state.mesTaches.filter(t => t.id !== deletedId)
       state.tachesEnRetard = state.tachesEnRetard.filter(t => t.id !== deletedId)
       if (deleted) clearPlanningCache(deleted.projetId)

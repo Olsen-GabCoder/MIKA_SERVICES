@@ -194,6 +194,8 @@
       "deleteTitle": "Delete user",
       "deleteMessage": "Delete user {{name}}? This will deactivate the account.",
       "passwordReset": "Password has been reset.",
+      "passwordResetSent": "New temporary password generated and sent by email. All user sessions have been disconnected.",
+      "resetPasswordConfirmMessage": "A new temporary password will be generated and sent by email to {{name}} ({{email}}). All active sessions will be disconnected. The user will be required to change their password at next login.",
       "twoFaDisabled": "Two-factor authentication disabled.",
       "updated": "User updated.",
       "activated": "Account activated.",

@@ -194,6 +194,8 @@
       "deleteTitle": "Supprimer l'utilisateur",
       "deleteMessage": "Supprimer l'utilisateur {{name}} ? Cette action désactive le compte.",
       "passwordReset": "Mot de passe réinitialisé.",
+      "passwordResetSent": "Nouveau mot de passe généré et envoyé par email. Toutes les sessions de l'utilisateur ont été déconnectées.",
+      "resetPasswordConfirmMessage": "Un nouveau mot de passe temporaire sera généré et envoyé par email à {{name}} ({{email}}). Toutes ses sessions actives seront déconnectées. L'utilisateur devra changer son mot de passe à la prochaine connexion.",
       "twoFaDisabled": "Authentification à deux facteurs désactivée.",
       "updated": "Utilisateur mis à jour.",
       "activated": "Compte activé.",

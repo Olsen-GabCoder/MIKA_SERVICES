@@ -3,7 +3,6 @@ package com.mikaservices.platform.modules.user.controller
 import com.mikaservices.platform.common.constants.ApiConstants
 import com.mikaservices.platform.modules.auth.dto.response.SessionResponse
 import com.mikaservices.platform.modules.auth.service.AuthService
-import com.mikaservices.platform.modules.user.dto.request.AdminResetPasswordRequest
 import com.mikaservices.platform.modules.user.dto.request.ChangePasswordRequest
 import com.mikaservices.platform.modules.user.dto.request.NotificationPreferencesUpdateRequest
 import com.mikaservices.platform.modules.user.dto.request.SessionPreferencesUpdateRequest
@@ -225,15 +224,12 @@ class UserController(
         return ResponseEntity.ok(mapOf("message" to "Mot de passe modifié avec succès"))
     }
 
-    @PutMapping("/{id}/admin-reset-password")
+    @PostMapping("/{id}/admin-reset-password")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    @Operation(summary = "Réinitialiser le mot de passe (admin)", description = "Réinitialisation du mot de passe d'un utilisateur par un administrateur, sans ancien mot de passe")
-    fun adminResetPassword(
-        @PathVariable id: Long,
-        @Valid @RequestBody request: AdminResetPasswordRequest
-    ): ResponseEntity<Map<String, String>> {
-        userService.adminResetPassword(id, request)
-        return ResponseEntity.ok(mapOf("message" to "Mot de passe réinitialisé avec succès"))
+    @Operation(summary = "Réinitialiser le mot de passe (admin)", description = "Génère un mot de passe temporaire, l'envoie par email et déconnecte toutes les sessions")
+    fun adminResetPassword(@PathVariable id: Long): ResponseEntity<Map<String, String>> {
+        userService.adminResetPassword(id)
+        return ResponseEntity.ok(mapOf("message" to "Mot de passe réinitialisé et envoyé par email"))
     }
 
     @PostMapping("/{id}/admin-disable-2fa")

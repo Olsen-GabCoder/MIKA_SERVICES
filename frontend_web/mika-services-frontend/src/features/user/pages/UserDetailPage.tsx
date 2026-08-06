@@ -11,11 +11,9 @@ import { clearError } from '@/store/slices/userSlice'
 import { fullName, getInitials } from '@/utils/userDisplay'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { Input } from '@/components/ui/Input'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { UserEditForm } from '../components/UserEditForm'
 import type { UserUpdateRequest } from '@/api/userApi'
-import { validatePassword } from '@/utils/passwordValidation'
 import { useFormatDate } from '@/hooks/useFormatDate'
 
 function getActionBadgeClass(action: string): string {
@@ -71,9 +69,8 @@ export const UserDetailPage = () => {
   const [activitySummary, setActivitySummary] = useState<UserActivitySummary | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [confirmToggleActif, setConfirmToggleActif] = useState(false)
-  const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false)
-  const [resetPasswordValue, setResetPasswordValue] = useState('')
-  const [resetPasswordError, setResetPasswordError] = useState<string | null>(null)
+  const [confirmResetPassword, setConfirmResetPassword] = useState(false)
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false)
   const [confirmDisable2FA, setConfirmDisable2FA] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -141,24 +138,19 @@ export const UserDetailPage = () => {
   }
 
   const handleResetPassword = async () => {
-    if (!user || !resetPasswordValue.trim()) {
-      setResetPasswordError(t('form.validation.passwordRequired'))
-      return
-    }
-    const pwdErr = validatePassword(resetPasswordValue)
-    if (pwdErr) {
-      setResetPasswordError(t(`common:${pwdErr}`))
-      return
-    }
-    setResetPasswordError(null)
+    if (!user) return
+    setResetPasswordLoading(true)
     try {
-      await userApi.adminResetPassword(user.id, resetPasswordValue)
-      setResetPasswordModalOpen(false)
-      setResetPasswordValue('')
-      setActionMessage({ type: 'success', text: t('detail.actions.passwordReset') })
-      setTimeout(() => setActionMessage(null), 4000)
+      await userApi.adminResetPassword(user.id)
+      setConfirmResetPassword(false)
+      setActionMessage({ type: 'success', text: t('detail.actions.passwordResetSent') })
+      setTimeout(() => setActionMessage(null), 6000)
     } catch (err: unknown) {
-      setResetPasswordError((err as { message?: string })?.message || t('detail.actions.errorGeneric'))
+      setConfirmResetPassword(false)
+      setActionMessage({ type: 'error', text: (err as { message?: string })?.message || t('detail.actions.errorGeneric') })
+      setTimeout(() => setActionMessage(null), 5000)
+    } finally {
+      setResetPasswordLoading(false)
     }
   }
 
@@ -256,8 +248,8 @@ export const UserDetailPage = () => {
         >
           {user.actif ? t('detail.actions.deactivate') : t('detail.actions.activate')}
         </Button>
-        <Button variant="outline" size="sm" onClick={() => { setResetPasswordModalOpen(true); setResetPasswordError(null); setResetPasswordValue(''); }}
-          disabled={!isOnline} title={!isOnline ? t('common:offline.actionUnavailable') : undefined}>
+        <Button variant="outline" size="sm" onClick={() => setConfirmResetPassword(true)}
+          disabled={!isOnline || resetPasswordLoading} title={!isOnline ? t('common:offline.actionUnavailable') : undefined}>
           {t('detail.actions.resetPassword')}
         </Button>
         {user.totpEnabled && (
@@ -535,34 +527,16 @@ export const UserDetailPage = () => {
         />
       </Modal>
 
-      {/* Modal réinitialiser mot de passe */}
-      <Modal
-        isOpen={resetPasswordModalOpen}
-        onClose={() => { setResetPasswordModalOpen(false); setResetPasswordValue(''); setResetPasswordError(null); }}
+      {/* Confirmer réinitialisation mot de passe */}
+      <ConfirmDialog
+        open={confirmResetPassword}
         title={t('detail.actions.resetPasswordTitle')}
-        size="md"
-      >
-        <div className="space-y-4">
-          {resetPasswordError && (
-            <p className="text-sm text-red-600 dark:text-red-400">{resetPasswordError}</p>
-          )}
-          <Input
-            label={t('profile.newPassword')}
-            type="password"
-            value={resetPasswordValue}
-            onChange={(e) => setResetPasswordValue(e.target.value)}
-            placeholder="••••••••"
-          />
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => { setResetPasswordModalOpen(false); setResetPasswordValue(''); setResetPasswordError(null); }}>
-              {t('form.cancel')}
-            </Button>
-            <Button variant="primary" onClick={handleResetPassword}>
-              {t('detail.actions.resetPassword')}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        message={t('detail.actions.resetPasswordConfirmMessage', { name: fullName(user), email: user.email })}
+        variant="primary"
+        confirmLabel={t('detail.actions.resetPassword')}
+        onConfirm={handleResetPassword}
+        onCancel={() => setConfirmResetPassword(false)}
+      />
 
       <ConfirmDialog
         open={confirmToggleActif}

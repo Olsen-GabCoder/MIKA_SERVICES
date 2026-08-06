@@ -7,7 +7,6 @@ import com.mikaservices.platform.common.utils.PasswordGenerator
 import com.mikaservices.platform.config.mail.EmailService
 import com.mikaservices.platform.modules.auth.repository.PasswordResetTokenRepository
 import com.mikaservices.platform.modules.auth.repository.SessionRepository
-import com.mikaservices.platform.modules.user.dto.request.AdminResetPasswordRequest
 import com.mikaservices.platform.modules.user.dto.request.ChangePasswordRequest
 import com.mikaservices.platform.modules.user.dto.request.NotificationPreferencesUpdateRequest
 import com.mikaservices.platform.modules.user.dto.request.SessionPreferencesUpdateRequest
@@ -442,25 +441,37 @@ class UserService(
         }
     }
 
-    fun adminResetPassword(id: Long, request: AdminResetPasswordRequest) {
+    fun adminResetPassword(id: Long) {
         logger.debug("Réinitialisation du mot de passe par admin pour l'utilisateur: $id")
         val user = userRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Utilisateur introuvable avec l'ID: $id") }
-        user.motDePasse = passwordEncoder.encode(request.newPassword)!!
+
+        // 1. Générer un mot de passe temporaire
+        val temporaryPassword = PasswordGenerator.generate()
+
+        // 2. Mettre à jour le mot de passe et forcer le changement
+        user.motDePasse = passwordEncoder.encode(temporaryPassword)!!
         user.mustChangePassword = true
         user.failedLoginAttempts = 0
         user.lockoutUntil = null
         val currentUsername = SecurityContextHolder.getContext().authentication?.name
         user.updatedBy = currentUsername
         userRepository.save(user)
+
+        // 3. Invalider toutes les sessions actives
+        sessionRepository.deactivateAllUserSessions(user.id!!)
+
+        // 4. Supprimer les tokens de reset en cours
+        passwordResetTokenRepository.deleteAllByUserId(user.id!!)
+
         auditLogService.log(user, "USER", "PASSWORD_RESET", "Mot de passe réinitialisé par un administrateur")
         logger.info("Mot de passe réinitialisé par admin pour l'utilisateur: ${user.email}")
-        if (user.emailNotificationsEnabled) {
-            try {
-                emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}", user.sexe)
-            } catch (e: Exception) {
-                logger.warn("Envoi notification mot de passe modifié échoué: ${e.message}")
-            }
+
+        // 5. Envoyer l'email avec le mot de passe temporaire (toujours, même si notifications désactivées)
+        try {
+            emailService.sendAdminPasswordResetEmail(user.email, user.prenom, temporaryPassword, user.sexe)
+        } catch (e: Exception) {
+            logger.warn("Envoi email de réinitialisation échoué pour ${user.email}: ${e.message}")
         }
     }
 

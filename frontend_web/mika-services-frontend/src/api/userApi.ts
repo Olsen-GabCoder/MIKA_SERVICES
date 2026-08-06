@@ -306,8 +306,8 @@ export const userApi = {
     return response.data
   },
 
-  adminResetPassword: async (userId: number, newPassword: string): Promise<void> => {
-    await apiClient.put(`/users/${userId}/admin-reset-password`, { newPassword })
+  adminResetPassword: async (userId: number): Promise<void> => {
+    await apiClient.post(`/users/${userId}/admin-reset-password`)
   },
 
   adminDisable2FA: async (userId: number): Promise<void> => {

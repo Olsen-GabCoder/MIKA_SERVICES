@@ -231,6 +231,43 @@ class EmailService(
         markSent(to, "password-changed")
     }
 
+    fun sendAdminPasswordResetEmail(to: String, prenom: String, temporaryPassword: String, sexe: Sexe? = null) {
+        val loginLink = link("/login")
+        val profileLink = link("/profile")
+        val greeting = salut(sexe, prenom)
+        val subject = "MIKA Services — Votre mot de passe a \u00e9t\u00e9 r\u00e9initialis\u00e9"
+        val plainBody = """
+            $greeting,
+
+            Votre mot de passe MIKA Services a été réinitialisé par un administrateur.
+
+            Nouveau mot de passe temporaire : $temporaryPassword
+
+            Connexion : $loginLink
+
+            Pour des raisons de sécurité, vous devrez modifier ce mot de passe dès votre prochaine connexion.
+            Toutes vos sessions actives ont été déconnectées.
+
+            Si vous n'avez pas demandé cette réinitialisation, contactez votre administrateur.
+
+            — L'équipe MIKA Services
+        """.trimIndent()
+
+        val htmlBody = wrapHtml("""
+            <p>${htmlEscape(greeting)},</p>
+            <p>Votre mot de passe MIKA Services a &eacute;t&eacute; <strong>r&eacute;initialis&eacute;</strong> par un administrateur.</p>
+            <table cellpadding="0" cellspacing="0" style="background:#f8f9fa;border-left:3px solid #FF6B35;padding:12px 16px;margin:16px 0;width:100%;">
+              <tr><td style="padding:8px 16px;font-size:14px;">
+                <strong>Nouveau mot de passe :</strong> <code style="background:#eef2f5;padding:2px 6px;border-radius:3px;">${htmlEscape(temporaryPassword)}</code>
+              </td></tr>
+            </table>
+            ${buttonHtml("Se connecter", loginLink)}
+            <p style="font-size:13px;color:#c0392b;"><strong>Important :</strong> Vous devrez modifier ce mot de passe d&egrave;s votre prochaine connexion. Toutes vos sessions actives ont &eacute;t&eacute; d&eacute;connect&eacute;es.</p>
+            <p style="font-size:13px;color:#666;">Nous recommandons d'activer l'authentification &agrave; deux facteurs (2FA) depuis votre <a href="$profileLink" style="color:#FF6B35;">profil</a>.</p>
+        """.trimIndent())
+        sendGenericNotification(to, subject, plainBody, htmlBody, "admin password reset")
+    }
+
     fun send2FAEnabledNotification(to: String, fullName: String, sexe: Sexe? = null) {
         val greeting = salut(sexe, fullName)
         val subject = "MIKA Services — 2FA activ\u00e9e"

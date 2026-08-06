@@ -584,6 +584,7 @@
   },
   "pwa": {
     "updateAvailable": "Une nouvelle version est disponible",
+    "updateHint": "Cliquez sur Mettre à jour pour profiter des dernières améliorations",
     "updateNow": "Mettre à jour",
     "dismiss": "Plus tard",
     "offlineReady": "Application prête pour le mode hors ligne"

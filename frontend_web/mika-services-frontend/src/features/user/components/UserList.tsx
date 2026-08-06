@@ -23,6 +23,7 @@ interface UserListProps {
   roleIdFilter: number | null
   sort: string
   roles: Role[]
+  isLoading?: boolean
   onPageChange: (page: number) => void
   onPageSizeChange: (size: number) => void
   onSearchChange: (value: string) => void
@@ -49,6 +50,7 @@ export const UserList = ({
   onActifFilterChange,
   onRoleIdFilterChange,
   onSortChange,
+  isLoading,
   onUserUpdated,
 }: UserListProps) => {
   const { t } = useTranslation('user')
@@ -158,7 +160,11 @@ export const UserList = ({
 
       {/* Vue cartes mobile */}
       <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-600">
-        {users.length === 0 ? (
+        {isLoading ? (
+          <div className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
+            <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        ) : users.length === 0 ? (
           <div className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
             {t('list.emptyNoUsers')}
           </div>
@@ -252,7 +258,13 @@ export const UserList = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-            {users.length === 0 ? (
+            {isLoading ? (
+              <tr>
+                <td colSpan={9} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                </td>
+              </tr>
+            ) : users.length === 0 ? (
               <tr>
                 <td colSpan={9} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
                   {t('list.emptyNoUsers')}

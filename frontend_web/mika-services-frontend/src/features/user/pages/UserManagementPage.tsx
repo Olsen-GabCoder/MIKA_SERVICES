@@ -14,7 +14,6 @@ import {
   clearError,
 } from '@/store/slices/userSlice'
 import { Button } from '@/components/ui/Button'
-import { Loading } from '@/components/ui/Loading'
 import { UserList } from '../components/UserList'
 import { UserForm } from '../components/UserForm'
 import { Modal } from '@/components/ui/Modal'
@@ -134,31 +133,28 @@ export const UserManagementPage = () => {
         </div>
       )}
 
-      {isLoading ? (
-        <Loading />
-      ) : (
-        <div className="w-full max-w-none">
-          <UserList
-            users={users}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalElements={totalElements}
-            pageSize={pageSize}
-            search={search}
-            actifFilter={actifFilter}
-            roleIdFilter={roleIdFilter}
-            sort={sort}
-            roles={roles}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            onSearchChange={(v) => applyFilter(() => dispatch(setSearch(v)))}
-            onActifFilterChange={(v) => applyFilter(() => dispatch(setActifFilter(v)))}
-            onRoleIdFilterChange={(v) => applyFilter(() => dispatch(setRoleIdFilter(v)))}
-            onSortChange={(v) => applyFilter(() => dispatch(setSort(v)))}
-            onUserUpdated={refetchUsers}
-          />
-        </div>
-      )}
+      <div className="w-full max-w-none">
+        <UserList
+          users={users}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalElements={totalElements}
+          pageSize={pageSize}
+          search={search}
+          actifFilter={actifFilter}
+          roleIdFilter={roleIdFilter}
+          sort={sort}
+          roles={roles}
+          isLoading={isLoading}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          onSearchChange={(v) => applyFilter(() => dispatch(setSearch(v)))}
+          onActifFilterChange={(v) => applyFilter(() => dispatch(setActifFilter(v)))}
+          onRoleIdFilterChange={(v) => applyFilter(() => dispatch(setRoleIdFilter(v)))}
+          onSortChange={(v) => applyFilter(() => dispatch(setSort(v)))}
+          onUserUpdated={refetchUsers}
+        />
+      </div>
 
       <Modal
         isOpen={isCreateModalOpen}

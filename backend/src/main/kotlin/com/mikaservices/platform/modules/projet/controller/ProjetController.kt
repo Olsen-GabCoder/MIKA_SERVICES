@@ -121,7 +121,7 @@ class ProjetController(
         return ResponseEntity.ok(mapOf("count" to projetService.countByStatut(statut)))
     }
 
-    @RequestMapping(value = ["/{id}"], method = [RequestMethod.PUT, RequestMethod.POST])
+    @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
     @Operation(summary = "Mettre à jour un projet (chef de projet responsable ou admin)")
     fun update(@PathVariable id: Long, @Valid @RequestBody request: ProjetUpdateRequest): ResponseEntity<ProjetResponse> {

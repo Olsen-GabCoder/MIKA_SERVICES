@@ -29,36 +29,42 @@ class PlanningController(
     }
 
     @GetMapping("/taches/projet/{projetId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Lister les tâches d'un projet")
     fun findByProjet(@PathVariable projetId: Long, @PageableDefault(size = 20) pageable: Pageable): ResponseEntity<Page<TacheResponse>> {
         return ResponseEntity.ok(planningService.findByProjet(projetId, pageable))
     }
 
     @GetMapping("/taches/{id}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Obtenir une tâche par ID")
     fun findById(@PathVariable id: Long): ResponseEntity<TacheResponse> {
         return ResponseEntity.ok(planningService.findById(id))
     }
 
     @GetMapping("/taches/mes-taches/{userId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Lister les tâches en cours d'un utilisateur (propres tâches ou admin)")
     fun findMesTaches(@PathVariable userId: Long): ResponseEntity<List<TacheResponse>> {
         return ResponseEntity.ok(planningService.findMesTaches(userId))
     }
 
     @GetMapping("/taches/en-retard")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Lister les tâches en retard (filtrées par accès utilisateur)")
     fun findTachesEnRetard(): ResponseEntity<List<TacheResponse>> {
         return ResponseEntity.ok(planningService.findTachesEnRetard())
     }
 
     @GetMapping("/taches/projet/{projetId}/all")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Lister toutes les tâches d'un projet (sans pagination)")
     fun findAllByProjet(@PathVariable projetId: Long): ResponseEntity<List<TacheResponse>> {
         return ResponseEntity.ok(planningService.findAllByProjet(projetId))
     }
 
     @GetMapping("/taches/projet/{projetId}/previsions")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Lister les prévisions (tâches avec typePrevision) d'un projet")
     fun findPrevisionsByProjet(
         @PathVariable projetId: Long,

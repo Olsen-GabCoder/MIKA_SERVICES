@@ -37,23 +37,30 @@ const STATUT_CONFIG: Record<StatutDemandeMateriel, { bg: string; text: string; d
    ANIMATED METRIC PILL — Compact, elegant inline metric
    ═══════════════════════════════════════════════════════════════════ */
 
-function MetricPill({ value, label, color, delay = 0 }: {
+function MetricPill({ value, label, color, delay = 0, active = false, onClick }: {
   value: number; label: string; color: string; delay?: number
+  active?: boolean; onClick?: () => void
 }) {
   const animated = useCountUp(value, 1200, delay)
   return (
-    <motion.div
-      className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 shadow-sm"
+    <motion.button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border shadow-sm text-left transition-all
+        ${active
+          ? 'bg-primary/5 dark:bg-primary/10 border-primary/40 dark:border-primary/40 ring-1 ring-primary/30'
+          : 'bg-white dark:bg-gray-800/60 border-gray-100 dark:border-gray-700/50 hover:border-gray-300 dark:hover:border-gray-500 hover:shadow'}`}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: delay / 1000, ease: [0.16, 1, 0.3, 1] }}
+      whileTap={{ scale: 0.97 }}
     >
-      <div className={`w-2 h-8 rounded-full ${color}`} />
-      <div>
-        <p className="text-xl font-black text-gray-900 dark:text-white tabular-nums leading-none">{animated}</p>
-        <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mt-1">{label}</p>
+      <div className={`w-1.5 h-7 rounded-full ${color}`} />
+      <div className="min-w-0">
+        <p className="text-lg font-black text-gray-900 dark:text-white tabular-nums leading-none">{animated}</p>
+        <p className={`text-[10px] font-semibold uppercase tracking-wider mt-1 truncate ${active ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>{label}</p>
       </div>
-    </motion.div>
+    </motion.button>
   )
 }
 
@@ -102,8 +109,8 @@ function WorkflowPipeline({ dmas, t, onFilter }: {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.4 }}
     >
-      {/* Bar */}
-      <div className="flex h-3 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700/40 mb-3">
+      {/* Bar — cliquable, tooltip natif (les chips de statut ci-dessous portent les libellés) */}
+      <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700/40">
         {segments.map((seg, i) => (
           <motion.div
             key={seg.statut}
@@ -117,22 +124,6 @@ function WorkflowPipeline({ dmas, t, onFilter }: {
           >
             <div className="absolute inset-0 bg-white/0 group-hover:bg-white/20 transition-colors" />
           </motion.div>
-        ))}
-      </div>
-
-      {/* Legend */}
-      <div className="flex flex-wrap gap-x-5 gap-y-1">
-        {segments.map((seg) => (
-          <button
-            key={seg.statut}
-            type="button"
-            onClick={() => onFilter(seg.statut)}
-            className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: seg.color }} />
-            <span className="font-medium">{t(`dma.statut.${seg.statut}`)}</span>
-            <span className="font-bold text-gray-700 dark:text-gray-300 tabular-nums">{seg.count}</span>
-          </button>
         ))}
       </div>
     </motion.div>
@@ -151,7 +142,7 @@ function DmaSkeleton() {
           <div className="h-7 w-56 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
           <div className="h-10 w-40 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
         </div>
-        <div className="grid grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mb-6">
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="h-16 bg-gray-200/60 dark:bg-gray-700/40 rounded-xl animate-pulse" />
           ))}
@@ -266,6 +257,7 @@ export function DemandeMaterielListPage() {
 
   const [filterStatut, setFilterStatut] = useState<StatutDemandeMateriel | ''>('')
   const [filterPriorite, setFilterPriorite] = useState<PrioriteDemandeMateriel | ''>('')
+  const [filterEnCours, setFilterEnCours] = useState(false)
   const [pageSize, setPageSize] = useState(20)
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -275,12 +267,14 @@ export function DemandeMaterielListPage() {
 
   useEffect(() => { fetchPage(0) }, [filterStatut, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const hasActiveFilters = filterStatut !== '' || filterPriorite !== ''
-  const resetFilters = () => { setFilterStatut(''); setFilterPriorite('') }
+  const hasActiveFilters = filterStatut !== '' || filterPriorite !== '' || filterEnCours
+  const resetFilters = () => { setFilterStatut(''); setFilterPriorite(''); setFilterEnCours(false) }
 
-  const displayedDmas = filterPriorite
+  const EN_COURS_EXCLUS = ['CLOTUREE', 'REJETEE', 'LIVRE']
+  let displayedDmas = filterPriorite
     ? dmas.filter((d) => d.priorite === filterPriorite)
     : dmas
+  if (filterEnCours) displayedDmas = displayedDmas.filter((d) => !EN_COURS_EXCLUS.includes(d.statut))
 
   const paginationRangeLabel = t('list.paginationRange', {
     from: totalElements === 0 ? 0 : currentPage * pageSize + 1,
@@ -305,18 +299,18 @@ export function DemandeMaterielListPage() {
 
         {/* ═══════════ TOP SECTION — Header + Metrics + Pipeline ═══════════ */}
         <div className="bg-white dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700/50">
-          <div className="px-6 lg:px-8 py-5">
+          <div className="px-4 sm:px-6 lg:px-8 py-4">
 
             {/* Row 1 — Title + Actions */}
-            <div className="flex items-center justify-between gap-4 mb-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <motion.div
                 className="flex items-center gap-3"
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-slate-800 to-slate-600 dark:from-slate-200 dark:to-slate-400 flex items-center justify-center shadow-md">
-                  <svg className="w-4.5 h-4.5 text-white dark:text-slate-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-md">
+                  <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
                   </svg>
                 </div>
@@ -357,13 +351,18 @@ export function DemandeMaterielListPage() {
               </motion.div>
             </div>
 
-            {/* Row 2 — Metrics row (full width) */}
-            <div className="grid grid-cols-5 gap-3 mb-5">
-              <MetricPill value={kpis.total} label="Total" color="bg-slate-400" delay={100} />
-              <MetricPill value={kpis.enCours} label="En cours" color="bg-sky-500" delay={200} />
-              <MetricPill value={kpis.urgentes} label="Urgentes" color="bg-rose-500" delay={300} />
-              <MetricPill value={kpis.livrees} label="Livrées" color="bg-teal-500" delay={400} />
-              <MetricPill value={kpis.cloturees} label="Clôturées" color="bg-emerald-500" delay={500} />
+            {/* Row 2 — Metrics row : KPIs cliquables qui filtrent */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mb-4">
+              <MetricPill value={kpis.total} label="Total" color="bg-slate-400" delay={100}
+                active={!hasActiveFilters} onClick={resetFilters} />
+              <MetricPill value={kpis.enCours} label="En cours" color="bg-sky-500" delay={200}
+                active={filterEnCours} onClick={() => { resetFilters(); setFilterEnCours(!filterEnCours) }} />
+              <MetricPill value={kpis.urgentes} label="Urgentes" color="bg-rose-500" delay={300}
+                active={filterPriorite === 'URGENTE'} onClick={() => { resetFilters(); if (filterPriorite !== 'URGENTE') setFilterPriorite('URGENTE') }} />
+              <MetricPill value={kpis.livrees} label="Livrées" color="bg-teal-500" delay={400}
+                active={filterStatut === 'LIVRE'} onClick={() => { resetFilters(); if (filterStatut !== 'LIVRE') setFilterStatut('LIVRE') }} />
+              <MetricPill value={kpis.cloturees} label="Clôturées" color="bg-emerald-500" delay={500}
+                active={filterStatut === 'CLOTUREE'} onClick={() => { resetFilters(); if (filterStatut !== 'CLOTUREE') setFilterStatut('CLOTUREE') }} />
             </div>
 
             {/* Row 3 — Pipeline bar (full width) */}
@@ -373,10 +372,10 @@ export function DemandeMaterielListPage() {
 
         {/* ═══════════ FILTER BAR — Full width, single row ═══════════ */}
         <div className="bg-gray-50/80 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700/40 sticky top-0 z-20">
-          <div className="px-6 lg:px-8 py-3 flex items-center gap-4">
+          <div className="px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
 
             {/* Statut filter */}
-            <div className="flex items-center gap-2 flex-1">
+            <div className="flex items-center gap-2 flex-1 min-w-[16rem]">
               <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest whitespace-nowrap">Statut</span>
               <div className="flex-1 flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
                 <button
@@ -413,7 +412,7 @@ export function DemandeMaterielListPage() {
             </div>
 
             {/* Separator */}
-            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
+            <div className="hidden sm:block w-px h-6 bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
 
             {/* Priorité filter */}
             <div className="flex items-center gap-2 flex-shrink-0">

@@ -217,7 +217,7 @@ class RapportAnalyseServiceTest {
             type = TypeProjet.VOIRIE
         )
         projet.numeroMarche = "M-2026-001"
-        projet.statut = StatutProjet.EN_COURS
+        projet.statut = StatutProjet.EN_COURS_EXECUTION
         projet.dateDebut = LocalDate.of(2026, 1, 15)
         projet.dateFin = LocalDate.of(2026, 12, 31)
         projet.montantHT = BigDecimal("5000000")

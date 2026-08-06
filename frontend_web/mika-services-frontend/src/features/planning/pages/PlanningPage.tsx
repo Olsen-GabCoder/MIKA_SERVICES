@@ -1,5 +1,6 @@
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useIsOnline } from '@/hooks/useConnectivity'
 import { Modal } from '@/components/ui/Modal'
@@ -69,7 +70,15 @@ export default function PlanningPage() {
   const { taches, tachesEnRetard, mesTaches, loading, totalPages, currentPage } = useAppSelector((s) => s.planning)
   const allProjets = useAppSelector((s) => s.projet.projets)
 
-  const [selectedProjetId, setSelectedProjetId] = useState<number | null>(null)
+  // Persister le projet sélectionné dans l'URL (?projet=14) pour survivre au HMR et refresh
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialProjetId = searchParams.get('projet') ? Number(searchParams.get('projet')) : null
+  const [selectedProjetId, setSelectedProjetIdRaw] = useState<number | null>(initialProjetId)
+
+  const setSelectedProjetId = useCallback((id: number | null) => {
+    setSelectedProjetIdRaw(id)
+    setSearchParams(id ? { projet: String(id) } : {}, { replace: true })
+  }, [setSearchParams])
   const [filterStatut, setFilterStatut] = useState<StatutTache | ''>('')
   const [filterHistorique, setFilterHistorique] = useState<StatutTache | ''>('')
   const [showModal, setShowModal] = useState(false)
@@ -288,6 +297,12 @@ export default function PlanningPage() {
     setShowModal(true)
   }
 
+  // Rafraîchir les données secondaires sans toucher aux tâches du projet (déjà à jour dans le reducer)
+  const refreshSecondaryData = () => {
+    dispatch(fetchTachesEnRetard())
+    if (currentUser?.id) dispatch(fetchMesTaches(currentUser.id))
+  }
+
   const handleSubmit = async () => {
     if (!selectedProjetId || !formTitre.trim()) return
 
@@ -349,25 +364,35 @@ export default function PlanningPage() {
     }
     setShowModal(false)
     resetForm()
+    // Recharger les tâches du projet pour avoir la liste à jour du serveur (pagination, tri)
     dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
-    dispatch(fetchTachesEnRetard())
-    if (currentUser?.id) dispatch(fetchMesTaches(currentUser.id))
+    refreshSecondaryData()
   }
 
   const handleStatusChange = async (tache: Tache, statut: StatutTache) => {
     await dispatch(updateTache({ id: tache.id, request: { statut } }))
-    if (selectedProjetId) dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
-    dispatch(fetchTachesEnRetard())
-    if (currentUser?.id) dispatch(fetchMesTaches(currentUser.id))
+    // Le reducer met à jour la tâche localement — pas besoin de recharger fetchTachesByProjet
+    refreshSecondaryData()
   }
 
   const handleDelete = async (id: number) => {
     if (!(await confirm({ messageKey: 'confirm.deleteTask' }))) return
     await dispatch(deleteTache(id))
     toast({ message: t('deleteSuccess'), variant: 'success' })
-    if (selectedProjetId) dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
-    dispatch(fetchTachesEnRetard())
-    if (currentUser?.id) dispatch(fetchMesTaches(currentUser.id))
+    refreshSecondaryData()
+  }
+
+  const handleDeleteMultiple = async (ids: number[]) => {
+    if (ids.length === 0) return
+    const confirmed = await confirm({
+      messageKey: 'confirm.deleteMultipleTasks',
+      messageParams: { count: String(ids.length) },
+      variant: 'danger',
+    })
+    if (!confirmed) return
+    await Promise.all(ids.map((id) => dispatch(deleteTache(id))))
+    toast({ message: t('deleteMultipleSuccess', { count: ids.length, defaultValue: '{{count}} tâche(s) supprimée(s)' }), variant: 'success' })
+    refreshSecondaryData()
   }
 
   // ---------- Render ----------
@@ -460,6 +485,7 @@ export default function PlanningPage() {
               onStatusChange={handleStatusChange}
               onEdit={openEdit}
               onDelete={handleDelete}
+              onDeleteMultiple={handleDeleteMultiple}
               totalPages={totalPages}
               currentPage={currentPage}
               onPageChange={(page) => dispatch(fetchTachesByProjet({ projetId: selectedProjetId, page }))}
@@ -477,6 +503,7 @@ export default function PlanningPage() {
               onStatusChange={handleStatusChange}
               onEdit={openEdit}
               onDelete={handleDelete}
+              onDeleteMultiple={handleDeleteMultiple}
               totalPages={0}
               currentPage={0}
               onPageChange={() => {}}

@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFormatDate } from '@/hooks/useFormatDate'
 import { StatutTache, Priorite } from '@/types/planning'
@@ -13,6 +14,7 @@ export interface TachesTableProps {
   onStatusChange: (tache: Tache, statut: StatutTache) => void
   onEdit: (tache: Tache) => void
   onDelete: (id: number) => void
+  onDeleteMultiple?: (ids: number[]) => void
   totalPages: number
   currentPage: number
   onPageChange: (page: number) => void
@@ -40,7 +42,7 @@ const prioriteColor: Record<Priorite, string> = {
 export function TachesTable({
   taches, loading, canEdit, isOnline,
   filterStatut, onFilterChange,
-  onStatusChange, onEdit, onDelete,
+  onStatusChange, onEdit, onDelete, onDeleteMultiple,
   totalPages, currentPage, onPageChange,
   colSpanClass = 'col-span-12 lg:col-span-6',
   title,
@@ -49,7 +51,39 @@ export function TachesTable({
   const { t } = useTranslation('planning')
   const formatDate = useFormatDate()
 
-  const filtered = filterStatut ? taches.filter((task) => task.statut === filterStatut) : taches
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const selectionMode = selectedIds.size > 0
+
+  const filtered = useMemo(
+    () => filterStatut ? taches.filter((task) => task.statut === filterStatut) : taches,
+    [taches, filterStatut]
+  )
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.id))
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filtered.map((t) => t.id)))
+    }
+  }
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return
+    const ids = Array.from(selectedIds)
+    setSelectedIds(new Set())
+    onDeleteMultiple?.(ids)
+  }
 
   return (
     <div
@@ -89,6 +123,49 @@ export function TachesTable({
         </div>
       </div>
 
+      {/* Barre de sélection multiple */}
+      {selectionMode && canEdit && (
+        <div
+          className="flex items-center gap-3 px-4 py-2.5 rounded-xl mb-3 border"
+          style={{
+            background: 'color-mix(in srgb, var(--db-danger) 6%, var(--db-card))',
+            borderColor: 'var(--db-danger)',
+            animation: 'db-rise 200ms ease-out both',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={allFilteredSelected}
+            onChange={toggleSelectAll}
+            className="w-4 h-4 rounded accent-[var(--db-danger)] cursor-pointer"
+          />
+          <span className="text-sm font-semibold" style={{ color: 'var(--db-danger)' }}>
+            {t('selectedCount', { count: selectedIds.size, defaultValue: '{{count}} sélectionnée(s)' })}
+          </span>
+          <div className="flex-1" />
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors hover:bg-[var(--db-subtle)]"
+            style={{ color: 'var(--db-t3)' }}
+          >
+            {t('deselectAll', { defaultValue: 'Tout désélectionner' })}
+          </button>
+          <button
+            type="button"
+            onClick={handleDeleteSelected}
+            disabled={!isOnline}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-white transition-all hover:opacity-90 disabled:opacity-50"
+            style={{ background: 'var(--db-danger)' }}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            {t('deleteSelected', { defaultValue: 'Supprimer' })}
+          </button>
+        </div>
+      )}
+
       {/* Read-only banner */}
       {!canEdit && taches.length > 0 && (
         <div
@@ -120,18 +197,42 @@ export function TachesTable({
         </div>
       ) : (
         <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+          {/* Checkbox tout sélectionner en haut de liste */}
+          {canEdit && onDeleteMultiple && filtered.length > 1 && !selectionMode && (
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className="flex items-center gap-2 text-xs font-medium px-2 py-1 rounded-lg transition-colors hover:bg-[var(--db-subtle)]"
+              style={{ color: 'var(--db-t4)' }}
+            >
+              <input type="checkbox" checked={false} readOnly className="w-3.5 h-3.5 rounded cursor-pointer" />
+              {t('selectAll', { defaultValue: 'Tout sélectionner' })}
+            </button>
+          )}
           {filtered.map((tache, idx) => (
             <div
               key={tache.id}
-              className="rounded-xl border p-4 transition-all duration-150 hover:shadow-sm group"
+              className={`rounded-xl border p-4 transition-all duration-150 hover:shadow-sm group ${selectedIds.has(tache.id) ? 'ring-2 ring-[var(--db-danger)]/40' : ''}`}
               style={{
-                borderColor: tache.enRetard ? 'var(--db-danger)' : 'var(--db-border)',
-                background: tache.enRetard ? 'color-mix(in srgb, var(--db-danger) 4%, var(--db-card))' : 'var(--db-card)',
+                borderColor: selectedIds.has(tache.id) ? 'var(--db-danger)' : tache.enRetard ? 'var(--db-danger)' : 'var(--db-border)',
+                background: selectedIds.has(tache.id)
+                  ? 'color-mix(in srgb, var(--db-danger) 4%, var(--db-card))'
+                  : tache.enRetard ? 'color-mix(in srgb, var(--db-danger) 4%, var(--db-card))' : 'var(--db-card)',
                 animation: `db-rise 280ms ease-out ${idx * 20}ms both`,
               }}
             >
-              {/* Ligne 1 : Titre + actions */}
+              {/* Ligne 1 : Checkbox + Titre + actions */}
               <div className="flex items-start gap-3">
+                {/* Checkbox de sélection */}
+                {canEdit && onDeleteMultiple && (
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(tache.id)}
+                    onChange={() => toggleSelect(tache.id)}
+                    className="w-4 h-4 mt-1 rounded accent-[var(--db-danger)] cursor-pointer shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                    style={selectedIds.has(tache.id) ? { opacity: 1 } : undefined}
+                  />
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-base leading-snug" style={{ color: 'var(--db-t1)' }}>
@@ -156,7 +257,7 @@ export function TachesTable({
                 </div>
 
                 {/* Actions (visible au hover) */}
-                {canEdit && (
+                {canEdit && !selectionMode && (
                   <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                     <button
                       type="button"

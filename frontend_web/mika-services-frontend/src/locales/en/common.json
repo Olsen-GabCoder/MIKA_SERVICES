@@ -37,6 +37,7 @@
     "ok": "OK",
     "deletePointBloquant": "Delete this blocking point?",
     "deleteTask": "Delete this task?",
+    "deleteMultipleTasks": "Delete {{count}} selected task(s)?",
     "deactivateProject": "Are you sure you want to deactivate the project \"{{name}}\"?",
     "deleteFournisseur": "Delete this supplier?",
     "downloadError": "Download error",

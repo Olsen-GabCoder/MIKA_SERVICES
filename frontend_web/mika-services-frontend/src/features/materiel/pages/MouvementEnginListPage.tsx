@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useIsOnline } from '@/hooks/useConnectivity'
 import { OfflineDisabledButton } from '@/components/pwa/OfflineDisabledButton'
@@ -13,37 +14,139 @@ import {
 import { MaterielEmptyState, MaterielPagination } from '../components/MaterielListChrome'
 import { MaterielModuleTabs } from '../components/MaterielModuleTabs'
 import { MouvementEnginCreateModal } from '../components/MouvementEnginCreateModal'
-import type { StatutMouvementEngin } from '@/types/materiel'
+import { useCountUp } from '../hooks/useCountUp'
+import type { StatutMouvementEngin, MouvementEnginSummary } from '@/types/materiel'
+
+/* ═══════════════════════════════════════════════════════════════════
+   STYLE MAPS
+   ═══════════════════════════════════════════════════════════════════ */
 
 const ALL_STATUTS: StatutMouvementEngin[] = ['EN_ATTENTE_DEPART', 'EN_TRANSIT', 'RECU', 'ANNULE']
 
-const STATUT_STYLE: Record<StatutMouvementEngin, string> = {
-  EN_ATTENTE_DEPART: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/40 text-amber-700 dark:text-amber-400',
-  EN_TRANSIT: 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-700/40 text-indigo-700 dark:text-indigo-400',
-  RECU: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700/40 text-green-700 dark:text-green-400',
-  ANNULE: 'bg-gray-100 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400',
+const STATUT_CONFIG: Record<StatutMouvementEngin, { bg: string; text: string; dot: string; border: string; hex: string }> = {
+  EN_ATTENTE_DEPART: { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-400', dot: 'bg-amber-500', border: 'border-amber-200 dark:border-amber-700/40', hex: '#f59e0b' },
+  EN_TRANSIT:        { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-400', dot: 'bg-indigo-500', border: 'border-indigo-200 dark:border-indigo-700/40', hex: '#6366f1' },
+  RECU:              { bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500', border: 'border-emerald-200 dark:border-emerald-700/40', hex: '#10b981' },
+  ANNULE:            { bg: 'bg-slate-100 dark:bg-slate-700/50', text: 'text-slate-600 dark:text-slate-300', dot: 'bg-slate-400', border: 'border-slate-200 dark:border-slate-600', hex: '#94a3b8' },
 }
 
-function SkeletonRow() {
+/* ═══════════════════════════════════════════════════════════════════
+   METRIC PILL — KPI cliquable (même style que la liste DMA)
+   ═══════════════════════════════════════════════════════════════════ */
+
+function MetricPill({ value, label, color, delay = 0, active = false, onClick }: {
+  value: number; label: string; color: string; delay?: number
+  active?: boolean; onClick?: () => void
+}) {
+  const animated = useCountUp(value, 1200, delay)
   return (
-    <tr className="border-b border-gray-100 dark:border-gray-700/40">
-      {Array.from({ length: 7 }).map((_, i) => (
-        <td key={i} className="px-3 py-3">
-          <div className="h-3.5 bg-gray-200 dark:bg-gray-600/60 rounded-full w-full max-w-[8rem] animate-pulse" />
-        </td>
-      ))}
-    </tr>
+    <motion.button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border shadow-sm text-left transition-all
+        ${active
+          ? 'bg-primary/5 dark:bg-primary/10 border-primary/40 dark:border-primary/40 ring-1 ring-primary/30'
+          : 'bg-white dark:bg-gray-800/60 border-gray-100 dark:border-gray-700/50 hover:border-gray-300 dark:hover:border-gray-500 hover:shadow'}`}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: delay / 1000, ease: [0.16, 1, 0.3, 1] }}
+      whileTap={{ scale: 0.97 }}
+    >
+      <div className={`w-1.5 h-7 rounded-full ${color}`} />
+      <div className="min-w-0">
+        <p className="text-lg font-black text-gray-900 dark:text-white tabular-nums leading-none">{animated}</p>
+        <p className={`text-[10px] font-semibold uppercase tracking-wider mt-1 truncate ${active ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>{label}</p>
+      </div>
+    </motion.button>
   )
 }
 
-// Modal léger de confirmation avec champ commentaire
+/* ═══════════════════════════════════════════════════════════════════
+   FLOW PIPELINE — répartition des statuts (cliquable)
+   ═══════════════════════════════════════════════════════════════════ */
+
+function FlowPipeline({ mouvements, t, onFilter }: {
+  mouvements: MouvementEnginSummary[]
+  t: (key: string) => string
+  onFilter: (s: StatutMouvementEngin | '') => void
+}) {
+  const total = mouvements.length
+  const counts = useMemo(() => {
+    const c: Partial<Record<StatutMouvementEngin, number>> = {}
+    mouvements.forEach((m) => { c[m.statut] = (c[m.statut] || 0) + 1 })
+    return c
+  }, [mouvements])
+
+  if (total === 0) return null
+
+  const segments = ALL_STATUTS
+    .filter((s) => (counts[s] || 0) > 0)
+    .map((s) => ({
+      statut: s,
+      count: counts[s]!,
+      pct: Math.round(((counts[s] || 0) / total) * 100),
+      color: STATUT_CONFIG[s].hex,
+    }))
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.4 }}
+    >
+      <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700/40">
+        {segments.map((seg, i) => (
+          <motion.div
+            key={seg.statut}
+            className="h-full cursor-pointer relative group"
+            style={{ background: seg.color }}
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.max(seg.pct, 2)}%` }}
+            transition={{ duration: 0.8, delay: 0.5 + i * 0.05, ease: 'easeOut' }}
+            onClick={() => onFilter(seg.statut)}
+            title={`${t(`mouvement.statut.${seg.statut}`)} — ${seg.count}`}
+          >
+            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/20 transition-colors" />
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SKELETON
+   ═══════════════════════════════════════════════════════════════════ */
+
+function MouvementSkeleton() {
+  return (
+    <PageContainer size="full" className="h-full flex flex-col min-h-0">
+      <div className="flex-1 min-h-0 overflow-y-auto px-1 py-2">
+        <div className="flex items-center justify-between mb-6">
+          <div className="h-7 w-56 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+          <div className="h-10 w-40 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mb-6">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-16 bg-gray-200/60 dark:bg-gray-700/40 rounded-xl animate-pulse" />
+          ))}
+        </div>
+        <div className="h-3 w-full bg-gray-200 dark:bg-gray-700 rounded-full mb-6 animate-pulse" />
+        <div className="h-12 w-full bg-gray-200/60 dark:bg-gray-700/40 rounded-xl mb-3 animate-pulse" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-14 w-full bg-gray-100/80 dark:bg-gray-800/40 rounded-lg mb-2 animate-pulse" />
+        ))}
+      </div>
+    </PageContainer>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ACTION CONFIRM MODAL — inchangé fonctionnellement
+   ═══════════════════════════════════════════════════════════════════ */
+
 function ActionConfirmModal({
-  title,
-  message,
-  confirmLabel,
-  confirmClass,
-  onConfirm,
-  onCancel,
+  title, message, confirmLabel, confirmClass, onConfirm, onCancel,
 }: {
   title: string
   message: string
@@ -57,7 +160,12 @@ function ActionConfirmModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative z-10 w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
+      <motion.div
+        className="relative z-10 w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h3>
         </div>
@@ -82,10 +190,135 @@ function ActionConfirmModal({
             {confirmLabel}
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOUVEMENT TABLE ROW
+   ═══════════════════════════════════════════════════════════════════ */
+
+function MouvementTableRow({ m, index, isActing, isOnline, locale, t, onAction }: {
+  m: MouvementEnginSummary
+  index: number
+  isActing: boolean
+  isOnline: boolean
+  locale: string
+  t: (key: string) => string
+  onAction: (type: 'depart' | 'reception' | 'annuler', label: string) => void
+}) {
+  const cfg = STATUT_CONFIG[m.statut]
+  const fmt = (d: string) => new Date(d).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
+
+  return (
+    <motion.tr
+      className="group border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: 0.05 * Math.min(index, 15) }}
+    >
+      {/* Engin */}
+      <td className="px-5 py-3.5 align-middle">
+        <div className="flex items-center gap-2.5">
+          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
+          <div>
+            <p className="font-mono text-[13px] font-bold text-gray-900 dark:text-white tracking-wide">{m.enginCode}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[11rem]">{m.enginNom}</p>
+          </div>
+        </div>
+      </td>
+
+      {/* Trajet : origine → destination */}
+      <td className="px-5 py-3.5 align-middle">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-gray-500 dark:text-gray-400 truncate max-w-[9rem]">
+            {m.projetOrigineNom ?? <span className="italic text-gray-400 dark:text-gray-500">{t('detail.depot')}</span>}
+          </span>
+          <svg className="w-3.5 h-3.5 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+          <span className="font-semibold text-gray-900 dark:text-gray-100 truncate max-w-[9rem]">{m.projetDestinationNom}</span>
+        </div>
+      </td>
+
+      {/* Statut */}
+      <td className="px-5 py-3.5 align-middle">
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-bold ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+          {t(`mouvement.statut.${m.statut}`)}
+        </span>
+      </td>
+
+      {/* Dates */}
+      <td className="px-5 py-3.5 align-middle text-sm text-gray-500 dark:text-gray-400 tabular-nums whitespace-nowrap">
+        {fmt(m.dateDemande)}
+        {m.dateDepartConfirmee && (
+          <p className="text-[10px] text-indigo-500 dark:text-indigo-400">{t('mouvement.depart')} {fmt(m.dateDepartConfirmee)}</p>
+        )}
+        {m.dateReceptionConfirmee && (
+          <p className="text-[10px] text-emerald-600 dark:text-emerald-400">{t('mouvement.reception')} {fmt(m.dateReceptionConfirmee)}</p>
+        )}
+      </td>
+
+      {/* Initiateur */}
+      <td className="px-5 py-3.5 align-middle">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-600 dark:to-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300 flex-shrink-0">
+            {m.initiateurNom?.charAt(0)?.toUpperCase() || '?'}
+          </div>
+          <span className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[8rem]">{m.initiateurNom}</span>
+        </div>
+      </td>
+
+      {/* Actions */}
+      <td className="px-5 py-3.5 align-middle">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {m.statut === 'EN_ATTENTE_DEPART' && (
+            <>
+              <button
+                type="button"
+                disabled={isActing || !isOnline}
+                title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                onClick={() => onAction('depart', t('mouvement.action.confirmDepart'))}
+                className="px-2.5 py-1.5 rounded-md border border-indigo-200 dark:border-indigo-700/50 bg-indigo-50/80 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/35 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {t('mouvement.action.confirmDepart')}
+              </button>
+              <button
+                type="button"
+                disabled={isActing || !isOnline}
+                title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                onClick={() => onAction('annuler', t('mouvement.action.annuler'))}
+                className="px-2.5 py-1.5 rounded-md border border-rose-200 dark:border-rose-700/50 bg-rose-50/80 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-[11px] font-bold hover:bg-rose-100 dark:hover:bg-rose-900/35 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {t('mouvement.action.annuler')}
+              </button>
+            </>
+          )}
+          {m.statut === 'EN_TRANSIT' && (
+            <button
+              type="button"
+              disabled={isActing || !isOnline}
+              title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+              onClick={() => onAction('reception', t('mouvement.action.confirmReception'))}
+              className="px-2.5 py-1.5 rounded-md border border-emerald-200 dark:border-emerald-700/50 bg-emerald-50/80 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/35 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {isActing ? '…' : t('mouvement.action.confirmReception')}
+            </button>
+          )}
+          {(m.statut === 'RECU' || m.statut === 'ANNULE') && (
+            <span className="text-[11px] text-gray-400 dark:text-gray-500 italic">{t('mouvement.terminal')}</span>
+          )}
+        </div>
+      </td>
+    </motion.tr>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MAIN PAGE
+   ═══════════════════════════════════════════════════════════════════ */
 
 type PendingAction = { type: 'depart' | 'reception' | 'annuler'; mouvementId: number; label: string }
 
@@ -107,7 +340,6 @@ export function MouvementEnginListPage() {
   useEffect(() => { fetchPage(0) }, [filterStatut, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasActiveFilters = filterStatut !== ''
-
   const resetFilters = () => setFilterStatut('')
 
   const handleAction = async (commentaire: string) => {
@@ -126,239 +358,278 @@ export function MouvementEnginListPage() {
     total: totalElements,
   })
 
+  // KPIs
+  const kpis = useMemo(() => ({
+    total: totalElements,
+    enAttente: mouvements.filter((m) => m.statut === 'EN_ATTENTE_DEPART').length,
+    enTransit: mouvements.filter((m) => m.statut === 'EN_TRANSIT').length,
+    recus: mouvements.filter((m) => m.statut === 'RECU').length,
+    annules: mouvements.filter((m) => m.statut === 'ANNULE').length,
+  }), [mouvements, totalElements])
+
+  const toggleStatut = (s: StatutMouvementEngin) => setFilterStatut(filterStatut === s ? '' : s)
+
+  if (loading && mouvements.length === 0 && !error) return <MouvementSkeleton />
+
   return (
-    <PageContainer size="full" className="h-full flex flex-col min-h-0 bg-gray-50/80 dark:bg-gray-900/80">
-      {/* Hero header */}
-      <div className="shrink-0 mb-6">
-        <div className="relative overflow-hidden rounded-2xl shadow-xl shadow-primary/10">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-dark to-secondary" />
-          <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-white/5 blur-3xl pointer-events-none" />
-          <div className="relative z-10 px-6 py-7 md:py-9">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
-              <div className="flex items-start gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center shadow-lg flex-shrink-0 backdrop-blur-sm">
-                  <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <PageContainer size="full" className="h-full flex flex-col min-h-0">
+      <div className="flex-1 min-h-0 overflow-y-auto">
+
+        {/* ═══════════ TOP SECTION — Header + Metrics + Pipeline ═══════════ */}
+        <div className="bg-white dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700/50">
+          <div className="px-4 sm:px-6 lg:px-8 py-4">
+
+            {/* Row 1 — Title + Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <motion.div
+                className="flex items-center gap-3"
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-md">
+                  <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 10-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 10-3 0m3 0h-9m-9-3h9m-9 3v-4.5m0 4.5h-.375a1.125 1.125 0 01-1.125-1.125V9.75m18 0v8.25m0 0h.375a1.125 1.125 0 001.125-1.125V9.75m-14.25 6.375h3m-3-4.5h9" />
                   </svg>
                 </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">{t('mouvement.title')}</h1>
-                  <p className="text-white/75 text-sm font-medium mt-1">{t('mouvement.hero')}</p>
-                  <MaterielModuleTabs />
+                  <h1 className="text-lg font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
+                    {t('mouvement.title')}
+                  </h1>
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">
+                    {t('mouvement.hero')}
+                  </p>
                 </div>
-              </div>
-              <div className="flex flex-col items-end gap-3">
-                {totalElements > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 border border-white/15">
-                    <p className="text-[10px] text-white/60 font-medium">{t('list.statRecords')}</p>
-                    <p className="text-sm font-bold text-white">{totalElements.toLocaleString(i18n.language)}</p>
-                  </div>
-                )}
+              </motion.div>
+
+              <motion.div
+                className="flex items-center gap-2"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <MaterielModuleTabs />
                 <OfflineDisabledButton>
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => setShowCreate(true)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-primary font-bold text-sm shadow-md hover:bg-white/90 transition-all duration-200"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg
+                               bg-gray-900 dark:bg-white text-white dark:text-gray-900
+                               font-bold text-sm shadow-sm
+                               hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
                     {t('mouvement.create')}
-                  </button>
+                  </motion.button>
                 </OfflineDisabledButton>
-              </div>
+              </motion.div>
             </div>
+
+            {/* Row 2 — Metrics row : KPIs cliquables qui filtrent */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mb-4">
+              <MetricPill value={kpis.total} label="Total" color="bg-slate-400" delay={100}
+                active={!hasActiveFilters} onClick={resetFilters} />
+              <MetricPill value={kpis.enAttente} label={t('mouvement.statut.EN_ATTENTE_DEPART')} color="bg-amber-500" delay={200}
+                active={filterStatut === 'EN_ATTENTE_DEPART'} onClick={() => toggleStatut('EN_ATTENTE_DEPART')} />
+              <MetricPill value={kpis.enTransit} label={t('mouvement.statut.EN_TRANSIT')} color="bg-indigo-500" delay={300}
+                active={filterStatut === 'EN_TRANSIT'} onClick={() => toggleStatut('EN_TRANSIT')} />
+              <MetricPill value={kpis.recus} label={t('mouvement.statut.RECU')} color="bg-emerald-500" delay={400}
+                active={filterStatut === 'RECU'} onClick={() => toggleStatut('RECU')} />
+              <MetricPill value={kpis.annules} label={t('mouvement.statut.ANNULE')} color="bg-slate-400" delay={500}
+                active={filterStatut === 'ANNULE'} onClick={() => toggleStatut('ANNULE')} />
+            </div>
+
+            {/* Row 3 — Pipeline bar */}
+            <FlowPipeline mouvements={mouvements} t={t} onFilter={setFilterStatut} />
           </div>
         </div>
-      </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-5">
-        {/* Filtres */}
-        <div className="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-primary/10 dark:bg-primary/20 text-primary flex items-center justify-center">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
-                </svg>
+        {/* ═══════════ FILTER BAR — chips statut ═══════════ */}
+        <div className="bg-gray-50/80 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700/40 sticky top-0 z-20">
+          <div className="px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div className="flex items-center gap-2 flex-1 min-w-[16rem]">
+              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest whitespace-nowrap">{t('mouvement.filterStatut')}</span>
+              <div className="flex-1 flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className={`px-3 py-1.5 rounded-md text-[11px] font-bold whitespace-nowrap transition-all ${
+                    filterStatut === ''
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/50'
+                  }`}
+                >
+                  {t('engin.filterAll')} ({kpis.total})
+                </button>
+                {ALL_STATUTS.map((s) => {
+                  const count = mouvements.filter((m) => m.statut === s).length
+                  if (count === 0 && filterStatut !== s) return null
+                  const cfg = STATUT_CONFIG[s]
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleStatut(s)}
+                      className={`px-3 py-1.5 rounded-md text-[11px] font-bold whitespace-nowrap transition-all border ${
+                        filterStatut === s
+                          ? `${cfg.bg} ${cfg.text} ${cfg.border}`
+                          : 'border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-200/60 dark:hover:bg-gray-700/50'
+                      }`}
+                    >
+                      {t(`mouvement.statut.${s}`)} {count > 0 && <span className="ml-1 tabular-nums">{count}</span>}
+                    </button>
+                  )
+                })}
               </div>
-              <p className="text-sm font-bold text-gray-900 dark:text-white">{t('list.filters')}</p>
-              {hasActiveFilters && <span className="px-2 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold">{t('list.active')}</span>}
             </div>
+
             {hasActiveFilters && (
-              <button type="button" onClick={resetFilters} className="text-xs font-semibold text-primary dark:text-primary-light hover:text-primary-dark transition-colors shrink-0">
-                {t('list.reset')} ×
-              </button>
+              <>
+                <div className="hidden sm:block w-px h-6 bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="text-[11px] font-bold text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 transition-colors flex items-center gap-1 flex-shrink-0"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  {t('list.resetFilters')}
+                </button>
+              </>
             )}
-          </div>
-          <div className="p-5">
-            <div className="max-w-xs">
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{t('mouvement.filterStatut')}</label>
-              <select
-                value={filterStatut}
-                onChange={(e) => setFilterStatut(e.target.value as StatutMouvementEngin | '')}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-              >
-                <option value="">{t('engin.filterAll')}</option>
-                {ALL_STATUTS.map((s) => (
-                  <option key={s} value={s}>{t(`mouvement.statut.${s}`)}</option>
-                ))}
-              </select>
-            </div>
           </div>
         </div>
 
-        {/* Erreur */}
-        {error && (
-          <div className="flex items-start gap-3 rounded-2xl border border-red-200 dark:border-red-700/60 bg-red-50 dark:bg-red-900/20 px-5 py-4 shadow-sm">
-            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{error}</p>
-          </div>
-        )}
+        {/* ═══════════ ERROR ═══════════ */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="px-6 lg:px-8 pt-4"
+            >
+              <div className="rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-700/50 px-4 py-3 flex items-center gap-3">
+                <svg className="w-4 h-4 text-rose-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <p className="text-sm text-rose-700 dark:text-rose-300 font-medium">{error}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Tableau */}
+        {/* ═══════════ TABLE ═══════════ */}
         {!error && (
-          <div className="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700/60 flex items-center gap-2.5">
-              <p className="text-sm font-bold text-gray-900 dark:text-white">{t('mouvement.tableTitle')}</p>
-              {!loading && mouvements.length > 0 && (
-                <span className="px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs font-bold">{totalElements}</span>
-              )}
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px]" role="table">
-                <thead>
-                  <tr className="bg-gray-50/80 dark:bg-gray-700/50">
-                    {([
-                      t('mouvement.col.engin'),
-                      t('mouvement.col.origine'),
-                      t('mouvement.col.destination'),
-                      t('mouvement.col.statut'),
-                      t('mouvement.col.date'),
-                      t('mouvement.col.initiateur'),
-                      t('engin.actions'),
-                    ] as const).map((label) => (
-                      <th key={label} scope="col" className="px-3 py-3.5 text-left border-b border-gray-100 dark:border-gray-700/60">
-                        <span className="text-[10px] font-black tracking-widest uppercase text-gray-500 dark:text-gray-400">{label}</span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-gray-700/40">
-                  {loading && Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} />)}
-                  {!loading && mouvements.map((m) => {
-                    const isActing = actionLoading === m.id
-                    return (
-                      <tr key={m.id} className="group hover:bg-primary/[0.02] dark:hover:bg-primary/[0.05] transition-colors duration-150">
-                        {/* Engin */}
-                        <td className="px-3 py-3 align-middle border-b border-gray-100 dark:border-gray-700/40">
-                          <p className="font-mono text-xs text-primary dark:text-primary-light font-semibold">{m.enginCode}</p>
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate max-w-[10rem]">{m.enginNom}</p>
-                        </td>
-                        {/* Origine */}
-                        <td className="px-3 py-3 align-middle text-sm text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700/40">
-                          {m.projetOrigineNom ?? <span className="italic text-gray-400 dark:text-gray-500">{t('detail.depot')}</span>}
-                        </td>
-                        {/* Destination */}
-                        <td className="px-3 py-3 align-middle text-sm font-medium text-gray-900 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700/40">
-                          {m.projetDestinationNom}
-                        </td>
-                        {/* Statut */}
-                        <td className="px-3 py-3 align-middle border-b border-gray-100 dark:border-gray-700/40">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-lg border text-xs font-bold ${STATUT_STYLE[m.statut]}`}>
-                            {t(`mouvement.statut.${m.statut}`)}
-                          </span>
-                        </td>
-                        {/* Date */}
-                        <td className="px-3 py-3 align-middle text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700/40 whitespace-nowrap">
-                          {new Date(m.dateDemande).toLocaleDateString()}
-                          {m.dateDepartConfirmee && (
-                            <p className="text-[10px] text-indigo-500 dark:text-indigo-400">{t('mouvement.depart')} {new Date(m.dateDepartConfirmee).toLocaleDateString()}</p>
-                          )}
-                          {m.dateReceptionConfirmee && (
-                            <p className="text-[10px] text-green-600 dark:text-green-400">{t('mouvement.reception')} {new Date(m.dateReceptionConfirmee).toLocaleDateString()}</p>
-                          )}
-                        </td>
-                        {/* Initiateur */}
-                        <td className="px-3 py-3 align-middle text-sm text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700/40">
-                          {m.initiateurNom}
-                        </td>
-                        {/* Actions */}
-                        <td className="px-3 py-3 align-middle border-b border-gray-100 dark:border-gray-700/40">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            {m.statut === 'EN_ATTENTE_DEPART' && (
-                              <>
-                                <button
-                                  type="button"
-                                  disabled={isActing || !isOnline}
-                                  title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
-                                  onClick={() => setPendingAction({ type: 'depart', mouvementId: m.id, label: t('mouvement.action.confirmDepart') })}
-                                  className="px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-700/50 bg-indigo-50/80 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/35 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                >
-                                  {t('mouvement.action.confirmDepart')}
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={isActing || !isOnline}
-                                  title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
-                                  onClick={() => setPendingAction({ type: 'annuler', mouvementId: m.id, label: t('mouvement.action.annuler') })}
-                                  className="px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-700/50 bg-red-50/80 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/35 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                >
-                                  {t('mouvement.action.annuler')}
-                                </button>
-                              </>
-                            )}
-                            {m.statut === 'EN_TRANSIT' && (
-                              <button
-                                type="button"
-                                disabled={isActing || !isOnline}
-                                title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
-                                onClick={() => setPendingAction({ type: 'reception', mouvementId: m.id, label: t('mouvement.action.confirmReception') })}
-                                className="px-2.5 py-1.5 rounded-lg border border-green-200 dark:border-green-700/50 bg-green-50/80 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs font-bold hover:bg-green-100 dark:hover:bg-green-900/35 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                              >
-                                {isActing ? '…' : t('mouvement.action.confirmReception')}
-                              </button>
-                            )}
-                            {(m.statut === 'RECU' || m.statut === 'ANNULE') && (
-                              <span className="text-xs text-gray-400 dark:text-gray-500 italic">{t('mouvement.terminal')}</span>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+          <div className="px-4 sm:px-6 lg:px-8 py-4">
+            <motion.div
+              className="bg-white dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm overflow-hidden"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              {/* Table header bar */}
+              <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">
+                    {t('mouvement.tableTitle')}
+                  </h2>
+                  {!loading && (
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 tabular-nums">
+                      {mouvements.length} sur {totalElements}
+                    </span>
+                  )}
+                </div>
+                {loading && (
+                  <div className="flex items-center gap-2 text-[11px] font-semibold text-gray-400">
+                    <div className="w-3.5 h-3.5 border-2 border-gray-300 dark:border-gray-600 border-t-primary rounded-full animate-spin" />
+                    Chargement…
+                  </div>
+                )}
+              </div>
 
-            {!loading && mouvements.length === 0 && (
-              <MaterielEmptyState
-                hasFilters={hasActiveFilters}
-                onReset={resetFilters}
-                labelNoData={t('mouvement.emptyNoData')}
-                labelNoResults={t('list.emptyNoResults')}
-                hintNoData={t('mouvement.emptyNoDataHint')}
-                hintNoResults={t('list.emptyNoResultsHint')}
-                labelReset={t('list.resetFilters')}
-              />
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px]" role="table">
+                  <thead>
+                    <tr className="bg-gray-50/60 dark:bg-gray-700/30">
+                      {[
+                        t('mouvement.col.engin'),
+                        `${t('mouvement.col.origine')} → ${t('mouvement.col.destination')}`,
+                        t('mouvement.col.statut'),
+                        t('mouvement.col.date'),
+                        t('mouvement.col.initiateur'),
+                        t('engin.actions'),
+                      ].map((label, i) => (
+                        <th key={i} scope="col" className="px-5 py-2.5 text-left border-b border-gray-100 dark:border-gray-700/50">
+                          <span className="text-[10px] font-black tracking-[0.08em] uppercase text-gray-400 dark:text-gray-500">
+                            {label}
+                          </span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading && mouvements.length === 0 && Array.from({ length: 6 }).map((_, i) => (
+                      <tr key={i} className="border-b border-gray-50 dark:border-gray-700/30">
+                        {Array.from({ length: 6 }).map((_, j) => (
+                          <td key={j} className="px-5 py-4">
+                            <div className="h-3 bg-gray-100 dark:bg-gray-700/40 rounded w-full max-w-[7rem] animate-pulse" />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                    {!loading && mouvements.map((m, i) => (
+                      <MouvementTableRow
+                        key={m.id}
+                        m={m}
+                        index={i}
+                        isActing={actionLoading === m.id}
+                        isOnline={isOnline}
+                        locale={i18n.language}
+                        t={t}
+                        onAction={(type, label) => setPendingAction({ type, mouvementId: m.id, label })}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {!loading && mouvements.length === 0 && (
+                <MaterielEmptyState
+                  hasFilters={hasActiveFilters}
+                  onReset={resetFilters}
+                  labelNoData={t('mouvement.emptyNoData')}
+                  labelNoResults={t('list.emptyNoResults')}
+                  hintNoData={t('mouvement.emptyNoDataHint')}
+                  hintNoResults={t('list.emptyNoResultsHint')}
+                  labelReset={t('list.resetFilters')}
+                />
+              )}
+            </motion.div>
+
+            {/* Pagination */}
+            {!loading && !error && totalPages > 1 && (
+              <div className="mt-4">
+                <MaterielPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  size={pageSize}
+                  onPageChange={(p) => fetchPage(p)}
+                  onSizeChange={(s) => setPageSize(s)}
+                  labelRange={paginationRangeLabel}
+                  labelPrev={t('list.paginationPrev')}
+                  labelNext={t('list.paginationNext')}
+                  labelPerPage={t('list.perPage')}
+                />
+              </div>
             )}
           </div>
         )}
-
-        {!loading && !error && totalPages > 1 && (
-          <MaterielPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            size={pageSize}
-            onPageChange={(p) => fetchPage(p)}
-            onSizeChange={(s) => setPageSize(s)}
-            labelRange={paginationRangeLabel}
-            labelPrev={t('list.paginationPrev')}
-            labelNext={t('list.paginationNext')}
-            labelPerPage={t('list.perPage')}
-          />
-        )}
-
-        <div className="h-4" />
       </div>
 
       {/* Modal création */}
@@ -383,10 +654,10 @@ export function MouvementEnginListPage() {
           confirmLabel={pendingAction.label}
           confirmClass={
             pendingAction.type === 'annuler'
-              ? 'bg-red-500 hover:bg-red-600'
+              ? 'bg-rose-500 hover:bg-rose-600'
               : pendingAction.type === 'depart'
               ? 'bg-indigo-600 hover:bg-indigo-700'
-              : 'bg-green-600 hover:bg-green-700'
+              : 'bg-emerald-600 hover:bg-emerald-700'
           }
           onConfirm={handleAction}
           onCancel={() => setPendingAction(null)}

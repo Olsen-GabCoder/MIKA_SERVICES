@@ -52,8 +52,10 @@ class CurrentUserService(
     fun canEditProjet(responsableProjetId: Long?): Boolean {
         val user = getCurrentUser() ?: return false
         if (hasGlobalAdminRole()) return true
+        // Projet sans responsable → seul un admin peut modifier (bloqué ci-dessus)
+        if (responsableProjetId == null) return false
         if (user.roles.none { it.code == "CHEF_PROJET" }) return false
-        return user.id != null && responsableProjetId != null && user.id == responsableProjetId
+        return user.id != null && user.id == responsableProjetId
     }
 
     /**

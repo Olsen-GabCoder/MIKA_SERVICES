@@ -40,6 +40,7 @@
     "ok": "OK",
     "deletePointBloquant": "Supprimer ce point bloquant ?",
     "deleteTask": "Supprimer cette tâche ?",
+    "deleteMultipleTasks": "Supprimer {{count}} tâche(s) sélectionnée(s) ?",
     "deactivateProject": "Êtes-vous sûr de vouloir désactiver le projet « {{name}} » ?",
     "deleteFournisseur": "Supprimer ce fournisseur ?",
     "downloadError": "Erreur lors du téléchargement",

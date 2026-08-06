@@ -13,6 +13,8 @@ interface PlanningState {
   totalPages: number
   currentPage: number
   loading: boolean
+  loadingMesTaches: boolean
+  loadingEnRetard: boolean
   error: string | null
 }
 
@@ -25,6 +27,8 @@ const initialState: PlanningState = {
   totalPages: 0,
   currentPage: 0,
   loading: false,
+  loadingMesTaches: false,
+  loadingEnRetard: false,
   error: null,
 }
 
@@ -104,14 +108,14 @@ const planningSlice = createSlice({
     builder.addCase(fetchTachesByProjet.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
     // fetchMesTaches
-    builder.addCase(fetchMesTaches.pending, (state) => { state.loading = true; state.error = null })
-    builder.addCase(fetchMesTaches.fulfilled, (state, action) => { state.mesTaches = action.payload; state.loading = false })
-    builder.addCase(fetchMesTaches.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
+    builder.addCase(fetchMesTaches.pending, (state) => { state.loadingMesTaches = true })
+    builder.addCase(fetchMesTaches.fulfilled, (state, action) => { state.mesTaches = action.payload; state.loadingMesTaches = false })
+    builder.addCase(fetchMesTaches.rejected, (state, action) => { state.loadingMesTaches = false; state.error = handleApiError(action.error) })
 
     // fetchTachesEnRetard
-    builder.addCase(fetchTachesEnRetard.pending, (state) => { state.loading = true; state.error = null })
-    builder.addCase(fetchTachesEnRetard.fulfilled, (state, action) => { state.tachesEnRetard = action.payload; state.loading = false })
-    builder.addCase(fetchTachesEnRetard.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
+    builder.addCase(fetchTachesEnRetard.pending, (state) => { state.loadingEnRetard = true })
+    builder.addCase(fetchTachesEnRetard.fulfilled, (state, action) => { state.tachesEnRetard = action.payload; state.loadingEnRetard = false })
+    builder.addCase(fetchTachesEnRetard.rejected, (state, action) => { state.loadingEnRetard = false; state.error = handleApiError(action.error) })
 
     // createTache
     builder.addCase(createTache.fulfilled, (state, action) => {
@@ -121,16 +125,29 @@ const planningSlice = createSlice({
 
     // updateTache
     builder.addCase(updateTache.fulfilled, (state, action) => {
-      const idx = state.taches.findIndex(t => t.id === action.payload.id)
-      if (idx !== -1) state.taches[idx] = action.payload
-      if (state.tacheDetail?.id === action.payload.id) state.tacheDetail = action.payload
-      clearPlanningCache(action.payload.projetId)
+      const updated = action.payload
+      const idx = state.taches.findIndex(t => t.id === updated.id)
+      if (idx !== -1) state.taches[idx] = updated
+      if (state.tacheDetail?.id === updated.id) state.tacheDetail = updated
+      // Mettre à jour aussi mesTaches et tachesEnRetard pour les KPIs
+      const idxMes = state.mesTaches.findIndex(t => t.id === updated.id)
+      if (idxMes !== -1) state.mesTaches[idxMes] = updated
+      const idxRetard = state.tachesEnRetard.findIndex(t => t.id === updated.id)
+      if (idxRetard !== -1) {
+        if (updated.enRetard) { state.tachesEnRetard[idxRetard] = updated }
+        else { state.tachesEnRetard.splice(idxRetard, 1) }
+      }
+      clearPlanningCache(updated.projetId)
     })
 
     // deleteTache
     builder.addCase(deleteTache.fulfilled, (state, action) => {
-      const deleted = state.taches.find(t => t.id === action.payload)
-      state.taches = state.taches.filter(t => t.id !== action.payload)
+      const deletedId = action.payload
+      const deleted = state.taches.find(t => t.id === deletedId)
+      state.taches = state.taches.filter(t => t.id !== deletedId)
+      // Retirer aussi de mesTaches et tachesEnRetard pour mise à jour immédiate des KPIs
+      state.mesTaches = state.mesTaches.filter(t => t.id !== deletedId)
+      state.tachesEnRetard = state.tachesEnRetard.filter(t => t.id !== deletedId)
       if (deleted) clearPlanningCache(deleted.projetId)
     })
   },

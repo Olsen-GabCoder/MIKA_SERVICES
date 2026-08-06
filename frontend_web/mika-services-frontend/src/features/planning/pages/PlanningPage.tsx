@@ -377,9 +377,15 @@ export default function PlanningPage() {
 
   const handleDelete = async (id: number) => {
     if (!(await confirm({ messageKey: 'confirm.deleteTask' }))) return
-    await dispatch(deleteTache(id))
-    toast({ message: t('deleteSuccess'), variant: 'success' })
-    refreshSecondaryData()
+    try {
+      await dispatch(deleteTache(id)).unwrap()
+      toast({ message: t('deleteSuccess'), variant: 'success' })
+      refreshSecondaryData()
+    } catch {
+      toast({ message: t('deleteError', { defaultValue: 'Erreur lors de la suppression. Veuillez réessayer.' }), variant: 'error' })
+      // Re-fetch pour resynchroniser avec le serveur
+      if (selectedProjetId) dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
+    }
   }
 
   const handleDeleteMultiple = async (ids: number[]) => {
@@ -390,8 +396,15 @@ export default function PlanningPage() {
       variant: 'danger',
     })
     if (!confirmed) return
-    await Promise.all(ids.map((id) => dispatch(deleteTache(id))))
-    toast({ message: t('deleteMultipleSuccess', { count: ids.length, defaultValue: '{{count}} tâche(s) supprimée(s)' }), variant: 'success' })
+    const results = await Promise.allSettled(ids.map((id) => dispatch(deleteTache(id)).unwrap()))
+    const failed = results.filter((r) => r.status === 'rejected').length
+    if (failed === 0) {
+      toast({ message: t('deleteMultipleSuccess', { count: ids.length, defaultValue: '{{count}} tâche(s) supprimée(s)' }), variant: 'success' })
+    } else {
+      toast({ message: t('deleteMultiplePartial', { failed, defaultValue: `${failed} tâche(s) n'ont pas pu être supprimée(s)` }), variant: 'error' })
+    }
+    // Re-fetch pour resynchroniser
+    if (selectedProjetId) dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
     refreshSecondaryData()
   }
 

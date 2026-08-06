@@ -34,8 +34,10 @@ export const Modal = ({
 }: ModalProps) => {
   const { t } = useTranslation('common')
   const panelRef = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
-  // Focus trap + Escape
+  // Focus trap + Escape — only re-run when isOpen changes (not onClose)
   useEffect(() => {
     if (!isOpen) return
 
@@ -45,7 +47,7 @@ export const Modal = ({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation()
-        onClose()
+        onCloseRef.current()
       }
     }
     document.addEventListener('keydown', onKey)
@@ -58,7 +60,7 @@ export const Modal = ({
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = prev
     }
-  }, [isOpen, onClose])
+  }, [isOpen])
 
   if (!isOpen) return null
 

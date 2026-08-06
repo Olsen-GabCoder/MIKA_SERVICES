@@ -11,7 +11,7 @@ export function PWAUpdatePrompt() {
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const {
-    needRefresh: [needRefresh, setNeedRefresh],
+    needRefresh: [needRefresh],
     offlineReady: [offlineReady, setOfflineReady],
     updateServiceWorker,
   } = useRegisterSW({

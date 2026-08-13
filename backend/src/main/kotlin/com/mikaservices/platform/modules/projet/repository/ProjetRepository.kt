@@ -31,7 +31,7 @@ interface ProjetRepository : JpaRepository<Projet, Long>, JpaSpecificationExecut
 
     fun findByType(type: TypeProjet): List<Projet>
     fun findByClientId(clientId: Long): List<Projet>
-    fun findByResponsableProjetId(userId: Long): List<Projet>
+    fun findByResponsableProjetIdAndActifTrue(userId: Long): List<Projet>
 
     @EntityGraph(attributePaths = ["client", "responsableProjet"])
     @Query("SELECT p FROM Projet p WHERE p.actif = true AND " +

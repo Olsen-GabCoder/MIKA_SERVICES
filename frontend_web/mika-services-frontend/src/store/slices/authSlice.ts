@@ -3,7 +3,7 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 import type { User } from '@/types'
 import { authApi, isLogin2FAPending } from '@/api/authApi'
 import type { LoginRequest } from '@/api/authApi'
-import { getAccessToken, setAccessToken, setRefreshToken, removeAllTokens } from '@/utils/tokenStorage'
+import { setAccessToken, removeAllTokens } from '@/utils/tokenStorage'
 import { setCurrentUserCache, getCurrentUserCache, clearCurrentUserCache, clearProjetsCache, clearUsersCache, clearDashboardCache } from '@/utils/offlineCache'
 import { clearResponseCache } from '@/utils/responseCache'
 import { clearOfflineCredentials } from '@/utils/offlineAuth'
@@ -30,9 +30,9 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  accessToken: getAccessToken(),
+  accessToken: null,
   refreshToken: null,
-  isAuthenticated: !!getAccessToken(),
+  isAuthenticated: false,
   isLoading: false,
   error: null,
   twoFactorPending: null,
@@ -132,7 +132,6 @@ const authSlice = createSlice({
       state.isAuthenticated = true
       state.error = null
       setAccessToken(action.payload.accessToken)
-      if (action.payload.refreshToken) setRefreshToken(action.payload.refreshToken)
     },
     logout: (state) => {
       state.user = null
@@ -242,9 +241,19 @@ const authSlice = createSlice({
       removeAllTokens()
     })
 
-    // Refresh token — ne jamais casser la session si le serveur est injoignable
-    builder.addCase(refreshToken.rejected, () => {
-      // no-op : garder l'état intact, le prochain refresh résoudra
+    // Refresh token — log l'echec mais ne pas casser la session (le retry ou intercepteur 401 gerera)
+    builder.addCase(refreshToken.rejected, (state, action) => {
+      // Si c'est une erreur 401 (refresh token invalide/expire), deconnecter proprement
+      const err = action.error as { message?: string } | undefined
+      const is401 = err?.message?.includes('401') || err?.message?.includes('Unauthorized')
+      if (is401) {
+        state.user = null
+        state.accessToken = null
+        state.refreshToken = null
+        state.isAuthenticated = false
+        removeAllTokens()
+      }
+      // Sinon (reseau, timeout) : garder la session intacte
     })
 
     // Logout

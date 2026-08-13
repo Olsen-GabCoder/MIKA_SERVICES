@@ -429,9 +429,9 @@ Si le contenu provient d'un fichier Excel, identifie les colonnes et lignes pert
     private fun parseExtraction(json: JsonNode): RapportAnalyseResponse {
         val champsExtraits = mutableListOf<String>()
 
-        val suiviMensuel = json.path("suiviMensuel").takeIf { !it.isMissingNode && it.size() > 0 }?.let { node ->
+        val suiviMensuel: List<SuiviMensuelExtrait>? = json.path("suiviMensuel").takeIf { !it.isMissingNode && it.size() > 0 }?.let { node ->
             champsExtraits.add("suiviMensuel")
-            node.map { item ->
+            node.toList().map { item ->
                 SuiviMensuelExtrait(
                     mois = item.path("mois").asInt(),
                     annee = item.path("annee").asInt(),
@@ -441,9 +441,9 @@ Si le contenu provient d'un fichier Excel, identifie les colonnes et lignes pert
             }
         }
 
-        val previsions = json.path("previsions").takeIf { !it.isMissingNode && it.size() > 0 }?.let { node ->
+        val previsions: List<PrevisionExtraite>? = json.path("previsions").takeIf { !it.isMissingNode && it.size() > 0 }?.let { node ->
             champsExtraits.add("previsions")
-            node.map { item ->
+            node.toList().map { item ->
                 PrevisionExtraite(
                     description = item.path("description").asText(),
                     type = TypePrevision.valueOf(item.path("type").asText()),
@@ -454,9 +454,9 @@ Si le contenu provient d'un fichier Excel, identifie les colonnes et lignes pert
             }
         }
 
-        val pointsBloquants = json.path("pointsBloquants").takeIf { !it.isMissingNode && it.size() > 0 }?.let { node ->
+        val pointsBloquants: List<PointBloquantExtrait>? = json.path("pointsBloquants").takeIf { !it.isMissingNode && it.size() > 0 }?.let { node ->
             champsExtraits.add("pointsBloquants")
-            node.map { item ->
+            node.toList().map { item ->
                 PointBloquantExtrait(
                     titre = item.path("titre").asText(),
                     description = item.path("description").takeIf { !it.isMissingNode && !it.isNull }?.asText(),
@@ -466,9 +466,9 @@ Si le contenu provient d'un fichier Excel, identifie les colonnes et lignes pert
             }
         }
 
-        val avancementEtudes = json.path("avancementEtudes").takeIf { !it.isMissingNode && it.size() > 0 }?.let { node ->
+        val avancementEtudes: List<AvancementEtudeExtrait>? = json.path("avancementEtudes").takeIf { !it.isMissingNode && it.size() > 0 }?.let { node ->
             champsExtraits.add("avancementEtudes")
-            node.map { item ->
+            node.toList().map { item ->
                 AvancementEtudeExtrait(
                     phase = PhaseEtude.valueOf(item.path("phase").asText()),
                     avancementPct = item.path("avancementPct").takeIf { !it.isMissingNode && !it.isNull }?.let { BigDecimal(it.asText()) },
@@ -492,8 +492,8 @@ Si le contenu provient d'un fichier Excel, identifie les colonnes et lignes pert
         val propositionsAmelioration = json.path("propositionsAmelioration").takeIf { !it.isMissingNode && !it.isNull }?.asText()
             ?.also { champsExtraits.add("propositionsAmelioration") }
 
-        val avertissements = json.path("avertissements").takeIf { !it.isMissingNode }
-            ?.map { it.asText() } ?: emptyList()
+        val avertissements: List<String> = json.path("avertissements").takeIf { !it.isMissingNode }
+            ?.toList()?.map { it.asText() } ?: emptyList()
 
         return RapportAnalyseResponse(
             suiviMensuel = suiviMensuel,

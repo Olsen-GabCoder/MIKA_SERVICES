@@ -1,7 +1,7 @@
 import apiClient, { performRefreshFromStorage } from './axios'
 import type { AuthResponse, Login2FAPendingResponse } from '@/types'
 import { API_ENDPOINTS } from '@/constants/api'
-import { setTokenStorageMode, setAccessToken, getAccessToken, removeAllTokens, setRefreshToken } from '@/utils/tokenStorage'
+import { setTokenStorageMode, setAccessToken, getAccessToken, removeAllTokens } from '@/utils/tokenStorage'
 import { storeOfflineCredentials, verifyOfflineCredentials, getOfflineToken } from '@/utils/offlineAuth'
 import { isNetworkError } from '@/utils/errorHandler'
 
@@ -49,7 +49,7 @@ export const authApi = {
         const logoutOnClose = credentials.rememberMe ? false : (data.user?.logoutOnBrowserClose ?? false)
         setTokenStorageMode(logoutOnClose)
         setAccessToken(data.accessToken)
-        if (data.refreshToken) setRefreshToken(data.refreshToken)
+        // Le refresh token est géré par le cookie httpOnly du backend
         await storeOfflineCredentials(credentials.email, credentials.password, data.user)
       }
       return data
@@ -79,7 +79,7 @@ export const authApi = {
       const logoutOnClose = rememberMe ? false : (response.data.user?.logoutOnBrowserClose ?? false)
       setTokenStorageMode(logoutOnClose)
       setAccessToken(response.data.accessToken)
-      if (response.data.refreshToken) setRefreshToken(response.data.refreshToken)
+      // Le refresh token est géré par le cookie httpOnly du backend
     }
     return response.data
   },

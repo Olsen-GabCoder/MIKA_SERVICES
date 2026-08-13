@@ -1,9 +1,13 @@
 import axios from 'axios'
 import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { i18n } from '@/i18n'
-import { getAccessToken, setAccessToken, removeAllTokens, getRefreshToken, setRefreshToken } from '@/utils/tokenStorage'
+import { getAccessToken, setAccessToken, removeAllTokens, getRefreshToken } from '@/utils/tokenStorage'
 import { cacheResponse, getCachedResponse } from '@/utils/responseCache'
 import type { AuthResponse } from '@/types'
+
+/** Callback defini par le store pour deconnecter proprement via Redux au lieu d'un hard redirect. */
+let onAuthFailure: (() => void) | null = null
+export function setOnAuthFailure(cb: () => void): void { onAuthFailure = cb }
 
 const MAX_RETRIES = 2
 const RETRY_BASE_DELAY_MS = 800
@@ -136,13 +140,11 @@ apiClient.interceptors.response.use(
 let refreshPromise: Promise<AuthResponse | null> | null = null
 
 async function doRefresh(): Promise<AuthResponse | null> {
-  const storedRefresh = getRefreshToken()
-  if (!storedRefresh) return null
-  const response = await apiClient.post<AuthResponse>('/auth/refresh', { refreshToken: storedRefresh })
+  // Le refresh token est dans le cookie httpOnly, envoyé automatiquement (withCredentials: true)
+  const response = await apiClient.post<AuthResponse>('/auth/refresh', {})
   const data = response.data
   if (data?.accessToken) {
     setAccessToken(data.accessToken)
-    if (data.refreshToken) setRefreshToken(data.refreshToken)
     return data
   }
   return null
@@ -175,7 +177,8 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true
       if (!getRefreshToken()) {
         removeAllTokens()
-        window.location.href = '/login'
+        if (onAuthFailure) onAuthFailure()
+        else window.location.href = '/login'
         return Promise.reject(error)
       }
       try {
@@ -191,7 +194,8 @@ apiClient.interceptors.response.use(
         refreshPromise = null
       }
       removeAllTokens()
-      window.location.href = '/login'
+      if (onAuthFailure) onAuthFailure()
+      else window.location.href = '/login'
       return Promise.reject(error)
     }
 

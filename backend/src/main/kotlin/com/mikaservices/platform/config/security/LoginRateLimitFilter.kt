@@ -29,7 +29,8 @@ class LoginRateLimitFilter(
         "/auth/login",
         "/auth/verify-2fa",
         "/auth/2fa/verify-setup",
-        "/auth/forgot-password"
+        "/auth/forgot-password",
+        "/auth/reset-password"
     )
 
     // Clé = "IP:endpoint" -> liste des timestamps

@@ -583,10 +583,11 @@
     "reconnected": "Connexion rétablie"
   },
   "pwa": {
-    "updateAvailable": "Une nouvelle version est disponible",
-    "updateHint": "Cliquez sur Mettre à jour pour profiter des dernières améliorations",
-    "updateNow": "Mettre à jour",
+    "updateAvailable": "Nouvelle version disponible",
+    "updateDescription": "Une mise \u00e0 jour de MIKA Services est pr\u00eate. Mettez \u00e0 jour pour profiter des derni\u00e8res am\u00e9liorations et corrections.",
+    "updateNow": "Mettre \u00e0 jour maintenant",
     "dismiss": "Plus tard",
-    "offlineReady": "Application prête pour le mode hors ligne"
+    "dismissHint": "Ce message r\u00e9appara\u00eetra dans 5 minutes",
+    "offlineReady": "Application pr\u00eate pour le mode hors ligne"
   }
 }

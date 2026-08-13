@@ -61,13 +61,13 @@ class AuthService(
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     fun login(request: LoginRequest, httpRequest: HttpServletRequest): LoginResult {
-        logger.debug("Tentative de connexion pour l'email: ${request.email}")
+        logger.debug("Tentative de connexion")
 
         val user = userRepository.findByEmail(request.email)
             .orElseThrow { UnauthorizedException("Email ou mot de passe incorrect") }
 
         if (!user.actif) {
-            throw UnauthorizedException("Compte utilisateur désactivé")
+            throw UnauthorizedException("Email ou mot de passe incorrect")
         }
 
         val now = LocalDateTime.now()
@@ -100,7 +100,7 @@ class AuthService(
         // Si 2FA activé, retourner token temporaire au lieu de créer la session
         if (user.totpEnabled) {
             val tempToken = jwtTokenProvider.generate2FAPendingToken(user.email)
-            logger.debug("2FA requis pour: ${user.email}")
+            logger.debug("2FA requis pour userId: ${user.id}")
             return LoginResult.Requires2FA(
                 Login2FAPendingResponse(tempToken = tempToken)
             )
@@ -380,14 +380,18 @@ class AuthService(
         )
     }
     
-    fun logout(token: String) {
+    fun logout(token: String, currentUserEmail: String? = null) {
         val session = sessionRepository.findByToken(token).orElse(null)
         session?.let {
+            // Vérifier que le token appartient à l'utilisateur authentifié
+            if (currentUserEmail != null && it.user.email != currentUserEmail) {
+                throw UnauthorizedException("Token manquant ou invalide")
+            }
             it.active = false
             sessionRepository.save(it)
             jwtAuthenticationFilter.evictSession(token)
             auditLogService.log(it.user, "AUTH", "LOGOUT", it.deviceName, it.ipAddress, actorOverride = it.user.email)
-            logger.info("Session désactivée pour l'utilisateur: ${it.user.email}")
+            logger.info("Session désactivée pour userId: ${it.user.id}")
         }
     }
 
@@ -432,13 +436,13 @@ class AuthService(
      * Ne révèle jamais si l'email existe ou non (protection contre l'énumération).
      */
     fun forgotPassword(request: ForgotPasswordRequest) {
-        logger.debug("Demande reset mot de passe pour: ${request.email}")
+        logger.debug("Demande reset mot de passe")
         val user = userRepository.findByEmail(request.email).orElse(null) ?: run {
-            logger.debug("Email non trouvé: ${request.email} (réponse générique envoyée)")
+            logger.debug("Email non trouvé (réponse générique envoyée)")
             return
         }
         if (!user.actif) {
-            logger.debug("Compte désactivé: ${request.email}")
+            logger.debug("Compte désactivé (réponse générique envoyée)")
             return
         }
         val token = UUID.randomUUID().toString().replace("-", "")
@@ -477,7 +481,10 @@ class AuthService(
         userRepository.save(user)
         resetToken.used = true
         passwordResetTokenRepository.save(resetToken)
-        logger.info("Mot de passe réinitialisé pour: ${user.email}")
+        // Invalider toutes les sessions actives de cet utilisateur
+        sessionRepository.deactivateAllUserSessions(user.id!!)
+        jwtAuthenticationFilter.evictAllSessions()
+        logger.info("Mot de passe réinitialisé pour userId: ${user.id}")
         if (user.emailNotificationsEnabled) {
             try {
                 emailService.sendPasswordChangedNotification(user.email, "${user.prenom} ${user.nom}", user.sexe)

@@ -51,10 +51,11 @@ class CorsConfig {
             }
         }
         
-        // En prod, autoriser tous les sous-domaines Render (*.onrender.com) si aucune origine HTTPS n'a été configurée
+        // En prod, autoriser les origines Render exactes si aucune origine HTTPS n'a été configurée
         val hasHttpsOrigin = origins.any { it.startsWith("https://") }
         if (!hasHttpsOrigin) {
-            origins.add("https://*.onrender.com")
+            origins.add("https://mika-services-frontend.onrender.com")
+            origins.add("https://mika-services-backend.onrender.com")
         }
         
         configuration.allowedOriginPatterns = origins
@@ -64,7 +65,10 @@ class CorsConfig {
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
         
         // Headers autorisés
-        configuration.allowedHeaders = listOf("*")
+        configuration.allowedHeaders = listOf(
+            "Authorization", "Content-Type", "Accept", "Accept-Language",
+            "Origin", "X-Requested-With", "Cache-Control"
+        )
         
         // Headers exposés
         configuration.exposedHeaders = listOf("Authorization")

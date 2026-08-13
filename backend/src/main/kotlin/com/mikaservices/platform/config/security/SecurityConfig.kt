@@ -44,6 +44,17 @@ class SecurityConfig(
         http
             .cors { it.configurationSource(corsConfigurationSource) }
             .csrf { it.disable() }
+            .httpBasic { it.disable() }
+            .formLogin { it.disable() }
+            .headers { headers ->
+                headers.frameOptions { it.deny() }
+                headers.contentTypeOptions { }
+                headers.httpStrictTransportSecurity { hsts ->
+                    hsts.includeSubDomains(true)
+                    hsts.maxAgeInSeconds(31536000)
+                }
+                headers.referrerPolicy { }
+            }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .exceptionHandling { it.authenticationEntryPoint(unauthorizedEntryPoint()) }
             .authorizeHttpRequests { auth ->

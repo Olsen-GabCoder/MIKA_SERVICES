@@ -580,10 +580,11 @@
     "reconnected": "Connection restored"
   },
   "pwa": {
-    "updateAvailable": "A new version is available",
-    "updateHint": "Click Update now to get the latest improvements",
+    "updateAvailable": "New version available",
+    "updateDescription": "A MIKA Services update is ready. Update now to get the latest improvements and fixes.",
     "updateNow": "Update now",
     "dismiss": "Later",
+    "dismissHint": "This message will reappear in 5 minutes",
     "offlineReady": "App ready for offline use"
   }
 }

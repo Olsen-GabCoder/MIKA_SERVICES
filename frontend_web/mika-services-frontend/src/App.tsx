@@ -13,10 +13,10 @@ import { applyCardSizeToDocument } from './utils/cardSizePreferences'
 import { applyHighContrastToDocument } from './utils/highContrastPreferences'
 import { usePageTracking } from './hooks/usePageTracking'
 
-/** Période de refresh proactif : avant expiration du JWT (15 min). */
-const PROACTIVE_REFRESH_INTERVAL_MS = 14 * 60 * 1000
-/** Premier refresh après 30 s pour valider tôt le refresh token (surtout en prod cross-origin). */
-const FIRST_REFRESH_DELAY_MS = 30 * 1000
+/** Période de refresh proactif : avant expiration du JWT (15 min). Buffer de 3 min. */
+const PROACTIVE_REFRESH_INTERVAL_MS = 12 * 60 * 1000
+/** Premier refresh après 10 s pour valider tôt le refresh token (surtout en prod cross-origin). */
+const FIRST_REFRESH_DELAY_MS = 10 * 1000
 
 function App() {
   const location = useLocation()
@@ -35,22 +35,42 @@ function App() {
 
   usePageTracking(isAuthenticated && !!user)
 
-  // Au chargement : si on a un token mais pas l'objet user, restaurer via /users/me ou cache hors ligne
+  // Au chargement : restaurer la session via refresh token (cookie httpOnly)
+  // Si l'access token est en mémoire (déjà authentifié), on charge juste le user.
+  // Sinon, on tente un refresh pour récupérer un nouvel access token.
+  const sessionRestoredRef = useRef(false)
   useEffect(() => {
     if (location.pathname === '/login' || location.pathname.startsWith('/forgot-password') || location.pathname.startsWith('/reset-password')) return
-    if (!isAuthenticated || user) return
-    const token = getAccessToken()
-    if (!token) return
+    if (user) return
+    if (sessionRestoredRef.current) return
+    sessionRestoredRef.current = true
 
-    dispatch(fetchUserFromToken()).then((result: unknown) => {
-      if (fetchUserFromToken.rejected.match(result)) {
-        const offline = typeof navigator !== 'undefined' && !navigator.onLine
-        if (!offline) {
-          navigate('/login', { replace: true })
+    const token = getAccessToken()
+    if (token) {
+      // Access token en mémoire (session en cours, pas de rechargement)
+      dispatch(fetchUserFromToken()).then((result: unknown) => {
+        if (fetchUserFromToken.rejected.match(result)) {
+          const offline = typeof navigator !== 'undefined' && !navigator.onLine
+          if (!offline) navigate('/login', { replace: true })
         }
-      }
-    })
-  }, [dispatch, isAuthenticated, user, location.pathname, navigate])
+      })
+    } else {
+      // Rechargement de page : access token perdu (mémoire vidée), tenter un refresh via cookie httpOnly
+      dispatch(refreshToken())
+        .unwrap()
+        .then(() => dispatch(fetchUserFromToken()))
+        .then((result: unknown) => {
+          if (fetchUserFromToken.rejected.match(result)) {
+            const offline = typeof navigator !== 'undefined' && !navigator.onLine
+            if (!offline) navigate('/login', { replace: true })
+          }
+        })
+        .catch(() => {
+          const offline = typeof navigator !== 'undefined' && !navigator.onLine
+          if (!offline) navigate('/login', { replace: true })
+        })
+    }
+  }, [dispatch, user, location.pathname, navigate])
 
   // Refresh proactif : premier run après 1 min puis toutes les 14 min (valide le refresh token tôt)
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)

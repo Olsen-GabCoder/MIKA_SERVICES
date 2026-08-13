@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ProjetSummary } from '@/types/projet'
 
@@ -11,6 +12,14 @@ export interface PlanningHeaderProps {
 
 export function PlanningHeader({ projets, selectedProjetId, onSelectProjet, canEdit, onNewTask }: PlanningHeaderProps) {
   const { t } = useTranslation('planning')
+
+  // Dédupliquer par ID et trier par nom (évite les doublons JPA @ElementCollection)
+  const uniqueProjets = useMemo(() => {
+    const seen = new Set<number>()
+    return projets
+      .filter((p) => { if (seen.has(p.id)) return false; seen.add(p.id); return true })
+      .sort((a, b) => (a.nom ?? '').localeCompare(b.nom ?? '', 'fr'))
+  }, [projets])
 
   return (
     <header className="flex flex-col sm:flex-row sm:items-center gap-4 py-2 pb-4" style={{ animation: 'db-rise 380ms ease-out both' }}>
@@ -34,7 +43,7 @@ export function PlanningHeader({ projets, selectedProjetId, onSelectProjet, canE
           style={{ background: 'var(--db-card)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
         >
           <option value="">{t('selectProjectPlaceholder')}</option>
-          {projets.map((p) => (
+          {uniqueProjets.map((p) => (
             <option key={p.id} value={p.id}>{p.nom}</option>
           ))}
         </select>

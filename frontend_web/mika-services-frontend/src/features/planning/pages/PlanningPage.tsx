@@ -57,6 +57,12 @@ import { TachesTable } from '../components/premium/TachesTable'
 import { PlanningDonut } from '../components/premium/PlanningDonut'
 import { TachesRetardList } from '../components/premium/TachesRetardList'
 import { PrioriteBars } from '../components/premium/PrioriteBars'
+import { GanttChart } from '../components/premium/GanttChart'
+import { KanbanBoard } from '../components/premium/KanbanBoard'
+import { planningApi } from '@/api/planningApi'
+import type { DependanceResponse } from '@/types/planning'
+
+type PlanningView = 'table' | 'gantt' | 'kanban'
 
 export default function PlanningPage() {
   const { t } = useTranslation('planning')
@@ -68,12 +74,24 @@ export default function PlanningPage() {
   const currentUser = useAppSelector((s) => s.auth.user)
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const { taches, tachesEnRetard, mesTaches, loading } = useAppSelector((s) => s.planning)
-  const allProjets = useAppSelector((s) => s.projet.projets)
+  const projetsPaginated = useAppSelector((s) => s.projet.projets)
+  const mesProjets = useAppSelector((s) => s.projet.mesProjets)
+
+  // Fusionner projets paginés + mesProjets pour garantir une liste complète sans doublons
+  const allProjets = useMemo(() => {
+    const map = new Map<number, typeof projetsPaginated[0]>()
+    for (const p of projetsPaginated) map.set(p.id, p)
+    for (const p of mesProjets) if (!map.has(p.id)) map.set(p.id, p)
+    return Array.from(map.values())
+  }, [projetsPaginated, mesProjets])
 
   // Persister le projet sélectionné dans l'URL (?projet=14) pour survivre au HMR et refresh
   const [searchParams, setSearchParams] = useSearchParams()
   const initialProjetId = searchParams.get('projet') ? Number(searchParams.get('projet')) : null
   const [selectedProjetId, setSelectedProjetIdRaw] = useState<number | null>(initialProjetId)
+  // Ref stable pour utiliser dans les handlers async (évite que la closure capture une ancienne valeur)
+  const selectedProjetIdRef = useRef(selectedProjetId)
+  selectedProjetIdRef.current = selectedProjetId
 
   const setSelectedProjetId = useCallback((id: number | null) => {
     setSelectedProjetIdRaw(id)
@@ -83,6 +101,9 @@ export default function PlanningPage() {
   const [filterHistorique, setFilterHistorique] = useState<StatutTache | ''>('')
   const [showModal, setShowModal] = useState(false)
   const [editingTache, setEditingTache] = useState<Tache | null>(null)
+  const [activeView, setActiveView] = useState<PlanningView>('table')
+  const [dependances, setDependances] = useState<DependanceResponse[]>([])
+  const [cheminCritique, setCheminCritique] = useState<number[]>([])
 
   // Users for assignee
   const allUsers = useAppSelector((s) => s.user.users)
@@ -136,8 +157,13 @@ export default function PlanningPage() {
       dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
       setFilterStatut('')
       dqeApi.findByProjet(selectedProjetId).then(setDqeChapitres).catch(() => setDqeChapitres([]))
+      // Load dependances for Gantt
+      planningApi.getDependancesByProjet(selectedProjetId).then(setDependances).catch(() => setDependances([]))
+      planningApi.getCheminCritique(selectedProjetId).then((t) => setCheminCritique(t.map((x) => x.id))).catch(() => setCheminCritique([]))
     } else {
       setDqeChapitres([])
+      setDependances([])
+      setCheminCritique([])
     }
   }, [dispatch, selectedProjetId])
 
@@ -298,9 +324,10 @@ export default function PlanningPage() {
   }
 
   // Rafraîchir les données secondaires sans toucher aux tâches du projet (déjà à jour dans le reducer)
+  // Les erreurs sont silencieusement ignorées pour éviter un logout en cascade (401 → redirect)
   const refreshSecondaryData = () => {
-    dispatch(fetchTachesEnRetard())
-    if (currentUser?.id) dispatch(fetchMesTaches(currentUser.id))
+    dispatch(fetchTachesEnRetard()).catch(() => {})
+    if (currentUser?.id) dispatch(fetchMesTaches(currentUser.id)).catch(() => {})
   }
 
   const handleSubmit = async () => {
@@ -365,12 +392,17 @@ export default function PlanningPage() {
     setShowModal(false)
     resetForm()
     // Recharger les tâches du projet pour avoir la liste à jour du serveur (pagination, tri)
-    dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
+    const pid = selectedProjetIdRef.current
+    if (pid) dispatch(fetchTachesByProjet({ projetId: pid })).catch(() => {})
     refreshSecondaryData()
   }
 
   const handleStatusChange = async (tache: Tache, statut: StatutTache) => {
-    await dispatch(updateTache({ id: tache.id, request: { statut } }))
+    try {
+      await dispatch(updateTache({ id: tache.id, request: { statut } })).unwrap()
+    } catch {
+      toast({ message: t('updateError', { defaultValue: 'Erreur lors de la mise à jour.' }), variant: 'error' })
+    }
     // Le reducer met à jour la tâche localement — pas besoin de recharger fetchTachesByProjet
     refreshSecondaryData()
   }
@@ -384,7 +416,9 @@ export default function PlanningPage() {
       toast({ message: t('deleteError', { defaultValue: 'Erreur lors de la suppression. Veuillez réessayer.' }), variant: 'error' })
     }
     // Toujours re-fetch pour resynchroniser le cache Workbox avec le serveur
-    if (selectedProjetId) dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
+    // Utiliser la ref pour garantir que l'ID projet est stable même après re-render
+    const pid = selectedProjetIdRef.current
+    if (pid) dispatch(fetchTachesByProjet({ projetId: pid })).catch(() => {})
     refreshSecondaryData()
   }
 
@@ -404,7 +438,8 @@ export default function PlanningPage() {
       toast({ message: t('deleteMultiplePartial', { failed, defaultValue: `${failed} tâche(s) n'ont pas pu être supprimée(s)` }), variant: 'error' })
     }
     // Re-fetch pour resynchroniser
-    if (selectedProjetId) dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
+    const pid = selectedProjetIdRef.current
+    if (pid) dispatch(fetchTachesByProjet({ projetId: pid })).catch(() => {})
     refreshSecondaryData()
   }
 
@@ -483,41 +518,93 @@ export default function PlanningPage() {
             {/* Row 1: KPIs projet */}
             <PlanningKpiRow {...projectKpis} />
 
+            {/* View tabs */}
+            <div className="col-span-12 flex items-center gap-1 rounded-xl p-1" style={{ background: 'var(--db-subtle)' }}>
+              {([
+                { id: 'table' as PlanningView, label: t('viewTable', { defaultValue: 'Tableau' }), icon: 'M3 4h18M3 8h18M3 12h18M3 16h18M3 20h18' },
+                { id: 'gantt' as PlanningView, label: t('viewGantt', { defaultValue: 'Gantt' }), icon: 'M3 6h13M3 12h8M3 18h18' },
+                { id: 'kanban' as PlanningView, label: t('viewKanban', { defaultValue: 'Kanban' }), icon: 'M9 3v18M15 3v18M3 3h18v18H3z' },
+              ]).map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => setActiveView(v.id)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                  style={{
+                    background: activeView === v.id ? 'var(--db-card)' : 'transparent',
+                    color: activeView === v.id ? 'var(--db-t1)' : 'var(--db-t4)',
+                    boxShadow: activeView === v.id ? '0 1px 3px rgba(0,0,0,0.1)' : undefined,
+                  }}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d={v.icon} />
+                  </svg>
+                  {v.label}
+                </button>
+              ))}
+              {cheminCritique.length > 0 && activeView === 'gantt' && (
+                <span className="ml-auto text-[10px] font-semibold px-2 py-1 rounded-md" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+                  {t('cheminCritique', { defaultValue: 'Chemin critique' })}: {cheminCritique.length} {t('taches', { defaultValue: 'taches' })}
+                </span>
+              )}
+            </div>
+
             {/* Row 2: Donut (6) + Priorites (6) — bande compacte */}
             <PlanningDonut counts={projectDonut} colSpanClass="col-span-12 md:col-span-6" />
             <PrioriteBars taches={taches} colSpanClass="col-span-12 md:col-span-6" />
 
-            {/* Row 3: Taches actives (6) + Historique terminées (6) */}
-            <TachesTable
-              taches={tachesActives}
-              loading={loading}
-              canEdit={canEdit}
-              isOnline={isOnline}
-              filterStatut={filterStatut}
-              onFilterChange={setFilterStatut}
-              onStatusChange={handleStatusChange}
-              onEdit={openEdit}
-              onDelete={handleDelete}
-              onDeleteMultiple={handleDeleteMultiple}
-              colSpanClass="col-span-12 lg:col-span-6"
-              title={t('tachesActivesTitle')}
-              filterStatuts={[StatutTache.A_FAIRE, StatutTache.EN_COURS, StatutTache.EN_ATTENTE]}
-            />
-            <TachesTable
-              taches={tachesHistorique}
-              loading={false}
-              canEdit={canEdit}
-              isOnline={isOnline}
-              filterStatut={filterHistorique}
-              onFilterChange={setFilterHistorique}
-              onStatusChange={handleStatusChange}
-              onEdit={openEdit}
-              onDelete={handleDelete}
-              onDeleteMultiple={handleDeleteMultiple}
-              colSpanClass="col-span-12 lg:col-span-6"
-              title={t('tachesHistoriqueTitle')}
-              filterStatuts={[StatutTache.TERMINEE, StatutTache.ANNULEE]}
-            />
+            {/* Content based on active view */}
+            {activeView === 'table' && (
+              <>
+                <TachesTable
+                  taches={tachesActives}
+                  loading={loading}
+                  canEdit={canEdit}
+                  isOnline={isOnline}
+                  filterStatut={filterStatut}
+                  onFilterChange={setFilterStatut}
+                  onStatusChange={handleStatusChange}
+                  onEdit={openEdit}
+                  onDelete={handleDelete}
+                  onDeleteMultiple={handleDeleteMultiple}
+                  colSpanClass="col-span-12 lg:col-span-6"
+                  title={t('tachesActivesTitle')}
+                  filterStatuts={[StatutTache.A_FAIRE, StatutTache.EN_COURS, StatutTache.EN_ATTENTE]}
+                />
+                <TachesTable
+                  taches={tachesHistorique}
+                  loading={false}
+                  canEdit={canEdit}
+                  isOnline={isOnline}
+                  filterStatut={filterHistorique}
+                  onFilterChange={setFilterHistorique}
+                  onStatusChange={handleStatusChange}
+                  onEdit={openEdit}
+                  onDelete={handleDelete}
+                  onDeleteMultiple={handleDeleteMultiple}
+                  colSpanClass="col-span-12 lg:col-span-6"
+                  title={t('tachesHistoriqueTitle')}
+                  filterStatuts={[StatutTache.TERMINEE, StatutTache.ANNULEE]}
+                />
+              </>
+            )}
+
+            {activeView === 'gantt' && (
+              <GanttChart
+                taches={taches}
+                dependances={dependances}
+                cheminCritique={cheminCritique}
+                onEdit={canEdit ? openEdit : undefined}
+              />
+            )}
+
+            {activeView === 'kanban' && (
+              <KanbanBoard
+                taches={taches.filter((t) => t.statut !== StatutTache.ANNULEE)}
+                canEdit={canEdit}
+                onStatusChange={handleStatusChange}
+                onEdit={openEdit}
+              />
+            )}
 
             {/* Row 4: Retards */}
             <TachesRetardList taches={tachesEnRetard} selectedProjetId={selectedProjetId} />

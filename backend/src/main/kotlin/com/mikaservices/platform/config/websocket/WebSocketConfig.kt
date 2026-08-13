@@ -21,7 +21,11 @@ class WebSocketConfig : WebSocketMessageBrokerConfigurer {
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         // Endpoint WebSocket pour les clients
         registry.addEndpoint("/ws")
-            .setAllowedOriginPatterns("*") // En dev, autoriser toutes les origines
+            .setAllowedOriginPatterns(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "https://mika-services-frontend.onrender.com"
+            )
             .withSockJS() // Support SockJS pour compatibilité navigateurs
     }
 }

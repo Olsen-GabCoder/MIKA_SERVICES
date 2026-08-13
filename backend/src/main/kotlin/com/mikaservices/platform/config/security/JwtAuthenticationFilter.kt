@@ -26,7 +26,12 @@ class JwtAuthenticationFilter(
 
     private data class SessionCacheEntry(val active: Boolean, val cachedAt: Long)
 
-    private val sessionCache = ConcurrentHashMap<String, SessionCacheEntry>()
+    private val sessionCache = object : LinkedHashMap<String, SessionCacheEntry>(256, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, SessionCacheEntry>?): Boolean {
+            return size > MAX_CACHE_SIZE
+        }
+    }
+    private val cacheLock = Any()
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val path = request.requestURI
@@ -46,7 +51,7 @@ class JwtAuthenticationFilter(
                 val token = authHeader.substring(SecurityConstants.JWT_PREFIX.length)
 
                 if (jwtTokenProvider.validateToken(token)) {
-                    val cached = sessionCache[token]
+                    val cached = synchronized(cacheLock) { sessionCache[token] }
                     val now = System.currentTimeMillis()
 
                     val isActive = if (cached != null && (now - cached.cachedAt) < SESSION_CACHE_TTL_MS) {
@@ -54,7 +59,7 @@ class JwtAuthenticationFilter(
                     } else {
                         val session = sessionRepository.findByToken(token).orElse(null)
                         val active = session?.active == true
-                        sessionCache[token] = SessionCacheEntry(active, now)
+                        synchronized(cacheLock) { sessionCache[token] = SessionCacheEntry(active, now) }
 
                         if (active) {
                             val lastActivity = session!!.lastActivity
@@ -91,15 +96,16 @@ class JwtAuthenticationFilter(
     }
 
     fun evictSession(token: String) {
-        sessionCache.remove(token)
+        synchronized(cacheLock) { sessionCache.remove(token) }
     }
 
     fun evictAllSessions() {
-        sessionCache.clear()
+        synchronized(cacheLock) { sessionCache.clear() }
     }
 
     companion object {
         private const val ACTIVITY_THROTTLE_MINUTES = 5L
         private const val SESSION_CACHE_TTL_MS = 60_000L
+        private const val MAX_CACHE_SIZE = 10_000
     }
 }

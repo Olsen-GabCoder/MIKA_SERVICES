@@ -37,6 +37,33 @@ export const TypePrevision = {
 
 export type TypePrevision = (typeof TypePrevision)[keyof typeof TypePrevision]
 
+export const TypeDependance = {
+  FIN_DEBUT: 'FIN_DEBUT',
+  DEBUT_DEBUT: 'DEBUT_DEBUT',
+  FIN_FIN: 'FIN_FIN',
+  DEBUT_FIN: 'DEBUT_FIN',
+} as const
+
+export type TypeDependance = (typeof TypeDependance)[keyof typeof TypeDependance]
+
+export interface DependanceLegere {
+  tacheId: number
+  tacheTitre: string
+  typeDependance: TypeDependance
+  delaiJours: number
+  direction: 'predecesseur' | 'successeur'
+}
+
+export interface DependanceResponse {
+  id: number
+  tacheSourceId: number
+  tacheSourceTitre: string
+  tacheCibleId: number
+  tacheCibleTitre: string
+  typeDependance: TypeDependance
+  delaiJours: number
+}
+
 export interface Tache {
   id: number
   projetId: number
@@ -55,8 +82,17 @@ export interface Tache {
   semaine: number | null
   annee: number | null
   typePrevision: TypePrevision | null
+  estJalon: boolean
+  couleur: string | null
+  ordreAffichage: number | null
+  dependances: DependanceLegere[]
   createdAt: string
   updatedAt: string
+}
+
+export interface GanttData {
+  taches: Tache[]
+  dependances: DependanceResponse[]
 }
 
 export interface TacheCreateRequest {
@@ -74,6 +110,9 @@ export interface TacheCreateRequest {
   annee?: number
   typePrevision?: TypePrevision
   pourcentageAvancement?: number
+  estJalon?: boolean
+  couleur?: string
+  ordreAffichage?: number
 }
 
 export interface TacheUpdateRequest {
@@ -90,6 +129,16 @@ export interface TacheUpdateRequest {
   annee?: number
   typePrevision?: TypePrevision
   tacheParentId?: number
+  estJalon?: boolean
+  couleur?: string
+  ordreAffichage?: number
+}
+
+export interface DependanceCreateRequest {
+  tacheSourceId: number
+  tacheCibleId: number
+  typeDependance?: TypeDependance
+  delaiJours?: number
 }
 
 export interface PaginatedResponse<T> {

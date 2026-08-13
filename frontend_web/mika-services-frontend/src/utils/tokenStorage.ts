@@ -1,73 +1,60 @@
 /**
- * Gestion des tokens (accès + refresh) : localStorage ou sessionStorage
- * selon la préférence "Déconnexion à la fermeture du navigateur".
+ * Gestion des tokens :
+ * - Access token : en MEMOIRE uniquement (protection XSS)
+ * - Refresh token : cookie httpOnly geré par le backend (jamais accessible en JS)
+ * - Le mode "session" (déconnexion à la fermeture) reste supporté via un flag.
  */
 
-const TOKEN_KEY = 'accessToken'
-const REFRESH_TOKEN_KEY = 'refreshToken'
 const STORAGE_MODE_KEY = 'mika_token_storage'
 
 export type TokenStorageMode = 'local' | 'session'
 
-function getMode(): TokenStorageMode {
-  if (typeof window === 'undefined') return 'local'
-  const v = localStorage.getItem(STORAGE_MODE_KEY)
-  return v === 'session' ? 'session' : 'local'
-}
-
-function getStorage(): Storage {
-  return getMode() === 'session' ? sessionStorage : localStorage
-}
+/** Access token en mémoire uniquement — jamais dans localStorage/sessionStorage */
+let inMemoryAccessToken: string | null = null
 
 export function getAccessToken(): string | null {
-  return getStorage().getItem(TOKEN_KEY)
+  return inMemoryAccessToken
 }
 
 export function setAccessToken(token: string): void {
-  getStorage().setItem(TOKEN_KEY, token)
+  inMemoryAccessToken = token
 }
 
 export function removeAccessToken(): void {
-  localStorage.removeItem(TOKEN_KEY)
-  sessionStorage.removeItem(TOKEN_KEY)
+  inMemoryAccessToken = null
 }
 
+/**
+ * Le refresh token est désormais géré exclusivement par le cookie httpOnly du backend.
+ * Ces fonctions sont conservées pour compatibilité mais n'utilisent plus le storage navigateur.
+ */
 export function getRefreshToken(): string | null {
-  return getStorage().getItem(REFRESH_TOKEN_KEY)
+  // Le refresh token est dans le cookie httpOnly, pas en JS.
+  // On retourne un marqueur non-null pour que le flux de refresh sache qu'il peut tenter un appel.
+  // Le backend lira le cookie automatiquement (withCredentials: true).
+  return 'httponly-cookie'
 }
 
-export function setRefreshToken(token: string): void {
-  getStorage().setItem(REFRESH_TOKEN_KEY, token)
+export function setRefreshToken(_token: string): void {
+  // No-op : le backend gère le cookie httpOnly
 }
 
 export function removeRefreshToken(): void {
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
-  sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+  // No-op : le cookie est supprimé par le backend au logout
 }
 
 export function removeAllTokens(): void {
   removeAccessToken()
-  removeRefreshToken()
+  // Nettoyage legacy : supprimer les anciens tokens si présents dans le storage
+  try {
+    localStorage.removeItem('accessToken')
+    sessionStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    sessionStorage.removeItem('refreshToken')
+  } catch { /* ignore */ }
 }
 
 export function setTokenStorageMode(logoutOnBrowserClose: boolean): void {
   const newMode: TokenStorageMode = logoutOnBrowserClose ? 'session' : 'local'
   localStorage.setItem(STORAGE_MODE_KEY, newMode)
-
-  const accessFromLocal = localStorage.getItem(TOKEN_KEY)
-  const accessFromSession = sessionStorage.getItem(TOKEN_KEY)
-  const currentAccess = accessFromLocal ?? accessFromSession
-
-  const refreshFromLocal = localStorage.getItem(REFRESH_TOKEN_KEY)
-  const refreshFromSession = sessionStorage.getItem(REFRESH_TOKEN_KEY)
-  const currentRefresh = refreshFromLocal ?? refreshFromSession
-
-  localStorage.removeItem(TOKEN_KEY)
-  sessionStorage.removeItem(TOKEN_KEY)
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
-  sessionStorage.removeItem(REFRESH_TOKEN_KEY)
-
-  const target = newMode === 'session' ? sessionStorage : localStorage
-  if (currentAccess) target.setItem(TOKEN_KEY, currentAccess)
-  if (currentRefresh) target.setItem(REFRESH_TOKEN_KEY, currentRefresh)
 }

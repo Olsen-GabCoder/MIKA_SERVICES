@@ -86,8 +86,18 @@ export function createProjetMarker(
 /*  Tooltip HTML                                                       */
 /* ------------------------------------------------------------------ */
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export function createTooltipContent(nomFull: string, nbEngins: number): string {
-  const nom = nomFull.length > 25 ? nomFull.slice(0, 23) + '…' : nomFull
+  const truncated = nomFull.length > 25 ? nomFull.slice(0, 23) + '…' : nomFull
+  const nom = escapeHtml(truncated)
   const badge = nbEngins > 0
     ? `<span style="
         display:inline-flex;align-items:center;justify-content:center;

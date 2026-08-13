@@ -17,7 +17,9 @@ export const LoginPage = () => {
   const { isAuthenticated, user, twoFactorPending } = useAppSelector((state) => state.auth)
   const defaultHomePath = useAppSelector((state) => state.ui.defaultHomePath)
   const { t } = useTranslation('auth')
-  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/'
+  const rawFrom = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/'
+  // Sécurité : accepter uniquement les chemins relatifs internes (pas de redirect externe)
+  const from = rawFrom.startsWith('/') && !rawFrom.startsWith('//') ? rawFrom : '/'
   const destination = user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from)
 
   useEffect(() => {

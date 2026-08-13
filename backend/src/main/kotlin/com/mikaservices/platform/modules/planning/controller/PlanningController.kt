@@ -1,8 +1,12 @@
 package com.mikaservices.platform.modules.planning.controller
 
+import com.mikaservices.platform.modules.planning.dto.request.DependanceCreateRequest
 import com.mikaservices.platform.modules.planning.dto.request.TacheCreateRequest
 import com.mikaservices.platform.modules.planning.dto.request.TacheUpdateRequest
+import com.mikaservices.platform.modules.planning.dto.response.DependanceResponse
+import com.mikaservices.platform.modules.planning.dto.response.GanttDataResponse
 import com.mikaservices.platform.modules.planning.dto.response.TacheResponse
+import com.mikaservices.platform.modules.planning.service.DependanceService
 import com.mikaservices.platform.modules.planning.service.PlanningService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -19,7 +23,8 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/planning")
 @Tag(name = "Planning", description = "Gestion du planning et des tâches")
 class PlanningController(
-    private val planningService: PlanningService
+    private val planningService: PlanningService,
+    private val dependanceService: DependanceService
 ) {
     @PostMapping("/taches")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
@@ -92,5 +97,52 @@ class PlanningController(
     fun deleteTache(@PathVariable id: Long): ResponseEntity<Map<String, String>> {
         planningService.deleteTache(id)
         return ResponseEntity.ok(mapOf("message" to "Tâche supprimée avec succès"))
+    }
+
+    // ========== Dépendances ==========
+
+    @PostMapping("/dependances")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Créer une dépendance entre deux tâches")
+    fun createDependance(@Valid @RequestBody request: DependanceCreateRequest): ResponseEntity<DependanceResponse> {
+        return ResponseEntity.status(HttpStatus.CREATED).body(dependanceService.create(request))
+    }
+
+    @GetMapping("/dependances/projet/{projetId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Lister les dépendances d'un projet")
+    fun findDependancesByProjet(@PathVariable projetId: Long): ResponseEntity<List<DependanceResponse>> {
+        return ResponseEntity.ok(dependanceService.findByProjet(projetId))
+    }
+
+    @GetMapping("/dependances/tache/{tacheId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Lister les dépendances d'une tâche")
+    fun findDependancesByTache(@PathVariable tacheId: Long): ResponseEntity<List<DependanceResponse>> {
+        return ResponseEntity.ok(dependanceService.findByTache(tacheId))
+    }
+
+    @DeleteMapping("/dependances/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Supprimer une dépendance")
+    fun deleteDependance(@PathVariable id: Long): ResponseEntity<Map<String, String>> {
+        dependanceService.delete(id)
+        return ResponseEntity.ok(mapOf("message" to "Dépendance supprimée"))
+    }
+
+    // ========== Gantt & Chemin critique ==========
+
+    @GetMapping("/gantt/projet/{projetId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Données Gantt d'un projet (tâches + dépendances)")
+    fun getGanttData(@PathVariable projetId: Long): ResponseEntity<GanttDataResponse> {
+        return ResponseEntity.ok(dependanceService.getGanttData(projetId))
+    }
+
+    @GetMapping("/chemin-critique/projet/{projetId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Chemin critique d'un projet (tâches à marge nulle)")
+    fun getCheminCritique(@PathVariable projetId: Long): ResponseEntity<List<TacheResponse>> {
+        return ResponseEntity.ok(dependanceService.getCheminCritique(projetId))
     }
 }

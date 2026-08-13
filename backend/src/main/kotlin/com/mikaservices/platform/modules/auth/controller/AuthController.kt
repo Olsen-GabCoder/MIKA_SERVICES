@@ -147,7 +147,8 @@ class AuthController(
         httpResponse: HttpServletResponse
     ): ResponseEntity<Map<String, String>> {
         val token = authorization.removePrefix("Bearer ")
-        authService.logout(token)
+        val currentUser = org.springframework.security.core.context.SecurityContextHolder.getContext().authentication?.name
+        authService.logout(token, currentUser)
         authCookieHelper.clearRefreshTokenCookie(httpResponse)
         return ResponseEntity.ok(mapOf("message" to "Déconnexion réussie"))
     }

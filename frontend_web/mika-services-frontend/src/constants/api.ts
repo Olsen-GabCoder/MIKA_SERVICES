@@ -74,6 +74,12 @@ export const API_ENDPOINTS = {
     ALL_BY_PROJET: (projetId: number) => `/planning/taches/projet/${projetId}/all`,
     MES_TACHES: (userId: number) => `/planning/taches/mes-taches/${userId}`,
     EN_RETARD: '/planning/taches/en-retard',
+    DEPENDANCES: '/planning/dependances',
+    DEPENDANCES_BY_PROJET: (projetId: number) => `/planning/dependances/projet/${projetId}`,
+    DEPENDANCES_BY_TACHE: (tacheId: number) => `/planning/dependances/tache/${tacheId}`,
+    DEPENDANCE_BY_ID: (id: number) => `/planning/dependances/${id}`,
+    GANTT: (projetId: number) => `/planning/gantt/projet/${projetId}`,
+    CHEMIN_CRITIQUE: (projetId: number) => `/planning/chemin-critique/projet/${projetId}`,
   },
   DOCUMENTS: {
     BASE: '/documents',

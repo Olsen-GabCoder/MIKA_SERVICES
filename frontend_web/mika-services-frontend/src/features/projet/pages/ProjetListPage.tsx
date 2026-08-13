@@ -405,7 +405,7 @@ export const ProjetListPage = () => {
   const { isFirstVisit: isFirstProjets } = useFirstVisit('projets')
 
   return (
-    <PageContainer size="full" className="h-full flex flex-col min-h-0 bg-gray-50 dark:bg-[#0d0f14]">
+    <PageContainer size="full" className="h-full flex flex-col min-h-0 bg-[var(--db-bg-base)]">
       <CacheTimestampBanner lastFetched={lastFetched} />
       {isFirstProjets && (
         <PageGuide
@@ -417,36 +417,30 @@ export const ProjetListPage = () => {
 
       {/* ══════════ HERO HEADER ══════════ */}
       <div className="shrink-0 relative overflow-hidden">
-        {/* Fond dégradé subtil */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white via-orange-50/40 to-amber-50/60 dark:from-gray-900 dark:via-gray-900 dark:to-orange-950/20" />
-        {/* Cercle décoratif */}
-        <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-primary/5 dark:bg-primary/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 left-10 w-40 h-40 rounded-full bg-amber-400/10 blur-2xl pointer-events-none" />
-
-        <div className="relative px-4 md:px-8 py-7 border-b border-orange-100/60 dark:border-gray-800">
+        <div className="relative px-4 md:px-8 py-7 border-b border-[var(--db-border-subtle)]">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
 
             {/* Titre */}
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 dark:bg-primary/20 border-2 border-primary/20 dark:border-primary/30 flex items-center justify-center shadow-sm">
-                  <svg className="w-6 h-6 text-primary dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <div className="w-12 h-12 rounded-2xl bg-[var(--db-accent-muted)] border border-[var(--db-border-default)] flex items-center justify-center shadow-sm">
+                  <svg className="w-6 h-6 text-[var(--db-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
               </div>
               <div>
                 <div className="flex items-center gap-2.5">
-                  <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                  <h1 className="text-2xl font-extrabold text-[var(--db-text-primary)] tracking-tight">
                     {t('list.pageTitle')}
                   </h1>
                   {totalElements > 0 && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-primary/10 dark:bg-primary/20 text-primary dark:text-orange-400 text-sm font-bold border border-primary/20 dark:border-orange-500/30">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[var(--db-accent-muted)] text-[var(--db-accent)] text-sm font-bold border border-[var(--db-border-default)]">
                       {totalElements}
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{listSubtitle}</p>
+                <p className="text-sm text-[var(--db-text-muted)] mt-0.5">{listSubtitle}</p>
               </div>
             </div>
 
@@ -458,7 +452,7 @@ export const ProjetListPage = () => {
                     onClick={exportListToExcel}
                     title={t('list.exportExcelTitle')}
                     aria-label={t('list.exportExcelTitle')}
-                    className="group flex items-center justify-center gap-2 min-h-[44px] md:min-h-0 px-3 md:px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium hover:border-emerald-400 hover:text-emerald-600 dark:hover:border-emerald-500 dark:hover:text-emerald-400 hover:shadow-md hover:shadow-emerald-100 dark:hover:shadow-emerald-900/20 transition-all duration-200"
+                    className="group flex items-center justify-center gap-2 min-h-[44px] md:min-h-0 px-3 md:px-4 py-2.5 rounded-xl border border-[var(--db-border-default)] bg-[var(--db-bg-surface)] text-[var(--db-text-muted)] text-sm font-medium hover:border-[var(--db-success-border)] hover:text-[var(--db-success-text)] hover:shadow-md transition-all duration-200"
                   >
                     <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -491,18 +485,18 @@ export const ProjetListPage = () => {
 
         {/* Erreur */}
         {error && (
-          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm flex justify-between items-center shadow-sm">
+          <div className="p-4 rounded-xl bg-[var(--db-danger-bg)] border border-[var(--db-danger-border)] text-[var(--db-danger-text)] text-sm flex justify-between items-center shadow-sm">
             <span>{error === 'offline_no_cache' ? t('common:error.offlineNoCache') : error}</span>
             <button type="button" onClick={() => dispatch(clearError())} className="ml-4 text-red-400 hover:text-red-600 transition-colors">✕</button>
           </div>
         )}
 
         {/* ══ RECHERCHE + FILTRES ══ */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-md focus-within:border-primary/50 dark:focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/10 transition-all duration-300 overflow-hidden">
+        <div className="bg-[var(--db-bg-surface)] rounded-2xl border border-[var(--db-border-subtle)] shadow-sm focus-within:border-[var(--db-accent)] focus-within:shadow-md transition-all duration-300 overflow-hidden">
           {/* Barre de recherche */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b-2 border-gray-200 dark:border-gray-700">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--db-border-subtle)]">
+            <div className="w-9 h-9 rounded-xl bg-[var(--db-accent-muted)] flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-[var(--db-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -512,12 +506,12 @@ export const ProjetListPage = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="flex-1 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 bg-transparent focus:outline-none"
+              className="flex-1 text-sm text-[var(--db-text-primary)] placeholder-[var(--db-text-faint)] bg-transparent focus:outline-none"
             />
             {searchQuery && (
               <button
                 onClick={() => { setSearchQuery(''); dispatch(fetchProjets({ page: 0, size: pageSize, ...buildListQueryFilters(), ...sortParams() })); syncToUrl({ page: 0, size: pageSize, searchQuery: '', filters, sortBy, sortDir }) }}
-                className="w-6 h-6 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-xs transition-colors flex-shrink-0"
+                className="w-6 h-6 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 rounded-full bg-[var(--db-border-subtle)] text-[var(--db-text-muted)] hover:bg-[var(--db-border-default)] flex items-center justify-center text-xs transition-colors flex-shrink-0"
               >✕</button>
             )}
             <button
@@ -530,7 +524,7 @@ export const ProjetListPage = () => {
 
           {/* Filtres */}
           <div className="flex flex-wrap items-center gap-2.5 px-5 py-3.5">
-            <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex-shrink-0">
+            <span className="text-[10px] font-bold text-[var(--db-text-faint)] uppercase tracking-widest flex-shrink-0">
               {t('list.filtersLabel')}
             </span>
             {[
@@ -563,7 +557,7 @@ export const ProjetListPage = () => {
                 key={i}
                 value={f.value}
                 onChange={(e) => f.onChange(e.target.value)}
-                className="px-3 py-1.5 min-h-[44px] md:min-h-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-primary/40 focus:border-primary/60 focus:bg-white dark:focus:bg-gray-700 transition-all cursor-pointer hover:border-primary/40"
+                className="px-3 py-1.5 min-h-[44px] md:min-h-0 rounded-xl border border-[var(--db-border-default)] bg-[var(--db-bg-base)] text-xs text-[var(--db-text-primary)] focus:ring-2 focus:ring-[var(--db-accent)] focus:border-[var(--db-accent)] focus:bg-[var(--db-bg-surface)] transition-all cursor-pointer hover:border-[var(--db-accent)]"
               >
                 <option value="">{f.placeholder} — {t('list.all')}</option>
                 {f.options.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
@@ -578,7 +572,7 @@ export const ProjetListPage = () => {
             {hasActiveFilters && (
               <button
                 onClick={resetFilters}
-                className="px-4 py-1.5 min-h-[44px] md:min-h-0 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 transition-all duration-200"
+                className="px-4 py-1.5 min-h-[44px] md:min-h-0 rounded-xl border border-[var(--db-border-default)] text-xs text-[var(--db-text-muted)] hover:bg-[var(--db-bg-base)] hover:border-[var(--db-border-strong)] transition-all duration-200"
               >
                 {t('list.reset')}
               </button>
@@ -588,42 +582,42 @@ export const ProjetListPage = () => {
 
         {/* ══ TABLEAU / LOADING / VIDE ══ */}
         {loading ? (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-md overflow-hidden">
+          <div className="bg-[var(--db-bg-surface)] rounded-2xl border border-[var(--db-border-subtle)] shadow-sm overflow-hidden">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 px-6 py-4 border-b-2 border-gray-200 dark:border-gray-700 animate-pulse">
-                <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex-shrink-0" />
+              <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-[var(--db-border-subtle)] animate-pulse">
+                <div className="w-10 h-10 rounded-xl bg-[var(--db-border-subtle)] flex-shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3.5 bg-gray-100 dark:bg-gray-800 rounded-full w-3/5" />
-                  <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full w-2/5" />
+                  <div className="h-3.5 bg-[var(--db-border-subtle)] rounded-full w-3/5" />
+                  <div className="h-2.5 bg-[var(--db-border-subtle)] rounded-full w-2/5" />
                 </div>
-                <div className="h-6 bg-gray-100 dark:bg-gray-800 rounded-full w-16" />
-                <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full w-20" />
-                <div className="h-6 bg-gray-100 dark:bg-gray-800 rounded-xl w-20" />
+                <div className="h-6 bg-[var(--db-border-subtle)] rounded-full w-16" />
+                <div className="h-2 bg-[var(--db-border-subtle)] rounded-full w-20" />
+                <div className="h-6 bg-[var(--db-border-subtle)] rounded-xl w-20" />
               </div>
             ))}
           </div>
         ) : projets.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-md py-24 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/10 to-orange-100 dark:from-primary/20 dark:to-orange-900/20 flex items-center justify-center mx-auto mb-5 shadow-sm">
+          <div className="bg-[var(--db-bg-surface)] rounded-2xl border border-[var(--db-border-subtle)] shadow-sm py-24 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-[var(--db-accent-muted)] flex items-center justify-center mx-auto mb-5 shadow-sm">
               <svg className="w-8 h-8 text-primary/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <p className="text-base font-bold text-gray-900 dark:text-white">
+            <p className="text-base font-bold text-[var(--db-text-primary)]">
               {hasActiveFilters ? t('list.emptyNoResults') : t('list.emptyNoProjects')}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-xs mx-auto leading-relaxed">
+            <p className="text-sm text-[var(--db-text-muted)] mt-2 max-w-xs mx-auto leading-relaxed">
               {hasActiveFilters ? t('list.emptyNoResultsHint') : isAdmin ? t('list.emptyNoProjectsHintAdmin') : t('list.emptyNoProjectsHintUser')}
             </p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-md overflow-hidden">
+          <div className="bg-[var(--db-bg-surface)] rounded-2xl border border-[var(--db-border-subtle)] shadow-sm overflow-hidden">
 
             {/* ── Tableau desktop ── */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full" role="table">
                 <thead>
-                  <tr className="border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/40">
+                  <tr className="border-b border-[var(--db-border-subtle)] bg-[var(--db-bg-base)]">
                     {SORTABLE_COLUMNS.map(({ key, label, align = 'left', title }) => (
                       <th
                         key={key}
@@ -633,8 +627,8 @@ export const ProjetListPage = () => {
                         aria-sort={sortBy === key ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
                         className={`px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none transition-colors duration-150 group/th ${
                           sortBy === key
-                            ? 'text-primary dark:text-orange-400'
-                            : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                            ? 'text-[var(--db-accent)]'
+                            : 'text-[var(--db-text-faint)] hover:text-[var(--db-text-muted)]'
                         } ${align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'}`}
                       >
                         <span className="inline-flex items-center gap-1.5">
@@ -645,12 +639,12 @@ export const ProjetListPage = () => {
                         </span>
                       </th>
                     ))}
-                    <th scope="col" className="px-5 py-3.5 text-right text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-5 py-3.5 text-right text-[11px] font-bold text-[var(--db-text-faint)] uppercase tracking-wider">
                       {t('list.actions')}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-[var(--db-border-subtle)]">
                   {projets.map((projet) => (
                     <tr
                       key={projet.id}
@@ -659,35 +653,35 @@ export const ProjetListPage = () => {
                       onClick={() => openProjetDetail(projet)}
                       onKeyDown={(e) => handleRowKeyDown(e, projet)}
                       aria-label={t('list.openDetail', { name: projet.nom })}
-                      className="group hover:bg-gradient-to-r hover:from-orange-50/60 hover:to-amber-50/30 dark:hover:from-orange-950/20 dark:hover:to-amber-950/10 cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
+                      className="group hover:bg-[var(--db-accent-muted)] cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--db-accent)]"
                     >
                       {/* Nom — barre colorée statut sur la première cellule */}
                       <td className={`px-5 py-4 border-l-4 ${STATUT_BORDER[projet.statut] ?? 'border-l-gray-300 dark:border-l-gray-600'}`}>
                         <div className="flex items-center gap-3.5">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-orange-100/80 dark:from-primary/20 dark:to-orange-900/30 flex items-center justify-center flex-shrink-0 group-hover:from-primary/20 group-hover:to-orange-200/80 dark:group-hover:from-primary/30 dark:group-hover:to-orange-900/50 transition-all duration-200 shadow-sm group-hover:shadow-md group-hover:shadow-primary/10">
+                          <div className="w-10 h-10 rounded-xl bg-[var(--db-accent-muted)] flex items-center justify-center flex-shrink-0 transition-all duration-200 shadow-sm group-hover:shadow-md">
                             <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[200px] group-hover:text-primary dark:group-hover:text-orange-400 transition-colors duration-200">
+                            <p className="text-sm font-bold text-[var(--db-text-primary)] truncate max-w-[200px] group-hover:text-[var(--db-accent)] transition-colors duration-200">
                               {projet.nom}
                             </p>
                             {projet.codeProjet && (
-                              <p className="text-[11px] font-mono text-gray-400 dark:text-gray-500 mt-0.5">{projet.codeProjet}</p>
+                              <p className="text-[11px] font-mono text-[var(--db-text-faint)] mt-0.5">{projet.codeProjet}</p>
                             )}
                           </div>
                         </div>
                       </td>
                       {/* Type */}
                       <td className="px-5 py-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200/60 dark:border-gray-700/60">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--db-border-subtle)] text-[var(--db-text-muted)] border border-[var(--db-border-default)]">
                           {getTypeDisplay(projet)}
                         </span>
                       </td>
                       {/* Client */}
                       <td className="px-5 py-4">
-                        <span className="text-sm text-gray-700 dark:text-gray-300 font-medium truncate max-w-[150px] block">
+                        <span className="text-sm text-[var(--db-text-primary)] font-medium truncate max-w-[150px] block">
                           {projet.clientNom || '—'}
                         </span>
                       </td>
@@ -697,7 +691,7 @@ export const ProjetListPage = () => {
                           <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <span className="text-sm font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">
+                          <span className="text-sm font-bold text-[var(--db-text-primary)] tabular-nums whitespace-nowrap">
                             {formatMontant(projet.montantHT)}
                           </span>
                         </div>
@@ -705,20 +699,20 @@ export const ProjetListPage = () => {
                       {/* Avancement */}
                       <td className="px-5 py-4 text-center" title={t('list.columns.avancementGlobalTitle')}>
                         <div className="flex flex-col items-center gap-1.5">
-                          <div className="w-24 h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                          <div className="w-24 h-2 rounded-full bg-[var(--db-border-subtle)] overflow-hidden">
                             <div
                               className="h-full rounded-full bg-gradient-to-r from-primary to-orange-400 transition-all duration-700 shadow-sm"
                               style={{ width: `${Math.min(projet.avancementGlobal, 100)}%` }}
                             />
                           </div>
-                          <span className="text-xs font-bold text-gray-600 dark:text-gray-400 tabular-nums">
+                          <span className="text-xs font-bold text-[var(--db-text-muted)] tabular-nums">
                             {projet.avancementGlobal}%
                           </span>
                         </div>
                       </td>
                       {/* Statut */}
                       <td className="px-5 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border border-transparent ${STATUT_BADGE[projet.statut] ?? 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border border-transparent ${STATUT_BADGE[projet.statut] ?? 'bg-[var(--db-border-subtle)] text-[var(--db-text-muted)]'}`}>
                           <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${STATUT_DOT[projet.statut] ?? 'bg-gray-400'}`} />
                           {STATUT_LABELS[projet.statut]?.label || projet.statut}
                         </span>
@@ -730,10 +724,10 @@ export const ProjetListPage = () => {
                             <div className={`w-7 h-7 rounded-full ${getAvatarColor(projet.responsableNom)} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 shadow-sm`}>
                               {getInitials(projet.responsableNom)}
                             </div>
-                            <span className="text-sm text-gray-700 dark:text-gray-300 truncate max-w-[110px]">{projet.responsableNom}</span>
+                            <span className="text-sm text-[var(--db-text-primary)] truncate max-w-[110px]">{projet.responsableNom}</span>
                           </div>
                         ) : (
-                          <span className="text-gray-300 dark:text-gray-600">—</span>
+                          <span className="text-[var(--db-text-faint)]">—</span>
                         )}
                       </td>
                       {/* Actions */}
@@ -769,7 +763,7 @@ export const ProjetListPage = () => {
                             )}
                           </div>
                         ) : (
-                          <span className="text-gray-300 dark:text-gray-700">—</span>
+                          <span className="text-[var(--db-text-faint)]">—</span>
                         )}
                       </td>
                     </tr>
@@ -779,7 +773,7 @@ export const ProjetListPage = () => {
             </div>
 
             {/* ── Cartes mobile ── */}
-            <div className="md:hidden divide-y-2 divide-gray-200 dark:divide-gray-700">
+            <div className="md:hidden divide-y divide-[var(--db-border-subtle)]">
               {projets.map((projet) => (
                 <article
                   key={projet.id}
@@ -788,27 +782,27 @@ export const ProjetListPage = () => {
                   onClick={() => openProjetDetail(projet)}
                   onKeyDown={(e) => handleRowKeyDown(e, projet)}
                   aria-label={t('list.openDetail', { name: projet.nom })}
-                  className={`p-5 border-l-4 ${STATUT_BORDER[projet.statut] ?? 'border-l-gray-300'} hover:bg-orange-50/50 dark:hover:bg-orange-950/10 cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50`}
+                  className={`p-5 border-l-4 ${STATUT_BORDER[projet.statut] ?? 'border-l-gray-300'} hover:bg-[var(--db-accent-muted)] cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--db-accent)]`}
                 >
                   <div className="flex items-start gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-orange-100 dark:from-primary/20 dark:to-orange-900/30 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--db-accent-muted)] flex items-center justify-center flex-shrink-0 shadow-sm">
                       <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{projet.nom}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{getTypeDisplay(projet)} · {projet.clientNom || '—'}</p>
+                      <p className="text-sm font-bold text-[var(--db-text-primary)] truncate">{projet.nom}</p>
+                      <p className="text-xs text-[var(--db-text-muted)] mt-0.5">{getTypeDisplay(projet)} · {projet.clientNom || '—'}</p>
                       <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-semibold ${STATUT_BADGE[projet.statut] ?? 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${STATUT_BADGE[projet.statut] ?? 'bg-[var(--db-border-subtle)] text-[var(--db-text-muted)]'}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${STATUT_DOT[projet.statut] ?? 'bg-gray-400'}`} />
                           {STATUT_LABELS[projet.statut]?.label || projet.statut}
                         </span>
-                        <span className="text-xs font-bold text-gray-500 dark:text-gray-400 tabular-nums">{projet.avancementGlobal}%</span>
-                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 tabular-nums">{formatMontant(projet.montantHT)}</span>
+                        <span className="text-xs font-bold text-[var(--db-text-muted)] tabular-nums">{projet.avancementGlobal}%</span>
+                        <span className="text-xs font-semibold text-[var(--db-text-muted)] tabular-nums">{formatMontant(projet.montantHT)}</span>
                       </div>
                       {/* Progress + responsable mobile */}
-                      <div className="w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 mt-2.5 overflow-hidden">
+                      <div className="w-full h-1.5 rounded-full bg-[var(--db-border-subtle)] mt-2.5 overflow-hidden">
                         <div
                           className="h-full rounded-full bg-gradient-to-r from-primary to-orange-400"
                           style={{ width: `${Math.min(projet.avancementGlobal, 100)}%` }}
@@ -819,14 +813,14 @@ export const ProjetListPage = () => {
                           <div className={`w-5 h-5 rounded-full ${getAvatarColor(projet.responsableNom)} flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0`}>
                             {getInitials(projet.responsableNom)}
                           </div>
-                          <span className="text-[11px] text-gray-500 dark:text-gray-400">{projet.responsableNom}</span>
+                          <span className="text-[11px] text-[var(--db-text-muted)]">{projet.responsableNom}</span>
                         </div>
                       )}
                     </div>
                   </div>
                   {(canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) ||
                     canDeleteProjetEffective(currentUser, accessToken)) && (
-                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="mt-4 pt-3 border-t border-[var(--db-border-subtle)] flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                       {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) && (
                         <button type="button" onClick={() => navigate(`/projets/${projet.id}/edit`)}
                           disabled={!isOnline}
@@ -850,9 +844,9 @@ export const ProjetListPage = () => {
             </div>
 
             {/* ── PAGINATION ── */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between px-4 md:px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 gap-3 md:gap-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between px-4 md:px-6 py-4 border-t border-[var(--db-border-subtle)] bg-[var(--db-bg-base)] gap-3 md:gap-4">
               <div className="flex items-center justify-between md:justify-start gap-3">
-                <span className="text-sm text-gray-500 dark:text-gray-400 tabular-nums">{paginationRange}</span>
+                <span className="text-sm text-[var(--db-text-muted)] tabular-nums">{paginationRange}</span>
                 <select
                   value={pageSize}
                   onChange={(e) => {
@@ -863,7 +857,7 @@ export const ProjetListPage = () => {
                     else dispatch(fetchProjets(params))
                     syncToUrl({ page: 0, size: newSize, searchQuery, filters, sortBy, sortDir })
                   }}
-                  className="px-3 py-1.5 min-h-[44px] md:min-h-0 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all cursor-pointer"
+                  className="px-3 py-1.5 min-h-[44px] md:min-h-0 rounded-xl border border-[var(--db-border-default)] text-xs text-[var(--db-text-muted)] bg-[var(--db-bg-surface)] focus:ring-2 focus:ring-[var(--db-accent)] focus:border-[var(--db-accent)] transition-all cursor-pointer"
                 >
                   {[10, 20, 25, 50, 100].map((n) => <option key={n} value={n}>{n} / page</option>)}
                 </select>
@@ -872,17 +866,17 @@ export const ProjetListPage = () => {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 0}
-                  className="flex-1 md:flex-none px-4 py-2 min-h-[44px] md:min-h-0 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-gray-800 hover:border-primary/40 hover:text-primary dark:hover:text-orange-400 hover:shadow-sm transition-all duration-200"
+                  className="flex-1 md:flex-none px-4 py-2 min-h-[44px] md:min-h-0 rounded-xl border border-[var(--db-border-default)] text-sm font-semibold text-[var(--db-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--db-bg-surface)] hover:border-[var(--db-accent)] hover:text-[var(--db-accent)] hover:shadow-sm transition-all duration-200"
                 >
                   {t('list.pagination.prev')}
                 </button>
-                <span className="px-4 py-2 rounded-xl bg-gradient-to-r from-primary/10 to-orange-100/80 dark:from-primary/20 dark:to-orange-900/20 text-sm font-bold text-primary dark:text-orange-400 tabular-nums border border-primary/20 dark:border-orange-500/20">
+                <span className="px-4 py-2 rounded-xl bg-[var(--db-accent-muted)] text-sm font-bold text-[var(--db-accent)] tabular-nums border border-[var(--db-border-default)]">
                   {currentPage + 1} / {totalPages || 1}
                 </span>
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage >= (totalPages || 1) - 1}
-                  className="flex-1 md:flex-none px-4 py-2 min-h-[44px] md:min-h-0 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-gray-800 hover:border-primary/40 hover:text-primary dark:hover:text-orange-400 hover:shadow-sm transition-all duration-200"
+                  className="flex-1 md:flex-none px-4 py-2 min-h-[44px] md:min-h-0 rounded-xl border border-[var(--db-border-default)] text-sm font-semibold text-[var(--db-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--db-bg-surface)] hover:border-[var(--db-accent)] hover:text-[var(--db-accent)] hover:shadow-sm transition-all duration-200"
                 >
                   {t('list.pagination.next')}
                 </button>

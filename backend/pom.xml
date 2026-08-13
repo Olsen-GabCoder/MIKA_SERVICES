@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.0.2</version>
+		<version>4.0.6</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.mikaservices</groupId>
@@ -27,7 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>25</java.version>
+		<java.version>17</java.version>
 		<kotlin.version>2.3.0</kotlin.version>
 	</properties>
 	<dependencies>
@@ -131,9 +131,11 @@
 			<scope>runtime</scope>
 		</dependency>
 		<!-- PostgreSQL pour la prod sur Render (profil prod-postgres) -->
+		<!-- CVE fix: Upgraded from 42.7.9 to 42.7.12 for CVE-2026-42198 and CVE-2026-54291 -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
+			<version>42.7.12</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>

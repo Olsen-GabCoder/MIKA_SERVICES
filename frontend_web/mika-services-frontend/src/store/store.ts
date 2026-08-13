@@ -1,7 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { notificationSoundMiddleware } from './middleware/notificationSoundMiddleware'
 import { offlineQueueMiddleware } from './middleware/offlineQueueMiddleware'
-import authReducer from './slices/authSlice'
+import { setOnAuthFailure } from '@/api/axios'
+import authReducer, { logout } from './slices/authSlice'
 import userReducer from './slices/userSlice'
 import projetReducer from './slices/projetSlice'
 import equipeReducer from './slices/equipeSlice'
@@ -69,6 +70,15 @@ export const store = configureStore({
         ignoredActions: ['persist/PERSIST'],
       },
     }).concat(notificationSoundMiddleware, offlineQueueMiddleware),
+})
+
+// Connecter l'intercepteur 401 au store Redux pour une deconnexion propre
+setOnAuthFailure(() => {
+  store.dispatch(logout())
+  // Redirection douce via le router (les composants ProtectedRoute detectent isAuthenticated=false)
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login'
+  }
 })
 
 export type RootState = ReturnType<typeof store.getState>

@@ -285,7 +285,7 @@ class ProjetService(
 
     @Transactional(readOnly = true)
     fun findByResponsable(userId: Long): List<ProjetSummaryResponse> {
-        return mapListSummaries(projetRepository.findByResponsableProjetId(userId))
+        return mapListSummaries(projetRepository.findByResponsableProjetIdAndActifTrue(userId))
     }
 
     @Transactional(readOnly = true)

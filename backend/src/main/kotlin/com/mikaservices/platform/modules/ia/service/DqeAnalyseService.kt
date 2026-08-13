@@ -185,16 +185,17 @@ Ajoute un avertissement si :
     // ── Parsing de la réponse Claude ──────────────────────────────────
 
     private fun parseDqeExtraction(json: JsonNode): DqeAnalyseResponse {
-        val avertissements = json.path("avertissements")
+        val avertissements: List<String> = json.path("avertissements")
+            .toList()
             .map { it.asText() }
             .filter { it.isNotBlank() }
 
-        val chapitres = json.path("chapitres").mapNotNull { chapNode ->
+        val chapitres: List<DqeChapitreExtrait> = json.path("chapitres").toList().mapNotNull { chapNode ->
             val numero = chapNode.path("numero").asText("").trim()
             val designation = chapNode.path("designation").asText("").trim()
             if (designation.isBlank()) return@mapNotNull null
 
-            val lignes = chapNode.path("lignes").mapNotNull { ligneNode ->
+            val lignes = chapNode.path("lignes").toList().mapNotNull { ligneNode ->
                 val desig = ligneNode.path("designation").asText("").trim()
                 if (desig.isBlank()) return@mapNotNull null
 

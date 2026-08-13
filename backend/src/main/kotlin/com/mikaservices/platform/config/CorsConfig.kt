@@ -67,7 +67,7 @@ class CorsConfig {
         // Headers autorisés
         configuration.allowedHeaders = listOf(
             "Authorization", "Content-Type", "Accept", "Accept-Language",
-            "Origin", "X-Requested-With", "Cache-Control"
+            "Origin", "X-Requested-With", "Cache-Control", "Pragma"
         )
         
         // Headers exposés

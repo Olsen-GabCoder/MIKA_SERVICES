@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { setUser } from '@/store/slices/authSlice'
-import { toggleTheme, setLocale, setFontSize, setFontFamily, setDensity, setDateFormat, setTimeFormat, setNumberFormat, setTimezone, setCardSize, setSidebarCollapsed, setAnimationPreference, setDefaultHomePath, setItemsPerPage, setAutoRefreshListsEnabled, setOfflineModeEnabled, setHighContrastText, setHighContrastCards, setCacheEnabled, setCacheDuration, setPreloadDataEnabled, setOfflineQueueEnabled, setConnectionQuality, type CacheDuration, type ConnectionQuality } from '@/store/slices/uiSlice'
+import { toggleTheme, setLocale, setFontSize, setFontFamily, setDensity, setDateFormat, setTimeFormat, setNumberFormat, setTimezone, setCardSize, setSidebarCollapsed, setAnimationPreference, setDefaultHomePath, setItemsPerPage, setAutoRefreshListsEnabled, setOfflineModeEnabled, setHighContrastText, setHighContrastCards, setCacheEnabled, setCacheDuration, setPreloadDataEnabled, setOfflineQueueEnabled, setConnectionQuality, setPwaUpdateMode, type CacheDuration, type ConnectionQuality, type PwaUpdateMode } from '@/store/slices/uiSlice'
+import { useCheckForUpdate } from '@/components/pwa/PWAUpdatePrompt'
 import { authApi } from '@/api/authApi'
 import { userApi } from '@/api/userApi'
 import type { LoginHistoryEntry } from '@/api/userApi'
@@ -320,7 +321,10 @@ export const ParametresPage = () => {
   const { t, i18n } = useTranslation('parametres')
   const dispatch = useAppDispatch()
   const user = useAppSelector(s => s.auth.user)
-  const { sidebarCollapsed, fontSize, fontFamily, density, dateFormat, timeFormat, numberFormat, timezone, cardSize, animationPreference, defaultHomePath, itemsPerPage, autoRefreshListsEnabled, offlineModeEnabled, highContrastText, highContrastCards, cacheEnabled, cacheDuration, preloadDataEnabled, offlineQueueEnabled, connectionQuality } = useAppSelector(s => s.ui)
+  const { sidebarCollapsed, fontSize, fontFamily, density, dateFormat, timeFormat, numberFormat, timezone, cardSize, animationPreference, defaultHomePath, itemsPerPage, autoRefreshListsEnabled, offlineModeEnabled, highContrastText, highContrastCards, cacheEnabled, cacheDuration, preloadDataEnabled, offlineQueueEnabled, connectionQuality, pwaUpdateMode } = useAppSelector(s => s.ui)
+  const { checkAndApply } = useCheckForUpdate()
+  const [updateChecking, setUpdateChecking] = useState(false)
+  const [updateResult, setUpdateResult] = useState<'updated' | 'no-update' | null>(null)
   const [activeSection, setActiveSection] = useState<SectionId>('affichage')
   const scrollRef = useRef<HTMLDivElement>(null)
   const [notificationPrefsSaving, setNotificationPrefsSaving] = useState(false)
@@ -1098,6 +1102,62 @@ export const ParametresPage = () => {
                   slow: t('reseau.connectionQualitySlow'),
                 }}
               />
+            </SettingRow>
+
+            {/* Mise à jour de l'application */}
+            <div className="border-t border-gray-100 dark:border-gray-700/60 pt-4 mt-2">
+              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 px-1">{t('reseau.updateSectionTitle')}</p>
+            </div>
+            <SettingRow label={t('reseau.pwaUpdateMode')} description={t('reseau.pwaUpdateModeDesc')}>
+              <SettingSelect<PwaUpdateMode>
+                value={pwaUpdateMode}
+                options={['auto', 'prompt', 'manual']}
+                onChange={(v) => dispatch(setPwaUpdateMode(v))}
+                optionLabels={{
+                  auto: t('reseau.pwaUpdateAuto'),
+                  prompt: t('reseau.pwaUpdatePrompt'),
+                  manual: t('reseau.pwaUpdateManual'),
+                }}
+              />
+            </SettingRow>
+            <SettingRow label={t('reseau.checkForUpdate')} description={t('reseau.checkForUpdateDesc')}>
+              <div className="flex items-center gap-3">
+                {updateResult === 'no-update' && (
+                  <span className="text-[11px] font-medium text-green-600 dark:text-green-400 flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {t('reseau.upToDate')}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  disabled={updateChecking}
+                  onClick={async () => {
+                    setUpdateChecking(true)
+                    setUpdateResult(null)
+                    try {
+                      const result = await checkAndApply()
+                      setUpdateResult(result)
+                    } finally {
+                      setUpdateChecking(false)
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[var(--db-accent)] hover:brightness-90 active:scale-[0.97] transition-all disabled:opacity-60 disabled:cursor-wait"
+                >
+                  {updateChecking ? (
+                    <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
+                    </svg>
+                  )}
+                  {updateChecking ? t('reseau.checking') : t('reseau.checkNow')}
+                </button>
+              </div>
             </SettingRow>
           </SectionCard>
 

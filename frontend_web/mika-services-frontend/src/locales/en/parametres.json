@@ -285,7 +285,18 @@
     "connectionQualityNormal": "Normal",
     "connectionQualitySlow": "Slow",
     "offlineQueue": "Offline queue",
-    "offlineQueueDesc": "Queue actions to send when reconnected."
+    "offlineQueueDesc": "Queue actions to send when reconnected.",
+    "updateSectionTitle": "Updates",
+    "pwaUpdateMode": "Update mode",
+    "pwaUpdateModeDesc": "Choose how the app updates when a new version is available.",
+    "pwaUpdateAuto": "Automatic (recommended)",
+    "pwaUpdatePrompt": "Ask before updating",
+    "pwaUpdateManual": "Manual (from this page)",
+    "checkForUpdate": "Check for update",
+    "checkForUpdateDesc": "Check right now if a new version is available and apply it.",
+    "checkNow": "Check now",
+    "checking": "Checking…",
+    "upToDate": "You're up to date"
   },
   "raccourcis": {
     "shortcutsList": "Shortcuts list",

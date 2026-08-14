@@ -40,6 +40,7 @@ const MIKA_CACHE_DURATION_KEY = 'mika-cache-duration'
 const MIKA_PRELOAD_DATA_KEY = 'mika-preload-data'
 const MIKA_OFFLINE_QUEUE_KEY = 'mika-offline-queue'
 const MIKA_CONNECTION_QUALITY_KEY = 'mika-connection-quality'
+const MIKA_PWA_UPDATE_MODE_KEY = 'mika-pwa-update-mode'
 const MIKA_HIGH_CONTRAST_TEXT_KEY = 'mika-high-contrast-text'
 const MIKA_HIGH_CONTRAST_CARDS_KEY = 'mika-high-contrast-cards'
 
@@ -83,6 +84,14 @@ function getStoredOfflineQueueEnabled(): boolean {
 }
 
 export type ConnectionQuality = 'auto' | 'normal' | 'slow'
+export type PwaUpdateMode = 'auto' | 'prompt' | 'manual'
+
+function getStoredPwaUpdateMode(): PwaUpdateMode {
+  if (typeof window === 'undefined') return 'auto'
+  const stored = localStorage.getItem(MIKA_PWA_UPDATE_MODE_KEY)
+  if (stored === 'auto' || stored === 'prompt' || stored === 'manual') return stored
+  return 'auto'
+}
 
 function getStoredConnectionQuality(): ConnectionQuality {
   if (typeof window === 'undefined') return 'auto'
@@ -152,6 +161,8 @@ interface UiState {
   offlineQueueEnabled: boolean
   /** Qualité de connexion : auto (détection), normal, ou slow (intervalle refresh adapté). */
   connectionQuality: ConnectionQuality
+  /** Mode de mise à jour PWA : auto (silencieux), prompt (popup), manual (depuis paramètres). */
+  pwaUpdateMode: PwaUpdateMode
   locale: Locale
   fontSize: FontSize
   fontFamily: FontFamily
@@ -179,6 +190,7 @@ const initialState: UiState = {
   preloadDataEnabled: getStoredPreloadData(),
   offlineQueueEnabled: getStoredOfflineQueueEnabled(),
   connectionQuality: getStoredConnectionQuality(),
+  pwaUpdateMode: getStoredPwaUpdateMode(),
   locale: getInitialLocale(),
   fontSize: getStoredFontSize(),
   fontFamily: getStoredFontFamily(),
@@ -366,8 +378,14 @@ const uiSlice = createSlice({
         localStorage.setItem(MIKA_CONNECTION_QUALITY_KEY, action.payload)
       }
     },
+    setPwaUpdateMode(state, action: { payload: PwaUpdateMode }) {
+      state.pwaUpdateMode = action.payload
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(MIKA_PWA_UPDATE_MODE_KEY, action.payload)
+      }
+    },
   },
 })
 
-export const { setSidebarCollapsed, setTheme, toggleSidebar, toggleTheme, toggleMobileMenu, closeMobileMenu, setDefaultHomePath, setItemsPerPage, setAutoRefreshListsEnabled, setOfflineModeEnabled, setHighContrastText, setHighContrastCards, setCacheEnabled, setCacheDuration, setPreloadDataEnabled, setOfflineQueueEnabled, setConnectionQuality, setLocale, setFontSize, setFontFamily, setDensity, setDateFormat, setTimeFormat, setNumberFormat, setTimezone, setCardSize, setAnimationPreference } = uiSlice.actions
+export const { setSidebarCollapsed, setTheme, toggleSidebar, toggleTheme, toggleMobileMenu, closeMobileMenu, setDefaultHomePath, setItemsPerPage, setAutoRefreshListsEnabled, setOfflineModeEnabled, setHighContrastText, setHighContrastCards, setCacheEnabled, setCacheDuration, setPreloadDataEnabled, setOfflineQueueEnabled, setConnectionQuality, setPwaUpdateMode, setLocale, setFontSize, setFontFamily, setDensity, setDateFormat, setTimeFormat, setNumberFormat, setTimezone, setCardSize, setAnimationPreference } = uiSlice.actions
 export default uiSlice.reducer

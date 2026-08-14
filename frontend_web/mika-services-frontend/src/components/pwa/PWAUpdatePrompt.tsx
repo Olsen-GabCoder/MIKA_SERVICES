@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { useTranslation } from 'react-i18next'
+import { useAppSelector } from '@/store/hooks'
 
 const UPDATE_CHECK_INTERVAL = 60 * 1000       // Vérifier toutes les 60 s
 const RE_SHOW_AFTER_DISMISS = 5 * 60 * 1000   // Ré-afficher 5 min après dismiss
@@ -8,6 +9,7 @@ const MAX_DISMISSALS = 2                       // Après 2 reports, le bouton "P
 
 export function PWAUpdatePrompt() {
   const { t } = useTranslation('common')
+  const pwaUpdateMode = useAppSelector((s) => s.ui.pwaUpdateMode)
   const [dismissed, setDismissed] = useState(false)
   const [dismissCount, setDismissCount] = useState(0)
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -24,6 +26,13 @@ export function PWAUpdatePrompt() {
       }, UPDATE_CHECK_INTERVAL)
     },
   })
+
+  // Mode auto : appliquer immédiatement sans popup
+  useEffect(() => {
+    if (needRefresh && pwaUpdateMode === 'auto') {
+      updateServiceWorker(true)
+    }
+  }, [needRefresh, pwaUpdateMode, updateServiceWorker])
 
   // Auto-dismiss offlineReady après 4 secondes
   useEffect(() => {
@@ -49,7 +58,7 @@ export function PWAUpdatePrompt() {
     if (needRefresh) setDismissed(false)
   }, [needRefresh])
 
-  const showUpdate = needRefresh && !dismissed
+  const showUpdate = needRefresh && !dismissed && pwaUpdateMode === 'prompt'
   const showOffline = offlineReady && !needRefresh
   const canDismiss = dismissCount < MAX_DISMISSALS
 
@@ -136,4 +145,32 @@ export function PWAUpdatePrompt() {
       </div>
     </div>
   )
+}
+
+/**
+ * Expose la fonction pour déclencher manuellement une vérification de mise à jour
+ * depuis la page Paramètres.
+ */
+export function useCheckForUpdate() {
+  const {
+    needRefresh: [needRefresh],
+    updateServiceWorker,
+  } = useRegisterSW()
+
+  const checkAndApply = useCallback(async (): Promise<'updated' | 'no-update'> => {
+    // Force le SW à vérifier
+    const reg = await navigator.serviceWorker?.getRegistration()
+    if (reg) await reg.update()
+    // Petit délai pour laisser Workbox détecter le nouveau SW
+    await new Promise((r) => setTimeout(r, 1500))
+    // Re-check : si un nouveau SW est en attente, on l'applique
+    const freshReg = await navigator.serviceWorker?.getRegistration()
+    if (freshReg?.waiting) {
+      await updateServiceWorker(true)
+      return 'updated'
+    }
+    return 'no-update'
+  }, [updateServiceWorker])
+
+  return { needRefresh, checkAndApply, updateServiceWorker }
 }

@@ -285,7 +285,18 @@
     "connectionQualityNormal": "Normale",
     "connectionQualitySlow": "Lente",
     "offlineQueue": "File d'attente hors ligne",
-    "offlineQueueDesc": "Enregistrer les actions pour les envoyer à la reconnexion."
+    "offlineQueueDesc": "Enregistrer les actions pour les envoyer à la reconnexion.",
+    "updateSectionTitle": "Mises à jour",
+    "pwaUpdateMode": "Mode de mise à jour",
+    "pwaUpdateModeDesc": "Choisissez comment l'application se met à jour lorsqu'une nouvelle version est disponible.",
+    "pwaUpdateAuto": "Automatique (recommandé)",
+    "pwaUpdatePrompt": "Demander avant de mettre à jour",
+    "pwaUpdateManual": "Manuelle (depuis cette page)",
+    "checkForUpdate": "Rechercher une mise à jour",
+    "checkForUpdateDesc": "Vérifier immédiatement si une nouvelle version est disponible et l'appliquer.",
+    "checkNow": "Vérifier maintenant",
+    "checking": "Vérification…",
+    "upToDate": "Vous êtes à jour"
   },
   "raccourcis": {
     "shortcutsList": "Liste des raccourcis",

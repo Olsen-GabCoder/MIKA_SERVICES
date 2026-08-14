@@ -24,6 +24,7 @@ import {
   hasGlobalAdminRoleEffective,
 } from '@/utils/authRoles'
 import { PageGuide, useFirstVisit } from '@/components/ui/PageGuide'
+import { TruncateTooltip } from '@/components/ui/TruncateTooltip'
 
 const STATUT_COLORS: Record<string, string> = {
   INITIALISATION: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200',
@@ -215,6 +216,13 @@ export const ProjetListPage = () => {
   }, [location.state])
 
   useEffect(() => {
+    // Toujours charger les donnees de reference (clients, chefs)
+    dispatch(fetchClients({ page: 0, size: 200 }))
+    userApi
+      .getChefsProjet()
+      .then((r) => setChefUsers(r ?? []))
+      .catch(() => setChefUsers([]))
+
     const fromListState = (location.state as { fromListState?: ListStateToRestore } | null)?.fromListState
     if (fromListState) return
 
@@ -237,24 +245,26 @@ export const ProjetListPage = () => {
     } else {
       dispatch(fetchProjets({ page: 0, size: pageSize, ...sortParams() }))
     }
-
-    dispatch(fetchClients({ page: 0, size: 200 }))
-    userApi
-      .getChefsProjet()
-      .then((r) => setChefUsers(r ?? []))
-      .catch(() => setChefUsers([]))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const applyFilters = useCallback(() => {
-    const params = { page: 0, size: pageSize, ...buildListQueryFilters(), ...sortParams() }
+  const applyWithFilters = useCallback((newFilters: ProjetListFilters) => {
+    setFilters(newFilters)
+    const apiFilters: ProjetListFilters = {
+      ...(newFilters.statut && { statut: newFilters.statut }),
+      ...(newFilters.type && { type: newFilters.type }),
+      ...(newFilters.clientId != null && { clientId: newFilters.clientId }),
+      ...(newFilters.responsableId != null && { responsableId: newFilters.responsableId }),
+    }
+    const srt = sortBy ? { sortBy: sortBy as ProjetSortKey, sortDir } : {}
+    const params = { page: 0, size: pageSize, ...apiFilters, ...srt }
     if (searchQuery.trim()) {
       dispatch(searchProjets({ q: searchQuery.trim(), ...params }))
     } else {
       dispatch(fetchProjets(params))
     }
-    syncToUrl({ page: 0, size: pageSize, searchQuery, filters, sortBy, sortDir })
-  }, [dispatch, searchQuery, buildListQueryFilters, sortBy, sortDir, pageSize, syncToUrl, filters])
+    syncToUrl({ page: 0, size: pageSize, searchQuery, filters: newFilters, sortBy, sortDir })
+  }, [dispatch, searchQuery, sortBy, sortDir, pageSize, syncToUrl])
 
   const resetFilters = useCallback(() => {
     setFilters({})
@@ -405,7 +415,7 @@ export const ProjetListPage = () => {
   const { isFirstVisit: isFirstProjets } = useFirstVisit('projets')
 
   return (
-    <PageContainer size="full" className="h-full flex flex-col min-h-0 bg-[var(--db-bg-base)]">
+    <PageContainer size="full" className="h-full flex flex-col min-h-0" style={{ background: 'var(--db-page)' }}>
       <CacheTimestampBanner lastFetched={lastFetched} />
       {isFirstProjets && (
         <PageGuide
@@ -416,7 +426,7 @@ export const ProjetListPage = () => {
       )}
 
       {/* ══════════ HERO HEADER ══════════ */}
-      <div className="shrink-0 relative overflow-hidden">
+      <div className="shrink-0 relative overflow-hidden" style={{ animation: 'db-rise 380ms ease-out both' }}>
         <div className="relative px-4 md:px-8 py-7 border-b border-[var(--db-border-subtle)]">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
 
@@ -530,25 +540,25 @@ export const ProjetListPage = () => {
             {[
               {
                 value: filters.statut ?? '',
-                onChange: (v: string) => setFilters((f) => ({ ...f, statut: (v || undefined) as StatutProjet | undefined })),
+                onChange: (v: string) => applyWithFilters({ ...filters, statut: (v || undefined) as StatutProjet | undefined }),
                 placeholder: t('list.status'),
                 options: STATUT_OPTIONS,
               },
               {
                 value: filters.type ?? '',
-                onChange: (v: string) => setFilters((f) => ({ ...f, type: (v || undefined) as TypeProjet | undefined })),
+                onChange: (v: string) => applyWithFilters({ ...filters, type: (v || undefined) as TypeProjet | undefined }),
                 placeholder: t('list.type'),
                 options: TYPE_OPTIONS,
               },
               {
                 value: String(filters.clientId ?? ''),
-                onChange: (v: string) => setFilters((f) => ({ ...f, clientId: v ? Number(v) : undefined })),
+                onChange: (v: string) => applyWithFilters({ ...filters, clientId: v ? Number(v) : undefined }),
                 placeholder: t('list.client'),
                 options: clients.map((c) => ({ value: String(c.id), label: c.nom })),
               },
               {
                 value: String(filters.responsableId ?? ''),
-                onChange: (v: string) => setFilters((f) => ({ ...f, responsableId: v ? Number(v) : undefined })),
+                onChange: (v: string) => applyWithFilters({ ...filters, responsableId: v ? Number(v) : undefined }),
                 placeholder: t('list.manager'),
                 options: chefUsers.map((u) => ({ value: String(u.id), label: `${u.nom} ${u.prenom ?? ''}` })),
               },
@@ -563,12 +573,6 @@ export const ProjetListPage = () => {
                 {f.options.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
             ))}
-            <button
-              onClick={applyFilters}
-              className="px-4 py-1.5 min-h-[44px] md:min-h-0 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-xs font-bold shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/30 hover:scale-[1.03] active:scale-[0.97] transition-all duration-200"
-            >
-              {t('list.applyFilters')}
-            </button>
             {hasActiveFilters && (
               <button
                 onClick={resetFilters}
@@ -645,7 +649,7 @@ export const ProjetListPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--db-border-subtle)]">
-                  {projets.map((projet) => (
+                  {projets.map((projet, idx) => (
                     <tr
                       key={projet.id}
                       role="button"
@@ -654,6 +658,7 @@ export const ProjetListPage = () => {
                       onKeyDown={(e) => handleRowKeyDown(e, projet)}
                       aria-label={t('list.openDetail', { name: projet.nom })}
                       className="group hover:bg-[var(--db-accent-muted)] cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--db-accent)]"
+                      style={{ animation: `db-rise 380ms ease-out ${idx * 30}ms both` }}
                     >
                       {/* Nom — barre colorée statut sur la première cellule */}
                       <td className={`px-5 py-4 border-l-4 ${STATUT_BORDER[projet.statut] ?? 'border-l-gray-300 dark:border-l-gray-600'}`}>
@@ -664,9 +669,11 @@ export const ProjetListPage = () => {
                             </svg>
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-[var(--db-text-primary)] truncate max-w-[200px] group-hover:text-[var(--db-accent)] transition-colors duration-200">
-                              {projet.nom}
-                            </p>
+                            <TruncateTooltip
+                              text={projet.nom}
+                              className="text-sm font-bold text-[var(--db-text-primary)] truncate max-w-[200px] group-hover:text-[var(--db-accent)] transition-colors duration-200 block"
+                              side="bottom"
+                            />
                             {projet.codeProjet && (
                               <p className="text-[11px] font-mono text-[var(--db-text-faint)] mt-0.5">{projet.codeProjet}</p>
                             )}
@@ -681,9 +688,10 @@ export const ProjetListPage = () => {
                       </td>
                       {/* Client */}
                       <td className="px-5 py-4">
-                        <span className="text-sm text-[var(--db-text-primary)] font-medium truncate max-w-[150px] block">
-                          {projet.clientNom || '—'}
-                        </span>
+                        <TruncateTooltip
+                          text={projet.clientNom || '—'}
+                          className="text-sm text-[var(--db-text-primary)] font-medium truncate max-w-[150px] block"
+                        />
                       </td>
                       {/* Montant */}
                       <td className="px-5 py-4">
@@ -773,8 +781,8 @@ export const ProjetListPage = () => {
             </div>
 
             {/* ── Cartes mobile ── */}
-            <div className="md:hidden divide-y divide-[var(--db-border-subtle)]">
-              {projets.map((projet) => (
+            <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-3 p-3">
+              {projets.map((projet, idx) => (
                 <article
                   key={projet.id}
                   role="button"
@@ -782,50 +790,99 @@ export const ProjetListPage = () => {
                   onClick={() => openProjetDetail(projet)}
                   onKeyDown={(e) => handleRowKeyDown(e, projet)}
                   aria-label={t('list.openDetail', { name: projet.nom })}
-                  className={`p-5 border-l-4 ${STATUT_BORDER[projet.statut] ?? 'border-l-gray-300'} hover:bg-[var(--db-accent-muted)] cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--db-accent)]`}
+                  className="group relative rounded-xl p-4 cursor-pointer transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--db-accent)] focus:ring-offset-2 overflow-hidden"
+                  style={{ background: 'var(--db-card)', animation: `db-rise 380ms ease-out ${idx * 30}ms both` }}
                 >
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-[var(--db-accent-muted)] flex items-center justify-center flex-shrink-0 shadow-sm">
-                      <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  {/* Accent top bar */}
+                  <div className={`absolute top-0 left-0 right-0 h-[3px] ${
+                    projet.statut === 'EN_COURS_EXECUTION' || projet.statut === 'EN_AVANCE' ? 'bg-[var(--db-success)]'
+                    : projet.statut === 'SUSPENSION' ? 'bg-[var(--db-warn)]'
+                    : projet.statut === 'RECEPTION_PROVISOIRE' || projet.statut === 'RECEPTION_DEFINITIVE' ? 'bg-[var(--db-info)]'
+                    : 'bg-[var(--db-accent)]'
+                  }`} />
+
+                  {/* Header: icon + nom + statut */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--db-accent-muted)] flex items-center justify-center flex-shrink-0 group-hover:shadow-sm transition-shadow duration-200">
+                      <svg className="w-5 h-5 text-[var(--db-accent)] group-hover:scale-110 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-[var(--db-text-primary)] truncate">{projet.nom}</p>
-                      <p className="text-xs text-[var(--db-text-muted)] mt-0.5">{getTypeDisplay(projet)} · {projet.clientNom || '—'}</p>
-                      <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${STATUT_BADGE[projet.statut] ?? 'bg-[var(--db-border-subtle)] text-[var(--db-text-muted)]'}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${STATUT_DOT[projet.statut] ?? 'bg-gray-400'}`} />
-                          {STATUT_LABELS[projet.statut]?.label || projet.statut}
-                        </span>
-                        <span className="text-xs font-bold text-[var(--db-text-muted)] tabular-nums">{projet.avancementGlobal}%</span>
-                        <span className="text-xs font-semibold text-[var(--db-text-muted)] tabular-nums">{formatMontant(projet.montantHT)}</span>
-                      </div>
-                      {/* Progress + responsable mobile */}
-                      <div className="w-full h-1.5 rounded-full bg-[var(--db-border-subtle)] mt-2.5 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-primary to-orange-400"
-                          style={{ width: `${Math.min(projet.avancementGlobal, 100)}%` }}
-                        />
-                      </div>
-                      {projet.responsableNom && (
-                        <div className="flex items-center gap-1.5 mt-2">
-                          <div className={`w-5 h-5 rounded-full ${getAvatarColor(projet.responsableNom)} flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0`}>
-                            {getInitials(projet.responsableNom)}
-                          </div>
-                          <span className="text-[11px] text-[var(--db-text-muted)]">{projet.responsableNom}</span>
-                        </div>
+                      <TruncateTooltip
+                        text={projet.nom}
+                        className="text-sm font-bold text-[var(--db-text-primary)] truncate group-hover:text-[var(--db-accent)] transition-colors duration-200 block"
+                        side="bottom"
+                      />
+                      {projet.codeProjet && (
+                        <p className="text-[10px] font-mono text-[var(--db-text-faint)] mt-0.5">{projet.codeProjet}</p>
                       )}
                     </div>
                   </div>
+
+                  {/* Meta: type + client */}
+                  <div className="mt-3 flex items-center gap-2 text-[11px] text-[var(--db-text-muted)]">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[var(--db-border-subtle)] font-medium truncate max-w-[120px]">
+                      {getTypeDisplay(projet)}
+                    </span>
+                    <span className="truncate">{projet.clientNom || '—'}</span>
+                  </div>
+
+                  {/* KPI row: montant + avancement */}
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-xs font-bold text-[var(--db-text-primary)] tabular-nums truncate">
+                        {formatMontant(projet.montantHT)}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-[var(--db-text-primary)] tabular-nums">
+                        {projet.avancementGlobal}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-[var(--db-border-subtle)] overflow-hidden">
+                    <div
+                      className="h-full rounded-full db-progress-fill"
+                      style={{
+                        width: `${Math.min(projet.avancementGlobal, 100)}%`,
+                        background: 'linear-gradient(90deg, var(--db-orange), #FF8F5E)',
+                      }}
+                    />
+                  </div>
+
+                  {/* Footer: statut + responsable */}
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUT_BADGE[projet.statut] ?? 'bg-[var(--db-border-subtle)] text-[var(--db-text-muted)]'}`}>
+                      <span className={`w-[5px] h-[5px] rounded-full flex-shrink-0 ${STATUT_DOT[projet.statut] ?? 'bg-gray-400'}`} />
+                      {STATUT_LABELS[projet.statut]?.label || projet.statut}
+                    </span>
+                    {projet.responsableNom ? (
+                      <div className="flex items-center gap-1.5">
+                        <div className={`w-5 h-5 rounded-full ${getAvatarColor(projet.responsableNom)} flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0`}>
+                          {getInitials(projet.responsableNom)}
+                        </div>
+                        <span className="text-[11px] text-[var(--db-text-muted)] truncate max-w-[80px]">{projet.responsableNom}</span>
+                      </div>
+                    ) : (
+                      <span className="text-[var(--db-text-faint)] text-[11px]">—</span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
                   {(canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) ||
                     canDeleteProjetEffective(currentUser, accessToken)) && (
-                    <div className="mt-4 pt-3 border-t border-[var(--db-border-subtle)] flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="mt-3 pt-2.5 border-t border-[var(--db-border-subtle)] flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                       {canEditProjetEffective(currentUser, accessToken, projet.responsableProjetId) && (
                         <button type="button" onClick={() => navigate(`/projets/${projet.id}/edit`)}
                           disabled={!isOnline}
                           title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
-                          className="px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                          className="px-3 py-1.5 min-h-[44px] rounded-xl text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                           {t('list.edit')}
                         </button>
                       )}
@@ -833,7 +890,7 @@ export const ProjetListPage = () => {
                         <button type="button" onClick={() => handleDelete(projet.id, projet.nom)}
                           disabled={!isOnline}
                           title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
-                          className="px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                          className="px-3 py-1.5 min-h-[44px] rounded-xl text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                           {t('list.delete')}
                         </button>
                       )}

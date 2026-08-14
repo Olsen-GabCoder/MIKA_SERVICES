@@ -140,6 +140,7 @@ export default function PlanningPage() {
   const [formTypePrevision, setFormTypePrevision] = useState<string>('')
   const [formTacheParentId, setFormTacheParentId] = useState<string>('')
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [submitting, setSubmitting] = useState(false)
 
   // ---------- Data loading ----------
   useEffect(() => {
@@ -326,12 +327,13 @@ export default function PlanningPage() {
   // Rafraîchir les données secondaires sans toucher aux tâches du projet (déjà à jour dans le reducer)
   // Les erreurs sont silencieusement ignorées pour éviter un logout en cascade (401 → redirect)
   const refreshSecondaryData = () => {
-    dispatch(fetchTachesEnRetard()).catch(() => {})
-    if (currentUser?.id) dispatch(fetchMesTaches(currentUser.id)).catch(() => {})
+    dispatch(fetchTachesEnRetard()).catch((e: unknown) => console.error('fetchTachesEnRetard failed', e))
+    if (currentUser?.id) dispatch(fetchMesTaches(currentUser.id)).catch((e: unknown) => console.error('fetchMesTaches failed', e))
   }
 
   const handleSubmit = async () => {
-    if (!selectedProjetId || !formTitre.trim()) return
+    if (!selectedProjetId || !formTitre.trim() || submitting) return
+    setSubmitting(true)
 
     // Validation côté client
     const errors: Record<string, string> = {}
@@ -395,6 +397,7 @@ export default function PlanningPage() {
     const pid = selectedProjetIdRef.current
     if (pid) dispatch(fetchTachesByProjet({ projetId: pid })).catch(() => {})
     refreshSecondaryData()
+    setSubmitting(false)
   }
 
   const handleStatusChange = async (tache: Tache, statut: StatutTache) => {
@@ -502,7 +505,7 @@ export default function PlanningPage() {
                   </svg>
                 </div>
                 <p className="text-base font-medium" style={{ color: 'var(--db-t2)' }}>
-                  Selectionnez un projet pour voir ses taches en detail
+                  {t('selectProjectHint', { defaultValue: 'Sélectionnez un projet pour voir ses tâches en détail' })}
                 </p>
                 <p className="text-sm mt-2" style={{ color: 'var(--db-t4)' }}>
                   {t('headerDescription')}
@@ -631,7 +634,7 @@ export default function PlanningPage() {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={!formTitre.trim() || !isOnline}
+              disabled={!formTitre.trim() || !isOnline || submitting}
               className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
               style={{ background: 'var(--db-teal)' }}
             >

@@ -10,8 +10,10 @@ import com.mikaservices.platform.modules.planning.dto.response.TacheResponse
 import com.mikaservices.platform.modules.planning.entity.DependanceTache
 import com.mikaservices.platform.modules.planning.entity.Tache
 import com.mikaservices.platform.modules.planning.mapper.TacheMapper
+import com.mikaservices.platform.common.exception.ForbiddenException
 import com.mikaservices.platform.modules.planning.repository.DependanceTacheRepository
 import com.mikaservices.platform.modules.planning.repository.TacheRepository
+import com.mikaservices.platform.modules.user.service.CurrentUserService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -21,7 +23,8 @@ import java.time.temporal.ChronoUnit
 @Transactional
 class DependanceService(
     private val dependanceRepository: DependanceTacheRepository,
-    private val tacheRepository: TacheRepository
+    private val tacheRepository: TacheRepository,
+    private val currentUserService: CurrentUserService
 ) {
 
     fun create(request: DependanceCreateRequest): DependanceResponse {
@@ -67,10 +70,12 @@ class DependanceService(
     }
 
     fun delete(id: Long) {
-        if (!dependanceRepository.existsById(id)) {
-            throw ResourceNotFoundException("Dépendance non trouvée: $id")
+        val dep = dependanceRepository.findById(id)
+            .orElseThrow { ResourceNotFoundException("Dépendance non trouvée: $id") }
+        if (!currentUserService.canEditProjet(dep.tacheSource.projet.responsableProjet?.id)) {
+            throw ForbiddenException("Seul le chef de projet peut supprimer les dépendances de ce projet.")
         }
-        dependanceRepository.deleteById(id)
+        dependanceRepository.delete(dep)
     }
 
     @Transactional(readOnly = true)

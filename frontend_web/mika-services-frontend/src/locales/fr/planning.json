@@ -77,6 +77,11 @@
     "URGENTE": "Urgente",
     "CRITIQUE": "Critique"
   },
+  "alertesLabel": "Alertes",
+  "alertesCritiques": "critiques",
+  "donutTitle": "Répartition par statut",
+  "prioriteBarsTitle": "Répartition par priorité",
+  "selectProjectHint": "Sélectionnez un projet pour voir ses tâches en détail",
   "typePrevision": {
     "HEBDOMADAIRE": "Hebdomadaire",
     "MENSUELLE": "Mensuelle",

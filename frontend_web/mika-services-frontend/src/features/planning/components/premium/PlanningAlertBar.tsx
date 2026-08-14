@@ -43,12 +43,12 @@ export function PlanningAlertBar({ tachesEnRetard, selectedProjetId }: PlanningA
         className="text-xs uppercase tracking-widest pr-3 mr-1 border-r font-semibold shrink-0"
         style={{ color: 'var(--db-t4)', borderColor: 'var(--db-border)' }}
       >
-        Alertes
+        {t('alertesLabel', { defaultValue: 'Alertes' })}
       </span>
 
       <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
         <Item value={filtered.length} label={t('kpiEnRetard')} variant="danger" />
-        {critiques > 0 && <Item value={critiques} label="critiques" variant="danger" />}
+        {critiques > 0 && <Item value={critiques} label={t('alertesCritiques', { defaultValue: 'critiques' })} variant="danger" />}
         {hautes > 0 && <Item value={hautes} label={t('priorite.HAUTE')} variant="warn" />}
       </div>
 

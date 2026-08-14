@@ -9,6 +9,7 @@ import com.mikaservices.platform.modules.planning.dto.request.TacheUpdateRequest
 import com.mikaservices.platform.modules.planning.dto.response.TacheResponse
 import com.mikaservices.platform.modules.planning.entity.Tache
 import com.mikaservices.platform.modules.planning.mapper.TacheMapper
+import com.mikaservices.platform.modules.planning.repository.DependanceTacheRepository
 import com.mikaservices.platform.modules.planning.repository.TacheRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
 import com.mikaservices.platform.modules.user.repository.UserRepository
@@ -24,6 +25,7 @@ import java.time.LocalDate
 @Transactional
 class PlanningService(
     private val tacheRepository: TacheRepository,
+    private val dependanceTacheRepository: DependanceTacheRepository,
     private val projetRepository: ProjetRepository,
     private val userRepository: UserRepository,
     private val currentUserService: CurrentUserService
@@ -43,7 +45,8 @@ class PlanningService(
             description = request.description, statut = request.statut, priorite = request.priorite,
             dateDebut = request.dateDebut, dateFin = request.dateFin, dateEcheance = request.dateEcheance,
             semaine = request.semaine, annee = request.annee, typePrevision = request.typePrevision,
-            pourcentageAvancement = request.pourcentageAvancement ?: 0
+            pourcentageAvancement = request.pourcentageAvancement ?: 0,
+            estJalon = request.estJalon, couleur = request.couleur, ordreAffichage = request.ordreAffichage
         )
 
         request.assigneAId?.let { userId ->
@@ -114,20 +117,42 @@ class PlanningService(
         request.dateEcheance?.let { tache.dateEcheance = it }
         request.pourcentageAvancement?.let { tache.pourcentageAvancement = it }
 
-        request.assigneAId?.let { userId ->
-            tache.assigneA = userRepository.findById(userId)
-                .orElseThrow { ResourceNotFoundException("Utilisateur non trouvé avec l'ID: $userId") }
+        // assigneAId: 0 ou négatif → désassigner, positif → assigner
+        if (request.assigneAId != null) {
+            if (request.assigneAId <= 0) {
+                tache.assigneA = null
+            } else {
+                tache.assigneA = userRepository.findById(request.assigneAId)
+                    .orElseThrow { ResourceNotFoundException("Utilisateur non trouvé avec l'ID: ${request.assigneAId}") }
+            }
         }
         request.semaine?.let { tache.semaine = it }
         request.annee?.let { tache.annee = it }
         request.typePrevision?.let { tache.typePrevision = it }
+        request.estJalon?.let { tache.estJalon = it }
+        request.couleur?.let { tache.couleur = it }
+        request.ordreAffichage?.let { tache.ordreAffichage = it }
 
-        request.tacheParentId?.let { parentId ->
-            if (parentId == tache.id) {
-                throw BadRequestException("Une tâche ne peut pas être son propre parent")
+        if (request.tacheParentId != null) {
+            val parentId = request.tacheParentId
+            if (parentId <= 0) {
+                tache.tacheParent = null
+            } else {
+                if (parentId == tache.id) {
+                    throw BadRequestException("Une tâche ne peut pas être son propre parent")
+                }
+                val parent = tacheRepository.findById(parentId)
+                    .orElseThrow { ResourceNotFoundException("Tâche parente non trouvée avec l'ID: $parentId") }
+                // Vérifier la circularité : remonter la chaîne des parents
+                var ancestor = parent.tacheParent
+                while (ancestor != null) {
+                    if (ancestor.id == tache.id) {
+                        throw BadRequestException("Référence circulaire détectée : cette tâche est déjà un ancêtre du parent choisi")
+                    }
+                    ancestor = ancestor.tacheParent
+                }
+                tache.tacheParent = parent
             }
-            tache.tacheParent = tacheRepository.findById(parentId)
-                .orElseThrow { ResourceNotFoundException("Tâche parente non trouvée avec l'ID: $parentId") }
         }
 
         // Valider la cohérence des dates après application des modifications
@@ -139,6 +164,9 @@ class PlanningService(
 
         // Si terminée, mettre avancement à 100
         if (tache.statut == StatutTache.TERMINEE) {
+            if (tache.pourcentageAvancement != 100) {
+                logger.debug("Tâche ${tache.id}: avancement forcé de ${tache.pourcentageAvancement}% à 100% (statut TERMINEE)")
+            }
             tache.pourcentageAvancement = 100
             if (tache.dateFin == null) tache.dateFin = LocalDate.now()
         }
@@ -178,8 +206,15 @@ class PlanningService(
         if (!currentUserService.canEditProjet(tache.projet.responsableProjet?.id)) {
             throw ForbiddenException("Seul le chef de projet peut supprimer les tâches de ce projet.")
         }
+        // Supprimer les dépendances liées avant de supprimer la tâche (évite les orphelins)
+        val deps = dependanceTacheRepository.findByTacheId(id)
+        if (deps.isNotEmpty()) {
+            dependanceTacheRepository.deleteAll(deps)
+            logger.info("${deps.size} dépendance(s) nettoyée(s) pour la tâche $id")
+        }
+        val childCount = tache.tachesEnfants.size
         tacheRepository.delete(tache)
-        logger.info("Tâche supprimée: ${tache.titre} (+ ${tache.tachesEnfants.size} sous-tâches)")
+        logger.info("Tâche supprimée: ${tache.titre} (+ $childCount sous-tâches)")
     }
 
     private fun validateDates(dateDebut: LocalDate?, dateFin: LocalDate?, dateEcheance: LocalDate?) {
@@ -188,6 +223,9 @@ class PlanningService(
         }
         if (dateDebut != null && dateEcheance != null && dateEcheance.isBefore(dateDebut)) {
             throw BadRequestException("La date d'échéance ne peut pas être antérieure à la date de début")
+        }
+        if (dateFin != null && dateEcheance != null && dateFin.isAfter(dateEcheance)) {
+            throw BadRequestException("La date de fin ne peut pas être postérieure à la date d'échéance")
         }
     }
 }

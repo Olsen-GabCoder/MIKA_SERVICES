@@ -77,6 +77,11 @@
     "URGENTE": "Urgent",
     "CRITIQUE": "Critical"
   },
+  "alertesLabel": "Alerts",
+  "alertesCritiques": "critical",
+  "donutTitle": "Distribution by status",
+  "prioriteBarsTitle": "Distribution by priority",
+  "selectProjectHint": "Select a project to view its tasks in detail",
   "typePrevision": {
     "HEBDOMADAIRE": "Weekly",
     "MENSUELLE": "Monthly",

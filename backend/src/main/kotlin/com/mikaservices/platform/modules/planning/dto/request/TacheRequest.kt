@@ -15,6 +15,7 @@ data class TacheCreateRequest(
     val projetId: Long,
     @field:NotBlank(message = "Le titre est obligatoire") @field:Size(max = 300)
     val titre: String,
+    @field:Size(max = 5000, message = "La description ne peut pas dépasser 5000 caractères")
     val description: String? = null,
     val statut: StatutTache = StatutTache.A_FAIRE,
     val priorite: Priorite = Priorite.NORMALE,
@@ -23,16 +24,24 @@ data class TacheCreateRequest(
     val dateFin: LocalDate? = null,
     val dateEcheance: LocalDate? = null,
     val tacheParentId: Long? = null,
+    @field:Min(value = 1, message = "La semaine doit être entre 1 et 53")
+    @field:Max(value = 53, message = "La semaine doit être entre 1 et 53")
     val semaine: Int? = null,
+    @field:Min(value = 2000, message = "L'année doit être entre 2000 et 2100")
+    @field:Max(value = 2100, message = "L'année doit être entre 2000 et 2100")
     val annee: Int? = null,
     val typePrevision: TypePrevision? = null,
     @field:Min(value = 0, message = "L'avancement doit être entre 0 et 100")
     @field:Max(value = 100, message = "L'avancement doit être entre 0 et 100")
-    val pourcentageAvancement: Int? = null
+    val pourcentageAvancement: Int? = null,
+    val estJalon: Boolean = false,
+    val couleur: String? = null,
+    val ordreAffichage: Int? = null
 )
 
 data class TacheUpdateRequest(
     val titre: String? = null,
+    @field:Size(max = 5000, message = "La description ne peut pas dépasser 5000 caractères")
     val description: String? = null,
     val statut: StatutTache? = null,
     val priorite: Priorite? = null,
@@ -43,8 +52,15 @@ data class TacheUpdateRequest(
     @field:Min(value = 0, message = "L'avancement doit être entre 0 et 100")
     @field:Max(value = 100, message = "L'avancement doit être entre 0 et 100")
     val pourcentageAvancement: Int? = null,
+    @field:Min(value = 1, message = "La semaine doit être entre 1 et 53")
+    @field:Max(value = 53, message = "La semaine doit être entre 1 et 53")
     val semaine: Int? = null,
+    @field:Min(value = 2000, message = "L'année doit être entre 2000 et 2100")
+    @field:Max(value = 2100, message = "L'année doit être entre 2000 et 2100")
     val annee: Int? = null,
     val typePrevision: TypePrevision? = null,
-    val tacheParentId: Long? = null
+    val tacheParentId: Long? = null,
+    val estJalon: Boolean? = null,
+    val couleur: String? = null,
+    val ordreAffichage: Int? = null
 )

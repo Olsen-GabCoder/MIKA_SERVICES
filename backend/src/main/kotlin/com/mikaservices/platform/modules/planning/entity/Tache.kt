@@ -14,7 +14,9 @@ import java.time.LocalDate
     Index(name = "idx_tache_projet", columnList = "projet_id"),
     Index(name = "idx_tache_statut", columnList = "statut"),
     Index(name = "idx_tache_assigne", columnList = "assigne_a_id"),
-    Index(name = "idx_tache_semaine_annee", columnList = "semaine, annee")
+    Index(name = "idx_tache_semaine_annee", columnList = "semaine, annee"),
+    Index(name = "idx_tache_type_prevision", columnList = "type_prevision"),
+    Index(name = "idx_tache_date_echeance", columnList = "date_echeance")
 ])
 class Tache(
     @ManyToOne(fetch = FetchType.LAZY)
@@ -66,7 +68,16 @@ class Tache(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type_prevision", length = 30)
-    var typePrevision: TypePrevision? = null
+    var typePrevision: TypePrevision? = null,
+
+    @Column(name = "est_jalon", nullable = false)
+    var estJalon: Boolean = false,
+
+    @Column(name = "couleur", length = 7)
+    var couleur: String? = null,
+
+    @Column(name = "ordre_affichage")
+    var ordreAffichage: Int? = null
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {
@@ -75,6 +86,6 @@ class Tache(
         return id != null && id == other.id
     }
 
-    override fun hashCode(): Int = id?.hashCode() ?: titre.hashCode()
+    override fun hashCode(): Int = javaClass.hashCode()
     override fun toString(): String = "Tache(id=$id, titre='$titre', statut=$statut)"
 }

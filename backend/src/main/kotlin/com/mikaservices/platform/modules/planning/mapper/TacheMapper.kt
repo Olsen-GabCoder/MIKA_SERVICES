@@ -31,6 +31,9 @@ object TacheMapper {
             semaine = entity.semaine,
             annee = entity.annee,
             typePrevision = entity.typePrevision,
+            estJalon = entity.estJalon,
+            couleur = entity.couleur,
+            ordreAffichage = entity.ordreAffichage,
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt
         )

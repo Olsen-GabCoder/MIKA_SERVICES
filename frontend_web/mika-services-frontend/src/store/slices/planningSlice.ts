@@ -104,12 +104,16 @@ const planningSlice = createSlice({
     builder.addCase(fetchTachesEnRetard.rejected, (state, action) => { state.loadingEnRetard = false; state.error = handleApiError(action.error) })
 
     // createTache
+    builder.addCase(createTache.pending, (state) => { state.loading = true; state.error = null })
     builder.addCase(createTache.fulfilled, (state, action) => {
+      state.loading = false
       state.taches.unshift(action.payload)
       clearPlanningCache(action.payload.projetId)
     })
+    builder.addCase(createTache.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
     // updateTache
+    builder.addCase(updateTache.pending, (state) => { state.error = null })
     builder.addCase(updateTache.fulfilled, (state, action) => {
       const updated = action.payload
       const idx = state.taches.findIndex(t => t.id === updated.id)
@@ -124,6 +128,7 @@ const planningSlice = createSlice({
       }
       clearPlanningCache(updated.projetId)
     })
+    builder.addCase(updateTache.rejected, (state, action) => { state.error = handleApiError(action.error) })
 
     // deleteTache
     builder.addCase(deleteTache.fulfilled, (state, action) => {
@@ -134,6 +139,7 @@ const planningSlice = createSlice({
       state.tachesEnRetard = state.tachesEnRetard.filter(t => t.id !== deletedId)
       if (deleted) clearPlanningCache(deleted.projetId)
     })
+    builder.addCase(deleteTache.rejected, (state, action) => { state.error = handleApiError(action.error) })
   },
 })
 

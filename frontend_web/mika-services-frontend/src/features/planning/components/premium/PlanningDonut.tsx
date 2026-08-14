@@ -43,7 +43,7 @@ export function PlanningDonut({ counts, colSpanClass = 'col-span-12 lg:col-span-
     >
       <div className="flex items-center gap-2.5 mb-4">
         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--db-t3)' }}>
-          Repartition par statut
+          {t('donutTitle', { defaultValue: 'Répartition par statut' })}
         </span>
       </div>
 

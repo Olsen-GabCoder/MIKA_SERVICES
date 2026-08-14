@@ -33,7 +33,7 @@ export function PrioriteBars({ taches, colSpanClass = 'col-span-12 lg:col-span-4
     >
       <div className="flex items-center gap-2.5 mb-4">
         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--db-t3)' }}>
-          Repartition par priorite
+          {t('prioriteBarsTitle', { defaultValue: 'Répartition par priorité' })}
         </span>
       </div>
 

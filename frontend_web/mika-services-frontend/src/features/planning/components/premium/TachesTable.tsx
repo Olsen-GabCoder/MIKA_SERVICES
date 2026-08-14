@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFormatDate } from '@/hooks/useFormatDate'
 import { StatutTache, Priorite } from '@/types/planning'
@@ -48,6 +48,15 @@ export function TachesTable({
   const formatDate = useFormatDate()
 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  // Clear selection when taches change (e.g. after delete)
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const validIds = new Set(taches.map((t) => t.id))
+      const next = new Set([...prev].filter((id) => validIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [taches])
+
   const selectionMode = selectedIds.size > 0
 
   const filtered = useMemo(
@@ -77,8 +86,8 @@ export function TachesTable({
   const handleDeleteSelected = () => {
     if (selectedIds.size === 0) return
     const ids = Array.from(selectedIds)
-    setSelectedIds(new Set())
     onDeleteMultiple?.(ids)
+    // Selection will be cleared after confirmation via the taches prop change
   }
 
   return (
@@ -225,7 +234,7 @@ export function TachesTable({
                     type="checkbox"
                     checked={selectedIds.has(tache.id)}
                     onChange={() => toggleSelect(tache.id)}
-                    className="w-4 h-4 mt-1 rounded accent-[var(--db-danger)] cursor-pointer shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                    className="w-4 h-4 mt-1 rounded accent-[var(--db-danger)] cursor-pointer shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150"
                     style={selectedIds.has(tache.id) ? { opacity: 1 } : undefined}
                   />
                 )}

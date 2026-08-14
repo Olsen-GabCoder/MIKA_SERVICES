@@ -25,6 +25,9 @@ data class TacheResponse(
     val semaine: Int?,
     val annee: Int?,
     val typePrevision: TypePrevision?,
+    val estJalon: Boolean,
+    val couleur: String?,
+    val ordreAffichage: Int?,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
 )

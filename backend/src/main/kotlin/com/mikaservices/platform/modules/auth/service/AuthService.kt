@@ -152,7 +152,7 @@ class AuthService(
             rememberMe -> SecurityConstants.LONG_SESSION_MS
             user.defaultSessionDuration == "LONG" -> SecurityConstants.LONG_SESSION_MS
             user.defaultSessionDuration == "SHORT" -> SecurityConstants.SHORT_SESSION_MS
-            else -> SecurityConstants.SHORT_SESSION_MS
+            else -> SecurityConstants.LONG_SESSION_MS
         }
         val accessToken = jwtTokenProvider.generateToken(user.email, roles, SecurityConstants.DEFAULT_JWT_EXPIRATION_MS)
         val refreshToken = jwtTokenProvider.generateRefreshToken(user.email, sessionDurationMs)
@@ -363,11 +363,15 @@ class AuthService(
 
         val newAccessToken = jwtTokenProvider.generateToken(user.email, roles, SecurityConstants.DEFAULT_JWT_EXPIRATION_MS)
         val newRefreshToken = jwtTokenProvider.generateRefreshToken(user.email, effectiveSeconds * 1000)
-        
+
+        val oldToken = session.token
+        session.previousToken = oldToken
+        session.previousTokenExpiresAt = now.plusSeconds(TOKEN_GRACE_PERIOD_SECONDS)
         session.token = newAccessToken
         session.refreshToken = newRefreshToken
         session.lastActivity = now
         sessionRepository.save(session)
+        jwtAuthenticationFilter.evictSession(oldToken)
         
         logger.info("Token renouvelé pour l'utilisateur: ${user.email}")
         
@@ -428,7 +432,8 @@ class AuthService(
 
     companion object {
         private const val RESET_TOKEN_EXPIRATION_HOURS = 1L
-        private const val MAX_SESSIONS_PER_USER = 3
+        private const val MAX_SESSIONS_PER_USER = 10
+        private const val TOKEN_GRACE_PERIOD_SECONDS = 30L
     }
 
     /**

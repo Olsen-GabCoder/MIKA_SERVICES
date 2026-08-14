@@ -57,7 +57,11 @@ class JwtAuthenticationFilter(
                     val isActive = if (cached != null && (now - cached.cachedAt) < SESSION_CACHE_TTL_MS) {
                         cached.active
                     } else {
-                        val session = sessionRepository.findByToken(token).orElse(null)
+                        var session = sessionRepository.findByToken(token).orElse(null)
+                        // Grace period: accept previous token for 30s after refresh
+                        if (session == null) {
+                            session = sessionRepository.findByPreviousToken(token, LocalDateTime.now()).orElse(null)
+                        }
                         val active = session?.active == true
                         synchronized(cacheLock) { sessionCache[token] = SessionCacheEntry(active, now) }
 

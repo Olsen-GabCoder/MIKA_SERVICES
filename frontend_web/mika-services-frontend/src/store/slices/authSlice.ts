@@ -214,6 +214,7 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken
       state.refreshToken = action.payload.refreshToken ?? null
       state.user = action.payload.user
+      state.isAuthenticated = true
       setCurrentUserCache(action.payload.user)
     })
 
@@ -225,6 +226,7 @@ const authSlice = createSlice({
     builder.addCase(fetchUserFromToken.fulfilled, (state, action) => {
       state.isLoading = false
       state.user = action.payload
+      state.isAuthenticated = true
     })
     builder.addCase(fetchUserFromToken.rejected, (state, action) => {
       state.isLoading = false

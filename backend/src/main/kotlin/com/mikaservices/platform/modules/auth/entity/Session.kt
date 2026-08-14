@@ -43,7 +43,13 @@ class Session(
     var lastActivity: LocalDateTime = LocalDateTime.now(),
     
     @Column(name = "active", nullable = false)
-    var active: Boolean = true
+    var active: Boolean = true,
+
+    @Column(name = "previous_token", length = 500)
+    var previousToken: String? = null,
+
+    @Column(name = "previous_token_expires_at")
+    var previousTokenExpiresAt: LocalDateTime? = null
 ) {
 
     override fun equals(other: Any?): Boolean {

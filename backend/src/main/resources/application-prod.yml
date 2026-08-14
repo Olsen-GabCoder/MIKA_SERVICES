@@ -7,7 +7,7 @@ app:
   auth:
     refresh-cookie:
       secure: true
-      same-site: Strict
+      same-site: Lax
 
 spring:
   datasource:

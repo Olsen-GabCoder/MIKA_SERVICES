@@ -5,6 +5,7 @@ import com.mikaservices.platform.modules.user.entity.User
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
 import java.util.*
@@ -12,6 +13,10 @@ import java.util.*
 @Repository
 interface SessionRepository : JpaRepository<Session, Long> {
     fun findByToken(token: String): Optional<Session>
+
+    @Query("SELECT s FROM Session s WHERE s.previousToken = :token AND s.active = true AND s.previousTokenExpiresAt > :now")
+    fun findByPreviousToken(@Param("token") token: String, @Param("now") now: LocalDateTime): Optional<Session>
+
     fun findByRefreshToken(refreshToken: String): Optional<Session>
     fun findByUserAndActiveTrue(user: User): List<Session>
     

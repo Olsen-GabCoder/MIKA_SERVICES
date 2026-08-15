@@ -3,6 +3,7 @@ package com.mikaservices.platform.modules.materiel.service
 import com.mikaservices.platform.common.enums.StatutAffectation
 import com.mikaservices.platform.common.enums.StatutEngin
 import com.mikaservices.platform.common.enums.TypeEngin
+import com.mikaservices.platform.common.exception.BadRequestException
 import com.mikaservices.platform.common.exception.ConflictException
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
 import com.mikaservices.platform.modules.materiel.dto.request.AffectationEnginRequest
@@ -18,10 +19,17 @@ import com.mikaservices.platform.modules.materiel.repository.AffectationEnginCha
 import com.mikaservices.platform.modules.materiel.repository.EnginRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.core.io.Resource
+import org.springframework.core.io.UrlResource
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 @Service
 @Transactional
@@ -30,6 +38,9 @@ class EnginService(
     private val affectationRepository: AffectationEnginChantierRepository,
     private val projetRepository: ProjetRepository
 ) {
+    @Value("\${app.upload.dir:uploads}")
+    private lateinit var uploadDir: String
+
     private val logger = LoggerFactory.getLogger(EnginService::class.java)
 
     fun create(request: EnginCreateRequest): EnginResponse {
@@ -135,6 +146,40 @@ class EnginService(
     @Transactional(readOnly = true)
     fun findAffectationsByEngin(enginId: Long): List<AffectationEnginResponse> {
         return affectationRepository.findByEnginId(enginId).map { EnginMapper.toAffectationResponse(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun findAffectationsForPlanning(): List<AffectationEnginResponse> {
+        val statuts = listOf(StatutAffectation.PLANIFIEE, StatutAffectation.EN_COURS, StatutAffectation.SUSPENDUE)
+        return affectationRepository.findByStatutIn(statuts).map { EnginMapper.toAffectationResponse(it) }
+    }
+
+    // ========== Photo ==========
+    fun uploadPhoto(id: Long, file: MultipartFile): EnginResponse {
+        val engin = getEnginById(id)
+        val enginDir = Paths.get(uploadDir).resolve("engins").toAbsolutePath().normalize()
+        Files.createDirectories(enginDir)
+        val ext = file.originalFilename?.substringAfterLast(".", "jpg") ?: "jpg"
+        val filename = "engins/${engin.id}_${System.currentTimeMillis()}.$ext"
+        val targetPath = Paths.get(uploadDir).resolve(filename).toAbsolutePath().normalize()
+        if (!targetPath.startsWith(Paths.get(uploadDir).toAbsolutePath())) {
+            throw BadRequestException("Chemin de fichier invalide")
+        }
+        Files.copy(file.inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING)
+        engin.photo = filename
+        enginRepository.save(engin)
+        logger.info("Photo mise à jour pour l'engin: ${engin.code}")
+        return EnginMapper.toResponse(engin)
+    }
+
+    @Transactional(readOnly = true)
+    fun getPhotoResource(id: Long): Resource? {
+        val engin = getEnginById(id)
+        val photoPath = engin.photo ?: return null
+        val path = Paths.get(uploadDir).resolve(photoPath).toAbsolutePath().normalize()
+        val basePath = Paths.get(uploadDir).toAbsolutePath().normalize()
+        if (!path.startsWith(basePath) || !Files.exists(path)) return null
+        return UrlResource(path.toUri())
     }
 
     private fun getEnginById(id: Long): Engin {

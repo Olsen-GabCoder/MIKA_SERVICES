@@ -12,7 +12,6 @@ import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
-import java.math.BigDecimal
 import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
 
@@ -97,7 +96,7 @@ class EmailService(
         null       -> "Bonjour $name"
     }
 
-    // ─── Emails ───────────────────────────────────────────────────
+    // ─── Emails transactionnels ──────────────────────────────────
 
     fun sendWelcomeEmail(to: String, prenom: String, temporaryPassword: String, sexe: Sexe? = null) {
         val loginLink = link("/login")
@@ -385,248 +384,7 @@ class EmailService(
         }
     }
 
-    /**
-     * Rapport quotidien de l'état de la plateforme — envoyé chaque jour à 09h00 à tous les utilisateurs actifs.
-     * Contient : résumé global, projets actifs avec avancement, points bloquants ouverts par projet.
-     */
-    fun sendPlatformStatusEmail(
-        to: String,
-        prenom: String,
-        sexe: Sexe? = null,
-        data: PlatformStatusEmailData
-    ) {
-        if (data.totalProjets == 0) return
-        val greeting = salut(sexe, prenom)
-        val plateformeLink = link("/projets")
-        val dateFormatee = data.date.let {
-            val jour = when (it.dayOfWeek.value) {
-                1 -> "lundi"; 2 -> "mardi"; 3 -> "mercredi"; 4 -> "jeudi"
-                5 -> "vendredi"; 6 -> "samedi"; else -> "dimanche"
-            }
-            "$jour ${it.dayOfMonth} ${when (it.monthValue) {
-                1->"janvier"; 2->"février"; 3->"mars"; 4->"avril"; 5->"mai"; 6->"juin"
-                7->"juillet"; 8->"août"; 9->"septembre"; 10->"octobre"; 11->"novembre"; else->"décembre"
-            }} ${it.year}"
-        }
-
-        val subject = "MIKA Services — Tableau de bord du $dateFormatee"
-
-        // ── Plain text ──────────────────────────────────────────────
-        val plainBody = buildString {
-            appendLine(greeting)
-            appendLine()
-            appendLine("TABLEAU DE BORD — $dateFormatee".uppercase())
-            appendLine("${"─".repeat(50)}")
-            appendLine("Projets actifs : ${data.totalProjets}")
-            appendLine("Points bloquants ouverts : ${data.totalPointsBloquants} (dont ${data.totalPointsCritiques} critique(s)/urgent(s))")
-            appendLine()
-
-            fun appendSection(titre: String, projets: List<ProjetEmailRow>) {
-                if (projets.isEmpty()) return
-                appendLine("$titre (${projets.size})")
-                appendLine("${"─".repeat(40)}")
-                projets.forEach { p ->
-                    val phys = p.avancementPhysique?.let { "${it.toInt()}%" } ?: "—"
-                    val fin  = p.avancementFinancier?.let { "${it.toInt()}%" } ?: "—"
-                    appendLine("• ${p.nom}")
-                    appendLine("  Responsable : ${p.responsableNom ?: "Non assigné"}")
-                    appendLine("  Avancement  : $phys physique | $fin financier")
-                    if (p.pointsBloquants.isEmpty()) {
-                        appendLine("  Aucun point bloquant ouvert")
-                    } else {
-                        p.pointsBloquants.forEach { pb ->
-                            appendLine("  ⚠ ${pb.titre} — ${pb.priorite} — depuis le ${pb.dateDetection}")
-                        }
-                    }
-                    appendLine()
-                }
-            }
-
-            appendSection("PROJETS EN COURS", data.projetsEnCours)
-            appendSection("PROJETS PLANIFIÉS", data.projetsPlanifies)
-            appendSection("PROJETS EN RÉCEPTION PROVISOIRE", data.projetsReceptionProvisoire)
-            appendLine("— L'équipe MIKA Services")
-            appendLine(plateformeLink)
-        }
-
-        // ── HTML ────────────────────────────────────────────────────
-        fun prioriteBadge(p: com.mikaservices.platform.common.enums.Priorite): String {
-            val (bg, fg, label) = when (p) {
-                com.mikaservices.platform.common.enums.Priorite.CRITIQUE -> Triple("#b91c1c", "#fff", "CRITIQUE")
-                com.mikaservices.platform.common.enums.Priorite.URGENTE  -> Triple("#c2410c", "#fff", "URGENTE")
-                com.mikaservices.platform.common.enums.Priorite.HAUTE    -> Triple("#d97706", "#fff", "HAUTE")
-                com.mikaservices.platform.common.enums.Priorite.NORMALE  -> Triple("#6b7280", "#fff", "NORMALE")
-                com.mikaservices.platform.common.enums.Priorite.BASSE    -> Triple("#9ca3af", "#fff", "BASSE")
-            }
-            return """<span style="background:$bg;color:$fg;font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.5px;">$label</span>"""
-        }
-
-        fun avancementBar(pct: BigDecimal?, color: String): String {
-            val v = pct?.toInt()?.coerceIn(0, 100) ?: 0
-            return """<div style="background:#e5e7eb;border-radius:4px;height:6px;width:100%;margin:2px 0;">
-              <div style="background:$color;width:$v%;height:6px;border-radius:4px;"></div>
-            </div>"""
-        }
-
-        fun sectionHtml(titre: String, couleurBadge: String, projets: List<ProjetEmailRow>): String {
-            if (projets.isEmpty()) return ""
-            val rows = projets.joinToString("") { p ->
-                val phys = p.avancementPhysique?.toInt() ?: 0
-                val fin  = p.avancementFinancier?.toInt() ?: 0
-                val projetLink = link("/projets/${p.id}")
-                val pbHtml = if (p.pointsBloquants.isEmpty()) {
-                    """<p style="margin:6px 0 0;font-size:12px;color:#16a34a;">✓ Aucun point bloquant ouvert</p>"""
-                } else {
-                    p.pointsBloquants.joinToString("") { pb ->
-                        """<p style="margin:4px 0 0;font-size:12px;color:#374151;">
-                            ⚠&nbsp;${htmlEscape(pb.titre)}&nbsp;&nbsp;${prioriteBadge(pb.priorite)}&nbsp;
-                            <span style="color:#9ca3af;font-size:11px;">depuis le ${pb.dateDetection}</span>
-                           </p>"""
-                    }
-                }
-                """
-                <tr><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;">
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td><a href="$projetLink" style="font-weight:700;color:#1e3a5f;text-decoration:none;font-size:14px;">${htmlEscape(p.nom)}</a></td>
-                      <td style="text-align:right;white-space:nowrap;">
-                        <a href="$projetLink" style="font-size:11px;color:#FF6B35;text-decoration:none;">Voir →</a>
-                      </td>
-                    </tr>
-                    <tr><td colspan="2" style="font-size:12px;color:#6b7280;padding-top:2px;">
-                      Responsable : ${htmlEscape(p.responsableNom ?: "Non assigné")}
-                    </td></tr>
-                    <tr><td colspan="2" style="padding-top:6px;">
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td width="48%" style="font-size:11px;color:#6b7280;">Physique : <strong>$phys%</strong></td>
-                          <td width="4%"></td>
-                          <td width="48%" style="font-size:11px;color:#6b7280;">Financier : <strong>$fin%</strong></td>
-                        </tr>
-                        <tr>
-                          <td>${avancementBar(p.avancementPhysique, "#2E5266")}</td>
-                          <td></td>
-                          <td>${avancementBar(p.avancementFinancier, "#FF6B35")}</td>
-                        </tr>
-                      </table>
-                    </td></tr>
-                    <tr><td colspan="2">$pbHtml</td></tr>
-                  </table>
-                </td></tr>"""
-            }
-            return """
-            <p style="margin:20px 0 6px;font-weight:700;font-size:13px;color:#1e3a5f;text-transform:uppercase;letter-spacing:.5px;">
-              <span style="display:inline-block;width:10px;height:10px;background:$couleurBadge;border-radius:50%;margin-right:6px;"></span>
-              $titre&nbsp;&nbsp;<span style="font-weight:400;color:#6b7280;">(${projets.size})</span>
-            </p>
-            <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">$rows</table>"""
-        }
-
-        val htmlBody = wrapHtml("""
-            <p>${htmlEscape(greeting)},</p>
-            <p style="margin:4px 0 16px;color:#6b7280;font-size:13px;">Tableau de bord MIKA Services &mdash; <strong>$dateFormatee</strong></p>
-
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-left:3px solid #2E5266;border-radius:4px;margin:0 0 8px;">
-              <tr>
-                <td style="padding:12px 16px;font-size:13px;">
-                  <strong style="color:#1e3a5f;">${data.totalProjets}</strong> projet(s) actif(s)
-                  &nbsp;|&nbsp;
-                  <strong style="color:#374151;">${data.totalPointsBloquants}</strong> point(s) bloquant(s) ouvert(s)
-                  ${if (data.totalPointsCritiques > 0) "&nbsp;|&nbsp;<strong style=\"color:#b91c1c;\">${data.totalPointsCritiques} critique(s)/urgent(s)</strong>" else ""}
-                </td>
-              </tr>
-            </table>
-
-            ${sectionHtml("Projets en cours", "#16a34a", data.projetsEnCours)}
-            ${sectionHtml("Projets planifiés", "#2563eb", data.projetsPlanifies)}
-            ${sectionHtml("Réception provisoire", "#d97706", data.projetsReceptionProvisoire)}
-
-            ${buttonHtml("Acc&eacute;der &agrave; la plateforme", plateformeLink)}
-        """.trimIndent())
-
-        try {
-            sendGenericNotification(to, subject, plainBody, htmlBody, "rapport plateforme quotidien")
-        } catch (e: Exception) {
-            logger.warn("Envoi rapport plateforme échoué vers $to: ${e.message}")
-        }
-    }
-
-    /**
-     * Rappel hebdomadaire envoyé aux chefs de projet pour mettre à jour leurs projets
-     * avant la réunion du vendredi.
-     *
-     * @param projets liste de paires (nomProjet, idProjet) à mettre à jour
-     * @param jourReunion ex. "vendredi" ou "demain (vendredi)"
-     */
-    fun sendRappelMajProjetEmail(
-        to: String,
-        prenom: String,
-        projets: List<Pair<String, Long>>,
-        jourReunion: String,
-        sexe: Sexe? = null
-    ) {
-        if (projets.isEmpty()) return
-        val greeting = salut(sexe, prenom)
-        val projetsLink = link("/projets")
-        val subject = "MIKA Services — Rappel : mise à jour de vos projets avant la réunion"
-        val projectCount = projets.size
-
-        val plainProjetList = projets.joinToString("\n") { (nom, id) ->
-            "  • $nom — ${link("/projets/$id")}"
-        }
-        val plainBody = """
-            $greeting,
-
-            La réunion hebdomadaire a lieu $jourReunion. Merci de mettre à jour vos projets avant cette date.
-
-            Vous avez $projectCount projet(s) à actualiser :
-            $plainProjetList
-
-            Pensez à renseigner :
-              - L'avancement physique (%)
-              - L'avancement financier (%)
-              - Les points bloquants éventuels
-              - Les besoins en matériel et en personnel
-
-            Accéder à mes projets : $projetsLink
-
-            — L'équipe MIKA Services
-        """.trimIndent()
-
-        val htmlProjetRows = projets.joinToString("") { (nom, id) ->
-            val projetLink = link("/projets/$id")
-            """<tr><td style="padding:6px 0;border-bottom:1px solid #eee;">
-                <a href="$projetLink" style="color:#2E5266;font-weight:600;text-decoration:none;">${htmlEscape(nom)}</a>
-               </td>
-               <td style="padding:6px 0 6px 12px;border-bottom:1px solid #eee;text-align:right;">
-                <a href="$projetLink" style="color:#FF6B35;font-size:12px;text-decoration:none;">Mettre à jour →</a>
-               </td></tr>"""
-        }
-
-        val htmlBody = wrapHtml("""
-            <p>${htmlEscape(greeting)},</p>
-            <p>La <strong>r&eacute;union hebdomadaire</strong> a lieu <strong>${htmlEscape(jourReunion)}</strong>.<br>
-               Merci de mettre &agrave; jour vos projets avant cette &eacute;ch&eacute;ance.</p>
-            <p style="margin:16px 0 8px;font-weight:600;color:#333;">Vos projets &agrave; actualiser ($projectCount) :</p>
-            <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:14px;">
-              $htmlProjetRows
-            </table>
-            <p style="margin:16px 0 6px;font-size:13px;color:#555;">Pour chaque projet, pensez &agrave; renseigner :</p>
-            <ul style="padding-left:20px;color:#555;font-size:13px;margin:0 0 16px;">
-              <li>L'avancement physique (%)</li>
-              <li>L'avancement financier (%)</li>
-              <li>Les points bloquants &eacute;ventuels</li>
-              <li>Les besoins en mat&eacute;riel et en personnel</li>
-            </ul>
-            ${buttonHtml("Acc&eacute;der &agrave; mes projets", projetsLink)}
-        """.trimIndent())
-
-        try {
-            sendGenericNotification(to, subject, plainBody, htmlBody, "rappel MAJ projet")
-        } catch (e: Exception) {
-            logger.warn("Envoi rappel MAJ projet échoué vers $to: ${e.message}")
-        }
-    }
+    // ─── Digests ─────────────────────────────────────────────────
 
     fun sendDailyDigestEmail(to: String, prenom: String, unreadNotificationsCount: Long, unreadMessagesCount: Long) {
         if (unreadNotificationsCount == 0L && unreadMessagesCount == 0L) return
@@ -696,303 +454,75 @@ class EmailService(
         }
     }
 
-    // ─── Email d'activité quotidienne ────────────────────────────
+    // ─── Rapport hebdomadaire PDF (jeudi 18h) ─────────────────────
 
-    fun sendDailyActivityEmail(
+    /**
+     * Envoie le rapport hebdomadaire PDF en pièce jointe.
+     * Le PDF est généré côté serveur par [RapportHebdoPdfGenerator].
+     * Appelé par [com.mikaservices.platform.modules.rapport.scheduler.RapportHebdoScheduler].
+     */
+    fun sendRapportHebdoEmail(
         to: String,
         prenom: String,
-        nom: String,
-        sexe: Sexe?,
-        actionsAujourdhui: Map<String, Long>,
-        dayOfWeek: java.time.DayOfWeek = java.time.LocalDate.now().dayOfWeek
+        data: RapportHebdoData,
+        pdfBytes: ByteArray,
+        nomFichier: String,
+        sexe: Sexe? = null
     ) {
-        val dashboardLink = link("/")
-        val projetsLink   = link("/projets")
-        val hasActivity   = actionsAujourdhui.values.sum() > 0
+        val greeting = salut(sexe, prenom)
+        val listeLink = link("/projets")
+        val subject = "MIKA Services — Rapport hebdomadaire — Semaine ${data.semaine}/${data.annee}"
 
-        val totalActions  = actionsAujourdhui.values.sum()
-        val logins        = actionsAujourdhui["LOGIN"] ?: 0L
-        val pageViews     = actionsAujourdhui["PAGE_VIEW"] ?: 0L
-        val autresActions = totalActions - logins - pageViews
+        val plainBody = """
+            $greeting,
 
-        val civilite = when (sexe) {
-            Sexe.HOMME -> "Monsieur $nom"
-            Sexe.FEMME -> "Madame $nom"
-            null       -> prenom
-        }
-        val dateFormatee = java.time.LocalDate.now()
-            .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+            Veuillez trouver en pièce jointe le rapport hebdomadaire automatique de MIKA Services.
 
-        // ══════════════════════════════════════════════════════════════
-        // MESSAGES ABSENCE — 1 par jour de la semaine, ton professionnel
-        // ══════════════════════════════════════════════════════════════
-        data class AbsenceMsg(val sujet: String, val icone: String, val corps: String, val action: List<String>)
+            Semaine : ${data.semaine} / ${data.annee}
+            Date d'émission : ${data.dateEmission}
+            Projets actifs : ${data.totalProjets}
+            Points bloquants ouverts : ${data.totalPointsBloquants}
 
-        val absenceData: AbsenceMsg = when (dayOfWeek) {
-            java.time.DayOfWeek.MONDAY -> AbsenceMsg(
-                sujet  = "MIKA Services — Démarrez la semaine du bon pied",
-                icone  = "🗓️",
-                corps  = "Le lundi est le jour idéal pour planifier et prendre de l'avance sur vos chantiers. " +
-                         "Vous n'avez pas encore consulté votre espace de gestion aujourd'hui. " +
-                         "Une semaine bien commencée est une semaine maîtrisée — vos projets n'attendent que vous.",
-                action = listOf(
-                    "Planifier les priorités de la semaine",
-                    "Vérifier les délais critiques de vos projets",
-                    "Lire les messages et notifications en attente",
-                    "Mettre à jour les avancements depuis vendredi"
-                )
-            )
-            java.time.DayOfWeek.TUESDAY -> AbsenceMsg(
-                sujet  = "MIKA Services — Vos chantiers évoluent, suivez-les",
-                icone  = "📊",
-                corps  = "En milieu de semaine, le rythme des chantiers s'intensifie. " +
-                         "Votre espace de gestion MIKA Services n'a pas été consulté ce mardi. " +
-                         "C'est le bon moment pour vérifier que tout avance selon le plan et anticiper d'éventuels blocages.",
-                action = listOf(
-                    "Consulter les avancements physiques et financiers",
-                    "Vérifier si de nouveaux points bloquants ont été signalés",
-                    "Répondre aux messages de votre équipe",
-                    "Valider les mises à jour soumises par vos chefs de projet"
-                )
-            )
-            java.time.DayOfWeek.WEDNESDAY -> AbsenceMsg(
-                sujet  = "MIKA Services — Cap sur la fin de semaine",
-                icone  = "📋",
-                corps  = "À mi-semaine, c'est le bon moment pour faire le point sur vos chantiers. " +
-                         "Vous n'avez pas encore visité votre espace de gestion ce mercredi. " +
-                         "Prenez quelques minutes pour mettre à jour vos projets et anticiper " +
-                         "les actions prioritaires des deux prochains jours.",
-                action = listOf(
-                    "Mettre à jour les avancements physiques et financiers",
-                    "Renseigner vos besoins en matériel et en personnel",
-                    "Signaler les points bloquants récents",
-                    "Préparer vos propositions d'amélioration"
-                )
-            )
-            java.time.DayOfWeek.THURSDAY -> AbsenceMsg(
-                sujet  = "MIKA Services — Vos projets ont besoin de vous ce jeudi",
-                icone  = "🏗️",
-                corps  = "En cette fin de semaine de travail, vos chantiers continuent d'avancer. " +
-                         "Votre espace de gestion MIKA Services n'a pas été consulté aujourd'hui. " +
-                         "Quelques minutes suffisent pour garder une vision claire de l'état de vos projets " +
-                         "et anticiper sereinement les prochaines étapes.",
-                action = listOf(
-                    "Consulter l'avancement de vos projets en cours",
-                    "Vérifier les points bloquants ouverts nécessitant une action",
-                    "Mettre à jour les indicateurs d'avancement physique et financier",
-                    "Planifier les actions prioritaires pour demain"
-                )
-            )
-            java.time.DayOfWeek.FRIDAY -> AbsenceMsg(
-                sujet  = "MIKA Services — Bilan de semaine avant le week-end",
-                icone  = "✅",
-                corps  = "Avant d'entamer votre week-end, votre espace de gestion de chantiers mérite un dernier passage. " +
-                         "Vous n'avez pas consulté MIKA Services ce vendredi. " +
-                         "Une clôture de semaine propre, c'est un lundi serein : " +
-                         "mettez à jour vos projets ce soir pour reprendre en confiance la semaine prochaine.",
-                action = listOf(
-                    "Clôturer les actions de la semaine",
-                    "Mettre à jour les avancements des projets en cours",
-                    "Signaler tout problème survenu cette semaine",
-                    "Préparer les priorités pour lundi prochain"
-                )
-            )
-            java.time.DayOfWeek.SATURDAY -> AbsenceMsg(
-                sujet  = "MIKA Services — Un point rapide ce week-end",
-                icone  = "🏗️",
-                corps  = "Même le week-end, vos chantiers continuent d'évoluer. " +
-                         "Si vous avez quelques minutes, votre tableau de bord MIKA Services est accessible à tout moment. " +
-                         "Un bref passage vous permettra de rester informé et de démarrer lundi matin avec une longueur d'avance.",
-                action = listOf(
-                    "Consulter les dernières mises à jour de vos projets",
-                    "Vérifier les urgences éventuelles signalées",
-                    "Préparer mentalement les priorités de la semaine à venir"
-                )
-            )
-            java.time.DayOfWeek.SUNDAY -> AbsenceMsg(
-                sujet  = "MIKA Services — Préparez votre lundi dès aujourd'hui",
-                icone  = "🎯",
-                corps  = "Le dimanche est le bon moment pour prendre du recul et préparer sereinement la semaine à venir. " +
-                         "Votre espace MIKA Services vous permet de visualiser en un coup d'œil l'état de tous vos projets. " +
-                         "Quelques minutes ce soir pour demain matin — vos équipes vous en remercieront.",
-                action = listOf(
-                    "Faire le point sur l'avancement global de vos chantiers",
-                    "Anticiper les difficultés de la semaine à venir",
-                    "Identifier les projets nécessitant une attention prioritaire",
-                    "Préparer votre agenda de suivi pour lundi"
-                )
-            )
-        }
+            Ce rapport contient l'état de chaque projet actif (avancement physique,
+            financier, délai consommé, besoins matériels et humains, observations,
+            propositions et points bloquants) mis à jour par les chefs de projet.
 
-        // ══════════════════════════════════════════════════════════════
-        // MESSAGES ACTIVITÉ — selon le niveau d'implication
-        // ══════════════════════════════════════════════════════════════
-        data class ActiveMsg(val badge: String, val badgeColor: String, val corps: String, val complement: String)
-
-        val activeData: ActiveMsg = when {
-            totalActions >= 50 -> ActiveMsg(
-                badge       = "Engagement exceptionnel",
-                badgeColor  = "#7c3aed",
-                corps       = "Votre implication sur la plateforme MIKA Services aujourd'hui est remarquable. " +
-                              "Avec $totalActions actions effectuées, vous démontrez un engagement fort dans le suivi de vos chantiers. " +
-                              "C'est ce type de pilotage rigoureux qui fait la différence sur le terrain.",
-                complement  = "Votre niveau d'activité vous place parmi les membres les plus investis de la plateforme."
-            )
-            totalActions >= 20 -> ActiveMsg(
-                badge       = "Excellente journée",
-                badgeColor  = "#059669",
-                corps       = "Très bonne journée de travail sur MIKA Services. " +
-                              "Vos $totalActions actions aujourd'hui témoignent d'un suivi sérieux et régulier de vos projets. " +
-                              "Continuez à maintenir ce rythme — c'est le gage d'une gestion de chantiers efficace.",
-                complement  = "Un suivi aussi régulier permet d'anticiper les problèmes avant qu'ils ne deviennent critiques."
-            )
-            totalActions >= 6 -> ActiveMsg(
-                badge       = "Bonne journée",
-                badgeColor  = "#2563eb",
-                corps       = "Merci pour votre passage sur MIKA Services aujourd'hui. " +
-                              "Vous avez effectué $totalActions actions — votre présence régulière sur la plateforme " +
-                              "contribue directement à la qualité du suivi de vos chantiers.",
-                complement  = "Chaque visite compte. La régularité est la clé d'une gestion de projet maîtrisée."
-            )
-            else -> ActiveMsg(
-                badge       = "Début de journée",
-                badgeColor  = "#d97706",
-                corps       = "Vous avez effectué quelques actions sur MIKA Services aujourd'hui — c'est un bon début. " +
-                              "N'hésitez pas à explorer davantage votre tableau de bord : " +
-                              "vos projets contiennent peut-être des informations importantes qui nécessitent votre attention.",
-                complement  = "Prenez l'habitude de consulter l'ensemble de vos chantiers à chaque connexion."
-            )
-        }
-
-        // ── Sujet ───────────────────────────────────────────────────
-        val subject = if (hasActivity)
-            "MIKA Services — Votre bilan d'activité du $dateFormatee"
-        else
-            absenceData.sujet
-
-        // ── Plain text ──────────────────────────────────────────────
-        val plainBody = if (hasActivity) {
-            """
-            Bonsoir $civilite,
-
-            ${activeData.corps}
-
-            Votre récapitulatif du $dateFormatee :
-            • Connexions         : $logins
-            • Pages consultées   : $pageViews
-            • Autres actions     : $autresActions
-            • Total              : $totalActions actions
-
-            ${activeData.complement}
-
-            Accéder à la plateforme : $dashboardLink
+            Accéder à la liste des projets : $listeLink
 
             — L'équipe MIKA Services
-            """.trimIndent()
-        } else {
-            val actionsTexte = absenceData.action.joinToString("\n") { "• $it" }
-            """
-            Bonsoir $civilite,
-
-            ${absenceData.corps}
-
-            Ce que vous pouvez faire maintenant :
-            $actionsTexte
-
-            Accéder à mes projets : $projetsLink
-
-            — L'équipe MIKA Services
-            """.trimIndent()
-        }
-
-        // ── HTML ────────────────────────────────────────────────────
-        fun statCard(value: Long, label: String, color: String, icon: String): String = """
-            <td style="width:33%;padding:0 6px;text-align:center;">
-              <div style="background:#f8fafc;border-radius:10px;padding:16px 8px;border-top:3px solid $color;">
-                <div style="font-size:26px;margin-bottom:4px;">$icon</div>
-                <div style="font-size:24px;font-weight:800;color:$color;line-height:1;">$value</div>
-                <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:500;">$label</div>
-              </div>
-            </td>
         """.trimIndent()
 
-        val htmlBody = if (hasActivity) {
-            val scoreColor = when {
-                totalActions >= 50 -> "#7c3aed"
-                totalActions >= 20 -> "#059669"
-                totalActions >= 6  -> "#2563eb"
-                else               -> "#d97706"
-            }
-            val actionsListHtml = absenceData.action.joinToString("") {
-                "<li>${htmlEscape(it)}</li>"
-            }
-            wrapHtml("""
-                <div style="background:linear-gradient(135deg,#1e3a5f 0%,#2E5266 100%);margin:-28px -32px 24px;padding:28px 32px 24px;">
-                  <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#FF6B35;text-transform:uppercase;letter-spacing:1px;">Bilan d'activit&eacute; &mdash; $dateFormatee</p>
-                  <h1 style="margin:0;font-size:22px;font-weight:800;color:#ffffff;">Bonsoir, ${htmlEscape(civilite)}</h1>
-                </div>
+        val htmlBody = wrapHtml("""
+            <p>${htmlEscape(greeting)},</p>
+            <p style="margin:4px 0 16px;color:#6b7280;font-size:13px;">
+              Rapport hebdomadaire automatique &mdash;
+              <strong>Semaine ${data.semaine} / ${data.annee}</strong>
+            </p>
 
-                <span style="display:inline-block;background:${activeData.badgeColor};color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.5px;margin-bottom:16px;">${activeData.badge}</span>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-left:3px solid #FF6B35;border-radius:4px;margin:0 0 20px;font-size:13px;">
+              <tr>
+                <td style="padding:12px 16px;">
+                  <strong style="color:#1e3a5f;">${data.totalProjets}</strong> projet(s) actif(s)
+                  &nbsp;|&nbsp;
+                  <strong style="color:#374151;">${data.totalPointsBloquants}</strong> point(s) bloquant(s) ouvert(s)
+                  ${if (data.projetsEnCours.isNotEmpty()) "&nbsp;|&nbsp;<strong style=\"color:#16a34a;\">${data.projetsEnCours.size} en cours</strong>" else ""}
+                </td>
+              </tr>
+            </table>
 
-                <p style="font-size:15px;color:#374151;line-height:1.8;margin-bottom:20px;">
-                  ${htmlEscape(activeData.corps)}
-                </p>
+            <p style="font-size:13px;color:#555;">
+              Vous trouverez en pi&egrave;ce jointe le rapport complet au format PDF.
+              Il contient pour chaque projet l&rsquo;avancement physique, financier, le d&eacute;lai consomm&eacute;,
+              les besoins mat&eacute;riels et humains, les observations et les points bloquants actifs.
+            </p>
 
-                <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0;margin-bottom:20px;">
-                  <tr>
-                    ${statCard(logins,       "Connexion(s)",              "#16a34a", "🔐")}
-                    ${statCard(pageViews,    "Page(s) visit&eacute;e(s)", "#7c3aed", "📋")}
-                    ${statCard(autresActions,"Autre(s) action(s)",        "#FF6B35", "⚡")}
-                  </tr>
-                </table>
-
-                <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;border-radius:10px;padding:14px 20px;margin-bottom:20px;text-align:center;">
-                  <p style="margin:0;font-size:12px;color:#0369a1;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Score d'implication du jour</p>
-                  <p style="margin:6px 0 0;font-size:36px;font-weight:900;color:$scoreColor;line-height:1;">$totalActions <span style="font-size:16px;font-weight:600;color:#6b7280;">actions</span></p>
-                </div>
-
-                <p style="font-size:13px;color:#6b7280;line-height:1.7;margin-bottom:20px;padding:12px 16px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:0 6px 6px 0;">
-                  &#10003;&nbsp; ${htmlEscape(activeData.complement)}
-                </p>
-
-                ${buttonHtml("Acc&eacute;der &agrave; mon tableau de bord", dashboardLink)}
-            """.trimIndent())
-        } else {
-            val actionsListHtml = absenceData.action.joinToString("") { "<li>${htmlEscape(it)}</li>" }
-            wrapHtml("""
-                <div style="background:linear-gradient(135deg,#1e3a5f 0%,#2E5266 100%);margin:-28px -32px 24px;padding:28px 32px 24px;">
-                  <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#FF6B35;text-transform:uppercase;letter-spacing:1px;">Rappel &mdash; $dateFormatee</p>
-                  <h1 style="margin:0;font-size:22px;font-weight:800;color:#ffffff;">Bonsoir, ${htmlEscape(civilite)}</h1>
-                </div>
-
-                <div style="text-align:center;margin:8px 0 20px;">
-                  <div style="display:inline-block;background:#fef3c7;border-radius:50%;width:64px;height:64px;line-height:64px;font-size:28px;">${absenceData.icone}</div>
-                </div>
-
-                <p style="font-size:15px;color:#374151;line-height:1.8;margin-bottom:20px;">
-                  ${htmlEscape(absenceData.corps)}
-                </p>
-
-                <div style="background:#f8fafc;border-radius:10px;padding:16px 20px;margin-bottom:24px;border-left:3px solid #FF6B35;">
-                  <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#1e3a5f;">Ce que vous pouvez faire maintenant :</p>
-                  <ul style="margin:0;padding-left:18px;color:#4b5563;font-size:13px;line-height:2.1;">
-                    $actionsListHtml
-                  </ul>
-                </div>
-
-                ${buttonHtml("Acc&eacute;der &agrave; mes projets maintenant", projetsLink)}
-
-                <p style="font-size:12px;color:#9ca3af;text-align:center;margin-top:16px;line-height:1.6;">
-                  Ce message est envoy&eacute; chaque soir &agrave; tous les membres actifs de MIKA Services.<br>
-                  G&eacute;rez vos pr&eacute;f&eacute;rences de notification depuis votre profil.
-                </p>
-            """.trimIndent())
-        }
+            ${buttonHtml("Voir les projets", listeLink)}
+        """.trimIndent())
 
         try {
-            sendGenericNotification(to, subject, plainBody, htmlBody, "activite quotidienne")
+            sendWithAttachment(to, subject, plainBody, htmlBody, pdfBytes, nomFichier, "rapport hebdo PDF")
         } catch (e: Exception) {
-            logger.warn("Envoi activité quotidienne échoué vers $to: ${e.message}")
+            logger.warn("Envoi rapport hebdo PDF échoué vers $to: ${e.message}")
         }
     }
 
@@ -1105,78 +635,6 @@ class EmailService(
         }
     }
 
-    // ─── Rapport hebdomadaire PDF (jeudi 18h) ─────────────────────
-
-    /**
-     * Envoie le rapport hebdomadaire PDF en pièce jointe.
-     * Le PDF est généré côté serveur par [RapportHebdoPdfGenerator].
-     * Appelé par [com.mikaservices.platform.modules.rapport.scheduler.RapportHebdoScheduler].
-     */
-    fun sendRapportHebdoEmail(
-        to: String,
-        prenom: String,
-        data: RapportHebdoData,
-        pdfBytes: ByteArray,
-        nomFichier: String,
-        sexe: Sexe? = null
-    ) {
-        val greeting = salut(sexe, prenom)
-        val listeLink = link("/projets")
-        val subject = "MIKA Services — Rapport hebdomadaire — Semaine ${data.semaine}/${data.annee}"
-
-        val plainBody = """
-            $greeting,
-
-            Veuillez trouver en pièce jointe le rapport hebdomadaire automatique de MIKA Services.
-
-            Semaine : ${data.semaine} / ${data.annee}
-            Date d'émission : ${data.dateEmission}
-            Projets actifs : ${data.totalProjets}
-            Points bloquants ouverts : ${data.totalPointsBloquants}
-
-            Ce rapport contient l'état de chaque projet actif (avancement physique,
-            financier, délai consommé, besoins matériels et humains, observations,
-            propositions et points bloquants) mis à jour par les chefs de projet.
-
-            Accéder à la liste des projets : $listeLink
-
-            — L'équipe MIKA Services
-        """.trimIndent()
-
-        val htmlBody = wrapHtml("""
-            <p>${htmlEscape(greeting)},</p>
-            <p style="margin:4px 0 16px;color:#6b7280;font-size:13px;">
-              Rapport hebdomadaire automatique &mdash;
-              <strong>Semaine ${data.semaine} / ${data.annee}</strong>
-            </p>
-
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-left:3px solid #FF6B35;border-radius:4px;margin:0 0 20px;font-size:13px;">
-              <tr>
-                <td style="padding:12px 16px;">
-                  <strong style="color:#1e3a5f;">${data.totalProjets}</strong> projet(s) actif(s)
-                  &nbsp;|&nbsp;
-                  <strong style="color:#374151;">${data.totalPointsBloquants}</strong> point(s) bloquant(s) ouvert(s)
-                  ${if (data.projetsEnCours.isNotEmpty()) "&nbsp;|&nbsp;<strong style=\"color:#16a34a;\">${data.projetsEnCours.size} en cours</strong>" else ""}
-                </td>
-              </tr>
-            </table>
-
-            <p style="font-size:13px;color:#555;">
-              Vous trouverez en pi&egrave;ce jointe le rapport complet au format PDF.
-              Il contient pour chaque projet l&rsquo;avancement physique, financier, le d&eacute;lai consomm&eacute;,
-              les besoins mat&eacute;riels et humains, les observations et les points bloquants actifs.
-            </p>
-
-            ${buttonHtml("Voir les projets", listeLink)}
-        """.trimIndent())
-
-        try {
-            sendWithAttachment(to, subject, plainBody, htmlBody, pdfBytes, nomFichier, "rapport hebdo PDF")
-        } catch (e: Exception) {
-            logger.warn("Envoi rapport hebdo PDF échoué vers $to: ${e.message}")
-        }
-    }
-
     /**
      * Envoi d'un email avec pièce jointe.
      * Priorité : Brevo API > Resend API > SMTP JavaMailSender.
@@ -1276,166 +734,7 @@ class EmailService(
         }
     }
 
-    // ─── PV hebdomadaire automatique (jeudi 18h) ──────────────────
-
-    /**
-     * Envoie le PV de la réunion hebdomadaire à un destinataire.
-     * Pas de liste de participants — uniquement les points projets.
-     * Appelé par [com.mikaservices.platform.modules.reunionhebdo.scheduler.ReunionHebdoPVScheduler].
-     */
-    fun sendPVHebdoEmail(to: String, prenom: String, data: ReunionHebdoPVEmailData, sexe: Sexe? = null) {
-        val greeting = salut(sexe, prenom)
-        val reunionLink = link("/reunions-hebdo/${data.reunionId}/pv")
-        val listeLink = link("/reunions-hebdo")
-
-        val dateFormatee = data.dateReunion.format(java.time.format.DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", java.util.Locale.FRENCH))
-            .replaceFirstChar { it.uppercase() }
-
-        val semaine = data.dateReunion.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)
-        val subject = "MIKA Services — PV Réunion hebdomadaire — Semaine $semaine"
-
-        // ─── Corps texte brut ─────────────────────────────────────
-        val plainProjetLines = data.pointsProjets.joinToString("\n\n") { p ->
-            buildString {
-                append("${p.ordreAffichage + 1}. ${p.projetNom} (${p.projetCode})")
-                p.chefProjetNom?.let { append("\n   Chef de projet : $it") }
-                p.avancementPhysiquePct?.let { append("\n   Avancement physique : $it %") }
-                p.avancementFinancierPct?.let { append("\n   Avancement financier : $it %") }
-                p.delaiConsommePct?.let { append("\n   Délai consommé : $it %") }
-                p.resumeTravauxPrevisions?.takeIf { it.isNotBlank() }?.let { append("\n   Travaux / Prévisions : $it") }
-                p.pointsBloquantsResume?.takeIf { it.isNotBlank() }?.let { append("\n   Points bloquants : $it") }
-                p.besoinsMateriel?.takeIf { it.isNotBlank() }?.let { append("\n   Besoins matériels : $it") }
-                p.besoinsHumain?.takeIf { it.isNotBlank() }?.let { append("\n   Besoins humains : $it") }
-                p.propositionsAmelioration?.takeIf { it.isNotBlank() }?.let { append("\n   Propositions : $it") }
-            }
-        }
-
-        val plainBody = """
-            $greeting,
-
-            Veuillez trouver ci-dessous le procès-verbal automatique de la réunion hebdomadaire du $dateFormatee.
-
-            Date : ${data.dateReunion}
-            ${if (!data.lieu.isNullOrBlank()) "Lieu : ${data.lieu}" else ""}
-            ${if (data.heureDebut != null) "Heure : ${data.heureDebut}${if (data.heureFin != null) " — ${data.heureFin}" else ""}" else ""}
-
-            Points par projet (${data.totalAffaires}) :
-            $plainProjetLines
-
-            ${if (!data.divers.isNullOrBlank()) "Divers :\n${data.divers}" else ""}
-
-            Accéder au PV en ligne : $reunionLink
-
-            — L'équipe MIKA Services
-        """.trimIndent()
-
-        // ─── Corps HTML ───────────────────────────────────────────
-        fun pct(value: java.math.BigDecimal?): String = value?.let { "${it.toPlainString()}%" } ?: "—"
-
-        fun progressBar(value: java.math.BigDecimal?, color: String): String {
-            val pctInt = value?.toInt()?.coerceIn(0, 100) ?: 0
-            return """<div style="background:#e5e7eb;border-radius:4px;height:6px;width:100%;margin:3px 0 6px;">
-                        <div style="background:$color;border-radius:4px;height:6px;width:$pctInt%;"></div>
-                      </div>"""
-        }
-
-        fun fieldRow(label: String, value: String?): String {
-            if (value.isNullOrBlank()) return ""
-            return """<tr>
-                        <td style="padding:4px 8px 4px 0;font-size:12px;color:#6b7280;white-space:nowrap;vertical-align:top;">$label</td>
-                        <td style="padding:4px 0;font-size:13px;color:#1f2937;vertical-align:top;">${htmlEscape(value)}</td>
-                      </tr>"""
-        }
-
-        val htmlProjetCards = data.pointsProjets.joinToString("") { p ->
-            val projetLink = link("/projets/${p.projetCode}")
-            """<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;font-size:13px;">
-               <tr><td style="padding:10px 14px;background:#f8fafc;border-bottom:1px solid #e5e7eb;">
-                 <span style="font-weight:700;color:#1e3a5f;font-size:14px;">${htmlEscape(p.projetNom)}</span>
-                 <span style="color:#6b7280;font-size:12px;margin-left:8px;">(${htmlEscape(p.projetCode)})</span>
-                 ${if (!p.chefProjetNom.isNullOrBlank()) "<span style=\"float:right;font-size:11px;color:#6b7280;\">Chef de projet : ${htmlEscape(p.chefProjetNom)}</span>" else ""}
-               </td></tr>
-               <tr><td style="padding:12px 14px;">
-                 <table width="100%" cellpadding="0" cellspacing="0">
-                   <tr>
-                     <td width="32%" style="padding-right:12px;vertical-align:top;">
-                       <div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Av. physique</div>
-                       ${progressBar(p.avancementPhysiquePct, "#2E5266")}
-                       <div style="font-size:12px;font-weight:600;color:#2E5266;">${pct(p.avancementPhysiquePct)}</div>
-                     </td>
-                     <td width="32%" style="padding-right:12px;vertical-align:top;">
-                       <div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Av. financier</div>
-                       ${progressBar(p.avancementFinancierPct, "#FF6B35")}
-                       <div style="font-size:12px;font-weight:600;color:#FF6B35;">${pct(p.avancementFinancierPct)}</div>
-                     </td>
-                     <td width="32%" style="vertical-align:top;">
-                       <div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Délai consommé</div>
-                       ${progressBar(p.delaiConsommePct, "#d97706")}
-                       <div style="font-size:12px;font-weight:600;color:#d97706;">${pct(p.delaiConsommePct)}</div>
-                     </td>
-                   </tr>
-                 </table>
-                 <table cellpadding="0" cellspacing="0" style="width:100%;margin-top:8px;border-top:1px solid #f3f4f6;">
-                   ${fieldRow("Travaux / Prévisions :", p.resumeTravauxPrevisions)}
-                   ${fieldRow("Points bloquants :", p.pointsBloquantsResume)}
-                   ${fieldRow("Besoins matériels :", p.besoinsMateriel)}
-                   ${fieldRow("Besoins humains :", p.besoinsHumain)}
-                   ${fieldRow("Propositions :", p.propositionsAmelioration)}
-                 </table>
-               </td></tr>
-             </table>"""
-        }
-
-        val heureLine = if (data.heureDebut != null) {
-            val fin = if (data.heureFin != null) " — ${data.heureFin}" else ""
-            "<strong>Heure :</strong> ${data.heureDebut}$fin &nbsp;&nbsp;"
-        } else ""
-
-        val htmlBody = wrapHtml("""
-            <p>${htmlEscape(greeting)},</p>
-            <p style="margin:4px 0 16px;color:#6b7280;font-size:13px;">
-              Proc&egrave;s-verbal automatique &mdash; R&eacute;union hebdomadaire &mdash; <strong>${htmlEscape(dateFormatee)}</strong>
-            </p>
-
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-left:3px solid #FF6B35;border-radius:4px;margin:0 0 20px;font-size:13px;">
-              <tr><td style="padding:12px 16px;">
-                ${if (!data.lieu.isNullOrBlank()) "<strong>Lieu :</strong> ${htmlEscape(data.lieu!!)} &nbsp;&nbsp;" else ""}
-                $heureLine
-                <strong>${data.totalAffaires}</strong> affaire(s) au PV
-              </td></tr>
-              ${if (!data.ordreDuJour.isNullOrBlank()) """
-                <tr><td style="padding:8px 16px 12px;border-top:1px solid #e5e7eb;">
-                  <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Ordre du jour</div>
-                  <div style="font-size:13px;color:#374151;white-space:pre-line;">${htmlEscape(data.ordreDuJour!!)}</div>
-                </td></tr>""" else ""}
-            </table>
-
-            <p style="font-weight:700;font-size:13px;color:#1e3a5f;text-transform:uppercase;letter-spacing:.5px;margin:0 0 12px;">
-              Points par projet (${data.totalAffaires})
-            </p>
-
-            $htmlProjetCards
-
-            ${if (!data.divers.isNullOrBlank()) """
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border-left:3px solid #d97706;border-radius:4px;margin:16px 0;font-size:13px;">
-                <tr><td style="padding:10px 14px;">
-                  <div style="font-size:11px;color:#92400e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Divers</div>
-                  <div style="color:#374151;white-space:pre-line;">${htmlEscape(data.divers!!)}</div>
-                </td></tr>
-              </table>""" else ""}
-
-            ${buttonHtml("Voir le PV en ligne", reunionLink)}
-            <p style="text-align:center;margin-top:8px;">
-              <a href="$listeLink" style="color:#6b7280;font-size:12px;text-decoration:none;">Toutes les r&eacute;unions →</a>
-            </p>
-        """.trimIndent())
-
-        try {
-            sendGenericNotification(to, subject, plainBody, htmlBody, "pv hebdo")
-        } catch (e: Exception) {
-            logger.warn("Envoi PV hebdo échoué vers $to: ${e.message}")
-        }
-    }
+    // ─── Async wrappers ──────────────────────────────────────────
 
     @Async
     fun sendWelcomeEmailAsync(to: String, prenom: String, temporaryPassword: String, sexe: Sexe? = null) {

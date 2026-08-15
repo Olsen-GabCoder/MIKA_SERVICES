@@ -17,6 +17,7 @@ interface AffectationEnginChantierRepository : JpaRepository<AffectationEnginCha
     fun findByEnginId(enginId: Long): List<AffectationEnginChantier>
     fun findByEnginIdAndStatut(enginId: Long, statut: StatutAffectation): List<AffectationEnginChantier>
     fun findByEnginIdInAndStatut(enginIds: Collection<Long>, statut: StatutAffectation): List<AffectationEnginChantier>
+    fun findByStatutIn(statuts: Collection<StatutAffectation>): List<AffectationEnginChantier>
 
     @Query(
         """
@@ -30,4 +31,8 @@ interface AffectationEnginChantierRepository : JpaRepository<AffectationEnginCha
         @Param("projetId") projetId: Long,
         @Param("statuts") statuts: Collection<StatutAffectation>,
     ): List<AffectationEnginChantier>
+
+    /** Affectations avec date de fin dans la plage donnee (retours location, fins d'affectation) */
+    @Query("SELECT a FROM AffectationEnginChantier a JOIN FETCH a.engin e JOIN FETCH a.projet p WHERE a.dateFin IS NOT NULL AND a.dateFin >= :debut AND a.dateFin <= :fin AND a.statut IN ('PLANIFIEE','EN_COURS') AND e.actif = true ORDER BY a.dateFin ASC")
+    fun findAffectationsFinissantEntre(@Param("debut") debut: java.time.LocalDate, @Param("fin") fin: java.time.LocalDate): List<AffectationEnginChantier>
 }

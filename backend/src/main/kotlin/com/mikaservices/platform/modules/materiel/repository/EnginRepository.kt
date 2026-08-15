@@ -26,6 +26,10 @@ interface EnginRepository : JpaRepository<Engin, Long> {
            "LOWER(e.immatriculation) LIKE LOWER(CONCAT('%', :search, '%')))")
     fun search(@Param("search") search: String, pageable: Pageable): Page<Engin>
 
+    fun countByActifTrue(): Long
+    fun countByStatutAndActifTrue(statut: StatutEngin): Long
+    fun countByTypeAndActifTrue(type: TypeEngin): Long
+
     @Query("SELECT e FROM Engin e WHERE e.actif = true " +
            "AND (:statut IS NULL OR e.statut = :statut) " +
            "AND (:type IS NULL OR e.type = :type)")

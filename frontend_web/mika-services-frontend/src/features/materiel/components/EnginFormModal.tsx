@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch } from '@/store/hooks'
 import { createEngin, updateEngin } from '@/store/slices/enginSlice'
+import { enginApi } from '@/api/enginApi'
 import type { Engin, EnginCreateRequest, TypeEngin } from '@/types/materiel'
 import { handleApiError } from '@/utils/errorHandler'
 import { useToast } from '@/contexts/ToastContext'
@@ -40,6 +41,32 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Photo state
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Load existing photo for edit mode
+  useEffect(() => {
+    if (!isEdit || !engin?.photo) return
+    let objectUrl: string | null = null
+    enginApi.getPhotoBlob(engin.id).then(blob => {
+      if (!blob) return
+      objectUrl = URL.createObjectURL(blob)
+      setPhotoPreview(objectUrl)
+    })
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
+  }, [isEdit, engin?.id, engin?.photo])
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !file.type.startsWith('image/')) return
+    setPhotoFile(file)
+    // Preview
+    const url = URL.createObjectURL(file)
+    setPhotoPreview(prev => { if (prev) URL.revokeObjectURL(prev); return url })
+  }
+
   const handleChange = (field: keyof EnginCreateRequest, value: unknown) => {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
@@ -53,10 +80,24 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
     setSubmitting(true)
     setError(null)
     try {
+      let enginId: number
       if (isEdit) {
-        await dispatch(updateEngin({ id: engin.id, data: form })).unwrap()
+        const result = await dispatch(updateEngin({ id: engin.id, data: form })).unwrap()
+        enginId = result.id
       } else {
-        await dispatch(createEngin(form)).unwrap()
+        const result = await dispatch(createEngin(form)).unwrap()
+        enginId = result.id
+      }
+      // Upload photo if selected
+      if (photoFile) {
+        try {
+          await enginApi.uploadPhoto(enginId, photoFile)
+        } catch {
+          // Don't fail the whole operation if photo upload fails
+          toast({ message: 'Engin sauvegardé mais erreur lors de l\'upload de la photo', variant: 'warning' })
+          onSuccess()
+          return
+        }
       }
       toast({ message: isEdit ? t('form.updateSuccess') : t('form.createSuccess'), variant: 'success' })
       onSuccess()
@@ -66,6 +107,8 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
       setSubmitting(false)
     }
   }
+
+  const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -98,6 +141,49 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
             </div>
           )}
 
+          {/* Photo upload zone */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Photo de l'engin
+            </label>
+            <div
+              className="relative w-full h-40 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary cursor-pointer overflow-hidden transition-colors duration-200 group"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {photoPreview ? (
+                <>
+                  <img src={photoPreview} alt="Aperçu" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <svg className="w-8 h-8 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                      <span className="text-xs font-semibold">Changer la photo</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500">
+                  <svg className="w-10 h-10 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                  <span className="text-xs font-semibold">Cliquer pour ajouter une photo</span>
+                  <span className="text-[10px] mt-1 text-gray-400">JPG, PNG — max 5 Mo</span>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoSelect}
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Code */}
             <div>
@@ -110,7 +196,7 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
                 onChange={(e) => handleChange('code', e.target.value)}
                 disabled={isEdit}
                 placeholder="ENG-001"
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                className={inputCls + ' disabled:opacity-50 disabled:cursor-not-allowed'}
               />
             </div>
 
@@ -124,7 +210,7 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
                 value={form.nom}
                 onChange={(e) => handleChange('nom', e.target.value)}
                 placeholder={t('form.nomPlaceholder')}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                className={inputCls}
               />
             </div>
 
@@ -136,7 +222,7 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
               <select
                 value={form.type}
                 onChange={(e) => handleChange('type', e.target.value as TypeEngin)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                className={inputCls}
               >
                 {ALL_TYPES.map((ty) => (
                   <option key={ty} value={ty}>{t(`engin.type.${ty}`)}</option>
@@ -151,8 +237,8 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
                 type="text"
                 value={form.marque ?? ''}
                 onChange={(e) => handleChange('marque', e.target.value)}
-                placeholder="Caterpillar, Volvo…"
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Caterpillar, Volvo..."
+                className={inputCls}
               />
             </div>
 
@@ -163,7 +249,7 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
                 type="text"
                 value={form.modele ?? ''}
                 onChange={(e) => handleChange('modele', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                className={inputCls}
               />
             </div>
 
@@ -175,7 +261,7 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
                 value={form.immatriculation ?? ''}
                 onChange={(e) => handleChange('immatriculation', e.target.value)}
                 placeholder="LB-1234-A"
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                className={inputCls}
               />
             </div>
 
@@ -186,7 +272,7 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
                 type="text"
                 value={form.numeroSerie ?? ''}
                 onChange={(e) => handleChange('numeroSerie', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                className={inputCls}
               />
             </div>
 
@@ -199,7 +285,7 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
                 onChange={(e) => handleChange('anneeFabrication', e.target.value ? Number(e.target.value) : undefined)}
                 min={1970}
                 max={new Date().getFullYear()}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                className={inputCls}
               />
             </div>
 
@@ -210,7 +296,7 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
                 type="text"
                 value={form.proprietaire ?? ''}
                 onChange={(e) => handleChange('proprietaire', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                className={inputCls}
               />
             </div>
 
@@ -223,7 +309,7 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
                 onChange={(e) => handleChange('coutLocationJournalier', e.target.value ? Number(e.target.value) : undefined)}
                 min={0}
                 step="0.01"
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                className={inputCls}
               />
             </div>
           </div>

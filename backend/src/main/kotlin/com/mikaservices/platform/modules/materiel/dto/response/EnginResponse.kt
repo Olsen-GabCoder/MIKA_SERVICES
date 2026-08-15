@@ -24,6 +24,7 @@ data class EnginResponse(
     val proprietaire: String?,
     val estLocation: Boolean,
     val coutLocationJournalier: BigDecimal?,
+    val photo: String?,
     val actif: Boolean,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
@@ -38,6 +39,7 @@ data class EnginSummaryResponse(
     val immatriculation: String?,
     val statut: StatutEngin,
     val estLocation: Boolean,
+    val photo: String? = null,
     /** Nom du chantier/projet actuel (affectation EN_COURS), null si aucun. */
     val chantierActuel: String? = null
 )

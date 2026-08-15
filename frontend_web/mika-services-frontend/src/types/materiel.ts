@@ -15,6 +15,8 @@ export interface EnginSummary {
   immatriculation?: string
   statut: StatutEngin
   estLocation: boolean
+  photo?: string
+  chantierActuel?: string
 }
 
 export interface Engin extends EnginSummary {
@@ -26,6 +28,7 @@ export interface Engin extends EnginSummary {
   heuresCompteur: number
   proprietaire?: string
   coutLocationJournalier?: number
+  photo?: string
   actif: boolean
   createdAt?: string
   updatedAt?: string
@@ -215,6 +218,254 @@ export interface DemandeMaterielCreateRequest {
   dateSouhaitee?: string
   commentaire?: string
   lignes: DemandeMaterielLignePayload[]
+}
+
+// ============================================
+// Maintenance
+// ============================================
+export type TypeOperationMaintenance = 'VIDANGE' | 'GRAISSAGE' | 'REVISION' | 'REPARATION' | 'CONTROLE_TECHNIQUE' | 'CHANGEMENT_PIECES' | 'ENTRETIEN_PREVENTIF' | 'AUTRE'
+export type StatutMaintenance = 'PLANIFIEE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE'
+
+export interface OperationMaintenance {
+  id: number
+  enginId: number
+  enginCode: string
+  typeOperation: TypeOperationMaintenance
+  statut: StatutMaintenance
+  description?: string
+  echeanceDate?: string
+  echeanceHeures?: number
+  coutEstime?: number
+  coutReel?: number
+  executePar?: string
+  dateRealisation?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface OperationMaintenanceCreateRequest {
+  typeOperation: TypeOperationMaintenance
+  description?: string
+  echeanceDate?: string
+  echeanceHeures?: number
+  coutEstime?: number
+  executePar?: string
+}
+
+export interface OperationMaintenanceUpdateRequest {
+  typeOperation?: TypeOperationMaintenance
+  statut?: StatutMaintenance
+  description?: string
+  echeanceDate?: string
+  echeanceHeures?: number
+  coutEstime?: number
+  coutReel?: number
+  executePar?: string
+  dateRealisation?: string
+}
+
+// ============================================
+// Incidents
+// ============================================
+export type TypeIncidentEngin = 'PANNE' | 'ACCIDENT' | 'VOL' | 'VANDALISME' | 'USURE_PREMATUREE' | 'DEFAUT_TECHNIQUE' | 'AUTRE'
+export type GraviteIncident = 'MINEURE' | 'MOYENNE' | 'MAJEURE' | 'CRITIQUE'
+
+export interface IncidentEngin {
+  id: number
+  enginId: number
+  enginCode: string
+  typeIncident: TypeIncidentEngin
+  gravite: GraviteIncident
+  dateIncident: string
+  description?: string
+  lieu?: string
+  signalePar?: string
+  resolu: boolean
+  dateResolution?: string
+  actionsCorrectives?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface IncidentEnginCreateRequest {
+  typeIncident: TypeIncidentEngin
+  gravite: GraviteIncident
+  dateIncident: string
+  description?: string
+  lieu?: string
+  signalePar?: string
+}
+
+export interface IncidentEnginUpdateRequest {
+  typeIncident?: TypeIncidentEngin
+  gravite?: GraviteIncident
+  description?: string
+  lieu?: string
+  signalePar?: string
+  resolu?: boolean
+  dateResolution?: string
+  actionsCorrectives?: string
+}
+
+// ============================================
+// Documents
+// ============================================
+export type TypeDocumentEngin = 'CARTE_GRISE' | 'ASSURANCE' | 'CONTROLE_TECHNIQUE' | 'CERTIFICAT_CONFORMITE' | 'BON_LIVRAISON' | 'FACTURE' | 'PHOTO' | 'RAPPORT' | 'AUTRE'
+
+export interface DocumentEngin {
+  id: number
+  enginId: number
+  enginCode: string
+  typeDocument: TypeDocumentEngin
+  nom: string
+  urlFichier?: string
+  dateExpiration?: string
+  commentaire?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface DocumentEnginCreateRequest {
+  typeDocument: TypeDocumentEngin
+  nom: string
+  urlFichier?: string
+  dateExpiration?: string
+  commentaire?: string
+}
+
+// ============================================
+// Releves compteur
+// ============================================
+export interface ReleveCompteur {
+  id: number
+  enginId: number
+  dateReleve: string
+  valeurHeures: number
+  relevePar?: string
+  commentaire?: string
+  createdAt?: string
+}
+
+export interface ReleveCompteurCreateRequest {
+  dateReleve: string
+  valeurHeures: number
+  relevePar?: string
+  commentaire?: string
+}
+
+// ============================================
+// Consommation carburant
+// ============================================
+export interface ConsommationCarburant {
+  id: number
+  enginId: number
+  datePlein: string
+  quantiteLitres: number
+  coutTotal?: number
+  heuresCompteurAuPlein?: number
+  pleinPar?: string
+  commentaire?: string
+  createdAt?: string
+}
+
+export interface ConsommationCarburantCreateRequest {
+  datePlein: string
+  quantiteLitres: number
+  coutTotal?: number
+  heuresCompteurAuPlein?: number
+  pleinPar?: string
+  commentaire?: string
+}
+
+// ============================================
+// Stats dashboard
+// ============================================
+export interface EnginStats {
+  totalEngins: number
+  enService: number
+  disponibles: number
+  enPanne: number
+  enMaintenance: number
+  tauxDisponibilite: number
+  parType: Record<string, number>
+  parStatut: Record<string, number>
+  alertesMaintenance: number
+  incidentsNonResolus: number
+}
+
+// ============================================
+// Carnet de bord (timeline)
+// ============================================
+export interface CarnetEnginEntry {
+  type: string
+  date: string
+  titre: string
+  detail?: string
+  couleur: string
+}
+
+export interface CarnetEngin {
+  enginId: number
+  enginCode: string
+  entries: CarnetEnginEntry[]
+}
+
+// ============================================
+// Carte (positions engins)
+// ============================================
+export interface EnginCarte {
+  id: number
+  code: string
+  nom: string
+  type: TypeEngin
+  statut: StatutEngin
+  marque?: string
+  chantierNom?: string
+  latitude: number
+  longitude: number
+}
+
+// ============================================
+// Heures mensuelles (graphique barres)
+// ============================================
+export interface HeuresMensuelles {
+  enginId: number
+  mois: HeuresMois[]
+}
+
+export interface HeuresMois {
+  mois: string
+  label: string
+  heures: number
+}
+
+// ============================================
+// Echeances
+// ============================================
+export interface EcheanceEngin {
+  date: string
+  titre: string
+  detail?: string
+  couleur: string
+  enginId?: number
+  enginCode?: string
+  sourceType: string
+  sourceId?: number
+}
+
+// ============================================
+// Alertes actives du parc
+// ============================================
+export interface AlerteEngin {
+  niveau: string       // CRITIQUE | HAUTE | NORMALE | BASSE | INFO
+  titre: string
+  detail: string
+  enginId?: number
+  enginCode?: string
+  couleur: string
+  pulse: boolean
+  sourceType: string   // MAINTENANCE | INCIDENT | DOCUMENT | ENGIN
+  sourceId?: number
 }
 
 export { type PageResponse }

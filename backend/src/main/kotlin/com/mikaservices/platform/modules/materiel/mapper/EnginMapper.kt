@@ -16,6 +16,7 @@ object EnginMapper {
         heuresCompteur = entity.heuresCompteur ?: 0, statut = entity.statut,
         proprietaire = entity.proprietaire, estLocation = entity.estLocation,
         coutLocationJournalier = entity.coutLocationJournalier,
+        photo = entity.photo,
         actif = entity.actif, createdAt = entity.createdAt, updatedAt = entity.updatedAt
     )
 
@@ -23,7 +24,7 @@ object EnginMapper {
         id = entity.id!!, code = entity.code, nom = entity.nom, type = entity.type,
         marque = entity.marque, immatriculation = entity.immatriculation,
         statut = entity.statut, estLocation = entity.estLocation,
-        chantierActuel = chantierActuel
+        photo = entity.photo, chantierActuel = chantierActuel
     )
 
     fun toAffectationResponse(entity: AffectationEnginChantier): AffectationEnginResponse = AffectationEnginResponse(

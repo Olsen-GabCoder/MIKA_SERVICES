@@ -61,6 +61,9 @@ class Engin(
     @Column(name = "cout_location_journalier", precision = 15, scale = 2)
     var coutLocationJournalier: BigDecimal? = null,
 
+    @Column(name = "photo", length = 500)
+    var photo: String? = null,
+
     @Column(name = "actif", nullable = false)
     var actif: Boolean = true
 ) : BaseEntity() {

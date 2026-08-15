@@ -5,22 +5,55 @@ import com.mikaservices.platform.common.enums.TypeEngin
 import com.mikaservices.platform.modules.materiel.dto.request.AffectationEnginRequest
 import com.mikaservices.platform.modules.materiel.dto.request.EnginCreateRequest
 import com.mikaservices.platform.modules.materiel.dto.request.EnginUpdateRequest
+import com.mikaservices.platform.modules.materiel.dto.request.ConsommationCarburantCreateRequest
+import com.mikaservices.platform.modules.materiel.dto.request.DocumentEnginCreateRequest
+import com.mikaservices.platform.modules.materiel.dto.request.DocumentEnginUpdateRequest
+import com.mikaservices.platform.modules.materiel.dto.request.IncidentEnginCreateRequest
+import com.mikaservices.platform.modules.materiel.dto.request.IncidentEnginUpdateRequest
+import com.mikaservices.platform.modules.materiel.dto.request.OperationMaintenanceCreateRequest
+import com.mikaservices.platform.modules.materiel.dto.request.OperationMaintenanceUpdateRequest
+import com.mikaservices.platform.modules.materiel.dto.request.ReleveCompteurCreateRequest
+import com.mikaservices.platform.modules.materiel.dto.response.AlerteEnginResponse
+import com.mikaservices.platform.modules.materiel.dto.response.EcheanceEnginResponse
 import com.mikaservices.platform.modules.materiel.dto.response.AffectationEnginResponse
+import com.mikaservices.platform.modules.materiel.dto.response.CarnetEnginResponse
+import com.mikaservices.platform.modules.materiel.dto.response.ConsommationCarburantResponse
+import com.mikaservices.platform.modules.materiel.dto.response.EnginCarteResponse
 import com.mikaservices.platform.modules.materiel.dto.response.EnginResponse
+import com.mikaservices.platform.modules.materiel.dto.response.EnginStatsResponse
 import com.mikaservices.platform.modules.materiel.dto.response.EnginSummaryResponse
+import com.mikaservices.platform.modules.materiel.dto.response.DocumentEnginResponse
+import com.mikaservices.platform.modules.materiel.dto.response.IncidentEnginResponse
 import com.mikaservices.platform.modules.materiel.dto.response.MouvementEnginResponse
+import com.mikaservices.platform.modules.materiel.dto.response.HeuresMensuellesResponse
+import com.mikaservices.platform.modules.materiel.dto.response.OperationMaintenanceResponse
+import com.mikaservices.platform.modules.materiel.dto.response.ReleveCompteurResponse
 import com.mikaservices.platform.modules.materiel.service.EnginService
+import com.mikaservices.platform.modules.materiel.service.CarnetEnginService
+import com.mikaservices.platform.modules.materiel.service.ConsommationCarburantService
+import com.mikaservices.platform.modules.materiel.service.DocumentEnginService
+import com.mikaservices.platform.modules.materiel.service.EnginCarteService
+import com.mikaservices.platform.modules.materiel.service.EnginStatsService
+import com.mikaservices.platform.modules.materiel.service.IncidentEnginService
 import com.mikaservices.platform.modules.materiel.service.MouvementEnginService
+import com.mikaservices.platform.modules.materiel.service.OperationMaintenanceService
+import com.mikaservices.platform.modules.materiel.service.ReleveCompteurService
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.client.j2se.MatrixToImageWriter
+import com.google.zxing.qrcode.QRCodeWriter
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.core.io.Resource
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/engins")
@@ -28,6 +61,14 @@ import org.springframework.web.bind.annotation.*
 class EnginController(
     private val enginService: EnginService,
     private val mouvementEnginService: MouvementEnginService,
+    private val maintenanceService: OperationMaintenanceService,
+    private val incidentService: IncidentEnginService,
+    private val documentService: DocumentEnginService,
+    private val releveCompteurService: ReleveCompteurService,
+    private val consommationService: ConsommationCarburantService,
+    private val statsService: EnginStatsService,
+    private val carteService: EnginCarteService,
+    private val carnetService: CarnetEnginService,
 ) {
     @PostMapping
     @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
@@ -52,6 +93,51 @@ class EnginController(
     @Operation(summary = "Obtenir un engin par ID")
     fun findById(@PathVariable id: Long): ResponseEntity<EnginResponse> {
         return ResponseEntity.ok(enginService.findById(id))
+    }
+
+    @GetMapping("/stats")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Statistiques globales du parc d'engins")
+    fun getStats(): ResponseEntity<EnginStatsResponse> {
+        return ResponseEntity.ok(statsService.getStats())
+    }
+
+    @GetMapping("/alertes")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Alertes actives du parc (maintenances en retard, incidents, documents expirant)")
+    fun getAlertes(): ResponseEntity<List<AlerteEnginResponse>> {
+        return ResponseEntity.ok(statsService.getAlertes())
+    }
+
+    @GetMapping("/echeances")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Echeances a venir (maintenances, documents, fins d'affectation)")
+    fun getEcheances(@RequestParam(defaultValue = "7") jours: Int): ResponseEntity<List<EcheanceEnginResponse>> {
+        return ResponseEntity.ok(statsService.getEcheances(jours))
+    }
+
+    @GetMapping("/carte")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Positions des engins sur la carte (via chantier d'affectation)")
+    fun getPositions(): ResponseEntity<List<EnginCarteResponse>> {
+        return ResponseEntity.ok(carteService.getPositions())
+    }
+
+    @GetMapping("/export", produces = ["text/csv"])
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Exporter la liste des engins en CSV")
+    fun exportCsv(): ResponseEntity<ByteArray> {
+        val engins = enginService.findAll(Pageable.unpaged(), null, null)
+        val sb = StringBuilder()
+        sb.appendLine("Code;Nom;Type;Marque;Immatriculation;Statut;Location;Chantier actuel")
+        for (e in engins.content) {
+            sb.appendLine("${e.code};${e.nom};${e.type};${e.marque ?: ""};${e.immatriculation ?: ""};${e.statut};${if (e.estLocation) "Oui" else "Non"};${e.chantierActuel ?: ""}")
+        }
+        val bytes = sb.toString().toByteArray(Charsets.UTF_8)
+        return ResponseEntity.ok()
+            .header("Content-Disposition", "attachment; filename=engins_export.csv")
+            .header("Content-Type", "text/csv; charset=UTF-8")
+            .body(bytes)
     }
 
     @GetMapping("/search")
@@ -83,12 +169,59 @@ class EnginController(
         return ResponseEntity.ok(mapOf("message" to "Engin désactivé avec succès"))
     }
 
+    // ========== Photo ==========
+    @PostMapping("/{id}/photo", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Upload de la photo de profil d'un engin")
+    fun uploadPhoto(@PathVariable id: Long, @RequestParam("file") file: MultipartFile): ResponseEntity<EnginResponse> {
+        return ResponseEntity.ok(enginService.uploadPhoto(id, file))
+    }
+
+    @GetMapping("/{id}/photo")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Récupérer la photo de profil d'un engin")
+    fun getPhoto(@PathVariable id: Long): ResponseEntity<Resource> {
+        val resource = enginService.getPhotoResource(id)
+            ?: return ResponseEntity.noContent().build()
+        return ResponseEntity.ok()
+            .contentType(MediaType.IMAGE_JPEG)
+            .body(resource)
+    }
+
+    // ========== QR Code ==========
+    @GetMapping("/{id}/qrcode", produces = [MediaType.IMAGE_PNG_VALUE])
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Generer un QR code PNG pour un engin (encode l'URL de la fiche)")
+    fun getQrCode(
+        @PathVariable id: Long,
+        @RequestParam(defaultValue = "300") size: Int,
+        @RequestParam(required = false) baseUrl: String?
+    ): ResponseEntity<ByteArray> {
+        val engin = enginService.findById(id)
+        val url = "${baseUrl ?: "https://mika-services.onrender.com"}/materiel/engins/${engin.id}"
+        val writer = QRCodeWriter()
+        val matrix = writer.encode(url, BarcodeFormat.QR_CODE, size, size)
+        val stream = java.io.ByteArrayOutputStream()
+        MatrixToImageWriter.writeToStream(matrix, "PNG", stream)
+        return ResponseEntity.ok()
+            .contentType(MediaType.IMAGE_PNG)
+            .header("Content-Disposition", "inline; filename=qr_${engin.code}.png")
+            .body(stream.toByteArray())
+    }
+
     // ========== Affectations ==========
     @PostMapping("/affectations")
     @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
     @Operation(summary = "Affecter un engin à un projet")
     fun affecterEngin(@Valid @RequestBody request: AffectationEnginRequest): ResponseEntity<AffectationEnginResponse> {
         return ResponseEntity.status(HttpStatus.CREATED).body(enginService.affecterEngin(request))
+    }
+
+    @GetMapping("/affectations/planning")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Toutes les affectations actives/planifiées pour le planning Gantt")
+    fun findAffectationsForPlanning(): ResponseEntity<List<AffectationEnginResponse>> {
+        return ResponseEntity.ok(enginService.findAffectationsForPlanning())
     }
 
     @GetMapping("/affectations/projet/{projetId}")
@@ -105,10 +238,151 @@ class EnginController(
         return ResponseEntity.ok(enginService.findAffectationsByEngin(id))
     }
 
+    @GetMapping("/{id}/carnet")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Carnet de bord d'un engin (timeline agregee)")
+    fun getCarnet(@PathVariable id: Long): ResponseEntity<CarnetEnginResponse> {
+        return ResponseEntity.ok(carnetService.getCarnet(id))
+    }
+
     @GetMapping("/{id}/mouvements")
     @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
     @Operation(summary = "Historique des mouvements d'un engin")
     fun findMouvementsByEngin(@PathVariable id: Long): ResponseEntity<List<MouvementEnginResponse>> {
         return ResponseEntity.ok(mouvementEnginService.findByEnginId(id))
+    }
+
+    // ========== Maintenances ==========
+    @PostMapping("/{id}/maintenances")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Creer une operation de maintenance pour un engin")
+    fun createMaintenance(@PathVariable id: Long, @Valid @RequestBody request: OperationMaintenanceCreateRequest): ResponseEntity<OperationMaintenanceResponse> {
+        return ResponseEntity.status(HttpStatus.CREATED).body(maintenanceService.create(id, request))
+    }
+
+    @GetMapping("/{id}/maintenances")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Lister les maintenances d'un engin")
+    fun findMaintenancesByEngin(@PathVariable id: Long, @PageableDefault(size = 20) pageable: Pageable): ResponseEntity<Page<OperationMaintenanceResponse>> {
+        return ResponseEntity.ok(maintenanceService.findByEnginId(id, pageable))
+    }
+
+    @GetMapping("/{id}/maintenances/{maintenanceId}")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Obtenir une maintenance par ID")
+    fun findMaintenanceById(@PathVariable id: Long, @PathVariable maintenanceId: Long): ResponseEntity<OperationMaintenanceResponse> {
+        return ResponseEntity.ok(maintenanceService.findById(id, maintenanceId))
+    }
+
+    @PutMapping("/{id}/maintenances/{maintenanceId}")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Mettre a jour une maintenance")
+    fun updateMaintenance(@PathVariable id: Long, @PathVariable maintenanceId: Long, @Valid @RequestBody request: OperationMaintenanceUpdateRequest): ResponseEntity<OperationMaintenanceResponse> {
+        return ResponseEntity.ok(maintenanceService.update(id, maintenanceId, request))
+    }
+
+    @DeleteMapping("/{id}/maintenances/{maintenanceId}")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Supprimer une maintenance")
+    fun deleteMaintenance(@PathVariable id: Long, @PathVariable maintenanceId: Long): ResponseEntity<Map<String, String>> {
+        maintenanceService.delete(id, maintenanceId)
+        return ResponseEntity.ok(mapOf("message" to "Maintenance supprimee avec succes"))
+    }
+
+    // ========== Incidents ==========
+    @PostMapping("/{id}/incidents")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Signaler un incident sur un engin")
+    fun createIncident(@PathVariable id: Long, @Valid @RequestBody request: IncidentEnginCreateRequest): ResponseEntity<IncidentEnginResponse> {
+        return ResponseEntity.status(HttpStatus.CREATED).body(incidentService.create(id, request))
+    }
+
+    @GetMapping("/{id}/incidents")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Lister les incidents d'un engin")
+    fun findIncidentsByEngin(@PathVariable id: Long, @PageableDefault(size = 20) pageable: Pageable): ResponseEntity<Page<IncidentEnginResponse>> {
+        return ResponseEntity.ok(incidentService.findByEnginId(id, pageable))
+    }
+
+    @PutMapping("/{id}/incidents/{incidentId}")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Mettre a jour un incident")
+    fun updateIncident(@PathVariable id: Long, @PathVariable incidentId: Long, @Valid @RequestBody request: IncidentEnginUpdateRequest): ResponseEntity<IncidentEnginResponse> {
+        return ResponseEntity.ok(incidentService.update(id, incidentId, request))
+    }
+
+    @DeleteMapping("/{id}/incidents/{incidentId}")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Supprimer un incident")
+    fun deleteIncident(@PathVariable id: Long, @PathVariable incidentId: Long): ResponseEntity<Map<String, String>> {
+        incidentService.delete(id, incidentId)
+        return ResponseEntity.ok(mapOf("message" to "Incident supprime avec succes"))
+    }
+
+    // ========== Documents ==========
+    @PostMapping("/{id}/documents")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Ajouter un document a un engin")
+    fun createDocument(@PathVariable id: Long, @Valid @RequestBody request: DocumentEnginCreateRequest): ResponseEntity<DocumentEnginResponse> {
+        return ResponseEntity.status(HttpStatus.CREATED).body(documentService.create(id, request))
+    }
+
+    @GetMapping("/{id}/documents")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Lister les documents d'un engin")
+    fun findDocumentsByEngin(@PathVariable id: Long, @PageableDefault(size = 20) pageable: Pageable): ResponseEntity<Page<DocumentEnginResponse>> {
+        return ResponseEntity.ok(documentService.findByEnginId(id, pageable))
+    }
+
+    @PutMapping("/{id}/documents/{documentId}")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Mettre a jour un document")
+    fun updateDocument(@PathVariable id: Long, @PathVariable documentId: Long, @Valid @RequestBody request: DocumentEnginUpdateRequest): ResponseEntity<DocumentEnginResponse> {
+        return ResponseEntity.ok(documentService.update(id, documentId, request))
+    }
+
+    @DeleteMapping("/{id}/documents/{documentId}")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Supprimer un document")
+    fun deleteDocument(@PathVariable id: Long, @PathVariable documentId: Long): ResponseEntity<Map<String, String>> {
+        documentService.delete(id, documentId)
+        return ResponseEntity.ok(mapOf("message" to "Document supprime avec succes"))
+    }
+
+    // ========== Releves compteur ==========
+    @PostMapping("/{id}/releves-compteur")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Enregistrer un releve compteur")
+    fun createReleve(@PathVariable id: Long, @Valid @RequestBody request: ReleveCompteurCreateRequest): ResponseEntity<ReleveCompteurResponse> {
+        return ResponseEntity.status(HttpStatus.CREATED).body(releveCompteurService.create(id, request))
+    }
+
+    @GetMapping("/{id}/releves-compteur")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Historique des releves compteur d'un engin")
+    fun findRelevesByEngin(@PathVariable id: Long, @PageableDefault(size = 20) pageable: Pageable): ResponseEntity<Page<ReleveCompteurResponse>> {
+        return ResponseEntity.ok(releveCompteurService.findByEnginId(id, pageable))
+    }
+
+    @GetMapping("/{id}/heures-mensuelles")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Heures d'utilisation mensuelles sur 12 mois (pour graphique barres)")
+    fun getHeuresMensuelles(@PathVariable id: Long): ResponseEntity<HeuresMensuellesResponse> {
+        return ResponseEntity.ok(releveCompteurService.getHeuresMensuelles(id))
+    }
+
+    // ========== Consommation carburant ==========
+    @PostMapping("/{id}/consommations")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Enregistrer un plein de carburant")
+    fun createConsommation(@PathVariable id: Long, @Valid @RequestBody request: ConsommationCarburantCreateRequest): ResponseEntity<ConsommationCarburantResponse> {
+        return ResponseEntity.status(HttpStatus.CREATED).body(consommationService.create(id, request))
+    }
+
+    @GetMapping("/{id}/consommations")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Historique des consommations carburant d'un engin")
+    fun findConsommationsByEngin(@PathVariable id: Long, @PageableDefault(size = 20) pageable: Pageable): ResponseEntity<Page<ConsommationCarburantResponse>> {
+        return ResponseEntity.ok(consommationService.findByEnginId(id, pageable))
     }
 }

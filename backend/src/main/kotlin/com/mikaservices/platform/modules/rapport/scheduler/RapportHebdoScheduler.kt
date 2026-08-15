@@ -68,7 +68,15 @@ class RapportHebdoScheduler(
             val pdfBytes = pdfGenerator.generate(data)
             logger.info("[RapportHebdoScheduler] PDF généré (${pdfBytes.size / 1024} Ko) — ${data.totalProjets} projet(s)")
 
+            // Rapport hebdo PDF : direction + chefs de projet, avec préférences respectées
+            val rolesEligibles = setOf("SUPER_ADMIN", "ADMIN", "CHEF_PROJET")
             val destinataires = userRepository.findByActifTrue()
+                .filter { user ->
+                    user.emailNotificationsEnabled
+                    && user.weeklyDigestEnabled
+                    && user.email.isNotBlank()
+                    && user.roles.any { it.code in rolesEligibles }
+                }
 
             if (destinataires.isEmpty()) {
                 logger.info("[RapportHebdoScheduler] Aucun destinataire — rapport ignoré.")

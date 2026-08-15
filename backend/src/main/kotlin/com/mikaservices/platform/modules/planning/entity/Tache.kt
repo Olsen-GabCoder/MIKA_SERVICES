@@ -70,7 +70,7 @@ class Tache(
     @Column(name = "type_prevision", length = 30)
     var typePrevision: TypePrevision? = null,
 
-    @Column(name = "est_jalon", nullable = false)
+    @Column(name = "est_jalon", nullable = false, columnDefinition = "boolean not null default false")
     var estJalon: Boolean = false,
 
     @Column(name = "couleur", length = 7)

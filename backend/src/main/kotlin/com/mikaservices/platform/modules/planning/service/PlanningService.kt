@@ -6,6 +6,7 @@ import com.mikaservices.platform.common.exception.ForbiddenException
 import com.mikaservices.platform.common.exception.ResourceNotFoundException
 import com.mikaservices.platform.modules.planning.dto.request.TacheCreateRequest
 import com.mikaservices.platform.modules.planning.dto.request.TacheUpdateRequest
+import com.mikaservices.platform.modules.planning.dto.response.ProjetPlanningStatsResponse
 import com.mikaservices.platform.modules.planning.dto.response.TacheResponse
 import com.mikaservices.platform.modules.planning.entity.Tache
 import com.mikaservices.platform.modules.planning.mapper.TacheMapper
@@ -198,6 +199,60 @@ class PlanningService(
         return tacheRepository.findByProjetIdAndSemaineAndAnnee(projetId, semaine, annee)
             .filter { it.typePrevision != null }
             .map { TacheMapper.toResponse(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun getStatsMesProjets(): List<ProjetPlanningStatsResponse> {
+        val currentUserId = currentUserService.getCurrentUserId()
+        val isAdmin = currentUserService.hasGlobalAdminRole()
+
+        // Récupérer les projets accessibles par l'utilisateur
+        val projets = if (isAdmin) {
+            projetRepository.findAll()
+        } else {
+            // Projets où l'utilisateur est responsable
+            val mesProjets = projetRepository.findByResponsableProjetIdAndActifTrue(currentUserId!!)
+            // Projets où l'utilisateur a des tâches assignées
+            val tachesAssignees = tacheRepository.findByAssigneAId(currentUserId)
+            val projetIdsAssignes = tachesAssignees.map { it.projet.id!! }.toSet()
+            val projetsAssignes = projetIdsAssignes
+                .filter { id -> mesProjets.none { it.id == id } }
+                .mapNotNull { id -> projetRepository.findById(id).orElse(null) }
+            mesProjets + projetsAssignes
+        }
+
+        if (projets.isEmpty()) return emptyList()
+
+        val projetIds = projets.mapNotNull { it.id }
+        if (projetIds.isEmpty()) return emptyList()
+
+        val rows = tacheRepository.getStatsByProjetIds(projetIds)
+
+        // Mapper les résultats — projets sans tâches doivent quand même apparaître
+        val statsMap = rows.associate { row ->
+            val projetId = (row[0] as Number).toLong()
+            projetId to ProjetPlanningStatsResponse(
+                projetId = projetId,
+                projetNom = row[1] as String,
+                ville = row[2] as? String,
+                total = (row[3] as Number).toLong(),
+                aFaire = (row[4] as Number).toLong(),
+                enCours = (row[5] as Number).toLong(),
+                enAttente = (row[6] as Number).toLong(),
+                terminees = (row[7] as Number).toLong(),
+                annulees = (row[8] as Number).toLong(),
+                enRetard = (row[9] as Number).toLong(),
+                avancement = (row[10] as Number).toInt()
+            )
+        }
+
+        return projets.map { p ->
+            statsMap[p.id] ?: ProjetPlanningStatsResponse(
+                projetId = p.id!!, projetNom = p.nom, ville = p.ville,
+                total = 0, aFaire = 0, enCours = 0, enAttente = 0,
+                terminees = 0, annulees = 0, enRetard = 0, avancement = 0
+            )
+        }
     }
 
     fun deleteTache(id: Long) {

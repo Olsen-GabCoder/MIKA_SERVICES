@@ -65,4 +65,22 @@ interface TacheRepository : JpaRepository<Tache, Long> {
         @Param("semaineFin") semaineFin: Int,
         @Param("annee") annee: Int
     ): List<Tache>
+
+    @Query("""
+        SELECT t.projet.id,
+               t.projet.nom,
+               t.projet.ville,
+               COUNT(t),
+               SUM(CASE WHEN t.statut = 'A_FAIRE' THEN 1 ELSE 0 END),
+               SUM(CASE WHEN t.statut = 'EN_COURS' THEN 1 ELSE 0 END),
+               SUM(CASE WHEN t.statut = 'EN_ATTENTE' THEN 1 ELSE 0 END),
+               SUM(CASE WHEN t.statut = 'TERMINEE' THEN 1 ELSE 0 END),
+               SUM(CASE WHEN t.statut = 'ANNULEE' THEN 1 ELSE 0 END),
+               SUM(CASE WHEN t.dateEcheance <= CURRENT_DATE AND t.statut IN ('A_FAIRE', 'EN_COURS') THEN 1 ELSE 0 END),
+               COALESCE(AVG(t.pourcentageAvancement), 0)
+        FROM Tache t
+        WHERE t.projet.id IN :projetIds
+        GROUP BY t.projet.id, t.projet.nom, t.projet.ville
+    """)
+    fun getStatsByProjetIds(@Param("projetIds") projetIds: List<Long>): List<Array<Any>>
 }

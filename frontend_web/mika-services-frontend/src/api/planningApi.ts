@@ -2,7 +2,7 @@ import api from './axios'
 import { API_ENDPOINTS } from '../constants/api'
 import type {
   Tache, TacheCreateRequest, TacheUpdateRequest, PaginatedResponse,
-  DependanceResponse, DependanceCreateRequest, GanttData
+  DependanceResponse, DependanceCreateRequest, GanttData, ProjetPlanningStats
 } from '../types/planning'
 import { USE_MOCK, USE_MOCK_FALLBACK } from '@/config/mock'
 import { getMockTachesByProjet, getMockTachesEnRetard } from '@/mock/data/planning'
@@ -57,6 +57,11 @@ export const planningApi = {
 
   deleteTache: async (id: number): Promise<void> => {
     await api.delete(API_ENDPOINTS.PLANNING.TACHE_BY_ID(id))
+  },
+
+  getStatsMesProjets: async (): Promise<ProjetPlanningStats[]> => {
+    const response = await api.get(API_ENDPOINTS.PLANNING.STATS_MES_PROJETS)
+    return response.data
   },
 
   // Dependances

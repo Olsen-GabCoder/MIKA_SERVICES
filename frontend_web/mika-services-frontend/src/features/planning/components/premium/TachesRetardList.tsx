@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next'
-import { useFormatDate } from '@/hooks/useFormatDate'
 import { Priorite } from '@/types/planning'
 import type { Tache } from '@/types/planning'
 
@@ -8,79 +7,149 @@ export interface TachesRetardListProps {
   selectedProjetId: number | null
 }
 
-const prioColor: Record<Priorite, string> = {
-  [Priorite.BASSE]: 'var(--db-t3)',
-  [Priorite.NORMALE]: 'var(--db-teal)',
-  [Priorite.HAUTE]: 'var(--db-orange)',
-  [Priorite.URGENTE]: 'var(--db-danger)',
-  [Priorite.CRITIQUE]: 'var(--db-danger)',
+const PRIO_COLORS: Record<Priorite, { color: string; soft: string }> = {
+  [Priorite.BASSE]: { color: '#8FA3AD', soft: 'rgba(143,163,173,.16)' },
+  [Priorite.NORMALE]: { color: '#6B7280', soft: 'var(--db-subtle)' },
+  [Priorite.HAUTE]: { color: 'var(--db-orange)', soft: 'var(--db-orange-soft)' },
+  [Priorite.URGENTE]: { color: '#E4572E', soft: 'rgba(228,87,46,.14)' },
+  [Priorite.CRITIQUE]: { color: 'var(--db-danger)', soft: 'var(--db-danger-bg2)' },
+}
+
+function fmtDate(d: string | null): string {
+  if (!d) return '—'
+  const parts = d.split('-')
+  if (parts.length !== 3) return d
+  return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`
+}
+
+function lateDays(tache: Tache): number {
+  if (!tache.dateEcheance) return 0
+  const diff = Math.floor((Date.now() - new Date(tache.dateEcheance).getTime()) / 86400000)
+  return diff > 0 ? diff : 0
 }
 
 export function TachesRetardList({ taches, selectedProjetId }: TachesRetardListProps) {
   const { t } = useTranslation('planning')
-  const formatDate = useFormatDate()
 
   const filtered = selectedProjetId
     ? taches.filter((tr) => tr.projetId === selectedProjetId)
     : taches
 
-  if (filtered.length === 0) return null
+  if (filtered.length === 0) {
+    return (
+      <div style={{
+        background: 'var(--db-card)',
+        border: '1px solid var(--db-border)',
+        borderRadius: 'var(--db-radius)',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          padding: '13px 16px',
+          display: 'flex', alignItems: 'center', gap: 8,
+          borderBottom: '1px solid var(--db-border)',
+        }}>
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: 'var(--db-success)',
+          }} />
+          <span style={{ fontSize: 13.5, fontWeight: 800 }}>Tâches en retard</span>
+          <span style={{
+            fontSize: 11, fontWeight: 700, color: '#fff',
+            background: 'var(--db-success)',
+            borderRadius: 20, padding: '2px 8px',
+          }}>0</span>
+        </div>
+        <div style={{ padding: '22px 16px', textAlign: 'center', fontSize: 12, color: 'var(--db-t2)' }}>
+          Aucun retard sur ce projet — toutes les échéances sont respectées.
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div
-      className="col-span-12 lg:col-span-8 rounded-xl p-5"
-      style={{ background: 'var(--db-card)', animation: 'db-rise 380ms ease-out 240ms both' }}
-    >
-      <div className="flex items-center gap-2.5 mb-3">
-        <span className="w-2 h-2 rounded-full" style={{ background: 'var(--db-danger)', animation: 'db-pulse 2s infinite' }} />
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--db-t3)' }}>
-          {t('tasksLateTitle', { count: filtered.length })}
-        </span>
+    <div style={{
+      background: 'var(--db-card)',
+      border: '1px solid var(--db-border)',
+      borderRadius: 'var(--db-radius)',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        padding: '13px 16px',
+        display: 'flex', alignItems: 'center', gap: 8,
+        borderBottom: '1px solid var(--db-border)',
+      }}>
+        <span style={{
+          width: 8, height: 8, borderRadius: '50%',
+          background: 'var(--db-danger)',
+          animation: 'mkPulse 1.8s ease-in-out infinite',
+        }} />
+        <span style={{ fontSize: 13.5, fontWeight: 800 }}>Tâches en retard</span>
+        <span style={{
+          fontSize: 11, fontWeight: 700, color: '#fff',
+          background: 'var(--db-danger)',
+          borderRadius: 20, padding: '2px 8px',
+        }}>{filtered.length}</span>
       </div>
 
-      <div className="space-y-0.5">
-        {filtered.slice(0, 8).map((tr, idx) => (
+      {filtered.slice(0, 4).map((tr) => {
+        const days = lateDays(tr)
+        const pc = PRIO_COLORS[tr.priorite]
+        return (
           <div
             key={tr.id}
-            className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 py-3 border-b last:border-b-0 transition-colors hover:bg-[var(--db-subtle)] rounded-lg px-2 -mx-2"
-            style={{ borderColor: 'var(--db-border)', animation: `db-rise 280ms ease-out ${idx * 20}ms both` }}
+            style={{
+              padding: '11px 16px',
+              borderBottom: '1px solid var(--db-border)',
+              cursor: 'default',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--db-subtle)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--db-danger)' }} />
-              <div className="min-w-0 flex-1">
-                <span className="font-medium text-sm truncate block" style={{ color: 'var(--db-t1)' }}>
-                  {tr.titre}
-                </span>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {!selectedProjetId && tr.projetNom && (
-                    <span className="text-[11px] truncate max-w-[140px]" style={{ color: 'var(--db-t4)' }}>
-                      {tr.projetNom}
-                    </span>
-                  )}
-                  {tr.semaine != null && (
-                    <span className="text-[11px] db-num" style={{ color: 'var(--db-t4)' }}>
-                      {!selectedProjetId && tr.projetNom ? '· ' : ''}S{tr.semaine}/{tr.annee}
-                    </span>
-                  )}
-                </div>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              {days > 0 && (
+                <span style={{
+                  fontSize: 9.5, fontWeight: 800, color: '#fff',
+                  background: 'var(--db-danger)',
+                  borderRadius: 3, padding: '2px 5px',
+                }}>J+{days}</span>
+              )}
+              <span style={{
+                fontSize: 12, fontWeight: 600, flex: 1,
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{tr.titre}</span>
             </div>
-
-            <div className="flex items-center gap-2 pl-3.5 sm:pl-0">
-              <span
-                className="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: 'var(--db-subtle)', color: prioColor[tr.priorite] }}
-              >
-                {t(`priorite.${tr.priorite}`)}
-              </span>
-
-              <span className="shrink-0 text-sm db-num font-semibold" style={{ color: 'var(--db-danger)' }}>
-                {tr.dateEcheance ? formatDate(tr.dateEcheance, { monthStyle: 'short' }) : '—'}
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 7 }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                fontSize: 11, fontWeight: 700,
+                color: pc.color, background: pc.soft,
+                border: `1px solid ${pc.color}`,
+                borderRadius: 'var(--db-radius-xs)',
+                padding: '3px 7px', whiteSpace: 'nowrap',
+              }}>{t(`priorite.${tr.priorite}`)}</span>
+              {tr.semaine != null && (
+                <span style={{ fontSize: 11, color: 'var(--db-t3)', fontVariantNumeric: 'tabular-nums' }}>
+                  S{tr.semaine}·{String(tr.annee ?? '').slice(2)}
+                </span>
+              )}
+              <span style={{
+                fontSize: 11, fontWeight: 700, color: 'var(--db-danger)',
+                marginLeft: 'auto', fontVariantNumeric: 'tabular-nums',
+              }}>éch. {fmtDate(tr.dateEcheance)}</span>
             </div>
           </div>
-        ))}
-      </div>
+        )
+      })}
+
+      {filtered.length > 0 && (
+        <div style={{
+          padding: '10px 16px', fontSize: 11.5, color: 'var(--db-t2)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <span>{Math.min(filtered.length, 4)} affichées</span>
+          <a href="#" onClick={(e) => e.preventDefault()} style={{ fontWeight: 700, color: 'var(--db-orange)', textDecoration: 'none' }}>Tout parcourir →</a>
+        </div>
+      )}
     </div>
   )
 }

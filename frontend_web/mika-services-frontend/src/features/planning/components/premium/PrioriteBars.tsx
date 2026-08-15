@@ -4,59 +4,66 @@ import type { Tache } from '@/types/planning'
 
 export interface PrioriteBarsProps {
   taches: Tache[]
-  colSpanClass?: string
 }
 
-const PRIO_ORDER: Priorite[] = [Priorite.CRITIQUE, Priorite.URGENTE, Priorite.HAUTE, Priorite.NORMALE, Priorite.BASSE]
+const PRIO_ORDER: Priorite[] = [Priorite.BASSE, Priorite.NORMALE, Priorite.HAUTE, Priorite.URGENTE, Priorite.CRITIQUE]
 
 const PRIO_COLORS: Record<Priorite, string> = {
-  [Priorite.CRITIQUE]: 'var(--db-danger)',
-  [Priorite.URGENTE]: 'var(--db-danger)',
+  [Priorite.BASSE]: '#8FA3AD',
+  [Priorite.NORMALE]: '#6B7280',
   [Priorite.HAUTE]: 'var(--db-orange)',
-  [Priorite.NORMALE]: 'var(--db-teal)',
-  [Priorite.BASSE]: 'var(--db-t3)',
+  [Priorite.URGENTE]: '#E4572E',
+  [Priorite.CRITIQUE]: 'var(--db-danger)',
 }
 
-export function PrioriteBars({ taches, colSpanClass = 'col-span-12 lg:col-span-4' }: PrioriteBarsProps) {
+export function PrioriteBars({ taches }: PrioriteBarsProps) {
   const { t } = useTranslation('planning')
 
-  const counts = PRIO_ORDER.map((p) => ({ key: p, count: taches.filter((task) => task.priorite === p).length }))
-  const max = Math.max(...counts.map((c) => c.count), 1)
+  const counts = PRIO_ORDER.map((p) => ({
+    key: p,
+    count: taches.filter((task) => task.priorite === p).length,
+  }))
   const total = taches.length
-
   if (total === 0) return null
 
   return (
-    <div
-      className={`${colSpanClass} rounded-xl p-5`}
-      style={{ background: 'var(--db-card)', animation: 'db-rise 380ms ease-out 270ms both' }}
-    >
-      <div className="flex items-center gap-2.5 mb-4">
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--db-t3)' }}>
-          {t('prioriteBarsTitle', { defaultValue: 'Répartition par priorité' })}
-        </span>
+    <div style={{
+      background: 'var(--db-card)',
+      border: '1px solid var(--db-border)',
+      borderRadius: 'var(--db-radius)',
+      padding: '16px 18px',
+    }}>
+      <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 14 }}>
+        {t('prioriteBarsTitle', { defaultValue: 'Répartition par priorité' })}
       </div>
 
-      <div className="space-y-4">
-        {counts.map((item, idx) => {
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {counts.map((item) => {
           const pct = Math.round((item.count / Math.max(total, 1)) * 100)
-          const barWidth = Math.max((item.count / max) * 100, item.count > 0 ? 8 : 0)
           return (
-            <div key={item.key} style={{ animation: `db-rise 280ms ease-out ${idx * 40}ms both` }}>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm font-medium" style={{ color: 'var(--db-t2)' }}>
+            <div key={item.key}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                <span style={{
+                  width: 9, height: 9, minWidth: 9,
+                  borderRadius: 3, background: PRIO_COLORS[item.key],
+                }} />
+                <span style={{ fontSize: 11.5, fontWeight: 600, flex: 1 }}>
                   {t(`priorite.${item.key}`)}
                 </span>
-                <span className="text-sm font-bold db-num" style={{ color: item.count > 0 ? PRIO_COLORS[item.key] : 'var(--db-t4)' }}>
+                <span style={{ fontSize: 11.5, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
                   {item.count}
-                  <span className="text-xs font-normal ml-1.5" style={{ color: 'var(--db-t4)' }}>{pct}%</span>
+                </span>
+                <span style={{ fontSize: 10.5, color: 'var(--db-t3)', minWidth: 32, textAlign: 'right' as const }}>
+                  {pct}%
                 </span>
               </div>
-              <div className="h-2 rounded-sm overflow-hidden" style={{ background: 'var(--db-subtle)' }}>
-                <div
-                  className="h-full rounded-sm db-progress-fill"
-                  style={{ width: `${barWidth}%`, background: PRIO_COLORS[item.key] }}
-                />
+              <div style={{ height: 7, borderRadius: 4, background: 'var(--db-subtle)', overflow: 'hidden' }}>
+                <div style={{
+                  width: `${pct}%`, height: '100%',
+                  borderRadius: 4,
+                  background: PRIO_COLORS[item.key],
+                  transition: 'width .5s ease',
+                }} />
               </div>
             </div>
           )

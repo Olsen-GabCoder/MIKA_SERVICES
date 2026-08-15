@@ -2,6 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Planning — animations ─────────────────────────────────────── */
+@keyframes mkPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .45; transform: scale(.82); }
+}
+@keyframes mkModal {
+  from { opacity: 0; transform: translateY(10px) scale(.99); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mkIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ── Planning — focus & disabled ──────────────────────────────── */
+.planning-focus *:focus-visible {
+  outline: 2px solid var(--db-orange);
+  outline-offset: 2px;
+}
+.planning-row-actions { opacity: 0; transition: opacity .12s ease; }
+.planning-row:hover .planning-row-actions,
+.planning-row:focus-within .planning-row-actions { opacity: 1; }
+.planning-view-enter { animation: mkIn .15s ease-out; }
+select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* ── Toast — animations ─────────────────────────────────────────── */
 @keyframes toast-slide-in {
   from { transform: translateX(100%) scale(0.95); opacity: 0; }

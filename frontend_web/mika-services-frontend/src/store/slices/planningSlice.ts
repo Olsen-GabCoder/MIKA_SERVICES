@@ -2,16 +2,18 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { planningApi } from '../../api/planningApi'
 import { handleApiError } from '@/utils/errorHandler'
 import { clearPlanningCache } from '@/utils/offlineCache'
-import type { Tache, TacheCreateRequest, TacheUpdateRequest } from '../../types/planning'
+import type { Tache, TacheCreateRequest, TacheUpdateRequest, ProjetPlanningStats } from '../../types/planning'
 
 interface PlanningState {
   taches: Tache[]
   tacheDetail: Tache | null
   mesTaches: Tache[]
   tachesEnRetard: Tache[]
+  projetStats: ProjetPlanningStats[]
   loading: boolean
   loadingMesTaches: boolean
   loadingEnRetard: boolean
+  loadingProjetStats: boolean
   error: string | null
 }
 
@@ -20,9 +22,11 @@ const initialState: PlanningState = {
   tacheDetail: null,
   mesTaches: [],
   tachesEnRetard: [],
+  projetStats: [],
   loading: false,
   loadingMesTaches: false,
   loadingEnRetard: false,
+  loadingProjetStats: false,
   error: null,
 }
 
@@ -41,6 +45,13 @@ export const fetchMesTaches = createAsyncThunk(
   'planning/fetchMesTaches',
   async (userId: number) => {
     return await planningApi.getMesTaches(userId)
+  }
+)
+
+export const fetchProjetStats = createAsyncThunk(
+  'planning/fetchProjetStats',
+  async () => {
+    return await planningApi.getStatsMesProjets()
   }
 )
 
@@ -97,6 +108,11 @@ const planningSlice = createSlice({
     builder.addCase(fetchMesTaches.pending, (state) => { state.loadingMesTaches = true })
     builder.addCase(fetchMesTaches.fulfilled, (state, action) => { state.mesTaches = action.payload; state.loadingMesTaches = false })
     builder.addCase(fetchMesTaches.rejected, (state, action) => { state.loadingMesTaches = false; state.error = handleApiError(action.error) })
+
+    // fetchProjetStats
+    builder.addCase(fetchProjetStats.pending, (state) => { state.loadingProjetStats = true })
+    builder.addCase(fetchProjetStats.fulfilled, (state, action) => { state.projetStats = action.payload; state.loadingProjetStats = false })
+    builder.addCase(fetchProjetStats.rejected, (state, action) => { state.loadingProjetStats = false; state.error = handleApiError(action.error) })
 
     // fetchTachesEnRetard
     builder.addCase(fetchTachesEnRetard.pending, (state) => { state.loadingEnRetard = true })

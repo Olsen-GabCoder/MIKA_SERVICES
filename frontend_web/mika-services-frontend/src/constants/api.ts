@@ -74,6 +74,7 @@ export const API_ENDPOINTS = {
     ALL_BY_PROJET: (projetId: number) => `/planning/taches/projet/${projetId}/all`,
     MES_TACHES: (userId: number) => `/planning/taches/mes-taches/${userId}`,
     EN_RETARD: '/planning/taches/en-retard',
+    STATS_MES_PROJETS: '/planning/stats/mes-projets',
     DEPENDANCES: '/planning/dependances',
     DEPENDANCES_BY_PROJET: (projetId: number) => `/planning/dependances/projet/${projetId}`,
     DEPENDANCES_BY_TACHE: (tacheId: number) => `/planning/dependances/tache/${tacheId}`,

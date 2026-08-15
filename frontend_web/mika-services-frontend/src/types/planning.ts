@@ -95,6 +95,20 @@ export interface GanttData {
   dependances: DependanceResponse[]
 }
 
+export interface ProjetPlanningStats {
+  projetId: number
+  projetNom: string
+  ville: string | null
+  total: number
+  aFaire: number
+  enCours: number
+  enAttente: number
+  terminees: number
+  annulees: number
+  enRetard: number
+  avancement: number
+}
+
 export interface TacheCreateRequest {
   projetId: number
   titre: string

@@ -5,6 +5,7 @@ import com.mikaservices.platform.modules.planning.dto.request.TacheCreateRequest
 import com.mikaservices.platform.modules.planning.dto.request.TacheUpdateRequest
 import com.mikaservices.platform.modules.planning.dto.response.DependanceResponse
 import com.mikaservices.platform.modules.planning.dto.response.GanttDataResponse
+import com.mikaservices.platform.modules.planning.dto.response.ProjetPlanningStatsResponse
 import com.mikaservices.platform.modules.planning.dto.response.TacheResponse
 import com.mikaservices.platform.modules.planning.service.DependanceService
 import com.mikaservices.platform.modules.planning.service.PlanningService
@@ -52,6 +53,13 @@ class PlanningController(
     @Operation(summary = "Lister les tâches en cours d'un utilisateur (propres tâches ou admin)")
     fun findMesTaches(@PathVariable userId: Long): ResponseEntity<List<TacheResponse>> {
         return ResponseEntity.ok(planningService.findMesTaches(userId))
+    }
+
+    @GetMapping("/stats/mes-projets")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Statistiques planning agrégées par projet (projets accessibles à l'utilisateur)")
+    fun getStatsMesProjets(): ResponseEntity<List<ProjetPlanningStatsResponse>> {
+        return ResponseEntity.ok(planningService.getStatsMesProjets())
     }
 
     @GetMapping("/taches/en-retard")

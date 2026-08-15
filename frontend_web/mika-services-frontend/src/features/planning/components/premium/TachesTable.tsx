@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useFormatDate } from '@/hooks/useFormatDate'
 import { StatutTache, Priorite } from '@/types/planning'
 import type { Tache } from '@/types/planning'
 
@@ -15,40 +14,55 @@ export interface TachesTableProps {
   onEdit: (tache: Tache) => void
   onDelete: (id: number) => void
   onDeleteMultiple?: (ids: number[]) => void
-  colSpanClass?: string
   title?: string
   filterStatuts?: StatutTache[]
 }
 
-const statutDot: Record<StatutTache, string> = {
-  [StatutTache.A_FAIRE]: 'var(--db-t3)',
-  [StatutTache.EN_COURS]: 'var(--db-teal)',
-  [StatutTache.EN_ATTENTE]: 'var(--db-warn)',
-  [StatutTache.TERMINEE]: 'var(--db-success)',
-  [StatutTache.ANNULEE]: 'var(--db-danger)',
+const STATUT_META: Record<StatutTache, { label: string; color: string; soft: string }> = {
+  [StatutTache.A_FAIRE]: { label: 'À faire', color: '#6B7280', soft: 'var(--db-subtle)' },
+  [StatutTache.EN_COURS]: { label: 'En cours', color: 'var(--db-info)', soft: 'var(--db-info-bg2)' },
+  [StatutTache.EN_ATTENTE]: { label: 'En attente', color: 'var(--db-warn)', soft: 'var(--db-warn-bg)' },
+  [StatutTache.TERMINEE]: { label: 'Terminée', color: 'var(--db-success)', soft: 'var(--db-success-bg)' },
+  [StatutTache.ANNULEE]: { label: 'Annulée', color: '#B08078', soft: 'var(--db-subtle)' },
 }
 
-const prioriteColor: Record<Priorite, string> = {
-  [Priorite.BASSE]: 'var(--db-t3)',
-  [Priorite.NORMALE]: 'var(--db-teal)',
-  [Priorite.HAUTE]: 'var(--db-orange)',
-  [Priorite.URGENTE]: 'var(--db-danger)',
-  [Priorite.CRITIQUE]: 'var(--db-danger)',
+const PRIO_META: Record<Priorite, { label: string; color: string; soft: string }> = {
+  [Priorite.BASSE]: { label: 'Basse', color: '#8FA3AD', soft: 'rgba(143,163,173,.16)' },
+  [Priorite.NORMALE]: { label: 'Normale', color: '#6B7280', soft: 'var(--db-subtle)' },
+  [Priorite.HAUTE]: { label: 'Haute', color: 'var(--db-orange)', soft: 'var(--db-orange-soft)' },
+  [Priorite.URGENTE]: { label: 'Urgente', color: '#E4572E', soft: 'rgba(228,87,46,.14)' },
+  [Priorite.CRITIQUE]: { label: 'Critique', color: 'var(--db-danger)', soft: 'var(--db-danger-bg2)' },
+}
+
+function fmtDate(d: string | null): string {
+  if (!d) return '—'
+  const p = d.split('-')
+  if (p.length !== 3) return d
+  return `${p[2]}/${p[1]}/${p[0].slice(2)}`
+}
+
+function initials(name: string | null | undefined): string {
+  if (!name) return '?'
+  return name.split(/[\s.]+/).filter(Boolean).slice(0, 2).map((x) => x[0].toUpperCase()).join('')
+}
+
+function lateDays(tache: Tache): number {
+  if (!tache.dateEcheance) return 0
+  if (tache.statut !== StatutTache.A_FAIRE && tache.statut !== StatutTache.EN_COURS) return 0
+  const diff = Math.floor((Date.now() - new Date(tache.dateEcheance).getTime()) / 86400000)
+  return diff > 0 ? diff : 0
 }
 
 export function TachesTable({
   taches, loading, canEdit, isOnline,
   filterStatut, onFilterChange,
   onStatusChange, onEdit, onDelete, onDeleteMultiple,
-  colSpanClass = 'col-span-12 lg:col-span-6',
   title,
   filterStatuts,
 }: TachesTableProps) {
   const { t } = useTranslation('planning')
-  const formatDate = useFormatDate()
 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
-  // Clear selection when taches change (e.g. after delete)
   useEffect(() => {
     setSelectedIds((prev) => {
       const validIds = new Set(taches.map((t) => t.id))
@@ -57,312 +71,363 @@ export function TachesTable({
     })
   }, [taches])
 
-  const selectionMode = selectedIds.size > 0
-
   const filtered = useMemo(
     () => filterStatut ? taches.filter((task) => task.statut === filterStatut) : taches,
     [taches, filterStatut]
   )
 
-  const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.id))
+  const allSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.id))
+  const hasSelection = selectedIds.size > 0 && canEdit
 
   const toggleSelect = (id: number) => {
     setSelectedIds((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      if (next.has(id)) next.delete(id); else next.add(id)
       return next
     })
   }
-
-  const toggleSelectAll = () => {
-    if (allFilteredSelected) {
-      setSelectedIds(new Set())
-    } else {
-      setSelectedIds(new Set(filtered.map((t) => t.id)))
-    }
+  const toggleAll = () => {
+    if (allSelected) setSelectedIds(new Set())
+    else setSelectedIds(new Set(filtered.map((t) => t.id)))
   }
 
-  const handleDeleteSelected = () => {
-    if (selectedIds.size === 0) return
-    const ids = Array.from(selectedIds)
-    onDeleteMultiple?.(ids)
-    // Selection will be cleared after confirmation via the taches prop change
-  }
+  const isHistory = filterStatuts?.includes(StatutTache.TERMINEE)
+
+  const filterOptions = ['' as const, ...(filterStatuts || Object.values(StatutTache))]
+
+  const chipStyle = (active: boolean) => ({
+    height: 32, padding: '0 10px',
+    borderRadius: 'var(--db-radius-xs)',
+    border: `1px solid ${active ? 'var(--db-orange)' : 'var(--db-border)'}`,
+    background: active ? 'var(--db-orange)' : 'var(--db-card)',
+    color: active ? '#fff' : 'var(--db-t2)',
+    fontSize: 11.5, fontWeight: 700,
+    cursor: 'pointer', whiteSpace: 'nowrap' as const,
+  })
+
+  const gridCols = '34px 1fr 132px 96px 74px 104px 150px 120px'
 
   return (
-    <div
-      className={`${colSpanClass} rounded-xl p-5`}
-      style={{ background: 'var(--db-card)', animation: 'db-rise 380ms ease-out 180ms both' }}
-    >
-      {/* Header + filtres */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
-        <span className="text-sm font-semibold uppercase tracking-wider shrink-0" style={{ color: 'var(--db-t2)' }}>
+    <div style={{
+      background: 'var(--db-card)',
+      border: '1px solid var(--db-border)',
+      borderRadius: 'var(--db-radius)',
+      overflow: 'hidden',
+    }}>
+      {/* Header with filters */}
+      <div style={{
+        padding: '13px 16px',
+        display: 'flex', alignItems: 'center', gap: 10,
+        borderBottom: '1px solid var(--db-border)',
+        flexWrap: 'wrap',
+      }}>
+        <span style={{ fontSize: 13.5, fontWeight: 800 }}>
           {title || t('tasksListTitle')}
-          <span className="ml-2 text-xs font-bold db-num" style={{ color: 'var(--db-t4)' }}>
-            {filtered.length}/{taches.length}
-          </span>
         </span>
-
-        <div className="sm:ml-auto flex items-center gap-1.5 flex-wrap">
-          {['' as const, ...(filterStatuts || Object.values(StatutTache))].map((s) => {
+        <span style={{
+          fontSize: 11, fontWeight: 700, color: 'var(--db-t2)',
+          background: 'var(--db-subtle)',
+          borderRadius: 20, padding: '2px 8px',
+        }}>
+          {filtered.length} / {taches.length}
+        </span>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 5 }}>
+          {filterOptions.map((s) => {
             const isActive = filterStatut === s
             const count = s ? taches.filter((task) => task.statut === s).length : taches.length
+            const label = s === '' ? t('filterAll', { defaultValue: 'Toutes' }) : t(`statut.${s}`)
             return (
-              <button
-                key={s}
-                type="button"
-                onClick={() => onFilterChange(s)}
-                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-all duration-150"
-                style={{
-                  background: isActive ? 'var(--db-t1)' : 'var(--db-subtle)',
-                  color: isActive ? 'var(--db-card)' : 'var(--db-t3)',
-                }}
-              >
-                {s !== '' && <span className="w-1.5 h-1.5 rounded-full" style={{ background: isActive ? 'var(--db-card)' : statutDot[s] }} />}
-                {s === '' ? t('filterAll') : t(`statut.${s}`)}
-                <span className="text-[11px] font-bold db-num" style={{ opacity: 0.6 }}>{count}</span>
+              <button key={s} type="button" onClick={() => onFilterChange(s)} style={chipStyle(isActive)}>
+                {label} {count}
               </button>
             )
           })}
         </div>
       </div>
 
-      {/* Barre de sélection multiple */}
-      {selectionMode && canEdit && (
-        <div
-          className="flex items-center gap-3 px-4 py-2.5 rounded-xl mb-3 border"
-          style={{
-            background: 'color-mix(in srgb, var(--db-danger) 6%, var(--db-card))',
-            borderColor: 'var(--db-danger)',
-            animation: 'db-rise 200ms ease-out both',
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={allFilteredSelected}
-            onChange={toggleSelectAll}
-            className="w-4 h-4 rounded accent-[var(--db-danger)] cursor-pointer"
-          />
-          <span className="text-sm font-semibold" style={{ color: 'var(--db-danger)' }}>
-            {t('selectedCount', { count: selectedIds.size, defaultValue: '{{count}} sélectionnée(s)' })}
+      {/* Selection bar */}
+      {hasSelection && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '10px 16px',
+          background: 'var(--db-orange-soft)',
+          borderBottom: '1px solid var(--db-orange)',
+        }}>
+          <span style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--db-orange)' }}>
+            {selectedIds.size} tâches sélectionnées
           </span>
-          <div className="flex-1" />
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors hover:bg-[var(--db-subtle)]"
-            style={{ color: 'var(--db-t3)' }}
-          >
-            {t('deselectAll', { defaultValue: 'Tout désélectionner' })}
-          </button>
+            style={{
+              height: 28, padding: '0 10px',
+              border: '1px solid var(--db-border-str)',
+              background: 'var(--db-card)', color: 'var(--db-t1)',
+              borderRadius: 'var(--db-radius-xs)',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            }}
+          >Tout désélectionner</button>
           <button
             type="button"
-            onClick={handleDeleteSelected}
+            onClick={() => onDeleteMultiple?.(Array.from(selectedIds))}
             disabled={!isOnline}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-white transition-all hover:opacity-90 disabled:opacity-50"
-            style={{ background: 'var(--db-danger)' }}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            {t('deleteSelected', { defaultValue: 'Supprimer' })}
-          </button>
+            style={{
+              height: 28, padding: '0 10px',
+              border: 0,
+              background: 'var(--db-danger)', color: '#fff',
+              borderRadius: 'var(--db-radius-xs)',
+              fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              marginLeft: 'auto',
+            }}
+          >Supprimer la sélection</button>
         </div>
       )}
 
-      {/* Read-only banner */}
-      {!canEdit && taches.length > 0 && (
-        <div
-          className="flex items-center gap-2.5 text-xs px-4 py-2.5 rounded-lg mb-3 font-medium"
-          style={{ background: 'var(--db-subtle)', color: 'var(--db-t3)' }}
-        >
-          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          {t('readOnlyBanner')}
+      {/* Column headers */}
+      {!loading && filtered.length > 0 && (
+        <div style={{
+          display: 'grid', gridTemplateColumns: gridCols, gap: 10,
+          padding: '9px 16px',
+          background: 'var(--db-subtle)',
+          borderBottom: '1px solid var(--db-border)',
+          fontSize: 10, fontWeight: 700,
+          letterSpacing: '.07em', textTransform: 'uppercase' as const,
+          color: 'var(--db-t3)',
+        }}>
+          <span>
+            {canEdit && onDeleteMultiple && (
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={toggleAll}
+                style={{ width: 16, height: 16, accentColor: '#FF6B35', cursor: 'pointer' }}
+              />
+            )}
+          </span>
+          <span>Tâche</span>
+          <span>Statut</span>
+          <span>Priorité</span>
+          <span>Sem.</span>
+          <span>Échéance</span>
+          <span>Avancement</span>
+          <span>Assigné à</span>
         </div>
       )}
 
       {/* Loading */}
-      {loading ? (
-        <div className="py-16 text-center">
-          <div className="inline-block w-7 h-7 border-2 rounded-full border-t-transparent animate-spin" style={{ borderColor: 'var(--db-teal)', borderTopColor: 'transparent' }} />
-          <p className="mt-3 text-sm" style={{ color: 'var(--db-t3)' }}>{t('loading')}</p>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="py-16 text-center">
-          <div className="w-12 h-12 mx-auto rounded-xl grid place-items-center mb-4" style={{ background: 'var(--db-subtle)' }}>
-            <svg className="w-6 h-6" style={{ color: 'var(--db-t4)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-          </div>
-          <p className="text-sm font-medium" style={{ color: 'var(--db-t2)' }}>{t('empty')}</p>
-          <p className="text-xs mt-1.5" style={{ color: 'var(--db-t4)' }}>{t('emptyHint')}</p>
-        </div>
-      ) : (
-        <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-          {/* Checkbox tout sélectionner en haut de liste */}
-          {canEdit && onDeleteMultiple && filtered.length > 1 && !selectionMode && (
-            <button
-              type="button"
-              onClick={toggleSelectAll}
-              className="flex items-center gap-2 text-xs font-medium px-2 py-1 rounded-lg transition-colors hover:bg-[var(--db-subtle)]"
-              style={{ color: 'var(--db-t4)' }}
-            >
-              <input type="checkbox" checked={false} readOnly className="w-3.5 h-3.5 rounded cursor-pointer" />
-              {t('selectAll', { defaultValue: 'Tout sélectionner' })}
-            </button>
-          )}
-          {filtered.map((tache, idx) => (
-            <div
-              key={tache.id}
-              className={`rounded-xl border p-4 transition-all duration-150 hover:shadow-sm group ${selectedIds.has(tache.id) ? 'ring-2 ring-[var(--db-danger)]/40' : ''}`}
-              style={{
-                borderColor: selectedIds.has(tache.id) ? 'var(--db-danger)' : tache.enRetard ? 'var(--db-danger)' : 'var(--db-border)',
-                background: selectedIds.has(tache.id)
-                  ? 'color-mix(in srgb, var(--db-danger) 4%, var(--db-card))'
-                  : tache.enRetard ? 'color-mix(in srgb, var(--db-danger) 4%, var(--db-card))' : 'var(--db-card)',
-                animation: `db-rise 280ms ease-out ${idx * 20}ms both`,
-              }}
-            >
-              {/* Ligne 1 : Checkbox + Titre + actions */}
-              <div className="flex items-start gap-3">
-                {/* Checkbox de sélection */}
-                {canEdit && onDeleteMultiple && (
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(tache.id)}
-                    onChange={() => toggleSelect(tache.id)}
-                    className="w-4 h-4 mt-1 rounded accent-[var(--db-danger)] cursor-pointer shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150"
-                    style={selectedIds.has(tache.id) ? { opacity: 1 } : undefined}
-                  />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-base leading-snug" style={{ color: 'var(--db-t1)' }}>
-                      {tache.titre}
-                    </span>
-                    {tache.enRetard && (
-                      <span
-                        className="shrink-0 text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                        style={{ background: 'var(--db-danger-bg2)', color: 'var(--db-danger)' }}
-                      >
-                        {t('enRetard')}
-                      </span>
-                    )}
-                  </div>
-                  {(tache.assigneA || tache.description) && (
-                    <p className="text-sm mt-1" style={{ color: 'var(--db-t4)' }}>
-                      {tache.assigneA ? `${tache.assigneA.prenom} ${tache.assigneA.nom}` : ''}
-                      {tache.assigneA && tache.description ? ' · ' : ''}
-                      {tache.description || ''}
-                    </p>
-                  )}
-                </div>
-
-                {/* Actions (visible au hover) */}
-                {canEdit && !selectionMode && (
-                  <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                    <button
-                      type="button"
-                      onClick={() => onEdit(tache)}
-                      disabled={!isOnline}
-                      className="w-8 h-8 rounded-lg grid place-items-center transition-colors hover:bg-[var(--db-subtle)] disabled:opacity-40"
-                      style={{ color: 'var(--db-t3)' }}
-                      title={t('edit')}
-                    >
-                      <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDelete(tache.id)}
-                      disabled={!isOnline}
-                      className="w-8 h-8 rounded-lg grid place-items-center transition-colors hover:bg-[var(--db-subtle)] disabled:opacity-40"
-                      style={{ color: 'var(--db-t3)' }}
-                      title={t('delete')}
-                    >
-                      <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Ligne 2 : Badges */}
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                {/* Statut */}
-                {canEdit ? (
-                  <select
-                    value={tache.statut}
-                    disabled={!isOnline}
-                    onChange={(e) => onStatusChange(tache, e.target.value as StatutTache)}
-                    className="text-sm font-semibold px-3 py-1.5 rounded-full border-none cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-                    style={{ background: 'var(--db-subtle)', color: statutDot[tache.statut] }}
-                  >
-                    {Object.values(StatutTache).map((s) => (
-                      <option key={s} value={s}>{t(`statut.${s}`)}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <span
-                    className="inline-flex items-center gap-1.5 text-sm px-3 py-1 rounded-full font-semibold"
-                    style={{ background: 'var(--db-subtle)', color: statutDot[tache.statut] }}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-current" />
-                    {t(`statut.${tache.statut}`)}
-                  </span>
-                )}
-
-                {/* Priorite */}
-                <span
-                  className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1 rounded-full"
-                  style={{ background: 'var(--db-subtle)', color: prioriteColor[tache.priorite] }}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-                  </svg>
-                  {t(`priorite.${tache.priorite}`)}
-                </span>
-
-                {/* Semaine */}
-                {tache.semaine != null && (
-                  <span className="text-sm font-semibold db-num px-3 py-1 rounded-full" style={{ background: 'var(--db-subtle)', color: 'var(--db-t2)' }}>
-                    S{tache.semaine}/{tache.annee}
-                  </span>
-                )}
-
-                {/* Echeance */}
-                {tache.dateEcheance && (
-                  <span className="text-sm db-num font-medium" style={{ color: tache.enRetard ? 'var(--db-danger)' : 'var(--db-t4)' }}>
-                    {formatDate(tache.dateEcheance, { monthStyle: 'short' })}
-                  </span>
-                )}
-              </div>
-
-              {/* Ligne 3 : Barre d'avancement */}
-              <div className="flex items-center gap-3 mt-3">
-                <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--db-subtle)' }}>
-                  <div
-                    className="h-full rounded-full db-progress-fill"
-                    style={{
-                      width: `${tache.pourcentageAvancement}%`,
-                      background: tache.pourcentageAvancement === 100 ? 'var(--db-success)' : tache.pourcentageAvancement >= 50 ? 'var(--db-teal)' : 'var(--db-warn)',
-                    }}
-                  />
-                </div>
-                <span className="text-sm font-bold db-num shrink-0" style={{ color: 'var(--db-t1)' }}>
-                  {tache.pourcentageAvancement}%
-                </span>
-              </div>
-            </div>
-          ))}
+      {loading && (
+        <div style={{ padding: '48px 0', textAlign: 'center' }}>
+          <div style={{
+            display: 'inline-block', width: 28, height: 28,
+            border: '2px solid var(--db-teal)',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+          }} />
+          <p style={{ marginTop: 12, fontSize: 13, color: 'var(--db-t3)' }}>{t('loading')}</p>
         </div>
       )}
 
+      {/* Empty */}
+      {!loading && filtered.length === 0 && (
+        <div style={{ padding: '48px 16px', textAlign: 'center' }}>
+          <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--db-t2)' }}>{t('empty')}</p>
+          <p style={{ fontSize: 11, color: 'var(--db-t3)', marginTop: 6 }}>{t('emptyHint')}</p>
+        </div>
+      )}
+
+      {/* Rows */}
+      {!loading && filtered.map((tache) => {
+        const sel = selectedIds.has(tache.id)
+        const sm = STATUT_META[tache.statut]
+        const pm = PRIO_META[tache.priorite]
+        const ld = lateDays(tache)
+        const assigneeName = tache.assigneA ? `${tache.assigneA.prenom} ${tache.assigneA.nom}` : 'Non assignée'
+        const ini = initials(tache.assigneA ? `${tache.assigneA.prenom} ${tache.assigneA.nom}` : null)
+
+        const progColor = tache.statut === StatutTache.TERMINEE
+          ? 'var(--db-success)'
+          : tache.statut === StatutTache.EN_COURS
+            ? 'var(--db-teal)'
+            : 'var(--db-orange)'
+
+        return (
+          <div
+            key={tache.id}
+            className="planning-row"
+            style={{
+              display: 'grid', gridTemplateColumns: gridCols, gap: 10,
+              alignItems: 'center',
+              padding: '0 16px', height: 44,
+              borderBottom: '1px solid var(--db-border)',
+              background: sel ? 'var(--db-orange-soft)' : 'transparent',
+              opacity: isHistory ? 0.82 : 1,
+              textDecoration: tache.statut === StatutTache.ANNULEE ? 'line-through' : undefined,
+            }}
+            onMouseEnter={(e) => { if (!sel) e.currentTarget.style.background = 'var(--db-subtle)' }}
+            onMouseLeave={(e) => { if (!sel) e.currentTarget.style.background = 'transparent' }}
+          >
+            {/* Checkbox */}
+            <span>
+              {canEdit && onDeleteMultiple && (
+                <input
+                  type="checkbox"
+                  checked={sel}
+                  onChange={() => toggleSelect(tache.id)}
+                  style={{ width: 16, height: 16, accentColor: '#FF6B35', cursor: 'pointer' }}
+                />
+              )}
+            </span>
+
+            {/* Task name + badges */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              {tache.estJalon && (
+                <span style={{
+                  width: 9, height: 9, minWidth: 9,
+                  background: 'var(--db-teal-dk)',
+                  transform: 'rotate(45deg)',
+                }} />
+              )}
+              <span style={{
+                fontSize: 13, fontWeight: 600,
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{tache.titre}</span>
+              {ld > 0 && (
+                <span style={{
+                  fontSize: 10.5, fontWeight: 800, color: '#fff',
+                  background: 'var(--db-danger)',
+                  borderRadius: 'var(--db-radius-xs)',
+                  padding: '2px 6px', whiteSpace: 'nowrap',
+                }}>⚠ J+{ld}</span>
+              )}
+            </div>
+
+            {/* Status */}
+            <div>
+              {canEdit && !isHistory ? (
+                <select
+                  value={tache.statut}
+                  disabled={!isOnline}
+                  onChange={(e) => onStatusChange(tache, e.target.value as StatutTache)}
+                  style={{
+                    width: '100%', height: 30,
+                    border: `1px solid ${sm.color}`,
+                    borderRadius: 'var(--db-radius-xs)',
+                    background: sm.soft,
+                    color: sm.color,
+                    fontSize: 11.5, fontWeight: 700,
+                    padding: '0 5px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {Object.values(StatutTache).map((s) => (
+                    <option key={s} value={s}>{t(`statut.${s}`)}</option>
+                  ))}
+                </select>
+              ) : (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  fontSize: 11, fontWeight: 700,
+                  color: sm.color, background: sm.soft,
+                  border: `1px solid ${sm.color}`,
+                  borderRadius: 'var(--db-radius-xs)',
+                  padding: '3px 7px', whiteSpace: 'nowrap',
+                }}>{t(`statut.${tache.statut}`)}</span>
+              )}
+            </div>
+
+            {/* Priority */}
+            <div>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                fontSize: 11, fontWeight: tache.priorite === Priorite.CRITIQUE ? 800 : 700,
+                color: tache.priorite === Priorite.CRITIQUE ? '#fff' : pm.color,
+                background: tache.priorite === Priorite.CRITIQUE ? pm.color : pm.soft,
+                border: `1px solid ${pm.color}`,
+                borderRadius: 'var(--db-radius-xs)',
+                padding: '3px 7px', whiteSpace: 'nowrap',
+              }}>{t(`priorite.${tache.priorite}`)}</span>
+            </div>
+
+            {/* Week */}
+            <div style={{ fontSize: 12, color: 'var(--db-t2)', fontVariantNumeric: 'tabular-nums' }}>
+              {tache.semaine ? `S${tache.semaine}·${String(tache.annee ?? '').slice(2)}` : '—'}
+            </div>
+
+            {/* Due date */}
+            <div style={{
+              fontSize: 12,
+              fontWeight: ld > 0 ? 800 : 500,
+              color: ld > 0 ? 'var(--db-danger)' : 'var(--db-t2)',
+              fontVariantNumeric: 'tabular-nums',
+            }}>
+              {fmtDate(tache.dateEcheance)}
+            </div>
+
+            {/* Progress */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1, height: 6, borderRadius: 4, background: 'var(--db-subtle)', overflow: 'hidden' }}>
+                <div style={{
+                  width: `${tache.pourcentageAvancement}%`, height: '100%',
+                  borderRadius: 4, background: progColor,
+                  transition: 'width .5s ease',
+                }} />
+              </div>
+              <span style={{
+                fontSize: 11.5, fontWeight: 700,
+                fontVariantNumeric: 'tabular-nums',
+                minWidth: 32, textAlign: 'right' as const,
+              }}>{tache.pourcentageAvancement}%</span>
+            </div>
+
+            {/* Assignee */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+              <span style={{
+                width: 22, height: 22, minWidth: 22,
+                borderRadius: '50%',
+                background: tache.assigneA ? 'var(--db-teal-dk)' : 'var(--db-subtle)',
+                color: tache.assigneA ? '#fff' : 'var(--db-t3)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 9.5, fontWeight: 800,
+              }}>{ini}</span>
+              <span style={{
+                fontSize: 12, color: 'var(--db-t2)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{assigneeName}</span>
+              {canEdit && !isHistory && (
+                <span className="planning-row-actions" style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onEdit(tache) }}
+                    style={{
+                      width: 28, height: 28,
+                      border: '1px solid var(--db-border)',
+                      background: 'var(--db-card)',
+                      color: 'var(--db-t2)',
+                      borderRadius: 'var(--db-radius-xs)',
+                      fontSize: 12, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >✎</button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onDelete(tache.id) }}
+                    style={{
+                      width: 28, height: 28,
+                      border: '1px solid var(--db-border)',
+                      background: 'var(--db-card)',
+                      color: 'var(--db-t2)',
+                      borderRadius: 'var(--db-radius-xs)',
+                      fontSize: 12, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >✕</button>
+                </span>
+              )}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

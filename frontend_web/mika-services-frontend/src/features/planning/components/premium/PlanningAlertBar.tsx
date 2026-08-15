@@ -7,21 +7,6 @@ export interface PlanningAlertBarProps {
   selectedProjetId: number | null
 }
 
-function Item({ value, label, variant }: { value: number; label: string; variant: 'danger' | 'warn' | 'muted' }) {
-  const colorMap = { danger: 'var(--db-danger)', warn: 'var(--db-warn)', muted: 'var(--db-t1)' }
-  return (
-    <span className="inline-flex items-baseline gap-2 px-4 text-sm" style={{ color: 'var(--db-t2)' }}>
-      <span
-        className="font-bold text-base db-num db-tight"
-        style={{ color: colorMap[variant], animation: value > 0 ? 'db-alert-ping 2s ease-in-out infinite' : undefined }}
-      >
-        {value}
-      </span>
-      {label}
-    </span>
-  )
-}
-
 export function PlanningAlertBar({ tachesEnRetard, selectedProjetId }: PlanningAlertBarProps) {
   const { t } = useTranslation('planning')
 
@@ -34,28 +19,50 @@ export function PlanningAlertBar({ tachesEnRetard, selectedProjetId }: PlanningA
   const critiques = filtered.filter((tr) => tr.priorite === Priorite.CRITIQUE || tr.priorite === Priorite.URGENTE).length
   const hautes = filtered.filter((tr) => tr.priorite === Priorite.HAUTE).length
 
+  const chips = [
+    critiques > 0 && `${critiques} critiques / urgentes`,
+    hautes > 0 && `${hautes} haute priorité`,
+  ].filter(Boolean) as string[]
+
   return (
-    <div
-      className="flex flex-wrap items-center gap-2 rounded-xl px-4 py-3 mb-3 overflow-hidden"
-      style={{ background: 'var(--db-card)', animation: 'db-rise 380ms ease-out 30ms both' }}
-    >
-      <span
-        className="text-xs uppercase tracking-widest pr-3 mr-1 border-r font-semibold shrink-0"
-        style={{ color: 'var(--db-t4)', borderColor: 'var(--db-border)' }}
-      >
-        {t('alertesLabel', { defaultValue: 'Alertes' })}
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 14,
+      background: 'var(--db-danger-bg2)',
+      border: '1px solid var(--db-danger)',
+      borderRadius: 'var(--db-radius)',
+      padding: '12px 16px',
+    }}>
+      <span style={{
+        width: 9, height: 9, minWidth: 9, borderRadius: '50%',
+        background: 'var(--db-danger)',
+        animation: 'mkPulse 1.8s ease-in-out infinite',
+      }} />
+      <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--db-danger)' }}>
+        {filtered.length} {t('kpiEnRetard', { defaultValue: 'tâches en retard' })}
       </span>
-
-      <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
-        <Item value={filtered.length} label={t('kpiEnRetard')} variant="danger" />
-        {critiques > 0 && <Item value={critiques} label={t('alertesCritiques', { defaultValue: 'critiques' })} variant="danger" />}
-        {hautes > 0 && <Item value={hautes} label={t('priorite.HAUTE')} variant="warn" />}
+      <div style={{ display: 'flex', gap: 7 }}>
+        {chips.map((label) => (
+          <span key={label} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            fontSize: 11, fontWeight: 700,
+            color: 'var(--db-danger)', background: 'transparent',
+            border: '1px solid var(--db-danger)',
+            borderRadius: 'var(--db-radius-xs)', padding: '3px 7px',
+            whiteSpace: 'nowrap',
+          }}>{label}</span>
+        ))}
       </div>
-
-      <span className="ml-auto hidden sm:inline-flex items-center gap-2 text-xs uppercase tracking-widest font-medium" style={{ color: 'var(--db-t3)' }}>
-        <span className="w-2 h-2 rounded-full" style={{ background: 'var(--db-danger)', animation: 'db-pulse 2s infinite' }} />
-        {t('kpiEnRetardSub')}
+      <span style={{ fontSize: 12, color: 'var(--db-t2)' }}>
+        À traiter en priorité — l'échéance contractuelle est dépassée.
       </span>
+      <button style={{
+        marginLeft: 'auto', height: 34, padding: '0 12px',
+        border: '1px solid var(--db-danger)',
+        background: 'transparent',
+        color: 'var(--db-danger)',
+        borderRadius: 'var(--db-radius-xs)',
+        fontSize: 12, fontWeight: 700, cursor: 'pointer',
+      }}>Voir les retards</button>
     </div>
   )
 }

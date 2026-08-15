@@ -13,6 +13,7 @@ import {
   createTache,
   updateTache,
   deleteTache,
+  fetchProjetStats,
 } from '@/store/slices/planningSlice'
 import { fetchProjets, fetchProjetsByResponsable } from '@/store/slices/projetSlice'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -22,8 +23,9 @@ import { canEditProjetEffective } from '@/utils/authRoles'
 import { fetchUsers } from '@/store/slices/userSlice'
 import { dqeApi } from '@/api/dqeApi'
 import type { DqeChapitre } from '@/types/dqe'
+import { exportPlanningExcel } from '../utils/exportPlanningExcel'
 
-// ---------- Suggestions predefinies BTP (identiques a ProjetFormPage) ----------
+// ---------- Suggestions predefinies BTP ----------
 const PREVISION_DESCRIPTION_OPTIONS: { value: string; label: string; group: string }[] = [
   { value: 'Terrassement général', label: 'Terrassement général', group: 'Travaux' },
   { value: 'Décapage', label: 'Décapage', group: 'Travaux' },
@@ -73,11 +75,10 @@ export default function PlanningPage() {
 
   const currentUser = useAppSelector((s) => s.auth.user)
   const accessToken = useAppSelector((s) => s.auth.accessToken)
-  const { taches, tachesEnRetard, mesTaches, loading } = useAppSelector((s) => s.planning)
+  const { taches, tachesEnRetard, mesTaches, projetStats, loading } = useAppSelector((s) => s.planning)
   const projetsPaginated = useAppSelector((s) => s.projet.projets)
   const mesProjets = useAppSelector((s) => s.projet.mesProjets)
 
-  // Fusionner projets paginés + mesProjets pour garantir une liste complète sans doublons
   const allProjets = useMemo(() => {
     const map = new Map<number, typeof projetsPaginated[0]>()
     for (const p of projetsPaginated) map.set(p.id, p)
@@ -85,11 +86,9 @@ export default function PlanningPage() {
     return Array.from(map.values())
   }, [projetsPaginated, mesProjets])
 
-  // Persister le projet sélectionné dans l'URL (?projet=14) pour survivre au HMR et refresh
   const [searchParams, setSearchParams] = useSearchParams()
   const initialProjetId = searchParams.get('projet') ? Number(searchParams.get('projet')) : null
   const [selectedProjetId, setSelectedProjetIdRaw] = useState<number | null>(initialProjetId)
-  // Ref stable pour utiliser dans les handlers async (évite que la closure capture une ancienne valeur)
   const selectedProjetIdRef = useRef(selectedProjetId)
   selectedProjetIdRef.current = selectedProjetId
 
@@ -105,15 +104,12 @@ export default function PlanningPage() {
   const [dependances, setDependances] = useState<DependanceResponse[]>([])
   const [cheminCritique, setCheminCritique] = useState<number[]>([])
 
-  // Users for assignee
   const allUsers = useAppSelector((s) => s.user.users)
 
-  // DQE chapitres for suggestions
   const [dqeChapitres, setDqeChapitres] = useState<DqeChapitre[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const suggestionsRef = useRef<HTMLDivElement>(null)
 
-  // Fermer suggestions au clic exterieur
   useEffect(() => {
     if (!showSuggestions) return
     const handler = (e: MouseEvent) => {
@@ -139,14 +135,19 @@ export default function PlanningPage() {
   const [formAnnee, setFormAnnee] = useState<string>('')
   const [formTypePrevision, setFormTypePrevision] = useState<string>('')
   const [formTacheParentId, setFormTacheParentId] = useState<string>('')
+  const [formEstJalon, setFormEstJalon] = useState(false)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
+  const [bulkDeleteIds, setBulkDeleteIds] = useState<number[]>([])
+  const [bulkConfirmed, setBulkConfirmed] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   // ---------- Data loading ----------
   useEffect(() => {
     dispatch(fetchProjets({ size: 200 }))
     dispatch(fetchTachesEnRetard())
     dispatch(fetchUsers({ size: 200 }))
+    dispatch(fetchProjetStats())
     if (currentUser?.id) {
       dispatch(fetchProjetsByResponsable(currentUser.id))
       dispatch(fetchMesTaches(currentUser.id))
@@ -158,7 +159,6 @@ export default function PlanningPage() {
       dispatch(fetchTachesByProjet({ projetId: selectedProjetId }))
       setFilterStatut('')
       dqeApi.findByProjet(selectedProjetId).then(setDqeChapitres).catch(() => setDqeChapitres([]))
-      // Load dependances for Gantt
       planningApi.getDependancesByProjet(selectedProjetId).then(setDependances).catch(() => setDependances([]))
       planningApi.getCheminCritique(selectedProjetId).then((t) => setCheminCritique(t.map((x) => x.id))).catch(() => setCheminCritique([]))
     } else {
@@ -178,15 +178,22 @@ export default function PlanningPage() {
     [currentUser, accessToken, selectedProjet]
   )
 
-  // ---------- Global KPIs (from mesTaches + tachesEnRetard) ----------
+  // ---------- KPIs ----------
   const globalKpis = useMemo(() => {
-    // Combine mesTaches (active for user) + tachesEnRetard for broader counts
+    if (projetStats.length > 0) {
+      return {
+        total: projetStats.reduce((s, p) => s + p.total, 0),
+        aFaire: projetStats.reduce((s, p) => s + p.aFaire, 0),
+        enCours: projetStats.reduce((s, p) => s + p.enCours, 0),
+        terminees: projetStats.reduce((s, p) => s + p.terminees, 0),
+        enRetard: projetStats.reduce((s, p) => s + p.enRetard, 0),
+        projetsCount: projetStats.length,
+      }
+    }
     const allKnown = [...mesTaches]
-    // Add retard tasks not already in mesTaches
     for (const tr of tachesEnRetard) {
       if (!allKnown.some((t) => t.id === tr.id)) allKnown.push(tr)
     }
-    // Count unique projects
     const uniqueProjects = new Set(allKnown.map((t) => t.projetId))
     return {
       total: allKnown.length,
@@ -196,9 +203,18 @@ export default function PlanningPage() {
       enRetard: tachesEnRetard.length,
       projetsCount: uniqueProjects.size,
     }
-  }, [mesTaches, tachesEnRetard])
+  }, [projetStats, mesTaches, tachesEnRetard])
 
   const globalDonut = useMemo(() => {
+    if (projetStats.length > 0) {
+      return {
+        [StatutTache.A_FAIRE]: projetStats.reduce((s, p) => s + p.aFaire, 0),
+        [StatutTache.EN_COURS]: projetStats.reduce((s, p) => s + p.enCours, 0),
+        [StatutTache.EN_ATTENTE]: projetStats.reduce((s, p) => s + p.enAttente, 0),
+        [StatutTache.TERMINEE]: projetStats.reduce((s, p) => s + p.terminees, 0),
+        [StatutTache.ANNULEE]: projetStats.reduce((s, p) => s + p.annulees, 0),
+      }
+    }
     const allKnown = [...mesTaches]
     for (const tr of tachesEnRetard) {
       if (!allKnown.some((t) => t.id === tr.id)) allKnown.push(tr)
@@ -210,9 +226,8 @@ export default function PlanningPage() {
       [StatutTache.TERMINEE]: allKnown.filter((t) => t.statut === StatutTache.TERMINEE).length,
       [StatutTache.ANNULEE]: allKnown.filter((t) => t.statut === StatutTache.ANNULEE).length,
     }
-  }, [mesTaches, tachesEnRetard])
+  }, [projetStats, mesTaches, tachesEnRetard])
 
-  // ---------- Project-level KPIs ----------
   const projectKpis = useMemo(() => ({
     total: taches.length,
     aFaire: taches.filter((t) => t.statut === StatutTache.A_FAIRE).length,
@@ -221,7 +236,29 @@ export default function PlanningPage() {
     enRetard: tachesEnRetard.filter((t) => t.projetId === selectedProjetId).length,
   }), [taches, tachesEnRetard, selectedProjetId])
 
-  // Séparer tâches actives / historique (terminées + annulées)
+  // ---------- Export Excel ----------
+  const handleExportExcel = useCallback(async () => {
+    if (exporting) return
+    setExporting(true)
+    try {
+      // Charger toutes les taches de tous les projets accessibles
+      const projetIds = projetStats.length > 0
+        ? projetStats.map((p) => p.projetId)
+        : allProjets.map((p) => p.id)
+      const allTachesPromises = projetIds.map((id) => planningApi.getAllTachesByProjet(id).catch(() => []))
+      const results = await Promise.all(allTachesPromises)
+      const allTaches = results.flat()
+
+      await exportPlanningExcel(projetStats, tachesEnRetard, allTaches)
+      toast({ message: 'Fichier Excel genere avec succes', variant: 'success' })
+    } catch (err) {
+      console.error('Export Excel error:', err)
+      toast({ message: 'Erreur lors de la generation du fichier Excel', variant: 'error' })
+    } finally {
+      setExporting(false)
+    }
+  }, [exporting, projetStats, allProjets, tachesEnRetard, toast])
+
   const triParSemaine = (a: Tache, b: Tache) => {
     const aAbs = (a.annee ?? 9999) * 53 + (a.semaine ?? 99)
     const bAbs = (b.annee ?? 9999) * 53 + (b.semaine ?? 99)
@@ -249,16 +286,16 @@ export default function PlanningPage() {
     [StatutTache.ANNULEE]: taches.filter((t) => t.statut === StatutTache.ANNULEE).length,
   }), [taches, projectKpis])
 
-  // ---------- Suggestions (titre) ----------
+  // ---------- Suggestions ----------
   const suggestionGroups = useMemo(() => {
     const q = formTitre.toLowerCase()
-    const groups: { label: string; items: { value: string; label: string }[] }[] = []
+    const groups: { label: string; source: string; color: string; items: { value: string; label: string }[] }[] = []
 
     for (const g of SUGGESTION_GROUPS) {
       const items = PREVISION_DESCRIPTION_OPTIONS
         .filter((o) => o.group === g)
         .filter((o) => !q || o.label.toLowerCase().includes(q))
-      if (items.length > 0) groups.push({ label: g, items })
+      if (items.length > 0) groups.push({ label: g, source: 'référentiel BTP', color: 'var(--db-orange)', items })
     }
 
     for (const chap of dqeChapitres) {
@@ -268,7 +305,7 @@ export default function PlanningPage() {
           label: `${l.numeroPoste ?? ''} — ${l.designation}${l.unite ? ` (${l.unite})` : ''}`,
         }))
         .filter((o) => !q || o.label.toLowerCase().includes(q))
-      if (items.length > 0) groups.push({ label: `DQE — Chap. ${chap.numero} ${chap.designation}`, items })
+      if (items.length > 0) groups.push({ label: `DQE — Chap. ${chap.numero} ${chap.designation}`, source: 'DQE du projet', color: 'var(--db-teal)', items })
     }
 
     return groups
@@ -289,13 +326,13 @@ export default function PlanningPage() {
     setFormAnnee('')
     setFormTypePrevision('')
     setFormTacheParentId('')
+    setFormEstJalon(false)
     setFormErrors({})
     setEditingTache(null)
   }
 
   const openCreate = () => {
     resetForm()
-    // Auto-remplir semaine et année courantes
     const now = new Date()
     const startOfYear = new Date(now.getFullYear(), 0, 1)
     const days = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000)
@@ -320,12 +357,11 @@ export default function PlanningPage() {
     setFormAnnee(tache.annee != null ? String(tache.annee) : '')
     setFormTypePrevision(tache.typePrevision ?? '')
     setFormTacheParentId(tache.tacheParentId != null ? String(tache.tacheParentId) : '')
+    setFormEstJalon(tache.estJalon)
     setFormErrors({})
     setShowModal(true)
   }
 
-  // Rafraîchir les données secondaires sans toucher aux tâches du projet (déjà à jour dans le reducer)
-  // Les erreurs sont silencieusement ignorées pour éviter un logout en cascade (401 → redirect)
   const refreshSecondaryData = () => {
     dispatch(fetchTachesEnRetard()).catch((e: unknown) => console.error('fetchTachesEnRetard failed', e))
     if (currentUser?.id) dispatch(fetchMesTaches(currentUser.id)).catch((e: unknown) => console.error('fetchMesTaches failed', e))
@@ -335,7 +371,6 @@ export default function PlanningPage() {
     if (!selectedProjetId || !formTitre.trim() || submitting) return
     setSubmitting(true)
 
-    // Validation côté client
     const errors: Record<string, string> = {}
     if (formDateDebut && formDateFin && formDateFin < formDateDebut) {
       errors.dateFin = t('validationDateFinAvantDebut', { defaultValue: 'La date de fin ne peut pas être antérieure à la date de début' })
@@ -345,11 +380,11 @@ export default function PlanningPage() {
     }
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors)
+      setSubmitting(false)
       return
     }
     setFormErrors({})
 
-    // Si semaine ou annee renseignee, forcer typePrevision par defaut
     const effectiveTypePrevision = (formTypePrevision as TypePrevision)
       || ((formSemaine || formAnnee) ? TypePrevision.HEBDOMADAIRE : undefined)
 
@@ -368,6 +403,7 @@ export default function PlanningPage() {
         annee: formAnnee ? Number(formAnnee) : undefined,
         typePrevision: effectiveTypePrevision,
         tacheParentId: formTacheParentId ? Number(formTacheParentId) : undefined,
+        estJalon: formEstJalon,
       }
       await dispatch(updateTache({ id: editingTache.id, request: req }))
       toast({ message: t('modalUpdateSuccess'), variant: 'success' })
@@ -387,13 +423,13 @@ export default function PlanningPage() {
         typePrevision: effectiveTypePrevision,
         pourcentageAvancement: formAvancement || undefined,
         tacheParentId: formTacheParentId ? Number(formTacheParentId) : undefined,
+        estJalon: formEstJalon,
       }
       await dispatch(createTache(req))
       toast({ message: t('modalCreateSuccess'), variant: 'success' })
     }
     setShowModal(false)
     resetForm()
-    // Recharger les tâches du projet pour avoir la liste à jour du serveur (pagination, tri)
     const pid = selectedProjetIdRef.current
     if (pid) dispatch(fetchTachesByProjet({ projetId: pid })).catch(() => {})
     refreshSecondaryData()
@@ -406,7 +442,6 @@ export default function PlanningPage() {
     } catch {
       toast({ message: t('updateError', { defaultValue: 'Erreur lors de la mise à jour.' }), variant: 'error' })
     }
-    // Le reducer met à jour la tâche localement — pas besoin de recharger fetchTachesByProjet
     refreshSecondaryData()
   }
 
@@ -418,32 +453,47 @@ export default function PlanningPage() {
     } catch {
       toast({ message: t('deleteError', { defaultValue: 'Erreur lors de la suppression. Veuillez réessayer.' }), variant: 'error' })
     }
-    // Toujours re-fetch pour resynchroniser le cache Workbox avec le serveur
-    // Utiliser la ref pour garantir que l'ID projet est stable même après re-render
     const pid = selectedProjetIdRef.current
     if (pid) dispatch(fetchTachesByProjet({ projetId: pid })).catch(() => {})
     refreshSecondaryData()
   }
 
-  const handleDeleteMultiple = async (ids: number[]) => {
+  const handleDeleteMultiple = (ids: number[]) => {
     if (ids.length === 0) return
-    const confirmed = await confirm({
-      messageKey: 'confirm.deleteMultipleTasks',
-      messageParams: { count: String(ids.length) },
-      variant: 'danger',
-    })
-    if (!confirmed) return
-    const results = await Promise.allSettled(ids.map((id) => dispatch(deleteTache(id)).unwrap()))
+    setBulkDeleteIds(ids)
+    setBulkConfirmed(false)
+  }
+
+  const executeBulkDelete = async () => {
+    if (bulkDeleteIds.length === 0) return
+    const results = await Promise.allSettled(bulkDeleteIds.map((id) => dispatch(deleteTache(id)).unwrap()))
     const failed = results.filter((r) => r.status === 'rejected').length
     if (failed === 0) {
-      toast({ message: t('deleteMultipleSuccess', { count: ids.length, defaultValue: '{{count}} tâche(s) supprimée(s)' }), variant: 'success' })
+      toast({ message: t('deleteMultipleSuccess', { count: bulkDeleteIds.length, defaultValue: '{{count}} tâche(s) supprimée(s)' }), variant: 'success' })
     } else {
       toast({ message: t('deleteMultiplePartial', { failed, defaultValue: `${failed} tâche(s) n'ont pas pu être supprimée(s)` }), variant: 'error' })
     }
-    // Re-fetch pour resynchroniser
+    setBulkDeleteIds([])
+    setBulkConfirmed(false)
     const pid = selectedProjetIdRef.current
     if (pid) dispatch(fetchTachesByProjet({ projetId: pid })).catch(() => {})
     refreshSecondaryData()
+  }
+
+  // ---------- Modal input styles ----------
+  const inputStyle: React.CSSProperties = {
+    width: '100%', height: 36,
+    border: '1px solid var(--db-border-str)',
+    borderRadius: 'var(--db-radius-xs)',
+    background: 'var(--db-card)',
+    color: 'var(--db-t1)',
+    fontSize: 12.5, fontWeight: 500,
+    padding: '0 9px',
+  }
+  const labelStyle: React.CSSProperties = {
+    display: 'block', fontSize: 11, fontWeight: 700,
+    letterSpacing: '.06em', textTransform: 'uppercase',
+    color: 'var(--db-t2)', marginBottom: 6,
   }
 
   // ---------- Render ----------
@@ -457,9 +507,15 @@ export default function PlanningPage() {
     )
   }
 
+  const viewTabs = [
+    { id: 'table' as PlanningView, label: t('viewTable', { defaultValue: 'Tableau' }) },
+    { id: 'gantt' as PlanningView, label: t('viewGantt', { defaultValue: 'Gantt' }) },
+    { id: 'kanban' as PlanningView, label: t('viewKanban', { defaultValue: 'Kanban' }) },
+  ]
+
   return (
-    <PageContainer size="full" className="pb-8" style={{ background: 'var(--db-page)' }}>
-      <div className="px-1 sm:px-2">
+    <PageContainer size="full" className="pb-8 planning-focus" style={{ background: 'var(--db-page)' }}>
+      <div style={{ padding: '20px 24px 34px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Header */}
         <PlanningHeader
@@ -468,149 +524,364 @@ export default function PlanningPage() {
           onSelectProjet={setSelectedProjetId}
           canEdit={canEdit}
           onNewTask={openCreate}
+          readOnly={!!selectedProjetId && !canEdit}
+          onExport={handleExportExcel}
+          exporting={exporting}
         />
 
-        {/* Alert bar — toujours visible si retards */}
+        {/* Alert bar */}
         <PlanningAlertBar
           tachesEnRetard={tachesEnRetard}
           selectedProjetId={selectedProjetId}
         />
 
-        {/* ========== VUE GLOBALE (aucun projet selectionne) ========== */}
-        {!selectedProjetId && (
-          <div className="grid grid-cols-12 gap-3">
-            {/* KPIs globaux */}
-            <PlanningKpiRow {...globalKpis} />
-
-            {/* Retards globaux (8) + Donut global (4) */}
-            <TachesRetardList taches={tachesEnRetard} selectedProjetId={null} />
-            <PlanningDonut counts={globalDonut} />
-
-            {/* Priorités globales (si des taches connues) */}
-            {(mesTaches.length > 0 || tachesEnRetard.length > 0) && (
-              <div className="col-span-12 lg:col-span-4 lg:col-start-9">
-                {/* Inline PrioriteBars for global */}
-              </div>
-            )}
-
-            {/* Invite a selectionner un projet */}
-            {tachesEnRetard.length === 0 && mesTaches.length === 0 && (
-              <div
-                className="col-span-12 rounded-xl p-12 text-center"
-                style={{ background: 'var(--db-card)', animation: 'db-rise 380ms ease-out 120ms both' }}
-              >
-                <div className="w-14 h-14 mx-auto rounded-xl grid place-items-center mb-4" style={{ background: 'var(--db-subtle)' }}>
-                  <svg className="w-7 h-7" style={{ color: 'var(--db-t4)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <p className="text-base font-medium" style={{ color: 'var(--db-t2)' }}>
-                  {t('selectProjectHint', { defaultValue: 'Sélectionnez un projet pour voir ses tâches en détail' })}
-                </p>
-                <p className="text-sm mt-2" style={{ color: 'var(--db-t4)' }}>
-                  {t('headerDescription')}
-                </p>
-              </div>
-            )}
-          </div>
+        {/* KPIs */}
+        {!selectedProjetId ? (
+          <PlanningKpiRow {...globalKpis} />
+        ) : (
+          <PlanningKpiRow {...projectKpis} />
         )}
 
-        {/* ========== VUE PROJET (projet selectionne) ========== */}
-        {selectedProjetId && (
-          <div className="grid grid-cols-12 gap-3">
-            {/* Row 1: KPIs projet */}
-            <PlanningKpiRow {...projectKpis} />
+        {/* ========== GLOBAL VIEW ========== */}
+        {!selectedProjetId && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 16, alignItems: 'start' }}>
+            {/* Left: project list + overdue */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Call to action */}
+              <div style={{
+                background: 'var(--db-card)', border: '1px solid var(--db-border)',
+                borderRadius: 'var(--db-radius)', padding: '22px 24px',
+                display: 'flex', gap: 22, alignItems: 'center',
+              }}>
+                <div style={{
+                  width: 56, height: 56, minWidth: 56,
+                  borderRadius: 'var(--db-radius)',
+                  background: 'var(--db-orange-soft)',
+                  border: '1px solid var(--db-orange)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 24, color: 'var(--db-orange)', fontWeight: 700,
+                }}>↗</div>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 800 }}>
+                    Sélectionnez un projet pour commencer la planification
+                  </div>
+                  <div style={{ fontSize: 12.5, color: 'var(--db-t2)', marginTop: 5, maxWidth: 620, lineHeight: 1.5 }}>
+                    Cette vue globale rassemble vos responsabilités sur l'ensemble de vos chantiers. Choisissez un projet dans le sélecteur ci-dessus pour accéder au planning détaillé — tableau, Gantt, Kanban, dépendances et chemin critique.
+                  </div>
+                </div>
+              </div>
 
-            {/* View tabs */}
-            <div className="col-span-12 flex items-center gap-1 rounded-xl p-1" style={{ background: 'var(--db-subtle)' }}>
-              {([
-                { id: 'table' as PlanningView, label: t('viewTable', { defaultValue: 'Tableau' }), icon: 'M3 4h18M3 8h18M3 12h18M3 16h18M3 20h18' },
-                { id: 'gantt' as PlanningView, label: t('viewGantt', { defaultValue: 'Gantt' }), icon: 'M3 6h13M3 12h8M3 18h18' },
-                { id: 'kanban' as PlanningView, label: t('viewKanban', { defaultValue: 'Kanban' }), icon: 'M9 3v18M15 3v18M3 3h18v18H3z' },
-              ]).map((v) => (
-                <button
-                  key={v.id}
-                  onClick={() => setActiveView(v.id)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                  style={{
-                    background: activeView === v.id ? 'var(--db-card)' : 'transparent',
-                    color: activeView === v.id ? 'var(--db-t1)' : 'var(--db-t4)',
-                    boxShadow: activeView === v.id ? '0 1px 3px rgba(0,0,0,0.1)' : undefined,
-                  }}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d={v.icon} />
-                  </svg>
-                  {v.label}
-                </button>
-              ))}
-              {cheminCritique.length > 0 && activeView === 'gantt' && (
-                <span className="ml-auto text-[10px] font-semibold px-2 py-1 rounded-md" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
-                  {t('cheminCritique', { defaultValue: 'Chemin critique' })}: {cheminCritique.length} {t('taches', { defaultValue: 'taches' })}
-                </span>
+              {/* Project list */}
+              <div style={{
+                background: 'var(--db-card)', border: '1px solid var(--db-border)',
+                borderRadius: 'var(--db-radius)', overflow: 'hidden',
+              }}>
+                <div style={{
+                  padding: '14px 18px', borderBottom: '1px solid var(--db-border)',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <span style={{ fontSize: 13.5, fontWeight: 800 }}>Mes projets accessibles</span>
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, color: 'var(--db-t2)',
+                    background: 'var(--db-subtle)', borderRadius: 20, padding: '2px 8px',
+                  }}>{projetStats.length > 0 ? projetStats.length : allProjets.length}</span>
+                </div>
+                {(projetStats.length > 0 ? projetStats : allProjets.map((p) => ({
+                  projetId: p.id, projetNom: p.nom, ville: p.ville ?? null,
+                  total: 0, aFaire: 0, enCours: 0, enAttente: 0, terminees: 0, annulees: 0, enRetard: 0, avancement: 0,
+                }))).map((ps) => (
+                    <div
+                      key={ps.projetId}
+                      onClick={() => setSelectedProjetId(ps.projetId)}
+                      style={{
+                        display: 'grid', gridTemplateColumns: '1fr 90px 90px 110px 150px',
+                        gap: 12, alignItems: 'center',
+                        padding: '13px 18px',
+                        borderBottom: '1px solid var(--db-border)',
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--db-subtle)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700 }}>{ps.projetNom}</div>
+                        <div style={{ fontSize: 11, color: 'var(--db-t3)', marginTop: 2 }}>{ps.ville || ''}</div>
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--db-t2)' }}>
+                        <b style={{ color: 'var(--db-t1)', fontSize: 13 }}>{ps.total}</b> tâches
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--db-t2)' }}>
+                        <b style={{ color: 'var(--db-t1)', fontSize: 13 }}>{ps.enCours}</b> en cours
+                      </div>
+                      <div style={{
+                        fontSize: 11.5, fontWeight: 700,
+                        color: ps.enRetard > 0 ? 'var(--db-danger)' : 'var(--db-success)',
+                        background: ps.enRetard > 0 ? 'var(--db-danger-bg2)' : 'var(--db-success-bg)',
+                        border: `1px solid ${ps.enRetard > 0 ? 'var(--db-danger)' : 'var(--db-success)'}`,
+                        borderRadius: 'var(--db-radius-xs)', padding: '3px 7px', textAlign: 'center',
+                      }}>
+                        {ps.enRetard > 0 ? `${ps.enRetard} en retard` : 'à jour'}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ flex: 1, height: 6, borderRadius: 4, background: 'var(--db-subtle)', overflow: 'hidden' }}>
+                          <div style={{ width: `${ps.avancement}%`, height: '100%', borderRadius: 4, background: 'var(--db-teal)' }} />
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{ps.avancement}%</span>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+
+              {/* Global overdue table */}
+              {tachesEnRetard.length > 0 && (
+                <div style={{
+                  background: 'var(--db-card)', border: '1px solid var(--db-border)',
+                  borderRadius: 'var(--db-radius)', overflow: 'hidden',
+                }}>
+                  <div style={{
+                    padding: '14px 18px', borderBottom: '1px solid var(--db-border)',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                  }}>
+                    <span style={{
+                      width: 8, height: 8, borderRadius: '50%',
+                      background: 'var(--db-danger)',
+                      animation: 'mkPulse 1.8s ease-in-out infinite',
+                    }} />
+                    <span style={{ fontSize: 13.5, fontWeight: 800 }}>Mes tâches en retard — tous projets</span>
+                    <span style={{
+                      fontSize: 11, fontWeight: 700, color: '#fff',
+                      background: 'var(--db-danger)', borderRadius: 20, padding: '2px 8px',
+                    }}>{tachesEnRetard.length}</span>
+                  </div>
+                  <div style={{
+                    display: 'grid', gridTemplateColumns: '30px 1fr 200px 70px 100px 110px',
+                    gap: 12, padding: '9px 18px',
+                    background: 'var(--db-subtle)',
+                    borderBottom: '1px solid var(--db-border)',
+                    fontSize: 10, fontWeight: 700,
+                    letterSpacing: '.07em', textTransform: 'uppercase' as const,
+                    color: 'var(--db-t3)',
+                  }}>
+                    <span /><span>Tâche</span><span>Projet</span><span>Sem.</span><span>Priorité</span><span>Échéance</span>
+                  </div>
+                  {tachesEnRetard.slice(0, 5).map((tr) => {
+                    const pc = {
+                      [Priorite.BASSE]: { color: '#8FA3AD', soft: 'rgba(143,163,173,.16)' },
+                      [Priorite.NORMALE]: { color: '#6B7280', soft: 'var(--db-subtle)' },
+                      [Priorite.HAUTE]: { color: 'var(--db-orange)', soft: 'var(--db-orange-soft)' },
+                      [Priorite.URGENTE]: { color: '#E4572E', soft: 'rgba(228,87,46,.14)' },
+                      [Priorite.CRITIQUE]: { color: 'var(--db-danger)', soft: 'var(--db-danger-bg2)' },
+                    }[tr.priorite]
+                    return (
+                      <div
+                        key={tr.id}
+                        style={{
+                          display: 'grid', gridTemplateColumns: '30px 1fr 200px 70px 100px 110px',
+                          gap: 12, alignItems: 'center',
+                          padding: '11px 18px',
+                          borderBottom: '1px solid var(--db-border)',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--db-subtle)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <span style={{
+                          width: 8, height: 8, borderRadius: '50%',
+                          background: 'var(--db-danger)',
+                          animation: 'mkPulse 1.8s ease-in-out infinite',
+                        }} />
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{tr.titre}</div>
+                        <div style={{ fontSize: 12, color: 'var(--db-t2)' }}>{tr.projetNom}</div>
+                        <div style={{ fontSize: 12, color: 'var(--db-t2)', fontVariantNumeric: 'tabular-nums' }}>
+                          {tr.semaine ? `S${tr.semaine}·${String(tr.annee ?? '').slice(2)}` : '—'}
+                        </div>
+                        <div>
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 5,
+                            fontSize: 11, fontWeight: tr.priorite === Priorite.CRITIQUE ? 800 : 700,
+                            color: tr.priorite === Priorite.CRITIQUE ? '#fff' : pc.color,
+                            background: tr.priorite === Priorite.CRITIQUE ? pc.color : pc.soft,
+                            border: `1px solid ${pc.color}`,
+                            borderRadius: 'var(--db-radius-xs)', padding: '3px 7px',
+                          }}>{t(`priorite.${tr.priorite}`)}</span>
+                        </div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--db-danger)', fontVariantNumeric: 'tabular-nums' }}>
+                          {tr.dateEcheance ? `${tr.dateEcheance.split('-')[2]}/${tr.dateEcheance.split('-')[1]}/${tr.dateEcheance.split('-')[0].slice(2)}` : '—'}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               )}
             </div>
 
-            {/* Row 2: Donut (6) + Priorites (6) — bande compacte */}
-            <PlanningDonut counts={projectDonut} colSpanClass="col-span-12 md:col-span-6" />
-            <PrioriteBars taches={taches} colSpanClass="col-span-12 md:col-span-6" />
+            {/* Right: Donut + Priority bars */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <PlanningDonut counts={globalDonut} label="Répartition globale par statut" large subtitle={`${globalKpis.total} tâches · ${globalKpis.projetsCount} projets`} />
+              {(mesTaches.length > 0 || tachesEnRetard.length > 0) && (
+                <PrioriteBars taches={[...mesTaches, ...tachesEnRetard.filter((tr) => !mesTaches.some((m) => m.id === tr.id))]} />
+              )}
+            </div>
+          </div>
+        )}
 
-            {/* Content based on active view */}
-            {activeView === 'table' && (
-              <>
-                <TachesTable
-                  taches={tachesActives}
-                  loading={loading}
-                  canEdit={canEdit}
-                  isOnline={isOnline}
-                  filterStatut={filterStatut}
-                  onFilterChange={setFilterStatut}
-                  onStatusChange={handleStatusChange}
-                  onEdit={openEdit}
-                  onDelete={handleDelete}
-                  onDeleteMultiple={handleDeleteMultiple}
-                  colSpanClass="col-span-12 lg:col-span-6"
-                  title={t('tachesActivesTitle')}
-                  filterStatuts={[StatutTache.A_FAIRE, StatutTache.EN_COURS, StatutTache.EN_ATTENTE]}
-                />
-                <TachesTable
-                  taches={tachesHistorique}
-                  loading={false}
-                  canEdit={canEdit}
-                  isOnline={isOnline}
-                  filterStatut={filterHistorique}
-                  onFilterChange={setFilterHistorique}
-                  onStatusChange={handleStatusChange}
-                  onEdit={openEdit}
-                  onDelete={handleDelete}
-                  onDeleteMultiple={handleDeleteMultiple}
-                  colSpanClass="col-span-12 lg:col-span-6"
-                  title={t('tachesHistoriqueTitle')}
-                  filterStatuts={[StatutTache.TERMINEE, StatutTache.ANNULEE]}
-                />
-              </>
-            )}
+        {/* ========== PROJECT VIEW ========== */}
+        {selectedProjetId && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 16, alignItems: 'start' }}>
+            {/* Left: view tabs + content */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* View tabs */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  display: 'flex', gap: 3,
+                  background: 'var(--db-subtle)',
+                  border: '1px solid var(--db-border)',
+                  borderRadius: 'var(--db-radius-sm)',
+                  padding: 3,
+                }}>
+                  {viewTabs.map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => setActiveView(v.id)}
+                      style={{
+                        height: 30, padding: '0 16px',
+                        borderRadius: 'var(--db-radius-xs)',
+                        border: 0,
+                        background: activeView === v.id ? 'var(--db-card)' : 'transparent',
+                        color: activeView === v.id ? 'var(--db-t1)' : 'var(--db-t2)',
+                        fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                        boxShadow: activeView === v.id ? '0 1px 3px rgba(0,0,0,.12)' : undefined,
+                      }}
+                    >{v.label}</button>
+                  ))}
+                </div>
 
-            {activeView === 'gantt' && (
-              <GanttChart
-                taches={taches}
-                dependances={dependances}
-                cheminCritique={cheminCritique}
-                onEdit={canEdit ? openEdit : undefined}
-              />
-            )}
+                {activeView === 'gantt' && cheminCritique.length > 0 && (
+                  <span style={{
+                    fontSize: 11.5, fontWeight: 700,
+                    color: 'var(--db-danger)',
+                    background: 'var(--db-danger-bg2)',
+                    border: '1px solid var(--db-danger)',
+                    borderRadius: 'var(--db-radius-xs)',
+                    padding: '5px 9px',
+                  }}>Chemin critique : {cheminCritique.length} tâches</span>
+                )}
 
-            {activeView === 'kanban' && (
-              <KanbanBoard
-                taches={taches.filter((t) => t.statut !== StatutTache.ANNULEE)}
-                canEdit={canEdit}
-                onStatusChange={handleStatusChange}
-                onEdit={openEdit}
-              />
-            )}
+                <span style={{ marginLeft: 'auto', fontSize: 11.5, color: 'var(--db-t2)' }}>
+                  Tri par semaine de prévision · {taches.length} tâches
+                </span>
+              </div>
 
-            {/* Row 4: Retards */}
-            <TachesRetardList taches={tachesEnRetard} selectedProjetId={selectedProjetId} />
+              {/* Empty state */}
+              {taches.length === 0 && !loading && (
+                <div style={{
+                  background: 'var(--db-card)', border: '1px solid var(--db-border)',
+                  borderRadius: 'var(--db-radius)',
+                  padding: '64px 24px',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  gap: 18, textAlign: 'center',
+                }}>
+                  <div style={{
+                    width: 200, height: 120,
+                    borderRadius: 'var(--db-radius-sm)',
+                    border: '1px dashed var(--db-border-str)',
+                    background: 'repeating-linear-gradient(135deg,var(--db-subtle) 0 8px,transparent 8px 16px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <span style={{ fontSize: 10, color: 'var(--db-t3)', letterSpacing: '.06em', fontFamily: 'monospace' }}>
+                      illustration planning vide
+                    </span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 17, fontWeight: 800 }}>Aucune tâche sur ce projet</div>
+                    <div style={{ fontSize: 13, color: 'var(--db-t2)', marginTop: 6, maxWidth: 430, lineHeight: 1.55 }}>
+                      Le planning de <b>{selectedProjet?.nom}</b> est vide. Créez la première tâche, ou importez les chapitres du DQE pour générer automatiquement la structure du planning.
+                    </div>
+                  </div>
+                  {canEdit && (
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button onClick={openCreate} style={{
+                        height: 40, padding: '0 18px', border: 0,
+                        borderRadius: 'var(--db-radius-sm)',
+                        background: 'var(--db-orange)', color: '#fff',
+                        fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                      }}>+ Créer une tâche</button>
+                      <button style={{
+                        height: 40, padding: '0 18px',
+                        border: '1px solid var(--db-border-str)',
+                        borderRadius: 'var(--db-radius-sm)',
+                        background: 'var(--db-card)', color: 'var(--db-t1)',
+                        fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                      }}>Importer depuis le DQE</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Table view */}
+              {activeView === 'table' && taches.length > 0 && (
+                <div className="planning-view-enter" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <TachesTable
+                    taches={tachesActives}
+                    loading={loading}
+                    canEdit={canEdit}
+                    isOnline={isOnline}
+                    filterStatut={filterStatut}
+                    onFilterChange={setFilterStatut}
+                    onStatusChange={handleStatusChange}
+                    onEdit={openEdit}
+                    onDelete={handleDelete}
+                    onDeleteMultiple={handleDeleteMultiple}
+                    title={t('tachesActivesTitle')}
+                    filterStatuts={[StatutTache.A_FAIRE, StatutTache.EN_COURS, StatutTache.EN_ATTENTE]}
+                  />
+                  <TachesTable
+                    taches={tachesHistorique}
+                    loading={false}
+                    canEdit={canEdit}
+                    isOnline={isOnline}
+                    filterStatut={filterHistorique}
+                    onFilterChange={setFilterHistorique}
+                    onStatusChange={handleStatusChange}
+                    onEdit={openEdit}
+                    onDelete={handleDelete}
+                    onDeleteMultiple={handleDeleteMultiple}
+                    title={t('tachesHistoriqueTitle')}
+                    filterStatuts={[StatutTache.TERMINEE, StatutTache.ANNULEE]}
+                  />
+                </div>
+              )}
+
+              {/* Gantt view */}
+              {activeView === 'gantt' && (
+                <div className="planning-view-enter">
+                  <GanttChart
+                    taches={taches}
+                    dependances={dependances}
+                    cheminCritique={cheminCritique}
+                    onEdit={canEdit ? openEdit : undefined}
+                  />
+                </div>
+              )}
+
+              {/* Kanban view */}
+              {activeView === 'kanban' && (
+                <div className="planning-view-enter">
+                  <KanbanBoard
+                    taches={taches.filter((t) => t.statut !== StatutTache.ANNULEE)}
+                    canEdit={canEdit}
+                    onStatusChange={handleStatusChange}
+                    onEdit={openEdit}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Right panel: Donut + Priority + Overdue */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <PlanningDonut counts={projectDonut} />
+              <PrioriteBars taches={taches} />
+              <TachesRetardList taches={tachesEnRetard} selectedProjetId={selectedProjetId} />
+            </div>
           </div>
         )}
       </div>
@@ -622,243 +893,270 @@ export default function PlanningPage() {
         title={editingTache ? t('modalEditTitle') : t('modalTitle')}
         size="lg"
         footer={
-          <>
+          <div style={{
+            padding: '14px 22px', borderTop: '1px solid var(--db-border)',
+            display: 'flex', alignItems: 'center', gap: 12,
+            background: 'var(--db-subtle)',
+          }}>
+            <span style={{ fontSize: 11.5, color: 'var(--db-t3)' }}>
+              Le titre est obligatoire · la date de fin ne peut précéder la date de début
+            </span>
             <button
               type="button"
               onClick={() => { setShowModal(false); resetForm() }}
-              className="px-5 py-2.5 border rounded-xl text-sm font-medium transition hover:bg-[var(--db-subtle)]"
-              style={{ borderColor: 'var(--db-border)', color: 'var(--db-t2)' }}
-            >
-              {t('modalCancel')}
-            </button>
+              style={{
+                marginLeft: 'auto', height: 38, padding: '0 16px',
+                border: '1px solid var(--db-border-str)',
+                background: 'var(--db-card)', color: 'var(--db-t1)',
+                borderRadius: 'var(--db-radius-sm)',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              }}
+            >{t('modalCancel')}</button>
             <button
               type="button"
               onClick={handleSubmit}
               disabled={!formTitre.trim() || !isOnline || submitting}
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
-              style={{ background: 'var(--db-teal)' }}
-            >
-              {editingTache ? t('modalUpdate') : t('modalCreate')}
-            </button>
-          </>
+              style={{
+                height: 38, padding: '0 18px', border: 0,
+                borderRadius: 'var(--db-radius-sm)',
+                background: formTitre.trim() ? 'var(--db-orange)' : 'var(--db-subtle)',
+                color: formTitre.trim() ? '#fff' : 'var(--db-t3)',
+                fontSize: 13, fontWeight: 700,
+                cursor: formTitre.trim() ? 'pointer' : 'not-allowed',
+              }}
+            >{editingTache ? t('modalUpdate') : t('modalCreate')}</button>
+          </div>
         }
       >
-        <div className="space-y-4">
-          {/* Titre avec suggestions */}
-          <div className="relative" ref={suggestionsRef}>
-            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--db-t3)' }}>{t('modalTitre')}</label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18, padding: '20px 22px' }}>
+          {/* Titre with suggestions */}
+          <div style={{ position: 'relative' }} ref={suggestionsRef}>
+            <label style={labelStyle}>Titre de la tâche <span style={{ color: 'var(--db-danger)' }}>*</span></label>
             <input
               type="text"
               value={formTitre}
               onChange={(e) => setFormTitre(e.target.value)}
               onFocus={() => setShowSuggestions(true)}
-              className="w-full px-4 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-              style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
-              placeholder={t('modalTitrePlaceholder')}
+              placeholder="Ex. Coulage dalle R+1"
+              style={{
+                ...inputStyle, height: 42,
+                borderWidth: 1.5,
+                borderColor: 'var(--db-orange)',
+                fontSize: 13.5,
+              }}
               autoFocus
             />
-            <div
-              className="absolute z-50 top-full left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-xl shadow-xl border"
-              style={{
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
+              <span style={{ fontSize: 11, color: 'var(--db-t3)' }}>Suggestions BTP filtrées en temps réel</span>
+              <span style={{ fontSize: 11, color: 'var(--db-t3)', fontVariantNumeric: 'tabular-nums' }}>{formTitre.length}/300</span>
+            </div>
+
+            {showSuggestions && suggestionGroups.length > 0 && (
+              <div style={{
+                position: 'absolute', top: 70, left: 0, right: 0,
                 background: 'var(--db-card)',
-                borderColor: 'var(--db-border)',
-                display: showSuggestions && suggestionGroups.length > 0 ? 'block' : 'none',
-              }}
-            >
+                border: '1px solid var(--db-border-str)',
+                borderRadius: 'var(--db-radius-sm)',
+                boxShadow: '0 16px 40px rgba(0,0,0,.18)',
+                maxHeight: 300, overflow: 'auto', zIndex: 5,
+              }}>
                 {suggestionGroups.map((g) => (
                   <div key={g.label}>
-                    <div
-                      className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider sticky top-0"
-                      style={{ background: 'var(--db-subtle)', color: 'var(--db-t4)' }}
-                    >
-                      {g.label}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '8px 12px',
+                      background: 'var(--db-subtle)',
+                      borderBottom: '1px solid var(--db-border)',
+                      position: 'sticky', top: 0,
+                    }}>
+                      <span style={{ width: 8, height: 8, borderRadius: 2, background: g.color }} />
+                      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' as const, color: 'var(--db-t2)' }}>
+                        {g.label}
+                      </span>
+                      <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--db-t3)' }}>{g.source}</span>
                     </div>
                     {g.items.map((item) => (
-                      <button
+                      <div
                         key={item.value}
-                        type="button"
-                        className="w-full text-left px-3 py-2 text-sm transition-colors hover:bg-[var(--db-subtle)]"
-                        style={{ color: 'var(--db-t1)' }}
-                        onClick={() => {
-                          setFormTitre(item.value)
-                          setShowSuggestions(false)
+                        onClick={() => { setFormTitre(item.value); setShowSuggestions(false) }}
+                        style={{
+                          padding: '9px 12px 9px 32px', fontSize: 12.5,
+                          borderBottom: '1px solid var(--db-border)',
+                          cursor: 'pointer',
+                          display: 'flex', gap: 8, alignItems: 'center',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--db-orange-soft)'
+                          e.currentTarget.style.color = 'var(--db-orange)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent'
+                          e.currentTarget.style.color = 'var(--db-t1)'
                         }}
                       >
-                        {item.label}
-                      </button>
+                        <span style={{ flex: 1 }}>{item.label}</span>
+                        <span style={{ fontSize: 10, color: 'var(--db-t3)' }}>↵</span>
+                      </div>
                     ))}
                   </div>
                 ))}
-                {formTitre.trim() && (
-                  <div
-                    className="px-3 py-2 text-xs border-t"
-                    style={{ borderColor: 'var(--db-border)', color: 'var(--db-t4)' }}
-                  >
-                    {t('modalSuggestionHint')}
-                  </div>
-                )}
               </div>
+            )}
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--db-t3)' }}>{t('modalDescription')}</label>
+            <label style={labelStyle}>Description</label>
             <textarea
               value={formDescription}
               onChange={(e) => setFormDescription(e.target.value)}
-              className="w-full px-4 py-2.5 border rounded-xl text-sm resize-none transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-              style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
-              rows={2}
-              placeholder={t('modalDescriptionPlaceholder')}
+              placeholder="Contexte, mode opératoire, réserves…"
+              style={{
+                width: '100%', height: 70,
+                border: '1px solid var(--db-border-str)',
+                borderRadius: 'var(--db-radius-xs)',
+                background: 'var(--db-card)', color: 'var(--db-t1)',
+                fontSize: 13, padding: '10px 12px', resize: 'vertical',
+              }}
             />
           </div>
 
-          {/* Statut + Priorite */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Statut + Priorite + Assigne + Parent */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--db-t3)' }}>{t('modalStatut')}</label>
-              <select
-                value={formStatut}
-                onChange={(e) => setFormStatut(e.target.value as StatutTache)}
-                className="w-full px-4 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-                style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
-              >
+              <label style={labelStyle}>Statut</label>
+              <select value={formStatut} onChange={(e) => setFormStatut(e.target.value as StatutTache)} style={inputStyle}>
                 {Object.values(StatutTache).map((s) => (
                   <option key={s} value={s}>{t(`statut.${s}`)}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--db-t3)' }}>{t('modalPriorite')}</label>
-              <select
-                value={formPriorite}
-                onChange={(e) => setFormPriorite(e.target.value as Priorite)}
-                className="w-full px-4 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-                style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
-              >
+              <label style={labelStyle}>Priorité</label>
+              <select value={formPriorite} onChange={(e) => setFormPriorite(e.target.value as Priorite)} style={inputStyle}>
                 {Object.values(Priorite).map((p) => (
                   <option key={p} value={p}>{t(`priorite.${p}`)}</option>
                 ))}
               </select>
             </div>
-          </div>
-
-          {/* Assigne a */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--db-t3)' }}>{t('modalAssigneA')}</label>
-            <select
-              value={formAssigneAId}
-              onChange={(e) => setFormAssigneAId(e.target.value)}
-              className="w-full px-4 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-              style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
-            >
-              <option value="">{t('modalAssigneANone')}</option>
-              {allUsers.map((u) => (
-                <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Tâche parente */}
-          {taches.length > 0 && (
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--db-t3)' }}>
-                {t('modalTacheParente', { defaultValue: 'Tâche parente' })}
-              </label>
-              <select
-                value={formTacheParentId}
-                onChange={(e) => setFormTacheParentId(e.target.value)}
-                className="w-full px-4 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-                style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
-              >
-                <option value="">{t('modalTacheParenteNone', { defaultValue: 'Aucune (tâche principale)' })}</option>
-                {taches
-                  .filter((t) => t.id !== editingTache?.id)
-                  .map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.titre}{t.semaine ? ` (S${t.semaine})` : ''}
-                    </option>
-                  ))}
+              <label style={labelStyle}>Assigné à</label>
+              <select value={formAssigneAId} onChange={(e) => setFormAssigneAId(e.target.value)} style={inputStyle}>
+                <option value="">Non assignée</option>
+                {allUsers.map((u) => (
+                  <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+                ))}
               </select>
             </div>
-          )}
+            <div>
+              <label style={labelStyle}>Tâche parente</label>
+              <select value={formTacheParentId} onChange={(e) => setFormTacheParentId(e.target.value)} style={inputStyle}>
+                <option value="">Aucune</option>
+                {taches.filter((t) => t.id !== editingTache?.id).map((t) => (
+                  <option key={t.id} value={t.id}>{t.titre}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-          {/* Dates : debut, fin, echeance */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--db-t3)' }}>{t('modalDateDebut')}</label>
-              <input
-                type="date"
-                value={formDateDebut}
-                onChange={(e) => { setFormDateDebut(e.target.value); setFormErrors((prev) => { const { dateFin, dateEcheance, ...rest } = prev; return rest }) }}
-                className="w-full px-3 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-                style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--db-t3)' }}>{t('modalDateFin')}</label>
-              <input
-                type="date"
-                value={formDateFin}
-                onChange={(e) => { setFormDateFin(e.target.value); setFormErrors((prev) => { const { dateFin, ...rest } = prev; return rest }) }}
-                className={`w-full px-3 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40 ${formErrors.dateFin ? 'border-red-500' : ''}`}
-                style={{ background: 'var(--db-subtle)', borderColor: formErrors.dateFin ? undefined : 'var(--db-border)', color: 'var(--db-t1)' }}
-              />
-              {formErrors.dateFin && <p className="text-xs text-red-500 mt-1">{formErrors.dateFin}</p>}
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--db-t3)' }}>{t('modalDateEcheance')}</label>
-              <input
-                type="date"
-                value={formDateEcheance}
-                onChange={(e) => { setFormDateEcheance(e.target.value); setFormErrors((prev) => { const { dateEcheance, ...rest } = prev; return rest }) }}
-                className={`w-full px-3 py-2.5 border rounded-xl text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40 ${formErrors.dateEcheance ? 'border-red-500' : ''}`}
-                style={{ background: 'var(--db-subtle)', borderColor: formErrors.dateEcheance ? undefined : 'var(--db-border)', color: 'var(--db-t1)' }}
-              />
-              {formErrors.dateEcheance && <p className="text-xs text-red-500 mt-1">{formErrors.dateEcheance}</p>}
+          {/* Dates */}
+          <div style={{
+            border: '1px solid var(--db-border)',
+            borderRadius: 'var(--db-radius-sm)',
+            padding: '14px 16px',
+            background: 'var(--db-subtle)',
+          }}>
+            <div style={{
+              fontSize: 11, fontWeight: 800,
+              letterSpacing: '.07em', textTransform: 'uppercase' as const,
+              color: 'var(--db-t2)', marginBottom: 10,
+            }}>Dates</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, color: 'var(--db-t2)', marginBottom: 5 }}>Début</label>
+                <input
+                  type="date" value={formDateDebut}
+                  onChange={(e) => { setFormDateDebut(e.target.value); setFormErrors((prev) => { const { dateFin, dateEcheance, ...rest } = prev; return rest }) }}
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, color: 'var(--db-t2)', marginBottom: 5 }}>Fin</label>
+                <input
+                  type="date" value={formDateFin}
+                  onChange={(e) => { setFormDateFin(e.target.value); setFormErrors((prev) => { const { dateFin, ...rest } = prev; return rest }) }}
+                  style={{ ...inputStyle, borderColor: formErrors.dateFin ? 'var(--db-danger)' : 'var(--db-border-str)' }}
+                />
+                {formErrors.dateFin && <p style={{ fontSize: 11, color: 'var(--db-danger)', marginTop: 4 }}>{formErrors.dateFin}</p>}
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, color: 'var(--db-t2)', marginBottom: 5 }}>Échéance</label>
+                <input
+                  type="date" value={formDateEcheance}
+                  onChange={(e) => { setFormDateEcheance(e.target.value); setFormErrors((prev) => { const { dateEcheance, ...rest } = prev; return rest }) }}
+                  style={{ ...inputStyle, borderColor: formErrors.dateEcheance ? 'var(--db-danger)' : 'var(--db-border-str)' }}
+                />
+                {formErrors.dateEcheance && <p style={{ fontSize: 11, color: 'var(--db-danger)', marginTop: 4 }}>{formErrors.dateEcheance}</p>}
+              </div>
             </div>
           </div>
 
           {/* Avancement */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--db-t3)' }}>{t('avancement')}</label>
-            <div className="flex items-center gap-3">
+          <div style={{
+            border: '1px solid var(--db-border)',
+            borderRadius: 'var(--db-radius-sm)',
+            padding: '14px 16px',
+          }}>
+            <div style={{
+              fontSize: 11, fontWeight: 800,
+              letterSpacing: '.07em', textTransform: 'uppercase' as const,
+              color: 'var(--db-t2)', marginBottom: 10,
+            }}>Avancement</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <input
-                type="range"
-                min={0}
-                max={100}
-                value={formAvancement}
+                type="range" min={0} max={100} value={formAvancement}
                 onChange={(e) => setFormAvancement(Number(e.target.value))}
-                className="flex-1 accent-[var(--db-teal)]"
+                style={{ flex: 1, accentColor: '#FF6B35' }}
               />
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={formAvancement}
-                onChange={(e) => setFormAvancement(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-                className="w-16 px-2 py-1.5 border rounded-lg text-sm text-center font-bold db-num focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-                style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
-              />
-              <span className="text-sm font-medium" style={{ color: 'var(--db-t3)' }}>%</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <input
+                  type="number" min={0} max={100} value={formAvancement}
+                  onChange={(e) => setFormAvancement(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                  style={{
+                    width: 66, height: 36,
+                    border: '1px solid var(--db-border-str)',
+                    borderRadius: 'var(--db-radius-xs)',
+                    background: 'var(--db-card)', color: 'var(--db-t1)',
+                    fontSize: 13, fontWeight: 700, textAlign: 'center',
+                  }}
+                />
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t2)' }}>%</span>
+              </div>
             </div>
           </div>
 
-          {/* Prevision : semaine, annee, type */}
-          <div
-            className="border rounded-xl p-3"
-            style={{ borderColor: 'var(--db-border)', background: 'color-mix(in srgb, var(--db-subtle) 50%, transparent)' }}
-          >
-            <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--db-t4)' }}>{t('modalPrevisionSection')}</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Prevision */}
+          <div style={{
+            border: '1px dashed var(--db-border-str)',
+            borderRadius: 'var(--db-radius-sm)',
+            padding: '14px 16px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <span style={{
+                fontSize: 11, fontWeight: 800,
+                letterSpacing: '.07em', textTransform: 'uppercase' as const,
+                color: 'var(--db-t2)',
+              }}>Prévision</span>
+              <span style={{
+                fontSize: 10.5, fontWeight: 600, color: 'var(--db-t3)',
+                border: '1px solid var(--db-border)',
+                borderRadius: 3, padding: '1px 5px',
+              }}>optionnel</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '110px 110px 1fr', gap: 12 }}>
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--db-t3)' }}>{t('modalSemaine')}</label>
-                <select
-                  value={formSemaine}
-                  onChange={(e) => setFormSemaine(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-                  style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
-                >
+                <label style={{ display: 'block', fontSize: 11.5, color: 'var(--db-t2)', marginBottom: 5 }}>Semaine</label>
+                <select value={formSemaine} onChange={(e) => setFormSemaine(e.target.value)} style={inputStyle}>
                   <option value="">—</option>
                   {Array.from({ length: 53 }, (_, i) => i + 1).map((w) => (
                     <option key={w} value={w}>S{w}</option>
@@ -866,13 +1164,8 @@ export default function PlanningPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--db-t3)' }}>{t('modalAnnee')}</label>
-                <select
-                  value={formAnnee}
-                  onChange={(e) => setFormAnnee(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-                  style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
-                >
+                <label style={{ display: 'block', fontSize: 11.5, color: 'var(--db-t2)', marginBottom: 5 }}>Année</label>
+                <select value={formAnnee} onChange={(e) => setFormAnnee(e.target.value)} style={inputStyle}>
                   <option value="">—</option>
                   {Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i).map((y) => (
                     <option key={y} value={y}>{y}</option>
@@ -880,13 +1173,8 @@ export default function PlanningPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--db-t3)' }}>{t('modalTypePrevision')}</label>
-                <select
-                  value={formTypePrevision}
-                  onChange={(e) => setFormTypePrevision(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--db-teal)]/40"
-                  style={{ background: 'var(--db-subtle)', borderColor: 'var(--db-border)', color: 'var(--db-t1)' }}
-                >
+                <label style={{ display: 'block', fontSize: 11.5, color: 'var(--db-t2)', marginBottom: 5 }}>Type de prévision</label>
+                <select value={formTypePrevision} onChange={(e) => setFormTypePrevision(e.target.value)} style={inputStyle}>
                   <option value="">—</option>
                   {Object.values(TypePrevision).map((tp) => (
                     <option key={tp} value={tp}>{t(`typePrevision.${tp}`)}</option>
@@ -895,8 +1183,124 @@ export default function PlanningPage() {
               </div>
             </div>
           </div>
+
+          {/* Jalon */}
+          <label style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 12.5, color: 'var(--db-t2)' }}>
+            <input
+              type="checkbox"
+              checked={formEstJalon}
+              onChange={(e) => setFormEstJalon(e.target.checked)}
+              style={{ width: 15, height: 15, accentColor: '#FF6B35' }}
+            />
+            Définir comme jalon du planning
+          </label>
         </div>
       </Modal>
+      {/* ===== Bulk Delete Modal ===== */}
+      {bulkDeleteIds.length > 0 && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(15,18,22,.52)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 60,
+        }}>
+          <div style={{
+            width: 520,
+            background: 'var(--db-card)',
+            border: '1px solid var(--db-border)',
+            borderRadius: 'var(--db-radius)',
+            boxShadow: '0 24px 60px rgba(0,0,0,.3)',
+            animation: 'mkModal .18s ease-out',
+            overflow: 'hidden',
+          }}>
+            <div style={{ padding: '20px 22px', display: 'flex', gap: 14 }}>
+              <div style={{
+                width: 40, height: 40, minWidth: 40,
+                borderRadius: 'var(--db-radius-sm)',
+                background: 'var(--db-danger-bg2)',
+                border: '1px solid var(--db-danger)',
+                color: 'var(--db-danger)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 19, fontWeight: 800,
+              }}>!</div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>
+                  Supprimer {bulkDeleteIds.length} tâches ?
+                </div>
+                <div style={{ fontSize: 12.5, color: 'var(--db-t2)', marginTop: 6, lineHeight: 1.55 }}>
+                  Cette action est irréversible. Les sous-tâches rattachées seront supprimées avec leur tâche parente et les dépendances associées seront nettoyées.
+                </div>
+              </div>
+            </div>
+            <div style={{ margin: '0 22px', border: '1px solid var(--db-border)', borderRadius: 'var(--db-radius-sm)', overflow: 'hidden' }}>
+              {bulkDeleteIds.map((id) => {
+                const tache = taches.find((t) => t.id === id)
+                if (!tache) return null
+                const sm = {
+                  [StatutTache.A_FAIRE]: { color: '#6B7280' },
+                  [StatutTache.EN_COURS]: { color: 'var(--db-info)' },
+                  [StatutTache.EN_ATTENTE]: { color: 'var(--db-warn)' },
+                  [StatutTache.TERMINEE]: { color: 'var(--db-success)' },
+                  [StatutTache.ANNULEE]: { color: '#B08078' },
+                }[tache.statut]
+                return (
+                  <div key={id} style={{
+                    display: 'flex', alignItems: 'center', gap: 9,
+                    padding: '9px 12px',
+                    borderBottom: '1px solid var(--db-border)',
+                    fontSize: 12.5,
+                  }}>
+                    <span style={{ width: 8, height: 8, minWidth: 8, borderRadius: '50%', background: sm.color }} />
+                    <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tache.titre}</span>
+                    <span style={{ fontSize: 11, color: 'var(--db-t3)' }}>
+                      {t(`statut.${tache.statut}`)} · {t(`priorite.${tache.priorite}`)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+            <label style={{
+              display: 'flex', alignItems: 'center', gap: 9,
+              fontSize: 12.5, color: 'var(--db-t2)',
+              padding: '14px 22px 0',
+            }}>
+              <input
+                type="checkbox"
+                checked={bulkConfirmed}
+                onChange={(e) => setBulkConfirmed(e.target.checked)}
+                style={{ width: 15, height: 15, accentColor: '#C8553D' }}
+              />
+              Je confirme la suppression définitive de ces éléments
+            </label>
+            <div style={{ padding: '16px 22px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => { setBulkDeleteIds([]); setBulkConfirmed(false) }}
+                style={{
+                  height: 38, padding: '0 16px',
+                  border: '1px solid var(--db-border-str)',
+                  background: 'var(--db-card)', color: 'var(--db-t1)',
+                  borderRadius: 'var(--db-radius-sm)',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                }}
+              >Annuler</button>
+              <button
+                type="button"
+                onClick={executeBulkDelete}
+                disabled={!bulkConfirmed}
+                style={{
+                  height: 38, padding: '0 16px', border: 0,
+                  background: bulkConfirmed ? 'var(--db-danger)' : 'var(--db-subtle)',
+                  color: bulkConfirmed ? '#fff' : 'var(--db-t3)',
+                  borderRadius: 'var(--db-radius-sm)',
+                  fontSize: 13, fontWeight: 700,
+                  cursor: bulkConfirmed ? 'pointer' : 'not-allowed',
+                }}
+              >Supprimer {bulkDeleteIds.length} tâches</button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageContainer>
   )
 }

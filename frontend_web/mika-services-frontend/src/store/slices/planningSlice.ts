@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { planningApi } from '../../api/planningApi'
 import { handleApiError } from '@/utils/errorHandler'
 import { clearPlanningCache } from '@/utils/offlineCache'
+import { clearResponseCacheMatching } from '@/utils/responseCache'
 import type { Tache, TacheCreateRequest, TacheUpdateRequest, ProjetPlanningStats } from '../../types/planning'
 
 interface PlanningState {
@@ -125,6 +126,7 @@ const planningSlice = createSlice({
       state.loading = false
       state.taches.unshift(action.payload)
       clearPlanningCache(action.payload.projetId)
+      clearResponseCacheMatching('/planning/')
     })
     builder.addCase(createTache.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
 
@@ -143,6 +145,7 @@ const planningSlice = createSlice({
         else { state.tachesEnRetard.splice(idxRetard, 1) }
       }
       clearPlanningCache(updated.projetId)
+      clearResponseCacheMatching('/planning/')
     })
     builder.addCase(updateTache.rejected, (state, action) => { state.error = handleApiError(action.error) })
 
@@ -154,6 +157,7 @@ const planningSlice = createSlice({
       state.mesTaches = state.mesTaches.filter(t => t.id !== deletedId)
       state.tachesEnRetard = state.tachesEnRetard.filter(t => t.id !== deletedId)
       if (deleted) clearPlanningCache(deleted.projetId)
+      clearResponseCacheMatching('/planning/')
     })
     builder.addCase(deleteTache.rejected, (state, action) => { state.error = handleApiError(action.error) })
   },

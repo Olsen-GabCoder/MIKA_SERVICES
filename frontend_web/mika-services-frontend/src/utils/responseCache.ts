@@ -44,7 +44,7 @@ export function cacheResponse(url: string, params: string | undefined, data: unk
   if (typeof window === 'undefined') return
   const key = buildKey(url, params)
   try {
-    const payload = JSON.stringify({ d: data, t: Date.now() })
+    const payload = JSON.stringify({ d: data, t: Date.now(), u: url })
     if (payload.length > MAX_TOTAL_BYTES / 4) return
 
     const keys = getIndex()
@@ -59,7 +59,7 @@ export function cacheResponse(url: string, params: string | undefined, data: unk
   } catch {
     evictOldest(10)
     try {
-      localStorage.setItem(key, JSON.stringify({ d: data, t: Date.now() }))
+      localStorage.setItem(key, JSON.stringify({ d: data, t: Date.now(), u: url }))
       const keys = getIndex()
       keys.push(key)
       saveIndex(keys)
@@ -76,6 +76,27 @@ export function getCachedResponse(url: string, params?: string): unknown | null 
     const parsed = JSON.parse(raw)
     return parsed?.d ?? null
   } catch { return null }
+}
+
+/** Invalide toutes les entrées dont l'URL contient le pattern donné. */
+export function clearResponseCacheMatching(pattern: string): void {
+  if (typeof window === 'undefined') return
+  const keys = getIndex()
+  const remaining: string[] = []
+  for (const k of keys) {
+    try {
+      const raw = localStorage.getItem(k)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed?.u && (parsed.u as string).includes(pattern)) {
+          localStorage.removeItem(k)
+          continue
+        }
+      }
+    } catch { /* ignore */ }
+    remaining.push(k)
+  }
+  if (remaining.length !== keys.length) saveIndex(remaining)
 }
 
 export function clearResponseCache(): void {

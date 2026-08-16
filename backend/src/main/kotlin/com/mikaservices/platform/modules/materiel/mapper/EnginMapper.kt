@@ -13,7 +13,7 @@ object EnginMapper {
         marque = entity.marque, modele = entity.modele, immatriculation = entity.immatriculation,
         numeroSerie = entity.numeroSerie, anneeFabrication = entity.anneeFabrication,
         dateAcquisition = entity.dateAcquisition, valeurAcquisition = entity.valeurAcquisition,
-        heuresCompteur = entity.heuresCompteur ?: 0, statut = entity.statut,
+        heuresCompteur = entity.heuresCompteur, statut = entity.statut,
         proprietaire = entity.proprietaire, estLocation = entity.estLocation,
         coutLocationJournalier = entity.coutLocationJournalier,
         photo = entity.photo,

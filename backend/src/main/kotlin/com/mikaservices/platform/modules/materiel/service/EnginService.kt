@@ -156,6 +156,10 @@ class EnginService(
 
     // ========== Photo ==========
     fun uploadPhoto(id: Long, file: MultipartFile): EnginResponse {
+        val maxSize = 5L * 1024 * 1024 // 5 Mo
+        if (file.size > maxSize) throw BadRequestException("Fichier trop volumineux (max 5 Mo)")
+        val allowedTypes = listOf("image/jpeg", "image/png", "image/webp")
+        if (file.contentType !in allowedTypes) throw BadRequestException("Format non autorisé (JPEG, PNG ou WebP uniquement)")
         val engin = getEnginById(id)
         val enginDir = Paths.get(uploadDir).resolve("engins").toAbsolutePath().normalize()
         Files.createDirectories(enginDir)

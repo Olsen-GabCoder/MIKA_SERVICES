@@ -39,14 +39,8 @@ class EnginStatsService(
 
         val tauxDispo = if (total > 0) (disponibles + enService).toDouble() / total * 100 else 0.0
 
-        // Count all planifiees maintenances across all engins
-        val allEngins = enginRepository.findByActifTrue(org.springframework.data.domain.Pageable.unpaged())
-        var alertesMaint = 0L
-        var incidentsNonResolus = 0L
-        for (engin in allEngins) {
-            alertesMaint += maintenanceRepository.countByEnginIdAndStatut(engin.id!!, StatutMaintenance.PLANIFIEE)
-            incidentsNonResolus += incidentRepository.countByEnginIdAndResoluFalse(engin.id!!)
-        }
+        val alertesMaint = maintenanceRepository.countAllByStatutAndEnginActif(StatutMaintenance.PLANIFIEE)
+        val incidentsNonResolus = incidentRepository.countAllNonResolusEnginActif()
 
         return EnginStatsResponse(
             totalEngins = total,

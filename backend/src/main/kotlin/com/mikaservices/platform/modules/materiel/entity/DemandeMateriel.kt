@@ -57,7 +57,7 @@ class DemandeMateriel(
     @BatchSize(size = 32)
     var lignes: MutableList<DemandeMaterielLigne> = mutableListOf(),
 
-    @OneToMany(mappedBy = "demande", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "demande", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     @BatchSize(size = 32)
     var historique: MutableList<DemandeMaterielHistorique> = mutableListOf(),
 ) : BaseEntity() {

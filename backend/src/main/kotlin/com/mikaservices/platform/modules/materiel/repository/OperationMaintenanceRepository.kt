@@ -14,6 +14,9 @@ interface OperationMaintenanceRepository : JpaRepository<OperationMaintenance, L
     fun findByEnginIdAndStatut(enginId: Long, statut: StatutMaintenance): List<OperationMaintenance>
     fun countByEnginIdAndStatut(enginId: Long, statut: StatutMaintenance): Long
 
+    @Query("SELECT COUNT(m) FROM OperationMaintenance m WHERE m.statut = :statut AND m.engin.actif = true")
+    fun countAllByStatutAndEnginActif(statut: StatutMaintenance): Long
+
     /** Maintenances planifiees dont l'echeance est depassee */
     @Query("SELECT m FROM OperationMaintenance m JOIN FETCH m.engin e WHERE m.statut = 'PLANIFIEE' AND m.echeanceDate IS NOT NULL AND m.echeanceDate < :today AND e.actif = true ORDER BY m.echeanceDate ASC")
     fun findMaintenancesEnRetard(today: LocalDate): List<OperationMaintenance>

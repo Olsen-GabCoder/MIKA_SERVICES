@@ -19,22 +19,32 @@ const initialState: EnginState = {
 
 export const fetchEngins = createAsyncThunk(
   'engin/fetchAll',
-  async ({ page = 0, size = 20, q, statut, type }: { page?: number; size?: number; q?: string; statut?: string; type?: string } = {}) => {
-    const trimmed = q?.trim()
-    if (trimmed) return await enginApi.search(trimmed, page, size)
-    return await enginApi.findAll(page, size, statut, type)
+  async ({ page = 0, size = 20, q, statut, type }: { page?: number; size?: number; q?: string; statut?: string; type?: string } = {}, { rejectWithValue }) => {
+    try {
+      const trimmed = q?.trim()
+      if (trimmed) return await enginApi.search(trimmed, page, size)
+      return await enginApi.findAll(page, size, statut, type)
+    } catch (err) {
+      return rejectWithValue(handleApiError(err))
+    }
   }
 )
 
-export const updateEngin = createAsyncThunk('engin/update', async ({ id, data }: { id: number; data: Partial<import('@/types/materiel').Engin> }) => {
-  return await enginApi.update(id, data)
+export const updateEngin = createAsyncThunk('engin/update', async ({ id, data }: { id: number; data: Partial<import('@/types/materiel').Engin> }, { rejectWithValue }) => {
+  try { return await enginApi.update(id, data) } catch (err) { return rejectWithValue(handleApiError(err)) }
 })
 
-export const fetchEnginById = createAsyncThunk('engin/fetchById', async (id: number) => { return await enginApi.findById(id) })
+export const fetchEnginById = createAsyncThunk('engin/fetchById', async (id: number, { rejectWithValue }) => {
+  try { return await enginApi.findById(id) } catch (err) { return rejectWithValue(handleApiError(err)) }
+})
 
-export const createEngin = createAsyncThunk('engin/create', async (data: EnginCreateRequest) => { return await enginApi.create(data) })
+export const createEngin = createAsyncThunk('engin/create', async (data: EnginCreateRequest, { rejectWithValue }) => {
+  try { return await enginApi.create(data) } catch (err) { return rejectWithValue(handleApiError(err)) }
+})
 
-export const deleteEngin = createAsyncThunk('engin/delete', async (id: number) => { await enginApi.delete(id); return id })
+export const deleteEngin = createAsyncThunk('engin/delete', async (id: number, { rejectWithValue }) => {
+  try { await enginApi.delete(id); return id } catch (err) { return rejectWithValue(handleApiError(err)) }
+})
 
 const enginSlice = createSlice({
   name: 'engin',

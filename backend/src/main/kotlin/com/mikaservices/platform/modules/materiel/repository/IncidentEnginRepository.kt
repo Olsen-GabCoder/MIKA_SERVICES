@@ -11,6 +11,9 @@ interface IncidentEnginRepository : JpaRepository<IncidentEngin, Long> {
     fun findByEnginId(enginId: Long): List<IncidentEngin>
     fun countByEnginIdAndResoluFalse(enginId: Long): Long
 
+    @Query("SELECT COUNT(i) FROM IncidentEngin i WHERE i.resolu = false AND i.engin.actif = true")
+    fun countAllNonResolusEnginActif(): Long
+
     /** Tous les incidents non resolus, tries par gravite (CRITIQUE d'abord) puis date desc */
     @Query("SELECT i FROM IncidentEngin i JOIN FETCH i.engin e WHERE i.resolu = false AND e.actif = true ORDER BY i.gravite ASC, i.dateIncident DESC")
     fun findIncidentsNonResolus(): List<IncidentEngin>

@@ -111,6 +111,7 @@ class MouvementEnginService(
         engin.statut = StatutEngin.EN_ATTENTE_DEPART
         enginRepository.save(engin)
         val saved = mouvementRepository.save(mouvement)
+        enregistrerEvenement(saved, user, TypeMouvementEnginEvenement.ORDRE_CREE, null)
         logger.info("Mouvement engin créé id=${saved.id} engin=${engin.code} vers projet=${projetDestination.nom}")
         eventPublisher.publishEvent(
             MouvementNotificationEvent(

@@ -103,8 +103,8 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
     setSubmitting(true)
     setError(null)
     try {
-      // Send code as null if empty so backend auto-generates
-      const payload = { ...form, code: form.code?.trim() || null }
+      // Code omis si vide : le backend le génère automatiquement
+      const payload = { ...form, code: form.code?.trim() || undefined }
       let enginId: number
       if (isEdit) {
         const result = await dispatch(updateEngin({ id: engin.id, data: payload })).unwrap()

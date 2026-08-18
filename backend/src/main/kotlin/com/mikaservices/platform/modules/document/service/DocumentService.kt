@@ -8,19 +8,14 @@ import com.mikaservices.platform.modules.document.mapper.DocumentMapper
 import com.mikaservices.platform.modules.document.repository.DocumentRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
 import com.mikaservices.platform.modules.user.repository.UserRepository
+import com.mikaservices.platform.common.service.FileStorageService
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.Resource
-import org.springframework.core.io.UrlResource
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import java.util.UUID
 
 @Service
@@ -28,12 +23,10 @@ import java.util.UUID
 class DocumentService(
     private val documentRepository: DocumentRepository,
     private val projetRepository: ProjetRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val fileStorage: FileStorageService
 ) {
     private val logger = LoggerFactory.getLogger(DocumentService::class.java)
-
-    @Value("\${app.upload.dir:uploads}")
-    private lateinit var uploadDir: String
 
     fun upload(
         file: MultipartFile,
@@ -42,20 +35,15 @@ class DocumentService(
         projetId: Long?,
         userId: Long?
     ): DocumentResponse {
-        val uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize()
-        Files.createDirectories(uploadPath)
-
         val originalFilename = file.originalFilename ?: "fichier"
         val extension = originalFilename.substringAfterLast(".", "")
         val storedFilename = "${UUID.randomUUID()}.$extension"
-        val targetPath = uploadPath.resolve(storedFilename)
-
-        Files.copy(file.inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING)
+        val stored = fileStorage.store(file, "documents", storedFilename)
 
         val document = Document(
             nomFichier = storedFilename,
             nomOriginal = originalFilename,
-            cheminStockage = targetPath.toString(),
+            cheminStockage = stored,
             typeMime = file.contentType,
             tailleOctets = file.size,
             typeDocument = typeDocument,
@@ -104,13 +92,8 @@ class DocumentService(
         val doc = documentRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Document non trouvé avec l'ID: $id") }
 
-        val filePath = Path.of(doc.cheminStockage)
-        val resource = UrlResource(filePath.toUri())
-
-        if (!resource.exists()) {
-            throw ResourceNotFoundException("Fichier physique non trouvé: ${doc.nomOriginal}")
-        }
-
+        val resource = fileStorage.resolve(doc.cheminStockage)
+            ?: throw ResourceNotFoundException("Fichier physique non trouvé: ${doc.nomOriginal}")
         return Pair(resource, doc)
     }
 
@@ -118,13 +101,7 @@ class DocumentService(
         val doc = documentRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Document non trouvé avec l'ID: $id") }
 
-        // Supprimer le fichier physique
-        try {
-            val filePath = Path.of(doc.cheminStockage)
-            Files.deleteIfExists(filePath)
-        } catch (e: Exception) {
-            logger.warn("Impossible de supprimer le fichier physique: ${doc.cheminStockage}", e)
-        }
+        fileStorage.delete(doc.cheminStockage)
 
         documentRepository.delete(doc)
         logger.info("Document supprimé: ${doc.nomOriginal}")

@@ -16,19 +16,15 @@ import com.mikaservices.platform.modules.communication.repository.MessageMention
 import com.mikaservices.platform.modules.communication.repository.MessageRepository
 import com.mikaservices.platform.modules.communication.repository.MessageSuppressionRepository
 import com.mikaservices.platform.modules.user.repository.UserRepository
+import com.mikaservices.platform.common.service.FileStorageService
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.Resource
-import org.springframework.core.io.UrlResource
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -42,11 +38,9 @@ class MessageService(
     private val messageSuppressionRepository: MessageSuppressionRepository,
     private val userRepository: UserRepository,
     private val messagingTemplate: SimpMessagingTemplate,
-    private val emailService: EmailService
+    private val emailService: EmailService,
+    private val fileStorage: FileStorageService
 ) {
-    @Value("\${app.upload.dir:uploads}")
-    private lateinit var uploadDir: String
-
     private val logger = LoggerFactory.getLogger(MessageService::class.java)
 
     fun envoyerMessage(expediteurId: Long, request: MessageCreateRequest, files: List<MultipartFile>? = null): MessageResponse {
@@ -78,23 +72,17 @@ class MessageService(
         }
 
         if (!files.isNullOrEmpty()) {
-            val messagesDir = Paths.get(uploadDir).resolve("messages").toAbsolutePath().normalize()
-            Files.createDirectories(messagesDir)
-            if (!messagesDir.startsWith(Paths.get(uploadDir).toAbsolutePath())) {
-                throw IllegalArgumentException("Chemin de stockage invalide")
-            }
             for (file in files) {
                 if (file.isEmpty) continue
                 val nomOriginal = file.originalFilename ?: "fichier"
                 val ext = nomOriginal.substringAfterLast(".", "").takeIf { it.isNotBlank() }?.let { ".$it" } ?: ""
                 val nomStockage = "${UUID.randomUUID()}${ext}"
-                val targetPath = messagesDir.resolve(nomStockage)
-                Files.copy(file.inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING)
+                val stored = fileStorage.store(file, "messages", nomStockage)
                 val pj = MessagePieceJointe(
                     message = saved,
                     nomOriginal = nomOriginal,
                     nomStockage = nomStockage,
-                    cheminStockage = targetPath.toString(),
+                    cheminStockage = stored,
                     typeMime = file.contentType,
                     tailleOctets = file.size
                 )
@@ -238,9 +226,8 @@ class MessageService(
         if (message.expediteur.id != userId && message.destinataire.id != userId) {
             throw ResourceNotFoundException("Accès non autorisé à cette pièce jointe")
         }
-        val path = Paths.get(pj.cheminStockage)
-        if (!Files.exists(path)) throw ResourceNotFoundException("Fichier introuvable sur le serveur")
-        val resource = UrlResource(path.toUri())
+        val resource = fileStorage.resolve(pj.cheminStockage)
+            ?: throw ResourceNotFoundException("Fichier introuvable sur le serveur")
         return Pair(resource, pj.nomOriginal)
     }
 

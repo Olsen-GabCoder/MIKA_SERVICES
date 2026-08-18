@@ -26,10 +26,9 @@ import com.mikaservices.platform.modules.user.mapper.UserMapper
 import com.mikaservices.platform.modules.user.entity.AuditLog
 import com.mikaservices.platform.modules.user.repository.*
 import com.mikaservices.platform.modules.user.service.AuditLogService
+import com.mikaservices.platform.common.service.FileStorageService
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.Resource
-import org.springframework.core.io.UrlResource
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -42,10 +41,6 @@ import org.springframework.web.multipart.MultipartFile
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
 import jakarta.persistence.criteria.JoinType
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 
 @Service
 @Transactional
@@ -59,14 +54,12 @@ class UserService(
     private val passwordEncoder: PasswordEncoder,
     private val emailService: EmailService,
     private val sessionRepository: SessionRepository,
-    private val passwordResetTokenRepository: PasswordResetTokenRepository
+    private val passwordResetTokenRepository: PasswordResetTokenRepository,
+    private val fileStorage: FileStorageService
 ) {
 
     @PersistenceContext
     private lateinit var entityManager: EntityManager
-
-    @Value("\${app.upload.dir:uploads}")
-    private lateinit var uploadDir: String
 
     private val logger = LoggerFactory.getLogger(UserService::class.java)
     
@@ -560,16 +553,9 @@ class UserService(
             ?: throw BadRequestException("Utilisateur non authentifié")
         val user = userRepository.findByEmail(email)
             .orElseThrow { ResourceNotFoundException("Utilisateur introuvable") }
-        val profilDir = Paths.get(uploadDir).resolve("profil").toAbsolutePath().normalize()
-        Files.createDirectories(profilDir)
-        val ext = file.originalFilename?.substringAfterLast(".", "jpg") ?: "jpg"
-        val filename = "profil/${user.id}_${System.currentTimeMillis()}.$ext"
-        val targetPath = Paths.get(uploadDir).resolve(filename).toAbsolutePath().normalize()
-        if (!targetPath.startsWith(Paths.get(uploadDir).toAbsolutePath())) {
-            throw BadRequestException("Chemin de fichier invalide")
-        }
-        Files.copy(file.inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING)
-        user.photo = filename
+        val ancien = user.photo
+        user.photo = fileStorage.store(file, "profil", "${user.id}_${System.currentTimeMillis()}")
+        if (ancien != null && ancien != user.photo) fileStorage.delete(ancien)
         val currentUsername = SecurityContextHolder.getContext().authentication?.name
         user.updatedBy = currentUsername
         userRepository.save(user)
@@ -591,11 +577,7 @@ class UserService(
     }
 
     private fun getPhotoResourceForUser(user: User): Resource? {
-        val photoPath = user.photo ?: return null
-        val path = Paths.get(uploadDir).resolve(photoPath).toAbsolutePath().normalize()
-        val basePath = Paths.get(uploadDir).toAbsolutePath().normalize()
-        if (!path.startsWith(basePath) || !Files.exists(path)) return null
-        return UrlResource(path.toUri())
+        return fileStorage.resolve(user.photo)
     }
 
     @Transactional(readOnly = true)

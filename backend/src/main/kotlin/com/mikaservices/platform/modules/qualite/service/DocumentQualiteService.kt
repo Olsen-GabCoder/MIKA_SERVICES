@@ -10,20 +10,15 @@ import com.mikaservices.platform.modules.qualite.entity.VersionDocumentQualite
 import com.mikaservices.platform.modules.qualite.mapper.DocumentQualiteMapper
 import com.mikaservices.platform.modules.qualite.repository.DocumentQualiteRepository
 import com.mikaservices.platform.modules.user.repository.UserRepository
+import com.mikaservices.platform.common.service.FileStorageService
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.Resource
-import org.springframework.core.io.UrlResource
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import java.util.UUID
 
 @Service
@@ -31,28 +26,17 @@ import java.util.UUID
 class DocumentQualiteService(
     private val repository: DocumentQualiteRepository,
     private val userRepository: UserRepository,
+    private val fileStorage: FileStorageService,
 ) {
     private val logger = LoggerFactory.getLogger(DocumentQualiteService::class.java)
 
-    @Value("\${app.upload.dir:uploads}")
-    private lateinit var uploadDir: String
-
-    private fun getUploadPath(): Path {
-        val uploadPath = Paths.get(uploadDir).resolve("qualite-documents").toAbsolutePath().normalize()
-        Files.createDirectories(uploadPath)
-        return uploadPath
-    }
-
-    private fun storeFile(file: MultipartFile): Triple<String, String, Path> {
-        val uploadPath = getUploadPath()
+    /** Retourne (nomOriginal, nomStockage, identifiantStockage — URL Cloudinary ou chemin local). */
+    private fun storeFile(file: MultipartFile): Triple<String, String, String> {
         val originalFilename = file.originalFilename ?: "fichier"
         val extension = originalFilename.substringAfterLast(".", "")
         val storedFilename = "${UUID.randomUUID()}.$extension"
-        val targetPath = uploadPath.resolve(storedFilename)
-
-        Files.copy(file.inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING)
-
-        return Triple(originalFilename, storedFilename, targetPath)
+        val stored = fileStorage.store(file, "qualite-documents", storedFilename)
+        return Triple(originalFilename, storedFilename, stored)
     }
 
     private fun generateCode(): String {
@@ -73,7 +57,7 @@ class DocumentQualiteService(
 
         // Créer la version 1 si un fichier est fourni
         if (file != null && !file.isEmpty) {
-            val (originalFilename, storedFilename, targetPath) = storeFile(file)
+            val (originalFilename, storedFilename, stored) = storeFile(file)
 
             saved.nomOriginal = originalFilename
             saved.nomStockage = storedFilename
@@ -85,7 +69,7 @@ class DocumentQualiteService(
                     numeroVersion = "1",
                     nomOriginal = originalFilename,
                     nomStockage = storedFilename,
-                    cheminStockage = targetPath.toString(),
+                    cheminStockage = stored,
                     typeMime = file.contentType,
                     tailleOctets = file.size,
                     commentaire = "Version initiale",
@@ -132,7 +116,7 @@ class DocumentQualiteService(
             userRepository.findById(it).orElseThrow { EntityNotFoundException("Utilisateur $it introuvable") }
         }
 
-        val (originalFilename, storedFilename, targetPath) = storeFile(file)
+        val (originalFilename, storedFilename, stored) = storeFile(file)
 
         val nextVersion = (doc.versionCourante.toIntOrNull()?.plus(1) ?: (doc.versions.size + 1)).toString()
 
@@ -142,7 +126,7 @@ class DocumentQualiteService(
                 numeroVersion = nextVersion,
                 nomOriginal = originalFilename,
                 nomStockage = storedFilename,
-                cheminStockage = targetPath.toString(),
+                cheminStockage = stored,
                 typeMime = file.contentType,
                 tailleOctets = file.size,
                 commentaire = commentaire,
@@ -172,13 +156,8 @@ class DocumentQualiteService(
                 ?: throw ResourceNotFoundException("Aucune version disponible pour le document $documentId")
         }
 
-        val filePath = Path.of(version.cheminStockage)
-        val resource = UrlResource(filePath.toUri())
-
-        if (!resource.exists()) {
-            throw ResourceNotFoundException("Fichier physique non trouvé: ${version.nomOriginal}")
-        }
-
+        val resource = fileStorage.resolve(version.cheminStockage)
+            ?: throw ResourceNotFoundException("Fichier physique non trouvé: ${version.nomOriginal}")
         return Pair(resource, version)
     }
 
@@ -187,14 +166,7 @@ class DocumentQualiteService(
             .orElseThrow { EntityNotFoundException("DocumentQualite $id introuvable") }
 
         // Supprimer les fichiers physiques de toutes les versions
-        doc.versions.forEach { version ->
-            try {
-                val filePath = Path.of(version.cheminStockage)
-                Files.deleteIfExists(filePath)
-            } catch (e: Exception) {
-                logger.warn("Impossible de supprimer le fichier physique: ${version.cheminStockage}", e)
-            }
-        }
+        doc.versions.forEach { version -> fileStorage.delete(version.cheminStockage) }
 
         repository.deleteById(id)
         logger.info("Document qualité supprimé: ${doc.codeDocument}")

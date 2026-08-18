@@ -19,18 +19,14 @@ import com.mikaservices.platform.modules.materiel.mapper.EnginMapper
 import com.mikaservices.platform.modules.materiel.repository.AffectationEnginChantierRepository
 import com.mikaservices.platform.modules.materiel.repository.EnginRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
+import com.mikaservices.platform.common.service.FileStorageService
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.Resource
-import org.springframework.core.io.UrlResource
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import java.time.LocalDate
 import java.time.Year
 import java.util.UUID
@@ -40,11 +36,9 @@ import java.util.UUID
 class EnginService(
     private val enginRepository: EnginRepository,
     private val affectationRepository: AffectationEnginChantierRepository,
-    private val projetRepository: ProjetRepository
+    private val projetRepository: ProjetRepository,
+    private val fileStorage: FileStorageService
 ) {
-    @Value("\${app.upload.dir:uploads}")
-    private lateinit var uploadDir: String
-
     private val logger = LoggerFactory.getLogger(EnginService::class.java)
 
     fun create(request: EnginCreateRequest): EnginResponse {
@@ -267,16 +261,9 @@ class EnginService(
         val allowedTypes = listOf("image/jpeg", "image/png", "image/webp")
         if (file.contentType !in allowedTypes) throw BadRequestException("Format non autorisé (JPEG, PNG ou WebP uniquement)")
         val engin = getEnginById(id)
-        val enginDir = Paths.get(uploadDir).resolve("engins").toAbsolutePath().normalize()
-        Files.createDirectories(enginDir)
-        val ext = file.originalFilename?.substringAfterLast(".", "jpg") ?: "jpg"
-        val filename = "engins/${engin.id}_${System.currentTimeMillis()}.$ext"
-        val targetPath = Paths.get(uploadDir).resolve(filename).toAbsolutePath().normalize()
-        if (!targetPath.startsWith(Paths.get(uploadDir).toAbsolutePath())) {
-            throw BadRequestException("Chemin de fichier invalide")
-        }
-        Files.copy(file.inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING)
-        engin.photo = filename
+        val ancien = engin.photo
+        engin.photo = fileStorage.store(file, "engins", "${engin.id}_${System.currentTimeMillis()}")
+        if (ancien != null && ancien != engin.photo) fileStorage.delete(ancien)
         enginRepository.save(engin)
         logger.info("Photo mise à jour pour l'engin: ${engin.code}")
         return EnginMapper.toResponse(engin)
@@ -285,11 +272,7 @@ class EnginService(
     @Transactional(readOnly = true)
     fun getPhotoResource(id: Long): Resource? {
         val engin = getEnginById(id)
-        val photoPath = engin.photo ?: return null
-        val path = Paths.get(uploadDir).resolve(photoPath).toAbsolutePath().normalize()
-        val basePath = Paths.get(uploadDir).toAbsolutePath().normalize()
-        if (!path.startsWith(basePath) || !Files.exists(path)) return null
-        return UrlResource(path.toUri())
+        return fileStorage.resolve(engin.photo)
     }
 
     private fun getEnginById(id: Long): Engin {

@@ -20,6 +20,7 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { StatutTache, Priorite, TypePrevision } from '@/types/planning'
 import type { TacheCreateRequest, TacheUpdateRequest, Tache } from '@/types/planning'
 import { canEditProjetEffective } from '@/utils/authRoles'
+import { handleApiError } from '@/utils/errorHandler'
 import { fetchUsers } from '@/store/slices/userSlice'
 import { dqeApi } from '@/api/dqeApi'
 import type { DqeChapitre } from '@/types/dqe'
@@ -233,8 +234,8 @@ export default function PlanningPage() {
     aFaire: taches.filter((t) => t.statut === StatutTache.A_FAIRE).length,
     enCours: taches.filter((t) => t.statut === StatutTache.EN_COURS).length,
     terminees: taches.filter((t) => t.statut === StatutTache.TERMINEE).length,
-    enRetard: tachesEnRetard.filter((t) => t.projetId === selectedProjetId).length,
-  }), [taches, tachesEnRetard, selectedProjetId])
+    enRetard: taches.filter((t) => t.enRetard).length,
+  }), [taches])
 
   // ---------- Export Excel ----------
   const handleExportExcel = useCallback(async () => {
@@ -364,6 +365,7 @@ export default function PlanningPage() {
 
   const refreshSecondaryData = () => {
     dispatch(fetchTachesEnRetard()).catch((e: unknown) => console.error('fetchTachesEnRetard failed', e))
+    dispatch(fetchProjetStats()).catch((e: unknown) => console.error('fetchProjetStats failed', e))
     if (currentUser?.id) dispatch(fetchMesTaches(currentUser.id)).catch((e: unknown) => console.error('fetchMesTaches failed', e))
   }
 
@@ -405,8 +407,14 @@ export default function PlanningPage() {
         tacheParentId: formTacheParentId ? Number(formTacheParentId) : undefined,
         estJalon: formEstJalon,
       }
-      await dispatch(updateTache({ id: editingTache.id, request: req }))
-      toast({ message: t('modalUpdateSuccess'), variant: 'success' })
+      try {
+        await dispatch(updateTache({ id: editingTache.id, request: req })).unwrap()
+        toast({ message: t('modalUpdateSuccess'), variant: 'success' })
+      } catch (err) {
+        toast({ message: handleApiError(err), variant: 'error' })
+        setSubmitting(false)
+        return
+      }
     } else {
       const req: TacheCreateRequest = {
         projetId: selectedProjetId,
@@ -425,8 +433,14 @@ export default function PlanningPage() {
         tacheParentId: formTacheParentId ? Number(formTacheParentId) : undefined,
         estJalon: formEstJalon,
       }
-      await dispatch(createTache(req))
-      toast({ message: t('modalCreateSuccess'), variant: 'success' })
+      try {
+        await dispatch(createTache(req)).unwrap()
+        toast({ message: t('modalCreateSuccess'), variant: 'success' })
+      } catch (err) {
+        toast({ message: handleApiError(err), variant: 'error' })
+        setSubmitting(false)
+        return
+      }
     }
     setShowModal(false)
     resetForm()

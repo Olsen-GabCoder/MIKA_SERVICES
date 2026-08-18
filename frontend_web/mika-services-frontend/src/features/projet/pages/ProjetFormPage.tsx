@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useConfirm } from '@/contexts/ConfirmContext'
+import { useToast } from '@/contexts/ToastContext'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useIsOnline } from '@/hooks/useConnectivity'
 import { OfflineWarningBanner } from '@/components/pwa/OfflineWarningBanner'
@@ -458,6 +459,7 @@ export const ProjetFormPage = () => {
   const { formatNumber } = useFormatNumber()
   const monthsShort = useMemo(() => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => t(`detail.monthsShort_${i}`)), [t])
   const confirm = useConfirm()
+  const toast = useToast()
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
   const navigate = useNavigate()
@@ -587,7 +589,15 @@ export const ProjetFormPage = () => {
         caPrevisionnel: typeof r.caPrevisionnel === 'number' ? r.caPrevisionnel : Number(r.caPrevisionnel) || 0,
         caRealise: typeof r.caRealise === 'number' ? r.caRealise : Number(r.caRealise) || 0,
       })))
-    }).catch(() => {})
+    }).catch((e) => {
+      // Sans le suivi sauvegardé, une sauvegarde du formulaire pourrait écraser les CA existants : prévenir l'utilisateur
+      console.error('ProjetFormPage: échec chargement suivi mensuel', e)
+      toast({
+        message: t('form.suiviMensuelLoadError', { defaultValue: 'Le suivi mensuel sauvegardé n\'a pas pu être chargé. Rechargez la page avant de sauvegarder.' }),
+        variant: 'error',
+      })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, id])
 
   // Charger points bloquants et prévisions en édition

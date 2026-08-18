@@ -18,20 +18,21 @@ export interface TachesTableProps {
   filterStatuts?: StatutTache[]
 }
 
-const STATUT_META: Record<StatutTache, { label: string; color: string; soft: string }> = {
-  [StatutTache.A_FAIRE]: { label: 'À faire', color: '#6B7280', soft: 'var(--db-subtle)' },
-  [StatutTache.EN_COURS]: { label: 'En cours', color: 'var(--db-info)', soft: 'var(--db-info-bg2)' },
-  [StatutTache.EN_ATTENTE]: { label: 'En attente', color: 'var(--db-warn)', soft: 'var(--db-warn-bg)' },
-  [StatutTache.TERMINEE]: { label: 'Terminée', color: 'var(--db-success)', soft: 'var(--db-success-bg)' },
-  [StatutTache.ANNULEE]: { label: 'Annulée', color: '#B08078', soft: 'var(--db-subtle)' },
+// Libellés : i18n planning:statut.* / planning:priorite.* — ici uniquement les couleurs
+const STATUT_META: Record<StatutTache, { color: string; soft: string }> = {
+  [StatutTache.A_FAIRE]: { color: '#6B7280', soft: 'var(--db-subtle)' },
+  [StatutTache.EN_COURS]: { color: 'var(--db-info)', soft: 'var(--db-info-bg2)' },
+  [StatutTache.EN_ATTENTE]: { color: 'var(--db-warn)', soft: 'var(--db-warn-bg)' },
+  [StatutTache.TERMINEE]: { color: 'var(--db-success)', soft: 'var(--db-success-bg)' },
+  [StatutTache.ANNULEE]: { color: '#B08078', soft: 'var(--db-subtle)' },
 }
 
-const PRIO_META: Record<Priorite, { label: string; color: string; soft: string }> = {
-  [Priorite.BASSE]: { label: 'Basse', color: '#8FA3AD', soft: 'rgba(143,163,173,.16)' },
-  [Priorite.NORMALE]: { label: 'Normale', color: '#6B7280', soft: 'var(--db-subtle)' },
-  [Priorite.HAUTE]: { label: 'Haute', color: 'var(--db-orange)', soft: 'var(--db-orange-soft)' },
-  [Priorite.URGENTE]: { label: 'Urgente', color: '#E4572E', soft: 'rgba(228,87,46,.14)' },
-  [Priorite.CRITIQUE]: { label: 'Critique', color: 'var(--db-danger)', soft: 'var(--db-danger-bg2)' },
+const PRIO_META: Record<Priorite, { color: string; soft: string }> = {
+  [Priorite.BASSE]: { color: '#8FA3AD', soft: 'rgba(143,163,173,.16)' },
+  [Priorite.NORMALE]: { color: '#6B7280', soft: 'var(--db-subtle)' },
+  [Priorite.HAUTE]: { color: 'var(--db-orange)', soft: 'var(--db-orange-soft)' },
+  [Priorite.URGENTE]: { color: '#E4572E', soft: 'rgba(228,87,46,.14)' },
+  [Priorite.CRITIQUE]: { color: 'var(--db-danger)', soft: 'var(--db-danger-bg2)' },
 }
 
 function fmtDate(d: string | null): string {
@@ -242,7 +243,7 @@ export function TachesTable({
         const sm = STATUT_META[tache.statut]
         const pm = PRIO_META[tache.priorite]
         const ld = lateDays(tache)
-        const assigneeName = tache.assigneA ? `${tache.assigneA.prenom} ${tache.assigneA.nom}` : 'Non assignée'
+        const assigneeName = tache.assigneA ? `${tache.assigneA.prenom} ${tache.assigneA.nom}` : t('unassigned', { defaultValue: 'Non assignée' })
         const ini = initials(tache.assigneA ? `${tache.assigneA.prenom} ${tache.assigneA.nom}` : null)
 
         const progColor = tache.statut === StatutTache.TERMINEE

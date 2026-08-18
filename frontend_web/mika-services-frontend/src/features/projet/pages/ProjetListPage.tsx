@@ -420,7 +420,7 @@ export const ProjetListPage = () => {
       {isFirstProjets && (
         <PageGuide
           variant="welcome"
-          message="Gerez tous vos projets BTP depuis cette page. Filtrez par statut, type ou client. Cliquez sur un projet pour acceder a ses details, son budget et son planning."
+          message={t('list.pageGuide', { defaultValue: 'Gérez tous vos projets BTP depuis cette page. Filtrez par statut, type ou client. Cliquez sur un projet pour accéder à ses détails, son budget et son planning.' })}
           dismissKey="projets-welcome"
         />
       )}

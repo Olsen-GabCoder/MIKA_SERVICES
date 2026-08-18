@@ -121,14 +121,15 @@ const planningSlice = createSlice({
     builder.addCase(fetchTachesEnRetard.rejected, (state, action) => { state.loadingEnRetard = false; state.error = handleApiError(action.error) })
 
     // createTache
-    builder.addCase(createTache.pending, (state) => { state.loading = true; state.error = null })
+    // Pas de state.loading ici : le modal gère son propre état "submitting",
+    // et allumer le loader global masquerait la table pendant la création.
+    builder.addCase(createTache.pending, (state) => { state.error = null })
     builder.addCase(createTache.fulfilled, (state, action) => {
-      state.loading = false
       state.taches.unshift(action.payload)
       clearPlanningCache(action.payload.projetId)
       clearResponseCacheMatching('/planning/')
     })
-    builder.addCase(createTache.rejected, (state, action) => { state.loading = false; state.error = handleApiError(action.error) })
+    builder.addCase(createTache.rejected, (state, action) => { state.error = handleApiError(action.error) })
 
     // updateTache
     builder.addCase(updateTache.pending, (state) => { state.error = null })

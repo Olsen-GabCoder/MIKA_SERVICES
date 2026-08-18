@@ -90,5 +90,6 @@
     "APPROVISIONNEMENT": "Approvisionnement",
     "RESSOURCES_HUMAINES": "Ressources humaines",
     "MATERIEL": "Materiel"
-  }
+  },
+  "unassigned": "Non assignée"
 }

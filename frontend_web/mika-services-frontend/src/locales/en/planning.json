@@ -90,5 +90,6 @@
     "APPROVISIONNEMENT": "Supply",
     "RESSOURCES_HUMAINES": "Human resources",
     "MATERIEL": "Equipment"
-  }
+  },
+  "unassigned": "Unassigned"
 }

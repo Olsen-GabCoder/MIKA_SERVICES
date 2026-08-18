@@ -37,6 +37,18 @@ class TachePrevisionFusionMigration(
 
     private fun migratePrevisionData() {
         try {
+            // Migration deja jouee et scellee : la table legacy a ete renommee en backup.
+            // Ce garde-fou empeche la re-insertion de taches supprimees par l'utilisateur
+            // a chaque redemarrage (bug des "taches ressuscitees").
+            val backupExists = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'previsions_legacy_backup'",
+                Int::class.java
+            ) ?: 0
+            if (backupExists > 0) {
+                logger.info("[TachePrevisionFusion] Migration deja scellee (previsions_legacy_backup presente), rien a faire.")
+                return
+            }
+
             // Verifier que la table previsions existe
             val tableExists = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'previsions'",
@@ -67,6 +79,7 @@ class TachePrevisionFusionMigration(
 
             if (count == 0) {
                 logger.info("[TachePrevisionFusion] Aucune prevision a migrer (deja fait ou table vide).")
+                sealMigration()
                 return
             }
 
@@ -107,8 +120,23 @@ class TachePrevisionFusionMigration(
             )
 
             logger.warn("[TachePrevisionFusion] $inserted previsions migrees vers taches.")
+            sealMigration()
         } catch (e: Exception) {
             logger.warn("[TachePrevisionFusion] Erreur migration donnees : ${e.message}")
+        }
+    }
+
+    /**
+     * Scelle la migration en renommant la table legacy (aucune perte de donnees).
+     * Sans ce scellement, chaque redemarrage re-inserait les previsions dont la tache
+     * correspondante a ete supprimee par l'utilisateur.
+     */
+    private fun sealMigration() {
+        try {
+            jdbcTemplate.execute("ALTER TABLE previsions RENAME TO previsions_legacy_backup")
+            logger.warn("[TachePrevisionFusion] Table previsions renommee en previsions_legacy_backup (migration scellee).")
+        } catch (e: Exception) {
+            logger.warn("[TachePrevisionFusion] Erreur scellement (rename previsions) : ${e.message}")
         }
     }
 

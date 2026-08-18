@@ -199,9 +199,6 @@ class Projet(
     var pointsBloquants: MutableList<PointBloquant> = mutableListOf(),
 
     @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
-    var previsions: MutableList<Prevision> = mutableListOf(),
-
-    @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
     var revisionsBudget: MutableList<RevisionBudget> = mutableListOf(),
 
     @OneToMany(mappedBy = "projet", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)

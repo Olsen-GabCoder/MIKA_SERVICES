@@ -46,6 +46,8 @@ data class ProjetResponse(
     val observations: String?,
     val propositionsAmelioration: String?,
     val responsableProjet: ProjetUserSummary?,
+    /** ID plat du chef de projet (même sémantique que ProjetSummaryResponse.responsableProjetId) */
+    val responsableProjetId: Long? = null,
     val partenairePrincipal: String?,
     val actif: Boolean,
     val chantierActif: Boolean = true,

@@ -7,7 +7,6 @@ import com.mikaservices.platform.modules.budget.repository.DepenseRepository
 import com.mikaservices.platform.modules.materiel.repository.EnginRepository
 import com.mikaservices.platform.modules.materiel.repository.MateriauRepository
 import com.mikaservices.platform.modules.planning.repository.TacheRepository
-import com.mikaservices.platform.modules.projet.repository.PrevisionRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
 import com.mikaservices.platform.modules.projet.repository.CAPrevisionnelRealiseRepository
 import com.mikaservices.platform.modules.qshe.repository.IncidentRepository
@@ -31,7 +30,6 @@ class ReportingService(
     private val projetRepository: ProjetRepository,
     private val depenseRepository: DepenseRepository,
     private val tacheRepository: TacheRepository,
-    private val previsionRepository: PrevisionRepository,
     private val enginRepository: EnginRepository,
     private val materiauRepository: MateriauRepository,
     private val incidentRepository: IncidentRepository,
@@ -318,21 +316,22 @@ class ReportingService(
 
         val startPair = weekSlots.first()
         val endPair = weekSlots.last()
-        val allPrevisions = previsionRepository.findByWeekRange(
+        // M3 : les prévisions vivent dans la table taches (typePrevision != null)
+        val allPrevisions = tacheRepository.findPrevisionsByWeekRangeCrossYear(
             startPair.second, startPair.first,
             endPair.second, endPair.first
         )
 
-        val grouped = allPrevisions.groupBy { Pair(it.semaine ?: 0, it.annee) }
+        val grouped = allPrevisions.groupBy { Pair(it.semaine ?: 0, it.annee ?: 0) }
 
         val weeks = weekSlots.map { (sem, an) ->
             val items = grouped[Pair(sem, an)] ?: emptyList()
             val total = items.size.toLong()
-            val terminees = items.count { (it.avancementPct ?: 0) >= 100 }.toLong()
-            val enCours = items.count { val pct = it.avancementPct ?: 0; pct in 1..99 }.toLong()
-            val nonCommencees = items.count { (it.avancementPct ?: 0) == 0 }.toLong()
+            val terminees = items.count { it.pourcentageAvancement >= 100 }.toLong()
+            val enCours = items.count { it.pourcentageAvancement in 1..99 }.toLong()
+            val nonCommencees = items.count { it.pourcentageAvancement == 0 }.toLong()
             val avancementMoyen = if (items.isNotEmpty()) {
-                round(items.map { (it.avancementPct ?: 0).toDouble() }.average() * 100.0) / 100.0
+                round(items.map { it.pourcentageAvancement.toDouble() }.average() * 100.0) / 100.0
             } else 0.0
 
             WeekSummary(

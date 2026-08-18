@@ -11,7 +11,7 @@ import com.mikaservices.platform.modules.ia.repository.AnalyseRapportLogReposito
 import com.mikaservices.platform.modules.projet.entity.Projet
 import com.mikaservices.platform.modules.projet.repository.CAPrevisionnelRealiseRepository
 import com.mikaservices.platform.modules.projet.repository.PointBloquantRepository
-import com.mikaservices.platform.modules.projet.repository.PrevisionRepository
+import com.mikaservices.platform.modules.planning.repository.TacheRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
 import jakarta.transaction.Transactional
 import org.apache.poi.xwpf.usermodel.XWPFDocument
@@ -32,7 +32,7 @@ class RapportAnalyseService(
     private val anthropicProperties: AnthropicProperties,
     private val projetRepository: ProjetRepository,
     private val caRepository: CAPrevisionnelRealiseRepository,
-    private val previsionRepository: PrevisionRepository,
+    private val tacheRepository: TacheRepository,
     private val pointBloquantRepository: PointBloquantRepository,
     private val analyseLogRepository: AnalyseRapportLogRepository
 ) {
@@ -527,12 +527,17 @@ Si le contenu provient d'un fichier Excel, identifie les colonnes et lignes pert
         }?.takeIf { it.isNotEmpty() }
 
         val doublonsPrevisions = response.previsions?.mapNotNull { extrait ->
-            val existing = previsionRepository.findByProjetIdAndSemaineAndAnnee(projetId, extrait.semaine, extrait.annee)
-            existing.firstOrNull { it.description?.contains(extrait.description.take(20), ignoreCase = true) == true }
+            // M3 : les prévisions vivent dans la table taches (typePrevision != null)
+            val existing = tacheRepository.findByProjetIdAndSemaineAndAnnee(projetId, extrait.semaine, extrait.annee)
+                .filter { it.typePrevision != null }
+            existing.firstOrNull {
+                (it.titre.contains(extrait.description.take(20), ignoreCase = true)) ||
+                    (it.description?.contains(extrait.description.take(20), ignoreCase = true) == true)
+            }
                 ?.let { match ->
                     DoublonPrevision(
                         previsionExistanteId = match.id ?: 0L,
-                        descriptionExistante = match.description ?: "",
+                        descriptionExistante = match.description ?: match.titre,
                         descriptionNouvelle = extrait.description,
                         semaine = extrait.semaine,
                         annee = extrait.annee

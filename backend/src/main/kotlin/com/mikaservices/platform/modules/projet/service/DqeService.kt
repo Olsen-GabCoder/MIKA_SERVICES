@@ -179,7 +179,8 @@ class DqeService(
 
         val chapitres = chapitreRepository.findByProjetIdOrderByOrdreAsc(projetId).associateBy { it.id!! }
         for (item in items) {
-            val chap = chapitres[item.id] ?: continue
+            val chap = chapitres[item.id]
+                ?: throw ForbiddenException("Le chapitre ${item.id} n'appartient pas au projet $projetId")
             chap.ordre = item.ordre
         }
         chapitreRepository.saveAll(chapitres.values)
@@ -194,7 +195,8 @@ class DqeService(
 
         val lignes = ligneRepository.findByChapitreIdOrderByOrdreAsc(chapitreId).associateBy { it.id!! }
         for (item in items) {
-            val ligne = lignes[item.id] ?: continue
+            val ligne = lignes[item.id]
+                ?: throw ForbiddenException("La ligne ${item.id} n'appartient pas au chapitre $chapitreId")
             ligne.ordre = item.ordre
         }
         ligneRepository.saveAll(lignes.values)

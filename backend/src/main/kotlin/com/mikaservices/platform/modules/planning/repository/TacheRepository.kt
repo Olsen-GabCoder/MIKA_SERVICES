@@ -66,6 +66,20 @@ interface TacheRepository : JpaRepository<Tache, Long> {
         @Param("annee") annee: Int
     ): List<Tache>
 
+    /** Prévisions (Tache.typePrevision != null) sur une plage de semaines pouvant chevaucher deux années. */
+    @EntityGraph(attributePaths = ["projet", "assigneA"])
+    @Query("""
+        SELECT t FROM Tache t WHERE t.typePrevision IS NOT NULL
+        AND (t.annee > :startYear OR (t.annee = :startYear AND t.semaine >= :startWeek))
+        AND (t.annee < :endYear OR (t.annee = :endYear AND t.semaine <= :endWeek))
+    """)
+    fun findPrevisionsByWeekRangeCrossYear(
+        @Param("startYear") startYear: Int,
+        @Param("startWeek") startWeek: Int,
+        @Param("endYear") endYear: Int,
+        @Param("endWeek") endWeek: Int
+    ): List<Tache>
+
     @Query("""
         SELECT t.projet.id,
                t.projet.nom,

@@ -83,6 +83,7 @@ object ProjetMapper {
         observations = entity.observations,
         propositionsAmelioration = entity.propositionsAmelioration,
         responsableProjet = toUserSummary(entity.responsableProjet),
+        responsableProjetId = entity.responsableProjetId ?: entity.responsableProjet?.id,
         partenairePrincipal = entity.partenairePrincipal,
         actif = entity.actif,
         chantierActif = entity.chantierActif,
@@ -120,7 +121,8 @@ object ProjetMapper {
                 latitude = entity.latitude,
                 longitude = entity.longitude,
                 montantHT = entity.montantHT,
-                avancementGlobal = entity.avancementGlobal ?: BigDecimal.ZERO,
+                // M7 : même valeur que le détail (physique = source de vérité, fallback global)
+                avancementGlobal = entity.avancementPhysiquePct ?: entity.avancementGlobal ?: BigDecimal.ZERO,
                 dateDebut = entity.dateDebut,
                 dateFin = entity.dateFin,
                 responsableNom = resp?.let {

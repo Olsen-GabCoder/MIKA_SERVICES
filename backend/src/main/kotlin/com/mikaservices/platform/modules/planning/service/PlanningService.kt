@@ -1,5 +1,6 @@
 package com.mikaservices.platform.modules.planning.service
 
+import com.mikaservices.platform.common.enums.StatutProjet
 import com.mikaservices.platform.common.enums.StatutTache
 import com.mikaservices.platform.common.exception.BadRequestException
 import com.mikaservices.platform.common.exception.ForbiddenException
@@ -39,7 +40,9 @@ class PlanningService(
         if (!currentUserService.canEditProjet(projet.responsableProjet?.id)) {
             throw ForbiddenException("Seul le chef de projet peut créer des tâches pour ce projet.")
         }
+        requireProjetNonGele(projet)
         validateDates(request.dateDebut, request.dateFin, request.dateEcheance)
+        validateDatesDansPeriodeProjet(projet, request.dateDebut, request.dateFin, request.dateEcheance)
 
         val tache = Tache(
             projet = projet, titre = request.titre,
@@ -108,6 +111,7 @@ class PlanningService(
         if (!currentUserService.canEditProjet(tache.projet.responsableProjet?.id)) {
             throw ForbiddenException("Seul le chef de projet peut modifier les tâches de ce projet.")
         }
+        requireProjetNonGele(tache.projet)
 
         request.titre?.let { tache.titre = it }
         request.description?.let { tache.description = it }
@@ -162,6 +166,22 @@ class PlanningService(
             request.dateFin ?: tache.dateFin,
             request.dateEcheance ?: tache.dateEcheance
         )
+        // Ne valider la période projet que si une date a été modifiée (évite de bloquer
+        // les tâches existantes dont les dates historiques débordent déjà)
+        if (request.dateDebut != null || request.dateFin != null || request.dateEcheance != null) {
+            validateDatesDansPeriodeProjet(tache.projet, tache.dateDebut, tache.dateFin, tache.dateEcheance)
+        }
+
+        // Interdire de terminer une tâche parente tant que des sous-tâches ne sont pas terminées
+        if (request.statut == StatutTache.TERMINEE) {
+            val enfantsNonTermines = tache.tachesEnfants.filter { it.statut != StatutTache.TERMINEE && it.statut != StatutTache.ANNULEE }
+            if (enfantsNonTermines.isNotEmpty()) {
+                val apercu = enfantsNonTermines.take(3).joinToString(", ") { it.titre }
+                throw BadRequestException(
+                    "Impossible de terminer cette tâche : ${enfantsNonTermines.size} sous-tâche(s) non terminée(s) ($apercu${if (enfantsNonTermines.size > 3) ", …" else ""})."
+                )
+            }
+        }
 
         // Si terminée, mettre avancement à 100
         if (tache.statut == StatutTache.TERMINEE) {
@@ -261,6 +281,7 @@ class PlanningService(
         if (!currentUserService.canEditProjet(tache.projet.responsableProjet?.id)) {
             throw ForbiddenException("Seul le chef de projet peut supprimer les tâches de ce projet.")
         }
+        requireProjetNonGele(tache.projet)
         // Supprimer les dépendances liées avant de supprimer la tâche (évite les orphelins)
         val deps = dependanceTacheRepository.findByTacheId(id)
         if (deps.isNotEmpty()) {
@@ -270,6 +291,35 @@ class PlanningService(
         val childCount = tache.tachesEnfants.size
         tacheRepository.delete(tache)
         logger.info("Tâche supprimée: ${tache.titre} (+ $childCount sous-tâches)")
+    }
+
+    /** C4 : gel du planning après réception définitive du projet. */
+    private fun requireProjetNonGele(projet: com.mikaservices.platform.modules.projet.entity.Projet) {
+        if (projet.statut == StatutProjet.RECEPTION_DEFINITIVE) {
+            throw BadRequestException(
+                "Le projet « ${projet.nom} » a été réceptionné définitivement : son planning est gelé et ne peut plus être modifié."
+            )
+        }
+    }
+
+    /** C3 : les dates d'une tâche doivent rester dans la période du projet (si définie). */
+    private fun validateDatesDansPeriodeProjet(
+        projet: com.mikaservices.platform.modules.projet.entity.Projet,
+        dateDebut: LocalDate?,
+        dateFin: LocalDate?,
+        dateEcheance: LocalDate?
+    ) {
+        val debutProjet = projet.dateDebut
+        val finProjet = projet.dateFin
+        if (debutProjet != null && dateDebut != null && dateDebut.isBefore(debutProjet)) {
+            throw BadRequestException("La date de début de la tâche ($dateDebut) est antérieure au début du projet ($debutProjet)")
+        }
+        if (finProjet != null) {
+            val derniereDate = listOfNotNull(dateFin, dateEcheance).maxOrNull()
+            if (derniereDate != null && derniereDate.isAfter(finProjet)) {
+                throw BadRequestException("La fin de la tâche ($derniereDate) dépasse la date de fin du projet ($finProjet)")
+            }
+        }
     }
 
     private fun validateDates(dateDebut: LocalDate?, dateFin: LocalDate?, dateEcheance: LocalDate?) {

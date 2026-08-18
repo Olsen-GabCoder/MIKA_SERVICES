@@ -14,6 +14,10 @@ interface AffectationEnginChantierRepository : JpaRepository<AffectationEnginCha
     fun findByProjetId(projetId: Long): List<AffectationEnginChantier>
     fun findByProjetId(projetId: Long, pageable: Pageable): Page<AffectationEnginChantier>
     fun countByProjetId(projetId: Long): Long
+
+    /** Comptage groupé pour éviter le N+1 sur les listes de projets. */
+    @Query("SELECT a.projet.id, COUNT(a) FROM AffectationEnginChantier a WHERE a.projet.id IN :projetIds GROUP BY a.projet.id")
+    fun countGroupByProjetIds(@Param("projetIds") projetIds: Collection<Long>): List<Array<Any>>
     fun findByEnginId(enginId: Long): List<AffectationEnginChantier>
     fun findByEnginIdAndStatut(enginId: Long, statut: StatutAffectation): List<AffectationEnginChantier>
     fun findByEnginIdInAndStatut(enginIds: Collection<Long>, statut: StatutAffectation): List<AffectationEnginChantier>

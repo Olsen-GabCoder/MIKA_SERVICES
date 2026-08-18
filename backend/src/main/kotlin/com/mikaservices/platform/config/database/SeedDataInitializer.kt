@@ -16,12 +16,10 @@ import com.mikaservices.platform.modules.planning.repository.TacheRepository
 import com.mikaservices.platform.modules.projet.entity.CAPrevisionnelRealise
 import com.mikaservices.platform.modules.projet.entity.Client
 import com.mikaservices.platform.modules.projet.entity.PointBloquant
-import com.mikaservices.platform.modules.projet.entity.Prevision
 import com.mikaservices.platform.modules.projet.entity.Projet
 import com.mikaservices.platform.modules.projet.repository.CAPrevisionnelRealiseRepository
 import com.mikaservices.platform.modules.projet.repository.ClientRepository
 import com.mikaservices.platform.modules.projet.repository.PointBloquantRepository
-import com.mikaservices.platform.modules.projet.repository.PrevisionRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
 import com.mikaservices.platform.modules.qualite.entity.*
 import com.mikaservices.platform.modules.qualite.enums.*
@@ -63,7 +61,6 @@ class SeedDataInitializer(
     private val depenseRepository: DepenseRepository,
     private val tacheRepository: TacheRepository,
     private val pointBloquantRepository: PointBloquantRepository,
-    private val previsionRepository: PrevisionRepository,
     private val equipeRepository: EquipeRepository,
     private val fournisseurRepository: FournisseurRepository,
     private val materiauRepository: MateriauRepository,
@@ -93,7 +90,6 @@ class SeedDataInitializer(
                 initSuiviMensuel()
                 initTaches()
                 initPointsBloquants()
-                initPrevisions()
                 initQualiteUsers()
                 initEquipes()
                 initFournisseurs()
@@ -285,20 +281,6 @@ class SeedDataInitializer(
         }
         pointBloquantRepository.saveAll(points)
         logger.info("${points.size} points bloquants créés")
-    }
-
-    private fun initPrevisions() {
-        if (previsionRepository.count() > 0L) return
-        val projets = projetRepository.findByActifTrue(PageRequest.of(0, 500)).content
-        if (projets.isEmpty()) return
-        val previsions = mutableListOf<Prevision>()
-        projets.take(3).forEach { p ->
-            previsions.add(Prevision(p, 2, 2025, "Décompte N°3", TypePrevision.HEBDOMADAIRE, LocalDate.of(2025, 1, 6), LocalDate.of(2025, 1, 12), avancementPct = 75))
-            previsions.add(Prevision(p, null, 2025, "Transmission documents MTPC - validation DQE", TypePrevision.MENSUELLE, null, null, avancementPct = 30))
-            previsions.add(Prevision(p, null, 2025, "Délai d'exécution actualisé S2", TypePrevision.TRIMESTRIELLE, null, null, avancementPct = 100))
-        }
-        previsionRepository.saveAll(previsions)
-        logger.info("${previsions.size} prévisions créées")
     }
 
     private fun initQualiteUsers() {

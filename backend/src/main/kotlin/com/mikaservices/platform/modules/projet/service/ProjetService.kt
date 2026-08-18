@@ -23,12 +23,10 @@ import com.mikaservices.platform.modules.projet.dto.response.PvResumeResponse
 import com.mikaservices.platform.modules.projet.entity.AvancementEtudeProjet
 import com.mikaservices.platform.modules.projet.entity.CAPrevisionnelRealise
 import com.mikaservices.platform.modules.projet.entity.Client
-import com.mikaservices.platform.modules.projet.entity.Prevision
 import com.mikaservices.platform.modules.projet.entity.Projet
 import com.mikaservices.platform.modules.projet.mapper.AvancementEtudeProjetMapper
 import com.mikaservices.platform.modules.projet.mapper.CAPrevisionnelRealiseMapper
 import com.mikaservices.platform.modules.projet.mapper.PointBloquantMapper
-import com.mikaservices.platform.modules.projet.mapper.PrevisionMapper
 import com.mikaservices.platform.modules.projet.mapper.ProjetMapper
 import com.mikaservices.platform.modules.projet.repository.AvancementEtudeProjetRepository
 import com.mikaservices.platform.modules.projet.repository.CAPrevisionnelRealiseRepository
@@ -36,7 +34,6 @@ import com.mikaservices.platform.modules.projet.repository.PartenaireRepository
 import com.mikaservices.platform.modules.projet.repository.PointBloquantRepository
 import com.mikaservices.platform.modules.planning.dto.request.TacheCreateRequest
 import com.mikaservices.platform.modules.planning.service.PlanningService
-import com.mikaservices.platform.modules.projet.repository.PrevisionRepository
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
 import com.mikaservices.platform.modules.materiel.repository.AffectationEnginChantierRepository
 import com.mikaservices.platform.modules.reunionhebdo.repository.PointProjetPVRepository
@@ -68,7 +65,6 @@ class ProjetService(
     private val pointBloquantRepository: PointBloquantRepository,
     private val avancementEtudeProjetRepository: AvancementEtudeProjetRepository,
     private val caPrevisionnelRealiseRepository: CAPrevisionnelRealiseRepository,
-    private val previsionRepository: PrevisionRepository,
     private val pointProjetPVRepository: PointProjetPVRepository,
     private val currentUserService: CurrentUserService,
     private val planningService: PlanningService,
@@ -83,22 +79,30 @@ class ProjetService(
         return userRepository.findAllById(fkIds).filter { it.id != null }.associateBy { it.id!! }
     }
 
+    /** Comptage groupé des engins affectés (une seule requête pour toute la liste). */
+    private fun enginCountsByProjet(projets: Collection<Projet>): Map<Long, Int> {
+        val ids = projets.mapNotNull { it.id }
+        if (ids.isEmpty()) return emptyMap()
+        return affectationEnginRepository.countGroupByProjetIds(ids)
+            .associate { (it[0] as Long) to (it[1] as Long).toInt() }
+    }
+
     private fun mapPageSummaries(page: Page<Projet>): Page<ProjetSummaryResponse> {
         val byFk = responsablesByProjetFk(page.content)
+        val enginCounts = enginCountsByProjet(page.content)
         return page.map { p ->
             val fk = p.responsableProjetId
-            val enginCount = p.id?.let { affectationEnginRepository.countByProjetId(it).toInt() } ?: 0
-            ProjetMapper.toSummaryResponse(p, fk?.let { byFk[it] }, enginCount)
+            ProjetMapper.toSummaryResponse(p, fk?.let { byFk[it] }, enginCounts[p.id] ?: 0)
         }
     }
 
     private fun mapListSummaries(projets: List<Projet>): List<ProjetSummaryResponse> {
         if (projets.isEmpty()) return emptyList()
         val byFk = responsablesByProjetFk(projets)
+        val enginCounts = enginCountsByProjet(projets)
         return projets.map { p ->
             val fk = p.responsableProjetId
-            val enginCount = p.id?.let { affectationEnginRepository.countByProjetId(it).toInt() } ?: 0
-            ProjetMapper.toSummaryResponse(p, fk?.let { byFk[it] }, enginCount)
+            ProjetMapper.toSummaryResponse(p, fk?.let { byFk[it] }, enginCounts[p.id] ?: 0)
         }
     }
 
@@ -326,8 +330,17 @@ class ProjetService(
         computeDelaiMois(projet.dateDebut, projet.dateFin)?.let { projet.delaiMois = it }
         request.dateDebutReel?.let { projet.dateDebutReel = it }
         request.dateFinReelle?.let { projet.dateFinReelle = it }
-        request.avancementGlobal?.let { projet.avancementGlobal = it }
-        request.avancementPhysiquePct?.let { projet.avancementPhysiquePct = it }
+        // M1 : avancement physique = source de vérité unique ; avancementGlobal (affiché
+        // dans les listes) est synchronisé dessus. L'UI étiquette d'ailleurs les deux
+        // champs « Avancement physique (%) ».
+        request.avancementPhysiquePct?.let {
+            projet.avancementPhysiquePct = it
+            projet.avancementGlobal = it
+        }
+        request.avancementGlobal?.let {
+            projet.avancementGlobal = it
+            if (request.avancementPhysiquePct == null) projet.avancementPhysiquePct = it
+        }
         request.avancementFinancierPct?.let { projet.avancementFinancierPct = it }
         request.delaiConsommePct?.let { projet.delaiConsommePct = it }
         request.besoinsMateriel?.let { projet.besoinsMateriel = it }
@@ -568,7 +581,8 @@ class ProjetService(
         val currentSemaine = now.get(weekFields.weekOfWeekBasedYear()).toInt()
         val currentAnnee = now.get(weekFields.weekBasedYear())
 
-        val previsions = previsionRepository.findByProjetId(projetId)
+        // M3 : les prévisions vivent dans la table taches (typePrevision != null)
+        val previsionResponses = planningService.findPrevisionsByProjet(projetId).map { tacheToPrevisionResponse(it) }
         val pointsBloquants = pointBloquantRepository.findByProjetId(projetId)
         val pointsPV = pointProjetPVRepository.findByProjetIdOrderByReunion_DateReunionDesc(projetId)
 
@@ -579,7 +593,7 @@ class ProjetService(
             annee < currentAnnee || (annee == currentAnnee && semaine < currentSemaine)
 
         val periodKeys = mutableSetOf<Pair<Int, Int>>()
-        previsions.forEach { p ->
+        previsionResponses.forEach { p ->
             val s = p.semaine ?: return@forEach
             val a = p.annee
             if (isBeforeCurrent(s, a)) periodKeys.add(s to a)
@@ -593,7 +607,6 @@ class ProjetService(
             compareBy<Pair<Int, Int>> { -it.second }.thenBy { -it.first }
         ).take(maxSemaines)
 
-        val previsionResponses = previsions.map { PrevisionMapper.toResponse(it) }
         val pointBloquantResponses = pointsBloquants.map { PointBloquantMapper.toResponse(it) }
 
         val pvByPeriod: Map<Pair<Int, Int>, com.mikaservices.platform.modules.reunionhebdo.entity.PointProjetPV> =

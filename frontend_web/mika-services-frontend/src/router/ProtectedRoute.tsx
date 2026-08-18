@@ -8,7 +8,8 @@ import { isConducteurOnlyEffective } from '@/utils/authRoles'
  * (/materiel/engins/{id}, encodée dans les QR), on conserve l'engin
  * pour ouvrir directement sa fiche dans l'app mobile.
  */
-const terrainTarget = (pathname: string): string => {
+const terrainTarget = (pathname: string, search = ''): string => {
+  if (pathname.startsWith('/terrain')) return `${pathname}${search}`
   const m = pathname.match(/^\/materiel\/engins\/(\d+)/)
   return m ? `/terrain?engin=${m[1]}` : '/terrain'
 }
@@ -61,13 +62,14 @@ export const ProtectedRoute = ({
 
   // Route publique mais redirection si déjà authentifié
   if (!requireAuth && isAuthenticated) {
+    const fromLoc = (location.state as any)?.from
+    const fromPath: string = fromLoc?.pathname || ''
+    const fromSearch: string = fromLoc?.search || ''
     if (conducteurOnly) {
       // Conserver l'engin scanné avant login (QR → /login → /terrain?engin=...)
-      const fromPath = (location.state as any)?.from?.pathname || ''
-      return <Navigate to={terrainTarget(fromPath)} replace />
+      return <Navigate to={terrainTarget(fromPath, fromSearch)} replace />
     }
-    const from = (location.state as any)?.from?.pathname || '/'
-    return <Navigate to={from} replace />
+    return <Navigate to={fromPath ? `${fromPath}${fromSearch}` : '/'} replace />
   }
 
   return <>{children}</>

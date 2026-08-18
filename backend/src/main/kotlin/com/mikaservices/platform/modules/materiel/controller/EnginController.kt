@@ -216,7 +216,8 @@ class EnginController(
         @RequestParam(required = false) baseUrl: String?
     ): ResponseEntity<ByteArray> {
         val engin = enginService.findById(id)
-        val url = "${baseUrl ?: "https://mika-services.onrender.com"}/materiel/engins/${engin.id}"
+        // Le QR pointe vers l'app mobile terrain : tout scan passe par /login puis atterrit sur /terrain
+        val url = "${baseUrl ?: "https://mika-services.onrender.com"}/terrain?engin=${engin.id}"
         val writer = QRCodeWriter()
         val matrix = writer.encode(url, BarcodeFormat.QR_CODE, size, size)
         val stream = java.io.ByteArrayOutputStream()

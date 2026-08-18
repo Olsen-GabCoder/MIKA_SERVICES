@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAppSelector } from '@/store/hooks'
 import { terrainApi, type TerrainEngin } from '@/api/terrainApi'
+import { TerrainInstallBanner } from '../components/TerrainInstallBanner'
 import type {
   ChecklistItem, EtatGeneralInspection, GraviteIncident, TypeIncidentEngin,
 } from '@/types/materiel'
@@ -290,6 +291,7 @@ export function TerrainAppPage() {
 
   return (
     <div style={{ fontFamily: F, background: '#F4F6F8', minHeight: '100vh', color: INK, maxWidth: 560, margin: '0 auto' }}>
+      <TerrainInstallBanner />
       {screen === 'accueil' && (
         <AccueilScreen
           prenom={prenom}

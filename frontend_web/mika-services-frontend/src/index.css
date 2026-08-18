@@ -1680,6 +1680,11 @@ html[data-theme="dark"] .login-page {
   box-shadow: var(--login-form-shadow);
 }
 
+/* Logo affiché dans la carte uniquement sur mobile */
+.login-mobile-logo {
+  display: none;
+}
+
 .login-form-inner::before {
   content: '';
   position: absolute;
@@ -1856,14 +1861,13 @@ html[data-theme="dark"] .login-page {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--login-toggle-color);
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
   transition: color 0.2s;
-  padding: 4px 8px;
+  padding: 6px;
+  border-radius: 8px;
 }
 
 .login-toggle-pw:hover {
@@ -2176,10 +2180,10 @@ html[data-theme="dark"] .login-page {
   }
 }
 
-/* Téléphone / tablette étroite (< 768) : colonne verticale, cartes fusionnées visuellement */
+/* Téléphone / tablette étroite (< 768) : carte de connexion unique, panneau marketing masqué */
 @media (max-width: 767px) {
   .login-page {
-    --login-card-max-width: 100%;
+    --login-card-max-width: 440px;
     --login-card-min-height: auto;
     --login-panel-padding-top: 0;
     --login-panel-padding-bottom: 0;
@@ -2190,77 +2194,19 @@ html[data-theme="dark"] .login-page {
     min-height: 100dvh;
   }
 
-  /* Masquer le séparateur vertical entre les colonnes */
-  .login-left::after {
-    display: none;
-  }
-
-  /* ── Panneau gauche ── */
+  /* ── Panneau marketing masqué sur mobile ── */
   .login-left {
-    flex: none;
-    width: 100%;
-    padding: var(--login-space-md) var(--login-space-sm) 0;
-    justify-content: center;
-    align-items: stretch;
-  }
-  .login-left-content {
-    min-height: auto;
-    padding: var(--login-space-lg) var(--login-space-md);
-    border-radius: 16px 16px 0 0;
-    border-bottom: none;
-  }
-  /* Ligne latérale gauche : suit la forme (arrondi haut-gauche seulement) */
-  .login-left-content::before {
-    border-radius: 16px 0 0 0;
-  }
-  /* Supprimer la ligne décorative du bas pour la continuité */
-  .login-left-content::after {
     display: none;
   }
 
-  .login-logo-wrap {
-    margin-bottom: var(--login-space-lg);
-  }
-  .login-logo-wrap img {
-    width: 150px;
-  }
-  .login-headline {
-    font-size: clamp(36px, 9vw, 52px);
-    margin-bottom: var(--login-space-sm);
-  }
-  .login-sub-line {
-    font-size: 0.8rem;
-    margin-bottom: var(--login-space-lg);
-  }
-  .login-ticker-box {
-    height: 160px;
-    margin-left: calc(var(--login-space-xs) * -1);
-    margin-right: calc(var(--login-space-xs) * -1);
-  }
-  .login-ticker-box::before,
-  .login-ticker-box::after {
-    height: 24px;
-  }
-  .login-ticker-item {
-    min-height: 68px;
-    padding: var(--login-space-xs) var(--login-space-xs);
-    gap: var(--login-space-sm);
-  }
-  .login-t-num {
-    font-size: 2rem;
-    width: 36px;
-  }
-  .login-t-title { font-size: 0.88rem; }
-  .login-t-desc  { font-size: 0.78rem; }
-  .login-bottom-badge {
-    margin-top: var(--login-space-lg);
-  }
-
-  /* ── Panneau droit : carte collée en dessous, sans espace ── */
+  /* ── Carte de connexion unique, centrée ── */
   .login-right {
-    flex: none;
+    flex: 1;
     width: 100%;
-    padding: 0 var(--login-space-sm) var(--login-space-md);
+    padding: var(--login-space-lg) var(--login-space-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-left: none;
     background: transparent;
     backdrop-filter: none;
@@ -2271,76 +2217,43 @@ html[data-theme="dark"] .login-page {
     display: none;
   }
   .login-form-inner {
-    max-width: 100%;
+    margin: 0 auto;
     min-height: auto;
-    padding: var(--login-space-xl) var(--login-space-md);
-    border-radius: 0 0 16px 16px;
-    border-top: 1px solid var(--login-form-divider);
+    padding: var(--login-space-xl) var(--login-space-lg);
+    border-radius: 16px;
   }
-  /* Ligne latérale gauche : suit la forme (arrondi bas-gauche seulement) */
-  .login-form-inner::before {
-    border-radius: 0 0 0 16px;
-  }
-  /* Supprimer la ligne décorative du bas de la carte connexion */
+  /* Contour uniforme et continu : masquer la barre latérale et l'accent bas-droit */
+  .login-form-inner::before,
   .login-form-inner::after {
     display: none;
   }
+
+  /* Logo dans la carte */
+  .login-mobile-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--login-space-lg);
+  }
+  .login-mobile-logo img {
+    width: 150px;
+    height: auto;
+  }
+
   .login-form-title {
-    font-size: 2.2rem;
+    font-size: 2rem;
   }
 }
 
 /* Téléphone petit (< 480) : compacter davantage */
 @media (max-width: 479px) {
-  .login-left {
-    padding: var(--login-space-sm) var(--login-space-xs) 0;
-  }
-  .login-left-content {
-    padding: var(--login-space-md) var(--login-space-sm);
-    border-radius: 14px 14px 0 0;
-  }
-  .login-left-content::before {
-    width: 2px;
-    border-radius: 14px 0 0 0;
-  }
-  .login-logo-wrap img { width: 130px; }
-  .login-headline {
-    font-size: clamp(30px, 8vw, 42px);
-  }
-  .login-sub-line {
-    font-size: 0.75rem;
-    margin-bottom: var(--login-space-md);
-  }
-  .login-ticker-box {
-    height: 130px;
-  }
-  .login-ticker-item {
-    min-height: 56px;
-    padding: var(--login-space-xs) var(--login-space-xs);
-  }
-  .login-t-num {
-    font-size: 1.6rem;
-    width: 28px;
-  }
-  .login-t-title { font-size: 0.8rem; }
-  .login-t-desc  { font-size: 0.7rem; }
-  .login-bottom-badge {
-    margin-top: var(--login-space-md);
-    gap: var(--login-space-xs);
-  }
-  .login-bb-text { font-size: 0.65rem; }
-
   .login-right {
-    padding: 0 var(--login-space-xs) var(--login-space-sm);
+    padding: var(--login-space-md) var(--login-space-sm);
   }
   .login-form-inner {
-    padding: var(--login-space-lg) var(--login-space-sm);
-    border-radius: 0 0 14px 14px;
+    padding: var(--login-space-lg) var(--login-space-md);
+    border-radius: 14px;
   }
-  .login-form-inner::before {
-    width: 2px;
-    border-radius: 0 0 0 14px;
-  }
+  .login-mobile-logo img { width: 130px; }
   .login-form-title {
     font-size: 1.8rem;
   }

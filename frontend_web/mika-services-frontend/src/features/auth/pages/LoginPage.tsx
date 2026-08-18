@@ -17,7 +17,8 @@ export const LoginPage = () => {
   const { isAuthenticated, user, twoFactorPending } = useAppSelector((state) => state.auth)
   const defaultHomePath = useAppSelector((state) => state.ui.defaultHomePath)
   const { t } = useTranslation('auth')
-  const rawFrom = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/'
+  const fromLoc = (location.state as { from?: { pathname: string; search?: string } } | null)?.from
+  const rawFrom = fromLoc ? `${fromLoc.pathname}${fromLoc.search ?? ''}` : '/'
   // Sécurité : accepter uniquement les chemins relatifs internes (pas de redirect externe)
   const from = rawFrom.startsWith('/') && !rawFrom.startsWith('//') ? rawFrom : '/'
   const destination = user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from)
@@ -111,6 +112,9 @@ export const LoginPage = () => {
 
       <div className="login-right">
         <div className="login-form-inner">
+          <div className="login-mobile-logo" aria-hidden="true">
+            <img src={LOGO_SRC} alt="" width={150} height={60} />
+          </div>
           <div className="login-form-greeting">{t('login.formGreeting')}</div>
           <h2 className="login-form-title">
             {show2FAStep ? t('twoFa.verifyTitle') : t('login.formTitle')}

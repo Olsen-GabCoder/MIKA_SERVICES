@@ -8,7 +8,8 @@ import java.time.LocalDate
 @Entity
 @Table(name = "documents_engin", indexes = [
     Index(name = "idx_doc_engin", columnList = "engin_id"),
-    Index(name = "idx_doc_type", columnList = "type_document")
+    // PostgreSQL : noms d'index uniques par schéma — idx_doc_type est déjà pris par la table documents
+    Index(name = "idx_doc_engin_type", columnList = "type_document")
 ])
 class DocumentEngin(
     @ManyToOne(fetch = FetchType.LAZY)

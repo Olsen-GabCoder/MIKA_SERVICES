@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; padding:0; background:#EEF1F4; }
+  * { box-sizing:border-box; }
+  a { color:#2563EB; text-decoration:none; }
+  a:hover { color:#1D4ED8; text-decoration:underline; }
+  @keyframes mkpulse { 0%,100% { opacity:1 } 50% { opacity:.35 } }
+  ::-webkit-scrollbar { width:10px; height:10px }
+  ::-webkit-scrollbar-thumb { background:#CBD5DF; border-radius:6px }
+</style>
+</helmet>
+<div style="font-family:Barlow, system-ui, sans-serif; background:#EEF1F4; min-height:100vh; color:#152230; -webkit-font-smoothing:antialiased">
+
+  <div style="display:flex; align-items:center; gap:20px; padding:0 28px; height:64px; background:#0F1B26; color:#fff; position:sticky; top:0; z-index:20">
+    <div style="display:flex; align-items:baseline; gap:10px">
+      <span style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:22px; letter-spacing:.14em; text-transform:uppercase">MIKA</span>
+      <span style="font-size:13px; color:#8FA3B4; letter-spacing:.06em">Services</span>
+    </div>
+    <div style="width:1px; height:26px; background:#28394A"></div>
+    <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:17px; font-weight:600; letter-spacing:.03em">Parc Engins &amp; Matériel</div>
+    <div style="flex:1"></div>
+    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#9FB2C2">
+      <span style="width:8px; height:8px; border-radius:50%; background:#16A34A; display:inline-block"></span>
+      Synchronisé · S33 2026
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; padding-left:16px; border-left:1px solid #28394A">
+      <div style="width:32px; height:32px; border-radius:50%; background:#2563EB; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600">CL</div>
+      <div style="line-height:1.15">
+        <div style="font-size:13px; font-weight:600">C. Lemaire</div>
+        <div style="font-size:11px; color:#8FA3B4">Resp. logistique</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; align-items:stretch; gap:0; padding:0 28px; background:#fff; border-bottom:1px solid #DFE5EB; position:sticky; top:64px; z-index:19">
+    <sc-for list="{{ navItems }}" as="nav" hint-placeholder-count="5">
+      <button onClick="{{ nav.go }}" style="appearance:none; background:none; border:none; cursor:pointer; font-family:Barlow,sans-serif; font-size:14px; font-weight:600; letter-spacing:.02em; padding:16px 18px 14px; color:{{ nav.color }}; border-bottom:3px solid {{ nav.line }}" style-hover="color:#152230">{{ nav.label }}</button>
+    </sc-for>
+  </div>
+
+  <!-- ============ TABLEAU DE BORD ============ -->
+  <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:24px 28px 40px">
+    <div style="display:flex; align-items:flex-end; gap:20px; margin-bottom:20px">
+      <div>
+        <h1 style="margin:0; font-family:'Barlow Condensed',sans-serif; font-size:34px; font-weight:700; letter-spacing:.01em">Parc Engins &amp; Matériel</h1>
+        <div style="margin-top:4px; font-size:14px; color:#5B6C7C">47 équipements · 12 en service · 6 alertes actives · semaine 33 · 2026</div>
+      </div>
+      <div style="flex:1"></div>
+      <div style="display:flex; gap:10px">
+        <button style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; font-size:14px; font-weight:600; padding:10px 16px; border-radius:6px; border:1px solid #C9D3DC; background:#fff; color:#33465A" style-hover="border-color:#8FA3B4">Exporter</button>
+        <button onClick="{{ goCarte }}" style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; font-size:14px; font-weight:600; padding:10px 16px; border-radius:6px; border:1px solid #C9D3DC; background:#fff; color:#33465A" style-hover="border-color:#8FA3B4">Carte du parc</button>
+        <button style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; font-size:14px; font-weight:700; padding:10px 18px; border-radius:6px; border:none; background:#FF6B35; color:#fff; box-shadow:0 1px 2px rgba(0,0,0,.12)" style-hover="background:#E85A26">+ Nouvel équipement</button>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 350px; gap:20px; align-items:start">
+      <div style="display:flex; flex-direction:column; gap:20px">
+
+        <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:12px">
+          <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="6">
+            <div style="background:#fff; border:1px solid #DFE5EB; border-top:3px solid {{ k.color }}; border-radius:8px; padding:14px 14px 12px">
+              <div style="font-size:11px; font-weight:600; letter-spacing:.09em; text-transform:uppercase; color:#7A8B9A">{{ k.label }}</div>
+              <div style="display:flex; align-items:baseline; gap:8px; margin-top:8px">
+                <span style="font-family:'Barlow Condensed',sans-serif; font-size:36px; font-weight:700; line-height:1; color:{{ k.color }}; animation:{{ k.anim }}">{{ k.value }}</span>
+                <span style="font-size:12px; color:#7A8B9A">{{ k.unit }}</span>
+              </div>
+              <div style="margin-top:6px; font-size:12px; color:{{ k.deltaColor }}">{{ k.delta }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px; overflow:hidden">
+          <div style="display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid #E8EDF1">
+            <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:17px; font-weight:600">Équipements</div>
+            <div style="flex:1"></div>
+            <div style="display:flex; gap:8px">
+              <sc-for list="{{ filtres }}" as="f" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:6px; font-size:13px; padding:7px 10px; border:1px solid #DDE4EA; border-radius:6px; color:#4A5C6D; background:#FBFCFD; cursor:pointer" style-hover="border-color:#9FB2C2">{{ f }} <span style="color:#A9B7C3; font-size:10px">▾</span></div>
+              </sc-for>
+              <div style="display:flex; align-items:center; gap:8px; font-size:13px; padding:7px 12px; border:1px solid #DDE4EA; border-radius:6px; color:#A9B7C3; background:#FBFCFD; min-width:180px">⌕ Rechercher un équipement</div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:56px 2.1fr 1.1fr 1fr 1.3fr 1fr 1fr 40px; gap:12px; padding:10px 16px; background:#F7F9FA; border-bottom:1px solid #E8EDF1; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:#7A8B9A">
+            <div></div><div>Code · Désignation</div><div>Catégorie</div><div>Statut</div><div>Chantier actuel</div><div>Conducteur</div><div>Dernier relevé</div><div></div>
+          </div>
+
+          <sc-for list="{{ equipements }}" as="e" hint-placeholder-count="8">
+            <div onClick="{{ e.open }}" style="display:grid; grid-template-columns:56px 2.1fr 1.1fr 1fr 1.3fr 1fr 1fr 40px; gap:12px; align-items:center; padding:{{ rowPad }} 16px; border-bottom:1px solid #EFF3F6; cursor:pointer" style-hover="background:#F7FAFF">
+              <div style="width:44px; height:36px; border-radius:5px; background:{{ e.tint }}; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; color:#fff; letter-spacing:.06em">{{ e.abbr }}</div>
+              <div>
+                <div style="font-size:14px; font-weight:600">{{ e.designation }}</div>
+                <div style="font-size:12px; color:#7A8B9A; font-family:'Barlow Semi Condensed',sans-serif; letter-spacing:.05em">{{ e.code }} · {{ e.marque }}</div>
+              </div>
+              <div style="font-size:12.5px; color:#4A5C6D">{{ e.categorie }}</div>
+              <div><span style="display:inline-block; font-size:11.5px; font-weight:600; letter-spacing:.04em; padding:4px 9px; border-radius:4px; color:{{ e.statutColor }}; background:{{ e.statutBg }}">{{ e.statut }}</span></div>
+              <div style="font-size:13px; color:#33465A">{{ e.chantier }}</div>
+              <div style="font-size:13px; color:#33465A">{{ e.conducteur }}</div>
+              <div style="font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:600; color:#33465A">{{ e.releve }}</div>
+              <div style="text-align:right; color:#B6C2CC; font-size:16px">›</div>
+            </div>
+          </sc-for>
+
+          <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; font-size:12.5px; color:#7A8B9A">
+            <span>8 sur 47 équipements</span><div style="flex:1"></div>
+            <span style="padding:5px 10px; border:1px solid #DDE4EA; border-radius:5px; background:#fff; color:#33465A">1</span>
+            <span style="padding:5px 10px; border:1px solid transparent; border-radius:5px">2</span>
+            <span style="padding:5px 10px; border:1px solid transparent; border-radius:5px">3</span>
+            <span style="padding:5px 10px; border:1px solid transparent; border-radius:5px">›</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:16px">
+        <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px">
+          <div style="display:flex; align-items:center; gap:8px; padding:13px 15px; border-bottom:1px solid #E8EDF1">
+            <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:16px; font-weight:600">Alertes actives</div>
+            <span style="font-size:11px; font-weight:700; background:#DC2626; color:#fff; border-radius:9px; padding:2px 7px">6</span>
+          </div>
+          <sc-for list="{{ alertes }}" as="a" hint-placeholder-count="5">
+            <div style="display:flex; gap:10px; padding:12px 15px; border-bottom:1px solid #F1F4F7; cursor:pointer" style-hover="background:#FAFBFC">
+              <div style="width:4px; border-radius:2px; background:{{ a.color }}; flex:none; animation:{{ a.anim }}"></div>
+              <div style="flex:1">
+                <div style="font-size:10.5px; font-weight:700; letter-spacing:.1em; color:{{ a.color }}">{{ a.niveau }}</div>
+                <div style="font-size:13px; font-weight:600; margin-top:2px">{{ a.titre }}</div>
+                <div style="font-size:12.5px; color:#7A8B9A; margin-top:1px">{{ a.detail }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px; padding:15px">
+          <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:16px; font-weight:600; margin-bottom:12px">Répartition du parc</div>
+          <div style="display:flex; align-items:center; gap:18px">
+            <div style="width:118px; height:118px; border-radius:50%; flex:none; background:{{ donut }}; display:flex; align-items:center; justify-content:center">
+              <div style="width:74px; height:74px; border-radius:50%; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center">
+                <div style="font-family:'Barlow Condensed',sans-serif; font-size:28px; font-weight:700; line-height:1">47</div>
+                <div style="font-size:10px; letter-spacing:.08em; color:#7A8B9A; text-transform:uppercase">Parc</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:7px; flex:1">
+              <sc-for list="{{ repartition }}" as="r" hint-placeholder-count="5">
+                <div style="display:flex; align-items:center; gap:8px; font-size:12.5px">
+                  <span style="width:9px; height:9px; border-radius:2px; background:{{ r.color }}"></span>
+                  <span style="flex:1; color:#4A5C6D">{{ r.label }}</span>
+                  <span style="font-weight:700; font-family:'Barlow Condensed',sans-serif; font-size:15px">{{ r.n }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px; padding:15px">
+          <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:16px; font-weight:600; margin-bottom:12px">Échéances · 7 prochains jours</div>
+          <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:12px">
+            <sc-for list="{{ semaine }}" as="j" hint-placeholder-count="7">
+              <div style="text-align:center; border:1px solid {{ j.border }}; background:{{ j.bg }}; border-radius:6px; padding:7px 0">
+                <div style="font-size:10px; letter-spacing:.06em; color:#7A8B9A; text-transform:uppercase">{{ j.jour }}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:700; color:{{ j.numColor }}">{{ j.num }}</div>
+                <div style="height:5px; width:5px; border-radius:50%; margin:2px auto 0; background:{{ j.dot }}"></div>
+              </div>
+            </sc-for>
+          </div>
+          <sc-for list="{{ echeances }}" as="ec" hint-placeholder-count="3">
+            <div style="display:flex; gap:9px; align-items:baseline; padding:6px 0; border-top:1px solid #F1F4F7">
+              <span style="font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; color:{{ ec.color }}; min-width:38px">{{ ec.date }}</span>
+              <span style="font-size:12.5px; color:#4A5C6D">{{ ec.texte }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ FICHE ÉQUIPEMENT ============ -->
+  <sc-if value="{{ isFiche }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:24px 28px 40px">
+    <div style="font-size:13px; color:#7A8B9A; margin-bottom:14px">Parc <span style="color:#C1CBD4">/</span> Engins lourds <span style="color:#C1CBD4">/</span> <span style="color:#33465A; font-weight:600">ENG-2024-042</span></div>
+
+    <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px; overflow:hidden">
+      <div style="display:flex; gap:24px; padding:20px 22px">
+        <div style="width:230px; height:160px; border-radius:7px; flex:none; background:#3F6B83; display:flex; align-items:flex-end; padding:12px">
+          <span style="font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600; letter-spacing:.1em; color:#CFE0EA; text-transform:uppercase">Photo · CAT 320</span>
+        </div>
+        <div style="flex:1">
+          <div style="display:flex; align-items:center; gap:12px">
+            <h1 style="margin:0; font-family:'Barlow Condensed',sans-serif; font-size:32px; font-weight:700">Pelle hydraulique 20T</h1>
+            <span style="font-size:12px; font-weight:700; letter-spacing:.05em; padding:5px 11px; border-radius:5px; color:#3F6B83; background:#E8F0F5">EN SERVICE</span>
+          </div>
+          <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:15px; letter-spacing:.06em; color:#7A8B9A; margin-top:2px">ENG-2024-042 · Caterpillar 320 · Pelle sur chenilles</div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:18px">
+            <sc-for list="{{ ficheStats }}" as="s" hint-placeholder-count="4">
+              <div>
+                <div style="font-size:10.5px; font-weight:600; letter-spacing:.09em; text-transform:uppercase; color:#7A8B9A">{{ s.label }}</div>
+                <div style="font-size:14.5px; font-weight:600; margin-top:3px; color:{{ s.color }}">{{ s.value }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px; width:190px">
+          <button style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; font-size:14px; font-weight:700; padding:10px; border-radius:6px; border:none; background:#2563EB; color:#fff" style-hover="background:#1D4ED8">Affecter</button>
+          <button style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; font-size:14px; font-weight:600; padding:10px; border-radius:6px; border:1px solid #F0B7B7; background:#FEF3F3; color:#DC2626" style-hover="background:#FDE8E8">Signaler un incident</button>
+          <button style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; font-size:14px; font-weight:600; padding:10px; border-radius:6px; border:1px solid #C9D3DC; background:#fff; color:#33465A" style-hover="border-color:#8FA3B4">Planifier maintenance</button>
+          <button style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; font-size:14px; font-weight:600; padding:10px; border-radius:6px; border:1px solid #C9D3DC; background:#fff; color:#33465A" style-hover="border-color:#8FA3B4">QR Code</button>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:2px; padding:0 22px; border-top:1px solid #E8EDF1; background:#FAFBFC; overflow-x:auto">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="10">
+          <button onClick="{{ t.go }}" style="appearance:none; background:none; border:none; cursor:pointer; white-space:nowrap; font-family:Barlow,sans-serif; font-size:13.5px; font-weight:600; padding:13px 14px 11px; color:{{ t.color }}; border-bottom:3px solid {{ t.line }}" style-hover="color:#152230">{{ t.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="margin-top:18px">
+      <sc-if value="{{ isTabInfos }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px">
+          <sc-for list="{{ infoGroupes }}" as="g" hint-placeholder-count="3">
+            <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px; padding:16px 18px">
+              <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:16px; font-weight:600; padding-bottom:10px; border-bottom:1px solid #EFF3F6">{{ g.titre }}</div>
+              <sc-for list="{{ g.lignes }}" as="l" hint-placeholder-count="6">
+                <div style="display:flex; gap:12px; padding:9px 0; border-bottom:1px solid #F5F7F9">
+                  <span style="font-size:12.5px; color:#7A8B9A; flex:1">{{ l.k }}</span>
+                  <span style="font-size:13.5px; font-weight:600; text-align:right">{{ l.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isTabCompteurs }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:18px">
+          <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px; padding:18px">
+            <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:18px">
+              <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:17px; font-weight:600">Heures moteur · 12 derniers mois</div>
+              <div style="flex:1"></div>
+              <div style="font-family:'Barlow Condensed',sans-serif; font-size:26px; font-weight:700">4 520 h</div>
+            </div>
+            <div style="display:flex; align-items:flex-end; gap:10px; height:190px; border-bottom:1px solid #E8EDF1; padding-bottom:0">
+              <sc-for list="{{ barres }}" as="b" hint-placeholder-count="12">
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; justify-content:flex-end; height:100%">
+                  <span style="font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; color:#7A8B9A">{{ b.val }}</span>
+                  <div style="width:100%; border-radius:3px 3px 0 0; background:{{ b.color }}; height:{{ b.h }}"></div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:8px">
+              <sc-for list="{{ barres }}" as="b" hint-placeholder-count="12">
+                <div style="flex:1; text-align:center; font-size:11px; color:#93A2AF">{{ b.mois }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:18px">
+            <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px; padding:18px">
+              <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:17px; font-weight:600; margin-bottom:14px">Consommation carburant</div>
+              <div style="display:flex; align-items:baseline; gap:8px">
+                <span style="font-family:'Barlow Condensed',sans-serif; font-size:44px; font-weight:700; line-height:1">17,4</span>
+                <span style="font-size:14px; color:#7A8B9A">L/h · moyenne 12 mois</span>
+              </div>
+              <div style="margin-top:14px; padding:11px 13px; border-radius:6px; background:#FFF7ED; border:1px solid #FBD9AE; font-size:13px; color:#9A5B10">Dernier plein à 19,8 L/h — +14 % au-dessus de la moyenne, sous surveillance.</div>
+            </div>
+            <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px; padding:18px">
+              <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:17px; font-weight:600; margin-bottom:12px">Derniers relevés</div>
+              <sc-for list="{{ releves }}" as="r" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-top:1px solid #F1F4F7">
+                  <span style="font-size:12.5px; color:#7A8B9A; width:74px">{{ r.date }}</span>
+                  <span style="font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:700; flex:1">{{ r.val }}</span>
+                  <span style="font-size:11px; font-weight:600; letter-spacing:.05em; padding:3px 8px; border-radius:4px; background:#EEF2F6; color:#5B6C7C">{{ r.source }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isTabTimeline }}" hint-placeholder-val="{{ true }}">
+        <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px; padding:20px 22px">
+          <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:17px; font-weight:600; margin-bottom:6px">{{ timelineTitre }}</div>
+          <div style="font-size:13px; color:#7A8B9A; margin-bottom:18px">{{ timelineSous }}</div>
+          <sc-for list="{{ timeline }}" as="t" hint-placeholder-count="6">
+            <div style="display:grid; grid-template-columns:96px 24px 1fr; gap:0; align-items:stretch">
+              <div style="text-align:right; padding:0 14px 22px 0; font-family:'Barlow Semi Condensed',sans-serif; font-size:13.5px; color:#7A8B9A; letter-spacing:.03em">{{ t.date }}</div>
+              <div style="position:relative; display:flex; justify-content:center">
+                <div style="position:absolute; top:0; bottom:0; width:2px; background:#E8EDF1"></div>
+                <div style="position:relative; width:11px; height:11px; border-radius:50%; margin-top:4px; background:{{ t.color }}; border:2px solid #fff; box-shadow:0 0 0 2px {{ t.color }}"></div>
+              </div>
+              <div style="padding:0 0 22px 16px">
+                <div style="font-size:14.5px; font-weight:600">{{ t.titre }}</div>
+                <div style="font-size:13px; color:#5B6C7C; margin-top:2px">{{ t.detail }}</div>
+                <span style="display:inline-block; margin-top:6px; font-size:11px; font-weight:600; letter-spacing:.05em; padding:3px 8px; border-radius:4px; color:{{ t.color }}; background:{{ t.bg }}">{{ t.tag }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isTabTable }}" hint-placeholder-val="{{ true }}">
+        <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px; overflow:hidden">
+          <div style="display:flex; align-items:center; gap:10px; padding:15px 18px; border-bottom:1px solid #E8EDF1">
+            <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:17px; font-weight:600">{{ tableTitre }}</div>
+            <div style="flex:1"></div>
+            <button style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; font-size:13.5px; font-weight:700; padding:8px 14px; border-radius:6px; border:none; background:#2563EB; color:#fff" style-hover="background:#1D4ED8">{{ tableAction }}</button>
+          </div>
+          <div style="display:grid; grid-template-columns:{{ tableCols }}; gap:14px; padding:10px 18px; background:#F7F9FA; border-bottom:1px solid #E8EDF1; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:#7A8B9A">
+            <sc-for list="{{ tableHead }}" as="h" hint-placeholder-count="5">
+              <div>{{ h }}</div>
+            </sc-for>
+          </div>
+          <sc-for list="{{ tableRows }}" as="row" hint-placeholder-count="5">
+            <div style="display:grid; grid-template-columns:{{ tableCols }}; gap:14px; align-items:center; padding:13px 18px; border-bottom:1px solid #F1F4F7" style-hover="background:#F9FBFD">
+              <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="5">
+                <div style="font-size:13.5px; font-weight:{{ c.weight }}; color:{{ c.color }}">
+                  <span style="display:inline-block; padding:{{ c.pad }}; border-radius:4px; background:{{ c.bg }}; font-size:{{ c.size }}">{{ c.text }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ CARTE ============ -->
+  <sc-if value="{{ isCarte }}" hint-placeholder-val="{{ true }}">
+  <div style="display:grid; grid-template-columns:340px 1fr; height:calc(100vh - 113px)">
+    <div style="background:#fff; border-right:1px solid #DFE5EB; display:flex; flex-direction:column">
+      <div style="padding:16px 18px; border-bottom:1px solid #E8EDF1">
+        <div style="font-family:'Barlow Condensed',sans-serif; font-size:24px; font-weight:700">Carte du parc</div>
+        <div style="font-size:12.5px; color:#7A8B9A; margin-top:2px">31 équipements géolocalisés sur 47</div>
+        <div style="display:flex; align-items:center; gap:8px; font-size:13px; padding:8px 11px; margin-top:12px; border:1px solid #DDE4EA; border-radius:6px; color:#A9B7C3; background:#FBFCFD">⌕ Rechercher</div>
+        <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap">
+          <sc-for list="{{ carteFiltres }}" as="cf" hint-placeholder-count="5">
+            <span style="font-size:12px; font-weight:600; padding:5px 10px; border-radius:20px; cursor:pointer; color:{{ cf.color }}; background:{{ cf.bg }}; border:1px solid {{ cf.border }}">{{ cf.label }}</span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="overflow:auto; flex:1">
+        <sc-for list="{{ carteListe }}" as="m" hint-placeholder-count="6">
+          <div onClick="{{ m.select }}" style="display:flex; gap:11px; padding:13px 18px; border-bottom:1px solid #F1F4F7; cursor:pointer; background:{{ m.rowBg }}" style-hover="background:#F7FAFF">
+            <div style="width:9px; height:9px; border-radius:50%; margin-top:5px; flex:none; background:{{ m.color }}"></div>
+            <div style="flex:1">
+              <div style="font-size:13.5px; font-weight:600">{{ m.nom }}</div>
+              <div style="font-size:12px; color:#7A8B9A; margin-top:1px">{{ m.chantier }} · {{ m.maj }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="position:relative; background:#E6ECE8; overflow:hidden">
+      <div style="position:absolute; inset:0; background:repeating-linear-gradient(0deg,rgba(255,255,255,.55) 0 1px,transparent 1px 62px),repeating-linear-gradient(90deg,rgba(255,255,255,.55) 0 1px,transparent 1px 62px)"></div>
+      <div style="position:absolute; left:0; right:0; top:38%; height:26px; background:#F2F4F0; border-top:1px solid #DCE2DA; border-bottom:1px solid #DCE2DA; transform:rotate(-4deg)"></div>
+      <div style="position:absolute; top:0; bottom:0; left:47%; width:20px; background:#F2F4F0; border-left:1px solid #DCE2DA; border-right:1px solid #DCE2DA; transform:rotate(3deg)"></div>
+      <div style="position:absolute; left:8%; top:56%; width:32%; height:34%; background:#D7E5EE; border-radius:40% 60% 55% 45%"></div>
+
+      <sc-for list="{{ marqueurs }}" as="mk" hint-placeholder-count="7">
+        <div onClick="{{ mk.select }}" style="position:absolute; left:{{ mk.x }}; top:{{ mk.y }}; transform:translate(-50%,-100%); cursor:pointer; display:flex; flex-direction:column; align-items:center">
+          <div style="padding:5px 9px; border-radius:6px; color:#fff; font-size:12px; font-weight:700; letter-spacing:.03em; white-space:nowrap; background:{{ mk.color }}; box-shadow:0 2px 6px rgba(0,0,0,.22); animation:{{ mk.anim }}">{{ mk.abbr }}</div>
+          <div style="width:2px; height:10px; background:{{ mk.color }}"></div>
+        </div>
+      </sc-for>
+
+      <div style="position:absolute; left:{{ popX }}; top:{{ popY }}; width:270px; background:#fff; border-radius:9px; box-shadow:0 8px 28px rgba(15,27,38,.22); overflow:hidden">
+        <div style="height:74px; background:{{ popTint }}; display:flex; align-items:flex-end; padding:9px 12px">
+          <span style="font-size:11px; font-weight:600; letter-spacing:.09em; color:rgba(255,255,255,.85); text-transform:uppercase">{{ popCode }}</span>
+        </div>
+        <div style="padding:12px 14px 14px">
+          <div style="font-size:15px; font-weight:700">{{ popNom }}</div>
+          <div style="display:flex; align-items:center; gap:7px; margin-top:6px">
+            <span style="font-size:11px; font-weight:700; letter-spacing:.04em; padding:3px 8px; border-radius:4px; color:{{ popColor }}; background:{{ popBg }}">{{ popStatut }}</span>
+            <span style="font-size:12px; color:#7A8B9A">{{ popMaj }}</span>
+          </div>
+          <div style="font-size:12.5px; color:#5B6C7C; margin-top:9px; line-height:1.5">{{ popChantier }}<br>{{ popCoord }}</div>
+          <button onClick="{{ goFiche }}" style="appearance:none; cursor:pointer; width:100%; margin-top:11px; font-family:Barlow,sans-serif; font-size:13.5px; font-weight:700; padding:9px; border-radius:6px; border:none; background:#2563EB; color:#fff" style-hover="background:#1D4ED8">Ouvrir la fiche</button>
+        </div>
+      </div>
+
+      <div style="position:absolute; right:18px; bottom:18px; background:#fff; border-radius:8px; padding:12px 14px; box-shadow:0 2px 10px rgba(15,27,38,.14)">
+        <div style="font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#7A8B9A; margin-bottom:8px">Statut</div>
+        <div style="display:flex; flex-direction:column; gap:6px">
+          <sc-for list="{{ legende }}" as="lg" hint-placeholder-count="5">
+            <div style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:#4A5C6D">
+              <span style="width:10px; height:10px; border-radius:50%; background:{{ lg.color }}"></span>{{ lg.label }}
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ PLANNING ============ -->
+  <sc-if value="{{ isPlanning }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:24px 28px 40px">
+    <div style="display:flex; align-items:flex-end; gap:16px; margin-bottom:18px">
+      <div>
+        <h1 style="margin:0; font-family:'Barlow Condensed',sans-serif; font-size:32px; font-weight:700">Planning des affectations</h1>
+        <div style="font-size:14px; color:#5B6C7C; margin-top:3px">Semaines 31 à 38 · 2026 — 2 conflits détectés</div>
+      </div>
+      <div style="flex:1"></div>
+      <div style="display:flex; gap:16px; font-size:12.5px; color:#5B6C7C; align-items:center">
+        <sc-for list="{{ ganttLegende }}" as="gl" hint-placeholder-count="4">
+          <span style="display:flex; align-items:center; gap:7px"><span style="width:14px; height:10px; border-radius:3px; background:{{ gl.color }}"></span>{{ gl.label }}</span>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 300px; gap:18px; align-items:start">
+      <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px; overflow:hidden">
+        <div style="display:grid; grid-template-columns:230px 1fr; border-bottom:1px solid #E8EDF1; background:#F7F9FA">
+          <div style="padding:11px 16px; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:#7A8B9A">Équipement</div>
+          <div style="display:grid; grid-template-columns:repeat(8,1fr)">
+            <sc-for list="{{ semaines }}" as="w" hint-placeholder-count="8">
+              <div style="padding:11px 0; text-align:center; font-size:11.5px; font-weight:600; color:{{ w.color }}; border-left:1px solid #E8EDF1; background:{{ w.bg }}">{{ w.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+        <sc-for list="{{ ganttRows }}" as="g" hint-placeholder-count="8">
+          <div style="display:grid; grid-template-columns:230px 1fr; border-bottom:1px solid #F1F4F7">
+            <div style="padding:11px 16px">
+              <div style="font-size:13.5px; font-weight:600">{{ g.nom }}</div>
+              <div style="font-family:'Barlow Semi Condensed',sans-serif; font-size:11.5px; letter-spacing:.05em; color:#7A8B9A">{{ g.code }}</div>
+            </div>
+            <div style="position:relative; min-height:52px; background:repeating-linear-gradient(90deg,transparent 0 calc(12.5% - 1px),#EFF3F6 calc(12.5% - 1px),#EFF3F6 12.5%)">
+              <sc-for list="{{ g.bars }}" as="bar" hint-placeholder-count="1">
+                <div style="position:absolute; top:11px; height:30px; border-radius:5px; display:flex; align-items:center; padding:0 10px; font-size:12px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; left:{{ bar.left }}; width:{{ bar.width }}; background:{{ bar.color }}; border:{{ bar.border }}">{{ bar.label }}</div>
+              </sc-for>
+              <sc-for list="{{ g.jalons }}" as="jl" hint-placeholder-count="0">
+                <div style="position:absolute; top:19px; width:14px; height:14px; transform:rotate(45deg); left:{{ jl.left }}; background:{{ jl.color }}; border:2px solid #fff; box-shadow:0 0 0 1px {{ jl.color }}"></div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background:#fff; border:1px solid #DFE5EB; border-radius:8px">
+        <div style="padding:14px 16px; border-bottom:1px solid #E8EDF1; font-family:'Barlow Semi Condensed',sans-serif; font-size:16px; font-weight:600">Demandes en attente</div>
+        <sc-for list="{{ demandes }}" as="d" hint-placeholder-count="3">
+          <div style="padding:13px 16px; border-bottom:1px solid #F1F4F7">
+            <div style="font-size:13.5px; font-weight:600">{{ d.equipement }}</div>
+            <div style="font-size:12.5px; color:#7A8B9A; margin-top:2px">{{ d.detail }}</div>
+            <div style="display:flex; gap:7px; margin-top:9px">
+              <button style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; font-size:12.5px; font-weight:700; padding:6px 12px; border-radius:5px; border:none; background:#16A34A; color:#fff" style-hover="background:#12833B">Valider</button>
+              <button style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; font-size:12.5px; font-weight:600; padding:6px 12px; border-radius:5px; border:1px solid #DDE4EA; background:#fff; color:#5B6C7C" style-hover="border-color:#9FB2C2">Refuser</button>
+            </div>
+          </div>
+        </sc-for>
+        <div style="padding:13px 16px; background:#FEF3F3; border-top:1px solid #F5D8D8">
+          <div style="font-size:11px; font-weight:700; letter-spacing:.09em; color:#DC2626">CONFLITS</div>
+          <div style="font-size:12.5px; color:#8A3232; margin-top:5px; line-height:1.5">Nacelle HA16 — double affectation S35 (Écoquartier / Le Parc).<br>Camion benne 19T — maintenance planifiée pendant l'affectation S36.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ TERRAIN / MOBILE ============ -->
+  <sc-if value="{{ isTerrain }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:24px 28px 48px">
+    <div style="margin-bottom:20px">
+      <h1 style="margin:0; font-family:'Barlow Condensed',sans-serif; font-size:32px; font-weight:700">Terrain — application mobile</h1>
+      <div style="font-size:14px; color:#5B6C7C; margin-top:3px">Conducteur d'engin · usage au pouce, gants, plein soleil — cibles ≥ 56 px, contrastes renforcés</div>
+    </div>
+
+    <div style="display:flex; gap:26px; flex-wrap:wrap">
+
+      <div style="display:flex; flex-direction:column; gap:10px">
+        <div style="font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#7A8B9A">01 · Accueil</div>
+        <div style="width:390px; height:800px; border-radius:34px; background:#0F1B26; padding:10px; box-shadow:0 14px 40px rgba(15,27,38,.22)">
+          <div style="width:100%; height:100%; border-radius:26px; background:#F4F6F8; overflow:hidden; display:flex; flex-direction:column">
+            <div style="background:#0F1B26; color:#fff; padding:12px 20px 16px">
+              <div style="display:flex; justify-content:space-between; font-size:12px; color:#9FB2C2">9:41<span>▮▮▮ 87 %</span></div>
+              <div style="font-family:'Barlow Condensed',sans-serif; font-size:26px; font-weight:700; margin-top:12px">Bonjour, Moussa</div>
+              <div style="font-size:13px; color:#9FB2C2">Chantier Résidence Le Parc · 2 engins affectés</div>
+            </div>
+            <div style="padding:18px 20px; display:flex; flex-direction:column; gap:16px; overflow:auto">
+              <button style="appearance:none; cursor:pointer; border:none; border-radius:14px; background:#2563EB; color:#fff; padding:26px 20px; display:flex; align-items:center; gap:16px; font-family:Barlow,sans-serif; box-shadow:0 6px 16px rgba(37,99,235,.28)" style-hover="background:#1D4ED8">
+                <span style="width:56px; height:56px; border-radius:12px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; font-size:26px">▣</span>
+                <span style="text-align:left">
+                  <span style="display:block; font-size:21px; font-weight:700">Scanner un QR</span>
+                  <span style="display:block; font-size:13.5px; color:rgba(255,255,255,.8); margin-top:2px">Identifier un engin en 1 s</span>
+                </span>
+              </button>
+              <div>
+                <div style="font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#7A8B9A; margin-bottom:9px">Actions rapides</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                  <sc-for list="{{ actionsRapides }}" as="ar" hint-placeholder-count="4">
+                    <div style="background:#fff; border:1px solid #DFE5EB; border-radius:12px; padding:16px 14px; min-height:96px; display:flex; flex-direction:column; justify-content:space-between; cursor:pointer" style-hover="border-color:#2563EB">
+                      <span style="font-size:22px; color:{{ ar.color }}">{{ ar.icone }}</span>
+                      <span style="font-size:14.5px; font-weight:600; line-height:1.25">{{ ar.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#7A8B9A; margin-bottom:9px">Mes équipements</div>
+                <div style="display:flex; flex-direction:column; gap:9px">
+                  <sc-for list="{{ mesEngins }}" as="me" hint-placeholder-count="2">
+                    <div style="background:#fff; border:1px solid #DFE5EB; border-radius:12px; padding:13px 14px; display:flex; align-items:center; gap:12px">
+                      <div style="width:46px; height:40px; border-radius:8px; background:{{ me.tint }}; flex:none"></div>
+                      <div style="flex:1">
+                        <div style="font-size:14.5px; font-weight:600">{{ me.nom }}</div>
+                        <div style="font-size:12.5px; color:#7A8B9A">{{ me.code }} · {{ me.releve }}</div>
+                      </div>
+                      <span style="font-size:11px; font-weight:700; padding:4px 8px; border-radius:4px; color:{{ me.color }}; background:{{ me.bg }}">{{ me.statut }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:#FEF3F3; border:1px solid #F5D8D8; border-radius:12px; padding:14px">
+                <div style="font-size:12px; font-weight:700; letter-spacing:.08em; color:#DC2626">1 ALERTE</div>
+                <div style="font-size:14px; font-weight:600; margin-top:4px">Inspection du jour non réalisée</div>
+                <div style="font-size:12.5px; color:#8A3232; margin-top:2px">Pelle CAT 320 — obligatoire avant utilisation</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px">
+        <div style="font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#7A8B9A">02 · Après scan QR</div>
+        <div style="width:390px; height:800px; border-radius:34px; background:#0F1B26; padding:10px; box-shadow:0 14px 40px rgba(15,27,38,.22)">
+          <div style="width:100%; height:100%; border-radius:26px; background:#F4F6F8; overflow:hidden; display:flex; flex-direction:column">
+            <div style="height:186px; background:#3F6B83; padding:16px 20px; display:flex; flex-direction:column; justify-content:space-between; color:#fff">
+              <div style="display:flex; justify-content:space-between; font-size:12px; color:rgba(255,255,255,.75)">9:43<span>◄ Retour</span></div>
+              <div>
+                <div style="font-size:12px; letter-spacing:.1em; color:rgba(255,255,255,.8)">ENG-2024-042</div>
+                <div style="font-family:'Barlow Condensed',sans-serif; font-size:30px; font-weight:700; line-height:1.1">Pelle hydraulique 20T</div>
+                <span style="display:inline-block; margin-top:8px; font-size:12px; font-weight:700; padding:4px 10px; border-radius:5px; background:rgba(255,255,255,.18)">EN SERVICE</span>
+              </div>
+            </div>
+            <div style="padding:16px 20px; display:flex; flex-direction:column; gap:14px; overflow:auto">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <sc-for list="{{ scanInfos }}" as="si" hint-placeholder-count="4">
+                  <div style="background:#fff; border:1px solid #DFE5EB; border-radius:10px; padding:12px 13px">
+                    <div style="font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#7A8B9A">{{ si.label }}</div>
+                    <div style="font-size:15px; font-weight:600; margin-top:4px; color:{{ si.color }}">{{ si.value }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:10px">
+                <sc-for list="{{ scanActions }}" as="sa" hint-placeholder-count="5">
+                  <button style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; display:flex; align-items:center; gap:14px; text-align:left; min-height:62px; padding:0 16px; border-radius:12px; font-size:16.5px; font-weight:{{ sa.weight }}; color:{{ sa.color }}; background:{{ sa.bg }}; border:1px solid {{ sa.border }}" style-hover="filter:brightness(.97)">
+                    <span style="font-size:20px">{{ sa.icone }}</span>{{ sa.label }}
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px">
+        <div style="font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#7A8B9A">03 · Signalement de panne</div>
+        <div style="width:390px; height:800px; border-radius:34px; background:#0F1B26; padding:10px; box-shadow:0 14px 40px rgba(15,27,38,.22)">
+          <div style="width:100%; height:100%; border-radius:26px; background:#F4F6F8; overflow:hidden; display:flex; flex-direction:column">
+            <div style="background:#fff; border-bottom:1px solid #E8EDF1; padding:14px 20px 16px">
+              <div style="display:flex; justify-content:space-between; font-size:12px; color:#93A2AF">9:47<span>Annuler</span></div>
+              <div style="font-family:'Barlow Condensed',sans-serif; font-size:26px; font-weight:700; margin-top:10px">Signaler un problème</div>
+              <div style="font-size:13px; color:#7A8B9A">Pelle CAT 320 · ENG-2024-042</div>
+            </div>
+            <div style="padding:16px 20px; display:flex; flex-direction:column; gap:18px; overflow:auto">
+              <div>
+                <div style="font-size:12.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#5B6C7C; margin-bottom:9px">Type de problème</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:9px">
+                  <sc-for list="{{ typesPanne }}" as="tp" hint-placeholder-count="6">
+                    <div style="min-height:58px; border-radius:11px; display:flex; align-items:center; gap:10px; padding:0 13px; font-size:14px; font-weight:{{ tp.weight }}; cursor:pointer; color:{{ tp.color }}; background:{{ tp.bg }}; border:1.5px solid {{ tp.border }}">
+                      <span style="font-size:18px">{{ tp.icone }}</span>{{ tp.label }}
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:12.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#5B6C7C; margin-bottom:9px">Gravité</div>
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px">
+                  <sc-for list="{{ gravites }}" as="gv" hint-placeholder-count="4">
+                    <div style="min-height:62px; border-radius:11px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; cursor:pointer; color:{{ gv.color }}; background:{{ gv.bg }}; border:1.5px solid {{ gv.border }}">
+                      <span style="width:12px; height:12px; border-radius:3px; background:{{ gv.dot }}"></span>
+                      <span style="font-size:12.5px; font-weight:600">{{ gv.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:12.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#5B6C7C; margin-bottom:9px">Description</div>
+                <div style="background:#fff; border:1px solid #DFE5EB; border-radius:11px; padding:13px; min-height:84px; font-size:14px; color:#33465A; line-height:1.5">Perte de pression sur le vérin de flèche, l'huile suinte au niveau du flexible droit.</div>
+              </div>
+              <div>
+                <div style="font-size:12.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#5B6C7C; margin-bottom:9px">Photos · 2 / 4</div>
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px">
+                  <div style="aspect-ratio:1; border-radius:10px; background:#5B6C7C"></div>
+                  <div style="aspect-ratio:1; border-radius:10px; background:#7A8B9A"></div>
+                  <div style="aspect-ratio:1; border-radius:10px; border:1.5px dashed #C1CBD4; display:flex; align-items:center; justify-content:center; font-size:22px; color:#9FB2C2">＋</div>
+                  <div></div>
+                </div>
+              </div>
+              <div style="background:#fff; border:1px solid #DFE5EB; border-radius:11px; padding:13px; display:flex; align-items:center; gap:11px">
+                <span style="font-size:18px; color:#2563EB">◎</span>
+                <div style="flex:1">
+                  <div style="font-size:13.5px; font-weight:600">Position détectée</div>
+                  <div style="font-size:12px; color:#7A8B9A">48,8721 N · 2,3412 E — Résidence Le Parc</div>
+                </div>
+              </div>
+              <button style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; width:100%; min-height:60px; border-radius:12px; border:none; background:#DC2626; color:#fff; font-size:17px; font-weight:700; box-shadow:0 6px 16px rgba(220,38,38,.28)" style-hover="background:#B91C1C">Envoyer le signalement</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px">
+        <div style="font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#7A8B9A">04 · Inspection quotidienne</div>
+        <div style="width:390px; height:800px; border-radius:34px; background:#0F1B26; padding:10px; box-shadow:0 14px 40px rgba(15,27,38,.22)">
+          <div style="width:100%; height:100%; border-radius:26px; background:#F4F6F8; overflow:hidden; display:flex; flex-direction:column">
+            <div style="background:#fff; border-bottom:1px solid #E8EDF1; padding:14px 20px 14px">
+              <div style="display:flex; justify-content:space-between; font-size:12px; color:#93A2AF">9:52<span>◄ Retour</span></div>
+              <div style="display:flex; align-items:center; gap:12px; margin-top:10px">
+                <div style="width:52px; height:44px; border-radius:9px; background:#3F6B83; flex:none"></div>
+                <div style="flex:1">
+                  <div style="font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:700; line-height:1.1">Inspection du jour</div>
+                  <div style="font-size:12.5px; color:#7A8B9A">Pelle CAT 320 · compteur 4 520 h</div>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; margin-top:12px">
+                <div style="flex:1; height:7px; border-radius:4px; background:#E8EDF1; overflow:hidden">
+                  <div style="width:64%; height:100%; background:#16A34A"></div>
+                </div>
+                <span style="font-size:12.5px; font-weight:700; color:#5B6C7C">9 / 14</span>
+              </div>
+            </div>
+            <div style="padding:14px 20px; display:flex; flex-direction:column; gap:16px; overflow:auto">
+              <sc-for list="{{ inspection }}" as="sec" hint-placeholder-count="3">
+                <div>
+                  <div style="font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#7A8B9A; margin-bottom:8px">{{ sec.titre }}</div>
+                  <div style="display:flex; flex-direction:column; gap:8px">
+                    <sc-for list="{{ sec.items }}" as="it" hint-placeholder-count="3">
+                      <div style="background:#fff; border:1px solid {{ it.border }}; border-radius:11px; padding:12px 13px">
+                        <div style="display:flex; align-items:center; gap:10px">
+                          <span style="flex:1; font-size:14.5px; font-weight:500">{{ it.label }}</span>
+                          <span style="min-width:54px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:{{ it.okColor }}; background:{{ it.okBg }}">OK</span>
+                          <span style="min-width:54px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:{{ it.nokColor }}; background:{{ it.nokBg }}">NOK</span>
+                        </div>
+                        <sc-if value="{{ it.commentaire }}" hint-placeholder-val="{{ false }}">
+                          <div style="margin-top:10px; padding:10px 11px; border-radius:8px; background:#FEF3F3; font-size:13px; color:#8A3232">{{ it.commentaire }}</div>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+              <div>
+                <div style="font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#7A8B9A; margin-bottom:8px">Signature de l'inspecteur</div>
+                <div style="background:#fff; border:1.5px dashed #C1CBD4; border-radius:11px; height:110px; display:flex; align-items:center; justify-content:center; font-size:13.5px; color:#9FB2C2">Signer ici avec le doigt</div>
+              </div>
+              <button style="appearance:none; cursor:pointer; font-family:Barlow,sans-serif; width:100%; min-height:60px; border-radius:12px; border:none; background:#16A34A; color:#fff; font-size:17px; font-weight:700; box-shadow:0 6px 16px rgba(22,163,74,.26)" style-hover="background:#12833B">Valider l'inspection</button>
+              <div style="font-size:12.5px; color:#7A8B9A; text-align:center; line-height:1.5; padding-bottom:10px">1 anomalie détectée — un incident sera créé automatiquement et transmis au responsable logistique.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accentModule&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#2563EB&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#2563EB&quot;,&quot;#3F6B83&quot;,&quot;#0F766E&quot;,&quot;#7C3AED&quot;],&quot;section&quot;:&quot;Identité du module&quot;},&quot;densite&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Confortable&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;Confortable&quot;,&quot;Compacte&quot;],&quot;section&quot;:&quot;Tableau de bord&quot;},&quot;alertesPulsantes&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Tableau de bord&quot;}}">
+const ST = {
+  DISPONIBLE:   { label: 'Disponible',   color: '#16A34A', bg: '#E7F6EC' },
+  EN_SERVICE:   { label: 'En service',   color: '#3F6B83', bg: '#E8F0F5' },
+  EN_MAINTENANCE:{ label: 'Maintenance', color: '#D97706', bg: '#FDF2E3' },
+  EN_PANNE:     { label: 'En panne',     color: '#DC2626', bg: '#FDECEC' },
+  IMMOBILISE:   { label: 'Immobilisé',   color: '#6B7280', bg: '#EFF1F3' }
+};
+
+const EQUIPEMENTS = [
+  { code:'ENG-2024-042', designation:'Pelle hydraulique 20T', marque:'Caterpillar 320', categorie:'Engin lourd', st:'EN_SERVICE', chantier:'Résidence Le Parc', conducteur:'M. Diallo', releve:'4 520 h', abbr:'PEL', tint:'#3F6B83' },
+  { code:'ENG-2024-018', designation:'Grue mobile 60T', marque:'Liebherr LTM 1060', categorie:'Grue', st:'EN_SERVICE', chantier:'ZAC Rivière Sud', conducteur:'A. Berger', releve:'2 130 h', abbr:'GRU', tint:'#2563EB' },
+  { code:'ENG-2023-091', designation:'Compacteur tandem', marque:'Bomag BW 138', categorie:'Compacteur', st:'EN_PANNE', chantier:'ZAC Rivière Sud', conducteur:'—', releve:'1 870 h', abbr:'CMP', tint:'#DC2626' },
+  { code:'VEH-2022-007', designation:'Camion benne 19T', marque:'Renault C380', categorie:'Véhicule', st:'DISPONIBLE', chantier:'Dépôt Nord', conducteur:'—', releve:'84 210 km', abbr:'CAM', tint:'#16A34A' },
+  { code:'ENG-2024-055', designation:'Chargeuse sur pneus', marque:'Volvo L60H', categorie:'Engin lourd', st:'EN_MAINTENANCE', chantier:'Atelier central', conducteur:'—', releve:'3 042 h', abbr:'CHA', tint:'#D97706' },
+  { code:'ENG-2021-033', designation:'Nacelle élévatrice 16 m', marque:'Haulotte HA16', categorie:'Engin léger', st:'DISPONIBLE', chantier:'Dépôt Nord', conducteur:'—', releve:'990 h', abbr:'NAC', tint:'#16A34A' },
+  { code:'MAT-2023-120', designation:'Groupe électrogène 60 kVA', marque:'SDMO R66', categorie:'Générateur', st:'EN_SERVICE', chantier:'Lot 4 — Écoquartier', conducteur:'Équipe TP2', releve:'6 410 h', abbr:'GEN', tint:'#3F6B83' },
+  { code:'ENG-2020-004', designation:'Mini-pelle 3,5T', marque:'Kubota U35', categorie:'Engin léger', st:'IMMOBILISE', chantier:'Dépôt Sud', conducteur:'—', releve:'5 760 h', abbr:'MPE', tint:'#6B7280' }
+];
+
+const CARTE = [
+  { nom:'Pelle hydraulique 20T', code:'ENG-2024-042', abbr:'PEL', st:'EN_SERVICE', chantier:'Résidence Le Parc', maj:'il y a 8 min', x:'34%', y:'32%', coord:'48,8721 N · 2,3412 E' },
+  { nom:'Grue mobile 60T', code:'ENG-2024-018', abbr:'GRU', st:'EN_SERVICE', chantier:'ZAC Rivière Sud', maj:'il y a 22 min', x:'62%', y:'26%', coord:'48,8654 N · 2,3789 E' },
+  { nom:'Compacteur tandem', code:'ENG-2023-091', abbr:'CMP', st:'EN_PANNE', chantier:'ZAC Rivière Sud', maj:'il y a 2 h', x:'68%', y:'46%', coord:'48,8641 N · 2,3801 E' },
+  { nom:'Camion benne 19T', code:'VEH-2022-007', abbr:'CAM', st:'DISPONIBLE', chantier:'Dépôt Nord', maj:'il y a 1 h', x:'22%', y:'62%', coord:'48,8902 N · 2,3204 E' },
+  { nom:'Nacelle élévatrice 16 m', code:'ENG-2021-033', abbr:'NAC', st:'DISPONIBLE', chantier:'Dépôt Nord', maj:'il y a 1 h', x:'27%', y:'71%', coord:'48,8899 N · 2,3218 E' },
+  { nom:'Groupe électrogène 60 kVA', code:'MAT-2023-120', abbr:'GEN', st:'EN_SERVICE', chantier:'Lot 4 — Écoquartier', maj:'il y a 35 min', x:'52%', y:'64%', coord:'48,8588 N · 2,3502 E' },
+  { nom:'Mini-pelle 3,5T', code:'ENG-2020-004', abbr:'MPE', st:'IMMOBILISE', chantier:'Dépôt Sud', maj:'hier 18:20', x:'80%', y:'72%', coord:'48,8511 N · 2,3910 E' }
+];
+
+const TABS = [
+  ['infos','Informations'], ['affectations','Affectations'], ['maintenance','Maintenance'],
+  ['incidents','Incidents'], ['compteurs','Compteurs & conso.'], ['documents','Documents'],
+  ['positions','Positions'], ['couts','Coûts'], ['inspections','Inspections'], ['carnet','Carnet de bord']
+];
+
+function cell(text, opt) {
+  opt = opt || {};
+  return {
+    text: text,
+    weight: opt.weight || 500,
+    color: opt.color || '#33465A',
+    bg: opt.bg || 'transparent',
+    pad: opt.bg ? '4px 9px' : '0',
+    size: opt.size || '13.5px'
+  };
+}
+const badge = (t, k) => cell(t, { color: ST[k] ? ST[k].color : k.color, bg: ST[k] ? ST[k].bg : k.bg, weight: 600, size: '11.5px' });
+const tone = (t, c, b) => cell(t, { color: c, bg: b, weight: 600, size: '11.5px' });
+
+const TABLES = {
+  affectations: {
+    titre: 'Historique des affectations', action: '+ Nouvelle affectation',
+    cols: '1.4fr 1fr 1fr .9fr .8fr',
+    head: ['Chantier', 'Période', 'Conducteur', 'Statut', 'Durée'],
+    rows: [
+      [cell('Résidence Le Parc', { weight: 600 }), cell('12/06/2026 → en cours'), cell('M. Diallo'), tone('ACTIVE', '#3F6B83', '#E8F0F5'), cell('64 j')],
+      [cell('ZAC Rivière Sud', { weight: 600 }), cell('03/03 → 09/06/2026'), cell('A. Berger'), tone('TERMINÉE', '#6B7280', '#EFF1F3'), cell('98 j')],
+      [cell('Écoquartier — lot 2', { weight: 600 }), cell('14/11/2025 → 27/02/2026'), cell('M. Diallo'), tone('TERMINÉE', '#6B7280', '#EFF1F3'), cell('105 j')],
+      [cell('Viaduc Est (réservation)', { weight: 600 }), cell('01/10 → 15/12/2026'), cell('à définir'), tone('PLANIFIÉE', '#2563EB', '#E7EEFD'), cell('75 j')]
+    ]
+  },
+  maintenance: {
+    titre: 'Opérations et plans de maintenance', action: '+ Planifier une opération',
+    cols: '1.6fr .8fr .9fr 1fr .8fr',
+    head: ['Opération', 'Type', 'Statut', 'Échéance', 'Coût'],
+    rows: [
+      [cell('Vidange moteur + filtres', { weight: 600 }), tone('PRÉVENTIVE', '#2563EB', '#E7EEFD'), tone('DÉPASSÉE +12 J', '#DC2626', '#FDECEC'), cell('à 4 500 h'), cell('—')],
+      [cell('Contrôle flexibles hydrauliques', { weight: 600 }), tone('RÉGLEMENT.', '#7C3AED', '#F1EAFE'), tone('PLANIFIÉE', '#D97706', '#FDF2E3'), cell('02/09/2026'), cell('380 €')],
+      [cell('Remplacement train de chenilles', { weight: 600 }), tone('CORRECTIVE', '#DC2626', '#FDECEC'), tone('TERMINÉE', '#16A34A', '#E7F6EC'), cell('18/04/2026'), cell('6 240 €')],
+      [cell('Graissage général', { weight: 600 }), tone('PRÉVENTIVE', '#2563EB', '#E7EEFD'), tone('TERMINÉE', '#16A34A', '#E7F6EC'), cell('toutes les 250 h'), cell('95 €')]
+    ]
+  },
+  incidents: {
+    titre: 'Incidents signalés', action: '+ Signaler un incident',
+    cols: '1.6fr .9fr .9fr 1fr .9fr',
+    head: ['Incident', 'Type', 'Gravité', 'Signalé le', 'Statut'],
+    rows: [
+      [cell('Suintement flexible de flèche', { weight: 600 }), cell('Hydraulique'), tone('MAJEURE', '#D97706', '#FDF2E3'), cell('11/08/2026 · M. Diallo'), tone('EN RÉPARATION', '#D97706', '#FDF2E3')],
+      [cell('Avertisseur de recul HS', { weight: 600 }), cell('Électrique'), tone('MODÉRÉE', '#2563EB', '#E7EEFD'), cell('22/06/2026 · M. Diallo'), tone('RÉSOLU', '#16A34A', '#E7F6EC')],
+      [cell('Casse dent de godet', { weight: 600 }), cell('Casse'), tone('MINEURE', '#6B7280', '#EFF1F3'), cell('04/05/2026 · S. Rey'), tone('CLOS', '#6B7280', '#EFF1F3')]
+    ]
+  },
+  documents: {
+    titre: 'Documents et conformité', action: '+ Ajouter un document',
+    cols: '1.5fr 1fr .9fr .9fr .9fr',
+    head: ['Document', 'Type', 'Émission', 'Expiration', 'État'],
+    rows: [
+      [cell('Attestation d\u2019assurance flotte', { weight: 600 }), cell('Assurance'), cell('01/09/2025'), cell('31/08/2026'), tone('EXPIRE DANS 16 J', '#D97706', '#FDF2E3')],
+      [cell('Certificat de conformité CE', { weight: 600 }), cell('Certificat'), cell('12/02/2024'), cell('—'), tone('VALIDE', '#16A34A', '#E7F6EC')],
+      [cell('Rapport VGP (vérification générale)', { weight: 600 }), cell('Réglementaire'), cell('14/03/2026'), cell('14/09/2026'), tone('VALIDE', '#16A34A', '#E7F6EC')],
+      [cell('Facture d\u2019acquisition', { weight: 600 }), cell('Facture'), cell('08/01/2024'), cell('—'), tone('ARCHIVÉ', '#6B7280', '#EFF1F3')]
+    ]
+  },
+  positions: {
+    titre: 'Historique des positions', action: 'Voir sur la carte',
+    cols: '1fr 1.4fr 1fr .9fr .8fr',
+    head: ['Horodatage', 'Coordonnées', 'Chantier', 'Source', 'Précision'],
+    rows: [
+      [cell('15/08 · 09:41', { weight: 600 }), cell('48,8721 N · 2,3412 E'), cell('Résidence Le Parc'), tone('QR SCAN', '#2563EB', '#E7EEFD'), cell('± 6 m')],
+      [cell('14/08 · 17:12', { weight: 600 }), cell('48,8720 N · 2,3410 E'), cell('Résidence Le Parc'), tone('GPS AUTO', '#3F6B83', '#E8F0F5'), cell('± 12 m')],
+      [cell('09/06 · 08:03', { weight: 600 }), cell('48,8654 N · 2,3789 E'), cell('ZAC Rivière Sud'), tone('QR SCAN', '#2563EB', '#E7EEFD'), cell('± 5 m')]
+    ]
+  },
+  couts: {
+    titre: 'Journal des coûts · TCO 2026 : 38 420 €', action: 'Exporter le journal',
+    cols: '1fr 1.4fr .9fr 1fr .8fr',
+    head: ['Type', 'Description', 'Date', 'Chantier', 'Montant'],
+    rows: [
+      [tone('MAINTENANCE', '#2563EB', '#E7EEFD'), cell('Train de chenilles + main-d\u2019œuvre'), cell('18/04/2026'), cell('Le Parc'), cell('6 240 €', { weight: 700 })],
+      [tone('CARBURANT', '#D97706', '#FDF2E3'), cell('Ravitaillements — cumul juillet'), cell('31/07/2026'), cell('Le Parc'), cell('3 118 €', { weight: 700 })],
+      [tone('ASSURANCE', '#7C3AED', '#F1EAFE'), cell('Prime annuelle flotte engins'), cell('01/09/2025'), cell('—'), cell('2 940 €', { weight: 700 })],
+      [tone('TRANSPORT', '#3F6B83', '#E8F0F5'), cell('Convoi ZAC Rivière Sud → Le Parc'), cell('12/06/2026'), cell('Le Parc'), cell('1 450 €', { weight: 700 })]
+    ]
+  },
+  inspections: {
+    titre: 'Inspections quotidiennes', action: 'Nouvelle inspection',
+    cols: '1fr 1.2fr .9fr 1.2fr .8fr',
+    head: ['Date', 'Inspecteur', 'Compteur', 'Résultat', 'Signature'],
+    rows: [
+      [cell('15/08/2026', { weight: 600 }), cell('M. Diallo'), cell('4 520 h'), tone('1 ANOMALIE', '#D97706', '#FDF2E3'), cell('✓ signée')],
+      [cell('14/08/2026', { weight: 600 }), cell('M. Diallo'), cell('4 512 h'), tone('CONFORME', '#16A34A', '#E7F6EC'), cell('✓ signée')],
+      [cell('13/08/2026', { weight: 600 }), cell('S. Rey'), cell('4 503 h'), tone('CONFORME', '#16A34A', '#E7F6EC'), cell('✓ signée')]
+    ]
+  }
+};
+
+const TIMELINES = {
+  carnet: {
+    titre: 'Carnet de bord numérique',
+    sous: 'Consolidation chronologique — exportable en PDF pour audit ou contrôle réglementaire',
+    items: [
+      { date:'15/08 · 09:41', titre:'Inspection quotidienne — 1 anomalie', detail:'M. Diallo · flexible de flèche signalé NOK, incident créé automatiquement', tag:'INSPECTION', color:'#D97706', bg:'#FDF2E3' },
+      { date:'15/08 · 09:38', titre:'Relevé compteur — 4 520 h', detail:'Scan QR sur site · +8 h depuis la veille', tag:'COMPTEUR', color:'#2563EB', bg:'#E7EEFD' },
+      { date:'14/08 · 16:20', titre:'Ravitaillement — 148 L', detail:'19,8 L/h · 218 € · surconsommation détectée (+14 %)', tag:'CARBURANT', color:'#D97706', bg:'#FDF2E3' },
+      { date:'11/08 · 07:55', titre:'Incident — suintement hydraulique', detail:'Gravité majeure, non immobilisant · maintenance corrective planifiée', tag:'INCIDENT', color:'#DC2626', bg:'#FDECEC' },
+      { date:'12/06 · 08:00', titre:'Affectation — Résidence Le Parc', detail:'Conducteur M. Diallo · habilitation CACES R482 cat. B1 vérifiée', tag:'AFFECTATION', color:'#3F6B83', bg:'#E8F0F5' },
+      { date:'18/04 · 14:30', titre:'Maintenance corrective terminée', detail:'Remplacement train de chenilles · 6 240 € · atelier interne', tag:'MAINTENANCE', color:'#16A34A', bg:'#E7F6EC' }
+    ]
+  }
+};
+
+class Component extends DCLogic {
+  state = { screen: 'dashboard', tab: 'infos', marqueur: 0 };
+
+  go(screen) { this.setState({ screen: screen }); window.scrollTo(0, 0); }
+
+  renderVals() {
+    const s = this.state;
+    const accent = this.props.accentModule || '#2563EB';
+    const dense = (this.props.densite || 'Confortable') === 'Compacte';
+    const pulse = this.props.alertesPulsantes !== false;
+    const anim = pulse ? 'mkpulse 1.8s ease-in-out infinite' : 'none';
+
+    const nav = [['dashboard','Tableau de bord'],['fiche','Fiche équipement'],['carte','Carte'],['planning','Planning'],['terrain','Terrain (mobile)']];
+
+    const eq = EQUIPEMENTS.map((e) => Object.assign({}, e, {
+      statut: ST[e.st].label, statutColor: ST[e.st].color, statutBg: ST[e.st].bg,
+      open: () => this.setState({ screen: 'fiche', tab: 'infos' })
+    }));
+
+    const sel = CARTE[s.marqueur];
+    const marqueurs = CARTE.map((m, i) => ({
+      abbr: m.abbr, x: m.x, y: m.y, color: ST[m.st].color,
+      anim: m.st === 'EN_PANNE' ? anim : 'none',
+      select: () => this.setState({ marqueur: i })
+    }));
+
+    const tbl = TABLES[s.tab];
+    const tl = TIMELINES[s.tab];
+
+    return {
+      navItems: nav.map(([id, label]) => ({
+        label: label, go: () => this.go(id),
+        color: s.screen === id ? '#152230' : '#7A8B9A',
+        line: s.screen === id ? accent : 'transparent'
+      })),
+      isDashboard: s.screen === 'dashboard',
+      isFiche: s.screen === 'fiche',
+      isCarte: s.screen === 'carte',
+      isPlanning: s.screen === 'planning',
+      isTerrain: s.screen === 'terrain',
+      goCarte: () => this.go('carte'),
+      goFiche: () => this.go('fiche'),
+      rowPad: dense ? '7px' : '12px',
+
+      kpis: [
+        { label:'Total parc', value:'47', unit:'engins', color:'#152230', delta:'+3 ce trimestre', deltaColor:'#7A8B9A', anim:'none' },
+        { label:'Disponibles', value:'21', unit:'', color:'#16A34A', delta:'45 % du parc', deltaColor:'#7A8B9A', anim:'none' },
+        { label:'En service', value:'12', unit:'', color:'#3F6B83', delta:'sur 6 chantiers', deltaColor:'#7A8B9A', anim:'none' },
+        { label:'Maintenance', value:'8', unit:'', color:'#D97706', delta:'2 dépassées', deltaColor:'#D97706', anim:'none' },
+        { label:'En panne', value:'3', unit:'', color:'#DC2626', delta:'1 bloquante', deltaColor:'#DC2626', anim: anim },
+        { label:'Taux d\u2019utilisation', value:'68', unit:'%', color:'#152230', delta:'+4 pts vs S32', deltaColor:'#16A34A', anim:'none' }
+      ],
+      filtres: ['Catégorie', 'Statut', 'Chantier', 'Disponibilité'],
+      equipements: eq,
+      alertes: [
+        { niveau:'CRITIQUE', titre:'Pelle CAT 320 — maintenance dépassée', detail:'Vidange moteur en retard de 12 jours · ENG-2024-042', color:'#DC2626', anim: anim },
+        { niveau:'CRITIQUE', titre:'Compacteur Bomag — panne hydraulique', detail:'Signalée il y a 2 h · équipement immobilisé', color:'#DC2626', anim: anim },
+        { niveau:'HAUTE', titre:'Grue Liebherr LTM — assurance', detail:'Expire le 28/08/2026 · document à renouveler', color:'#D97706', anim:'none' },
+        { niveau:'NORMALE', titre:'Chargeuse Volvo L60H — contrôle technique', detail:'Échéance dans 9 jours', color:'#2563EB', anim:'none' },
+        { niveau:'BASSE', titre:'Camion benne 19T — surconsommation', detail:'+34 % vs moyenne sur les 3 derniers pleins', color:'#7A8B9A', anim:'none' },
+        { niveau:'INFO', titre:'CACES R482 de M. Diallo', detail:'Expire dans 41 jours · à replanifier', color:'#7A8B9A', anim:'none' }
+      ],
+      donut: 'conic-gradient(#16A34A 0 45%, #3F6B83 45% 71%, #D97706 71% 88%, #DC2626 88% 94%, #6B7280 94% 100%)',
+      repartition: [
+        { label:'Disponible', n:21, color:'#16A34A' }, { label:'En service', n:12, color:'#3F6B83' },
+        { label:'En maintenance', n:8, color:'#D97706' }, { label:'En panne', n:3, color:'#DC2626' },
+        { label:'Immobilisé', n:3, color:'#6B7280' }
+      ],
+      semaine: ['Sam 15','Dim 16','Lun 17','Mar 18','Mer 19','Jeu 20','Ven 21'].map((d, i) => {
+        const hot = i === 2 || i === 5;
+        return { jour: d.slice(0, 3), num: d.slice(4), border: hot ? '#F5D8D8' : '#E8EDF1', bg: hot ? '#FEF7F7' : '#fff',
+                 numColor: hot ? '#DC2626' : '#33465A', dot: i === 2 ? '#DC2626' : (i === 5 ? '#D97706' : 'transparent') };
+      }),
+      echeances: [
+        { date:'17/08', texte:'Vidange Pelle CAT 320 — déjà dépassée', color:'#DC2626' },
+        { date:'20/08', texte:'VGP nacelle Haulotte HA16', color:'#D97706' },
+        { date:'21/08', texte:'Retour location mini-pelle Kubota', color:'#2563EB' }
+      ],
+
+      tabs: TABS.map(([id, label]) => ({
+        label: label, go: () => this.setState({ tab: id }),
+        color: s.tab === id ? '#152230' : '#7A8B9A',
+        line: s.tab === id ? accent : 'transparent'
+      })),
+      isTabInfos: s.tab === 'infos',
+      isTabCompteurs: s.tab === 'compteurs',
+      isTabTimeline: !!tl,
+      isTabTable: !!tbl,
+      tableTitre: tbl ? tbl.titre : '',
+      tableAction: tbl ? tbl.action : '',
+      tableCols: tbl ? tbl.cols : '1fr',
+      tableHead: tbl ? tbl.head : [],
+      tableRows: tbl ? tbl.rows.map((r) => ({ cells: r })) : [],
+      timelineTitre: tl ? tl.titre : '',
+      timelineSous: tl ? tl.sous : '',
+      timeline: tl ? tl.items : [],
+      ficheStats: [
+        { label:'Chantier actuel', value:'Résidence Le Parc', color:'#152230' },
+        { label:'Conducteur', value:'M. Diallo · CACES B1', color:'#152230' },
+        { label:'Compteur', value:'4 520 h · 15/08 09:41', color:'#152230' },
+        { label:'Prochaine maintenance', value:'Vidange — dépassée +12 j', color:'#DC2626' }
+      ],
+      infoGroupes: [
+        { titre:'Identification', lignes:[
+          { k:'Code interne', v:'ENG-2024-042' }, { k:'Catégorie', v:'Engin lourd' },
+          { k:'Sous-catégorie', v:'Pelle sur chenilles' }, { k:'Marque / modèle', v:'Caterpillar 320' },
+          { k:'N° de série', v:'CAT0320LKBH04872' }, { k:'Année', v:'2023' }, { k:'État', v:'Bon' }
+        ]},
+        { titre:'Technique', lignes:[
+          { k:'Puissance', v:'150 CV' }, { k:'Poids', v:'21 t' }, { k:'Capacité godet', v:'1,2 m³' },
+          { k:'Carburant', v:'Diesel' }, { k:'Réservoir', v:'410 L' }, { k:'Portée max.', v:'9,9 m' },
+          { k:'Accessoires', v:'Godet 600 · BRH' }
+        ]},
+        { titre:'Propriété & coûts', lignes:[
+          { k:'Mode d\u2019acquisition', v:'Achat' }, { k:'Propriétaire', v:'Interne' },
+          { k:'Date d\u2019acquisition', v:'08/01/2024' }, { k:'Mise en service', v:'22/01/2024' },
+          { k:'Valeur d\u2019acquisition', v:'184 000 €' }, { k:'Valeur résiduelle', v:'151 300 €' },
+          { k:'TCO 2026', v:'38 420 €' }
+        ]}
+      ],
+      barres: [
+        ['Sep', 312], ['Oct', 288], ['Nov', 341], ['Déc', 196], ['Jan', 210], ['Fév', 264],
+        ['Mar', 358], ['Avr', 172], ['Mai', 396], ['Juin', 412], ['Juil', 388], ['Août', 214]
+      ].map(([mois, val]) => ({
+        mois: mois, val: val, h: Math.round((val / 430) * 165) + 'px',
+        color: val > 380 ? '#2563EB' : '#9CBBD3'
+      })),
+      releves: [
+        { date:'15/08 09:41', val:'4 520 h', source:'QR SCAN' },
+        { date:'14/08 17:12', val:'4 512 h', source:'QR SCAN' },
+        { date:'13/08 08:05', val:'4 503 h', source:'MANUEL' },
+        { date:'12/08 17:40', val:'4 495 h', source:'QR SCAN' }
+      ],
+
+      carteFiltres: ['Tous', 'Disponible', 'En service', 'En panne', 'Avec position'].map((l, i) => ({
+        label: l, color: i === 0 ? '#fff' : '#4A5C6D',
+        bg: i === 0 ? accent : '#F5F7F9', border: i === 0 ? accent : '#DDE4EA'
+      })),
+      carteListe: CARTE.map((m, i) => ({
+        nom: m.nom, chantier: m.chantier, maj: m.maj, color: ST[m.st].color,
+        rowBg: i === s.marqueur ? '#F0F5FF' : '#fff',
+        select: () => this.setState({ marqueur: i })
+      })),
+      marqueurs: marqueurs,
+      legende: [
+        { label:'Disponible', color:'#16A34A' }, { label:'En service', color:'#3F6B83' },
+        { label:'En maintenance', color:'#D97706' }, { label:'En panne', color:'#DC2626' },
+        { label:'Immobilisé', color:'#6B7280' }
+      ],
+      popX: sel.x, popY: sel.y === '72%' ? '30%' : '52%',
+      popTint: ST[sel.st].color, popCode: sel.code, popNom: sel.nom,
+      popStatut: ST[sel.st].label.toUpperCase(), popColor: ST[sel.st].color, popBg: ST[sel.st].bg,
+      popMaj: 'MAJ ' + sel.maj, popChantier: sel.chantier, popCoord: sel.coord,
+
+      semaines: ['S31','S32','S33','S34','S35','S36','S37','S38'].map((w, i) => ({
+        label: w, color: i === 2 ? '#152230' : '#7A8B9A', bg: i === 2 ? '#EEF3FF' : 'transparent'
+      })),
+      ganttLegende: [
+        { label:'Résidence Le Parc', color:'#2563EB' }, { label:'ZAC Rivière Sud', color:'#3F6B83' },
+        { label:'Écoquartier', color:'#16A34A' }, { label:'Maintenance planifiée', color:'#D97706' }
+      ],
+      ganttRows: [
+        { nom:'Pelle hydraulique 20T', code:'ENG-2024-042', bars:[{ left:'0%', width:'75%', color:'#2563EB', border:'none', label:'Résidence Le Parc' }], jalons:[{ left:'30%', color:'#D97706' }] },
+        { nom:'Grue mobile 60T', code:'ENG-2024-018', bars:[{ left:'12.5%', width:'50%', color:'#3F6B83', border:'none', label:'ZAC Rivière Sud' }], jalons:[] },
+        { nom:'Compacteur tandem', code:'ENG-2023-091', bars:[{ left:'0%', width:'25%', color:'#DC2626', border:'none', label:'Immobilisé — panne' }], jalons:[{ left:'26%', color:'#D97706' }] },
+        { nom:'Camion benne 19T', code:'VEH-2022-007', bars:[{ left:'37.5%', width:'37.5%', color:'#16A34A', border:'none', label:'Écoquartier' }], jalons:[{ left:'62%', color:'#DC2626' }] },
+        { nom:'Chargeuse sur pneus', code:'ENG-2024-055', bars:[{ left:'0%', width:'37.5%', color:'#D97706', border:'none', label:'Atelier — révision 500 h' }, { left:'50%', width:'50%', color:'#2563EB', border:'none', label:'Résidence Le Parc' }], jalons:[] },
+        { nom:'Nacelle élévatrice 16 m', code:'ENG-2021-033', bars:[{ left:'25%', width:'31.25%', color:'#16A34A', border:'none', label:'Écoquartier' }, { left:'50%', width:'25%', color:'#2563EB', border:'2px solid #DC2626', label:'Le Parc — conflit' }], jalons:[] },
+        { nom:'Groupe électrogène 60 kVA', code:'MAT-2023-120', bars:[{ left:'0%', width:'100%', color:'#16A34A', border:'none', label:'Écoquartier — lot 4' }], jalons:[] },
+        { nom:'Mini-pelle 3,5T', code:'ENG-2020-004', bars:[{ left:'62.5%', width:'37.5%', color:'#3F6B83', border:'2px dashed #94A9BC', label:'Réservation ZAC Rivière Sud' }], jalons:[] }
+      ],
+      demandes: [
+        { equipement:'Nacelle Haulotte HA16', detail:'Chef de chantier Écoquartier · S35 → S37 · conducteur K. Ndiaye' },
+        { equipement:'Camion benne 19T', detail:'Résidence Le Parc · S36 · 3 rotations/jour' },
+        { equipement:'Mini-pelle Kubota U35', detail:'ZAC Rivière Sud · S37 → S38 · remise en service requise' }
+      ],
+
+      actionsRapides: [
+        { icone:'⚠', label:'Signaler une panne', color:'#DC2626' },
+        { icone:'◔', label:'Relevé compteur', color:'#2563EB' },
+        { icone:'⛽', label:'Ravitaillement', color:'#D97706' },
+        { icone:'☑', label:'Inspection du jour', color:'#16A34A' }
+      ],
+      mesEngins: [
+        { nom:'Pelle hydraulique 20T', code:'ENG-2024-042', releve:'4 520 h', tint:'#3F6B83', statut:'EN SERVICE', color:'#3F6B83', bg:'#E8F0F5' },
+        { nom:'Mini-pelle 3,5T', code:'ENG-2020-004', releve:'5 760 h', tint:'#6B7280', statut:'IMMOBILISÉ', color:'#6B7280', bg:'#EFF1F3' }
+      ],
+      scanInfos: [
+        { label:'Chantier', value:'Résidence Le Parc', color:'#152230' },
+        { label:'Compteur', value:'4 520 h', color:'#152230' },
+        { label:'Inspection', value:'Non faite aujourd\u2019hui', color:'#DC2626' },
+        { label:'Carburant', value:'Plein le 14/08', color:'#152230' }
+      ],
+      scanActions: [
+        { icone:'◎', label:'Confirmer ma position', weight:700, color:'#fff', bg:accent, border:accent },
+        { icone:'☑', label:'Inspection quotidienne', weight:700, color:'#fff', bg:'#16A34A', border:'#16A34A' },
+        { icone:'◔', label:'Relevé compteur', weight:600, color:'#33465A', bg:'#fff', border:'#DFE5EB' },
+        { icone:'⛽', label:'Ravitaillement', weight:600, color:'#33465A', bg:'#fff', border:'#DFE5EB' },
+        { icone:'⚠', label:'Signaler un problème', weight:700, color:'#DC2626', bg:'#FEF3F3', border:'#F0B7B7' }
+      ],
+      typesPanne: [
+        { icone:'⛆', label:'Fuite', weight:700, color:'#DC2626', bg:'#FEF3F3', border:'#DC2626' },
+        { icone:'⚡', label:'Électrique', weight:500, color:'#33465A', bg:'#fff', border:'#DFE5EB' },
+        { icone:'⚙', label:'Panne', weight:500, color:'#33465A', bg:'#fff', border:'#DFE5EB' },
+        { icone:'✂', label:'Casse', weight:500, color:'#33465A', bg:'#fff', border:'#DFE5EB' },
+        { icone:'◍', label:'Usure', weight:500, color:'#33465A', bg:'#fff', border:'#DFE5EB' },
+        { icone:'⊘', label:'Autre', weight:500, color:'#33465A', bg:'#fff', border:'#DFE5EB' }
+      ],
+      gravites: [
+        { label:'Mineur', dot:'#9CA3AF', color:'#33465A', bg:'#fff', border:'#DFE5EB' },
+        { label:'Modéré', dot:'#2563EB', color:'#33465A', bg:'#fff', border:'#DFE5EB' },
+        { label:'Majeur', dot:'#D97706', color:'#9A5B10', bg:'#FDF2E3', border:'#D97706' },
+        { label:'Critique', dot:'#DC2626', color:'#33465A', bg:'#fff', border:'#DFE5EB' }
+      ],
+      inspection: [
+        { titre:'Moteur & fluides', items:[
+          { label:'Niveau d\u2019huile moteur', border:'#DFE5EB', okColor:'#fff', okBg:'#16A34A', nokColor:'#7A8B9A', nokBg:'#F1F4F7', commentaire:'' },
+          { label:'Niveau liquide de refroidissement', border:'#DFE5EB', okColor:'#fff', okBg:'#16A34A', nokColor:'#7A8B9A', nokBg:'#F1F4F7', commentaire:'' },
+          { label:'Filtre à air', border:'#DFE5EB', okColor:'#fff', okBg:'#16A34A', nokColor:'#7A8B9A', nokBg:'#F1F4F7', commentaire:'' }
+        ]},
+        { titre:'Circuit hydraulique', items:[
+          { label:'État des flexibles', border:'#DC2626', okColor:'#7A8B9A', okBg:'#F1F4F7', nokColor:'#fff', nokBg:'#DC2626', commentaire:'Suintement au raccord droit de la flèche — photo jointe' },
+          { label:'Fonctionnement du godet', border:'#DFE5EB', okColor:'#fff', okBg:'#16A34A', nokColor:'#7A8B9A', nokBg:'#F1F4F7', commentaire:'' }
+        ]},
+        { titre:'Sécurité', items:[
+          { label:'Avertisseur de recul', border:'#DFE5EB', okColor:'#fff', okBg:'#16A34A', nokColor:'#7A8B9A', nokBg:'#F1F4F7', commentaire:'' },
+          { label:'Rétroviseurs & caméra', border:'#DFE5EB', okColor:'#fff', okBg:'#16A34A', nokColor:'#7A8B9A', nokBg:'#F1F4F7', commentaire:'' },
+          { label:'Extincteur & trousse de secours', border:'#DFE5EB', okColor:'#fff', okBg:'#16A34A', nokColor:'#7A8B9A', nokBg:'#F1F4F7', commentaire:'' }
+        ]}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

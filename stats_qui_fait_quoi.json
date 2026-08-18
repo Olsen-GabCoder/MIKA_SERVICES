@@ -1,0 +1,3074 @@
+{
+  "_metadata": {
+    "source": "Production Render (PostgreSQL)",
+    "date_extraction": "2026-06-25",
+    "periode_audit": "2026-03-16 / 2026-06-25",
+    "nb_audit_events": 4189,
+    "nb_utilisateurs_total": 21,
+    "nb_operationnels": 13,
+    "admins_exclus": [
+      "Olsen KAMPALA",
+      "Jeremie OMPINDI AKAGA",
+      "Yvannis Trécy Allogo",
+      "Lewis AWA NYARE",
+      "Ramzi JRIBI",
+      "Lee Gesnere BINOMBO",
+      "Patrice ZAVROSA",
+      "JOALIKA KEAT MANDAKA"
+    ],
+    "note_created_by": "Les colonnes created_by/updated_by existent en base mais sont NULL sur toutes les tables metier (sauf users). Les contributions sont mesurees via les audit_logs et les champs assigneA."
+  },
+  "bloc1_contributions_operationnels": [
+    {
+      "userId": 14,
+      "nom": "Justin NDONG",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "logins": 41,
+      "page_views_total": 348,
+      "consultations_projet": 148,
+      "modifications_projet_pages": 51,
+      "pages_autres_modules": 149,
+      "premiere_activite": "2026-03-25",
+      "derniere_activite": "2026-06-23",
+      "top_pages": {
+        "Détail projet": 91,
+        "Tableau de bord": 59,
+        "Projets": 57,
+        "Modification projet": 51,
+        "Budget & Finances": 15,
+        "Réunions hebdo": 11,
+        "Engins & Matériel": 10,
+        "Planning & Tâches": 7,
+        "Équipes": 7,
+        "Matériaux & Stocks": 6
+      }
+    },
+    {
+      "userId": 10,
+      "nom": "Adnen BEN SALAH",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "logins": 6,
+      "page_views_total": 176,
+      "consultations_projet": 101,
+      "modifications_projet_pages": 18,
+      "pages_autres_modules": 57,
+      "premiere_activite": "2026-03-24",
+      "derniere_activite": "2026-06-12",
+      "top_pages": {
+        "Détail projet": 53,
+        "Projets": 48,
+        "Tableau de bord": 20,
+        "Modification projet": 18,
+        "Salle MIKA": 13,
+        "/projets/40/dqe": 4,
+        "Planning & Tâches": 3,
+        "Équipes": 3,
+        "Réunions hebdo": 3,
+        "Matériaux & Stocks": 2
+      }
+    },
+    {
+      "userId": 11,
+      "nom": "Berenger YEMBI",
+      "roles_systeme": [
+        "SUPER_ADMIN"
+      ],
+      "logins": 27,
+      "page_views_total": 154,
+      "consultations_projet": 83,
+      "modifications_projet_pages": 38,
+      "pages_autres_modules": 33,
+      "premiere_activite": "2026-03-25",
+      "derniere_activite": "2026-06-19",
+      "top_pages": {
+        "Détail projet": 54,
+        "Modification projet": 38,
+        "Projets": 29,
+        "Tableau de bord": 21,
+        "/bareme": 5,
+        "/bareme/articles/nouveau": 2,
+        "Salle MIKA": 1,
+        "Budget & Finances": 1,
+        "Planning & Tâches": 1,
+        "Réunions hebdo": 1
+      }
+    },
+    {
+      "userId": 7,
+      "nom": "Cindy ANDRIANJAFY",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "logins": 5,
+      "page_views_total": 169,
+      "consultations_projet": 108,
+      "modifications_projet_pages": 40,
+      "pages_autres_modules": 21,
+      "premiere_activite": "2026-03-18",
+      "derniere_activite": "2026-06-11",
+      "top_pages": {
+        "Détail projet": 64,
+        "Projets": 44,
+        "Modification projet": 40,
+        "Tableau de bord": 16,
+        "Salle MIKA": 1,
+        "/projets/34/dqe": 1,
+        "/projets/24/dqe": 1,
+        "Paramètres": 1,
+        "Mon profil": 1
+      }
+    },
+    {
+      "userId": 15,
+      "nom": "Davy NDONG ENGONE",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "logins": 14,
+      "page_views_total": 158,
+      "consultations_projet": 80,
+      "modifications_projet_pages": 22,
+      "pages_autres_modules": 56,
+      "premiere_activite": "2026-03-25",
+      "derniere_activite": "2026-06-12",
+      "top_pages": {
+        "Détail projet": 50,
+        "Projets": 30,
+        "Modification projet": 22,
+        "Tableau de bord": 15,
+        "Engins & Matériel": 6,
+        "Matériaux & Stocks": 5,
+        "Historique projet": 5,
+        "Équipes": 4,
+        "Planning & Tâches": 4,
+        "Réunions hebdo": 4
+      }
+    },
+    {
+      "userId": 17,
+      "nom": "Ulrich Landry IBOUANA",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "logins": 14,
+      "page_views_total": 133,
+      "consultations_projet": 77,
+      "modifications_projet_pages": 22,
+      "pages_autres_modules": 34,
+      "premiere_activite": "2026-03-26",
+      "derniere_activite": "2026-06-22",
+      "top_pages": {
+        "Détail projet": 40,
+        "Projets": 37,
+        "Modification projet": 22,
+        "Tableau de bord": 19,
+        "Planning & Tâches": 3,
+        "Historique projet": 2,
+        "Matériaux & Stocks": 2,
+        "Engins & Matériel": 2,
+        "Équipes": 2,
+        "Mon profil": 2
+      }
+    },
+    {
+      "userId": 22,
+      "nom": "ARMAND KARL NENE NZIENGUI",
+      "roles_systeme": [
+        "ADMIN",
+        "CHEF_PROJET"
+      ],
+      "logins": 3,
+      "page_views_total": 137,
+      "consultations_projet": 62,
+      "modifications_projet_pages": 17,
+      "pages_autres_modules": 58,
+      "premiere_activite": "2026-04-20",
+      "derniere_activite": "2026-06-25",
+      "top_pages": {
+        "Détail projet": 38,
+        "Tableau de bord": 28,
+        "Projets": 24,
+        "Modification projet": 17,
+        "Salle MIKA": 11,
+        "Planning & Tâches": 5,
+        "Budget & Finances": 4,
+        "Mon profil": 3,
+        "Paramètres": 2,
+        "Salle MIKA - Procès-verbaux": 1
+      }
+    },
+    {
+      "userId": 16,
+      "nom": "Carine MOUGUIANA",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "logins": 11,
+      "page_views_total": 111,
+      "consultations_projet": 63,
+      "modifications_projet_pages": 33,
+      "pages_autres_modules": 15,
+      "premiere_activite": "2026-03-25",
+      "derniere_activite": "2026-06-19",
+      "top_pages": {
+        "Détail projet": 41,
+        "Modification projet": 33,
+        "Projets": 22,
+        "Tableau de bord": 14,
+        "Mon profil": 1
+      }
+    },
+    {
+      "userId": 31,
+      "nom": "Valaria Grace BIBALOU IKONDO",
+      "roles_systeme": [
+        "SUPER_ADMIN",
+        "ADMIN"
+      ],
+      "logins": 1,
+      "page_views_total": 59,
+      "consultations_projet": 30,
+      "modifications_projet_pages": 22,
+      "pages_autres_modules": 7,
+      "premiere_activite": "2026-06-16",
+      "derniere_activite": "2026-06-24",
+      "top_pages": {
+        "Détail projet": 23,
+        "Modification projet": 22,
+        "Projets": 7,
+        "Tableau de bord": 4,
+        "/projets/23/documents": 1,
+        "/projets/23/dqe": 1,
+        "Mon profil": 1
+      }
+    },
+    {
+      "userId": 20,
+      "nom": "Xavier NGUEMA",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "logins": 2,
+      "page_views_total": 34,
+      "consultations_projet": 20,
+      "modifications_projet_pages": 6,
+      "pages_autres_modules": 8,
+      "premiere_activite": "2026-04-16",
+      "derniere_activite": "2026-06-11",
+      "top_pages": {
+        "Détail projet": 13,
+        "Projets": 7,
+        "Modification projet": 6,
+        "Tableau de bord": 2,
+        "Paramètres": 2,
+        "/projets/37/documents": 1,
+        "/projets/37/dqe": 1,
+        "/projets/2/dqe": 1,
+        "Mon profil": 1
+      }
+    },
+    {
+      "userId": 12,
+      "nom": "Yves Alexis DITENGOU",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "logins": 4,
+      "page_views_total": 28,
+      "consultations_projet": 14,
+      "modifications_projet_pages": 10,
+      "pages_autres_modules": 4,
+      "premiere_activite": "2026-03-25",
+      "derniere_activite": "2026-03-27",
+      "top_pages": {
+        "Détail projet": 11,
+        "Modification projet": 10,
+        "Projets": 3,
+        "Tableau de bord": 2,
+        "Mon profil": 2
+      }
+    },
+    {
+      "userId": 23,
+      "nom": "Yannick Gerly OBAME ELLA",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "logins": 1,
+      "page_views_total": 12,
+      "consultations_projet": 6,
+      "modifications_projet_pages": 0,
+      "pages_autres_modules": 6,
+      "premiere_activite": "2026-04-20",
+      "derniere_activite": "2026-04-24",
+      "top_pages": {
+        "Tableau de bord": 3,
+        "Détail projet": 3,
+        "Projets": 3,
+        "Historique projet": 1,
+        "Paramètres": 1,
+        "Mon profil": 1
+      }
+    },
+    {
+      "userId": 33,
+      "nom": "Evrard ZUE MINTSA",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "logins": 1,
+      "page_views_total": 4,
+      "consultations_projet": 2,
+      "modifications_projet_pages": 1,
+      "pages_autres_modules": 1,
+      "premiere_activite": "2026-06-24",
+      "derniere_activite": "2026-06-24",
+      "top_pages": {
+        "Modification projet": 1,
+        "Détail projet": 1,
+        "Projets": 1,
+        "Mon profil": 1
+      }
+    }
+  ],
+  "bloc2_projets": {
+    "total": 31,
+    "agregats": {
+      "par_statut": {
+        "EN_COURS_EXECUTION": 12,
+        "INITIALISATION": 9,
+        "RECEPTION_DEFINITIVE": 9,
+        "RECEPTION_PROVISOIRE": 1
+      },
+      "par_type": {
+        "VOIRIE": 13,
+        "BATIMENT": 9,
+        "AMENAGEMENT": 4,
+        "PONT": 3,
+        "GENIE_CIVIL": 1,
+        "REHABILITATION": 1
+      },
+      "par_province": {
+        "Non renseigne": 23,
+        "Estuaire": 7,
+        "Ngounié": 1
+      },
+      "montant_ht_total_portefeuille": 157820429332.0,
+      "avancement_physique_moyen_pct": 10.0,
+      "projets_avec_taches": 15,
+      "projets_sans_aucune_tache": 16,
+      "projets_avec_dqe": 4,
+      "projets_avec_suivi_mensuel": 16,
+      "projets_avec_responsable": 19,
+      "projets_avec_client": 20,
+      "projets_avec_description": 5
+    },
+    "liste_par_activite": [
+      {
+        "id": 25,
+        "nom": "NOUVELLES VOIES JB-CAMP DE GAULLE + AMÉNAGEMENT BORD DE MER",
+        "codeProjet": "N°53MTPC/SG/2025",
+        "statut": "RECEPTION_DEFINITIVE",
+        "type": "AMENAGEMENT",
+        "province": "Non renseigne",
+        "ville": "",
+        "montantHT": 12107327977.0,
+        "dateDebut": "2025-10-15",
+        "dateFin": "2026-10-15",
+        "delaiMois": 12,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": 0.0,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "",
+        "responsable": "Ulrich Landry IBOUANA",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:16:09.477609",
+        "updatedAt": "2026-05-22T09:43:34.082329",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 229,
+        "nb_taches": 98,
+        "taches_par_statut": {
+          "A_FAIRE": 98
+        },
+        "taches_sans_assignation": 98,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 98,
+        "nb_previsions": 98,
+        "previsions_par_semaine": {
+          "2026-S17": 21,
+          "2026-S21": 57,
+          "2026-S22": 20
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 7,
+        "points_bloquants_ouverts": 5,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 13,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 11,
+            "caReel": null,
+            "caPrevisionnel": 300000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 12,
+            "caReel": null,
+            "caPrevisionnel": 300000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 300000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 400000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 400000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 650000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 350000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 7,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 8,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 9,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 27,
+        "nom": "TRAVAUX DE RÉHABILITATION ET D'AMÉNAGEMENT DES VOIRIES DE KANGO",
+        "codeProjet": "N°26/MTP/SG/2025",
+        "statut": "EN_COURS_EXECUTION",
+        "type": "REHABILITATION",
+        "province": "Estuaire",
+        "ville": "Kango",
+        "montantHT": 9098777126.0,
+        "dateDebut": "2025-10-15",
+        "dateFin": "2027-10-15",
+        "delaiMois": 24,
+        "avancementGlobal": 27.29,
+        "avancementPhysiquePct": 27.29,
+        "avancementFinancierPct": 27.29,
+        "delaiConsommePct": 23.18,
+        "description": "",
+        "responsable": "Justin  NDONG",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:16:10.32473",
+        "updatedAt": "2026-06-10T14:44:32.82836",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 202,
+        "nb_taches": 89,
+        "taches_par_statut": {
+          "A_FAIRE": 89
+        },
+        "taches_sans_assignation": 89,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 74,
+        "nb_previsions": 61,
+        "previsions_par_semaine": {
+          "2026-S16": 11,
+          "2026-S25": 12,
+          "2026-S15": 9,
+          "2026-S21": 8,
+          "2026-S24": 10,
+          "2026-S26": 11
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 2,
+        "points_bloquants_ouverts": 2,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 25,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 11,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 12,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 515249292.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 449693242.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 320802392.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 244909303.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 500000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 300000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 7,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 8,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 9,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 11,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 12,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 7,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 8,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 9,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 23,
+        "nom": "TRAVAUX D'AMÉNAGEMENT DES VOIRIES DE DESSERTE DU QUARTIER AKEMIDJONGONI",
+        "codeProjet": "N°144/MTP/SG/2024",
+        "statut": "EN_COURS_EXECUTION",
+        "type": "VOIRIE",
+        "province": "Estuaire",
+        "ville": "Libreville",
+        "montantHT": 2995552891.0,
+        "dateDebut": "2025-06-05",
+        "dateFin": "2026-02-05",
+        "delaiMois": 8,
+        "avancementGlobal": 71.11,
+        "avancementPhysiquePct": 71.11,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": 0.0,
+        "description": "",
+        "responsable": "Cindy  ANDRIANJAFY",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:16:06.632503",
+        "updatedAt": "2026-06-18T16:39:14.30213",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 169,
+        "nb_taches": 126,
+        "taches_par_statut": {
+          "A_FAIRE": 126
+        },
+        "taches_sans_assignation": 126,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 114,
+        "nb_previsions": 33,
+        "previsions_par_semaine": {
+          "2026-S21": 7,
+          "2026-S24": 8,
+          "2026-S25": 9,
+          "2026-S26": 9
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 5,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "nom": "TRAVAUX DE CONSTRUCTION D'UN CENTRE D'APPUI A LA PECHE ARTISANALE A DONGUILA",
+        "codeProjet": "01/MMPEB/SG/2025",
+        "statut": "RECEPTION_PROVISOIRE",
+        "type": "AMENAGEMENT",
+        "province": "Non renseigne",
+        "ville": "",
+        "montantHT": 819880934.0,
+        "dateDebut": "2025-12-30",
+        "dateFin": "2026-12-30",
+        "delaiMois": 12,
+        "avancementGlobal": 25.0,
+        "avancementPhysiquePct": 25.0,
+        "avancementFinancierPct": 33.0,
+        "delaiConsommePct": 50.0,
+        "description": "",
+        "responsable": "Jeremie  OMPINDI AKAGA",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:08:59.897348",
+        "updatedAt": "2026-06-19T08:45:17.821952",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 144,
+        "nb_taches": 49,
+        "taches_par_statut": {
+          "A_FAIRE": 49
+        },
+        "taches_sans_assignation": 49,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 49,
+        "nb_previsions": 41,
+        "previsions_par_semaine": {
+          "2026-S13": 5,
+          "2026-S14": 4,
+          "2026-S21": 7,
+          "2026-S15": 3,
+          "2026-S19": 10,
+          "2026-S25": 12
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 1,
+        "points_bloquants_ouverts": 1,
+        "dqe_present": true,
+        "dqe_chapitres": 22,
+        "dqe_lignes": 274,
+        "nb_suivi_mensuel": 13,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 12,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 7,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 8,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 9,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 11,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 12,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "nom": "BERGE DE LA LOWE",
+        "codeProjet": "52/MTPC/SG/2025",
+        "statut": "EN_COURS_EXECUTION",
+        "type": "PONT",
+        "province": "Non renseigne",
+        "ville": "",
+        "montantHT": 14348354681.0,
+        "dateDebut": "2025-11-11",
+        "dateFin": "2027-02-11",
+        "delaiMois": 15,
+        "avancementGlobal": 21.0,
+        "avancementPhysiquePct": 21.0,
+        "avancementFinancierPct": 22.0,
+        "delaiConsommePct": 0.0,
+        "description": "",
+        "responsable": "Carine  MOUGUIANA",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:08:59.382187",
+        "updatedAt": "2026-06-18T22:30:25.138222",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 141,
+        "nb_taches": 65,
+        "taches_par_statut": {
+          "A_FAIRE": 65
+        },
+        "taches_sans_assignation": 65,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 53,
+        "nb_previsions": 58,
+        "previsions_par_semaine": {
+          "2026-S13": 4,
+          "2026-S14": 5,
+          "2026-S21": 6,
+          "2026-S17": 2,
+          "2026-S15": 6,
+          "2026-S19": 3,
+          "2026-S24": 10,
+          "2026-S25": 11,
+          "2026-S26": 11
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 4,
+        "points_bloquants_ouverts": 4,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 7,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 200000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 200000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 200000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 200000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 942122150.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 7,
+            "caReel": null,
+            "caPrevisionnel": 1730345524.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 8,
+            "caReel": null,
+            "caPrevisionnel": 1424267985.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 39,
+        "nom": "Construction de 2 ponts sur le fleuve de la LOUETSI BONGOLO-IDEMBE",
+        "codeProjet": "N°?./MTP/SG/2026",
+        "statut": "EN_COURS_EXECUTION",
+        "type": "PONT",
+        "province": "Ngounié",
+        "ville": "Lebamba",
+        "montantHT": 28931329958.0,
+        "dateDebut": "2025-10-01",
+        "dateFin": "2028-10-01",
+        "delaiMois": 36,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": 0.0,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "Construction  de 2 ponts sur la rivière Louétsie: Un à Bongolo et l'autre à Idémbé\nConstruction d'une route entre le village Kanda et Idembé (09 kms)",
+        "responsable": "Davy  NDONG ENGONE",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:16:14.824259",
+        "updatedAt": "2026-06-12T05:27:07.551885",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 137,
+        "nb_taches": 77,
+        "taches_par_statut": {
+          "A_FAIRE": 77
+        },
+        "taches_sans_assignation": 77,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 77,
+        "nb_previsions": 50,
+        "previsions_par_semaine": {
+          "2026-S17": 4,
+          "2026-S21": 5,
+          "2026-S22": 5,
+          "2026-S14": 5,
+          "2026-S15": 4,
+          "2026-S16": 3,
+          "2026-S18": 5,
+          "2026-S23": 3,
+          "2026-S19": 5,
+          "2026-S20": 4,
+          "2026-S24": 4,
+          "2026-S25": 3
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 6,
+        "points_bloquants_ouverts": 4,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 2,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 11,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 34,
+        "nom": "TRAVAUX DE RÉAMÉNAGEMENT DES VOIRIES DU CINQUIÈME ARRONDISSEMENT, QUARTIER LALALA.",
+        "codeProjet": "N°95/MTPC/SG/2025",
+        "statut": "EN_COURS_EXECUTION",
+        "type": "VOIRIE",
+        "province": "Estuaire",
+        "ville": "Libreville",
+        "montantHT": 3064441838.0,
+        "dateDebut": "2026-03-05",
+        "dateFin": "2027-01-05",
+        "delaiMois": 10,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": 0.0,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "",
+        "responsable": "Cindy  ANDRIANJAFY",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:16:12.919759",
+        "updatedAt": "2026-05-21T07:54:20.172982",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 135,
+        "nb_taches": 83,
+        "taches_par_statut": {
+          "A_FAIRE": 83
+        },
+        "taches_sans_assignation": 83,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 83,
+        "nb_previsions": 27,
+        "previsions_par_semaine": {
+          "2026-S21": 11,
+          "2026-S20": 3,
+          "2026-S22": 13
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 3,
+        "points_bloquants_ouverts": 3,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 11,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 19000000.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 320392900.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 7,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 8,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 9,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 11,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 12,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 24,
+        "nom": "EXTENSION VOIRIES AKEMIDJONGONI",
+        "codeProjet": "N°92/MTPC/SG/2025",
+        "statut": "EN_COURS_EXECUTION",
+        "type": "VOIRIE",
+        "province": "Non renseigne",
+        "ville": "",
+        "montantHT": 494654477.0,
+        "dateDebut": "2026-05-06",
+        "dateFin": "2026-09-06",
+        "delaiMois": 4,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": 0.0,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "",
+        "responsable": "Cindy  ANDRIANJAFY",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:16:08.49497",
+        "updatedAt": "2026-06-18T16:59:42.419019",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 88,
+        "nb_taches": 32,
+        "taches_par_statut": {
+          "A_FAIRE": 32
+        },
+        "taches_sans_assignation": 32,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 28,
+        "nb_previsions": 16,
+        "previsions_par_semaine": {
+          "2026-S21": 1,
+          "2026-S20": 1,
+          "2026-S24": 3,
+          "2026-S25": 7,
+          "2026-S26": 4
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": true,
+        "dqe_chapitres": 7,
+        "dqe_lignes": 229,
+        "nb_suivi_mensuel": 9,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 7,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 8,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 9,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "nom": "AMÉNAGEMENT DE LA VOIE DE BEL AIR",
+        "codeProjet": "91/MTPC/SG/2025",
+        "statut": "EN_COURS_EXECUTION",
+        "type": "GENIE_CIVIL",
+        "province": "Non renseigne",
+        "ville": "",
+        "montantHT": 1536810579.0,
+        "dateDebut": null,
+        "dateFin": null,
+        "delaiMois": null,
+        "avancementGlobal": 8.8,
+        "avancementPhysiquePct": 8.8,
+        "avancementFinancierPct": 16.0,
+        "delaiConsommePct": null,
+        "description": "travaux de construction d'une voie en BAC avec assainissement",
+        "responsable": "Xavier NGUEMA",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:08:58.943429",
+        "updatedAt": "2026-06-11T15:19:57.249646",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 82,
+        "nb_taches": 41,
+        "taches_par_statut": {
+          "A_FAIRE": 41
+        },
+        "taches_sans_assignation": 41,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 41,
+        "nb_previsions": 33,
+        "previsions_par_semaine": {
+          "2026-S13": 1,
+          "2026-S17": 7,
+          "2026-S18": 5,
+          "2026-S24": 13,
+          "2026-S25": 7
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 6,
+        "points_bloquants_ouverts": 5,
+        "dqe_present": true,
+        "dqe_chapitres": 4,
+        "dqe_lignes": 29,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 20,
+        "nom": "CONSTRUCTION D'UN PONT SUR LE CARREFOUR CAMP DE GAULLE A LIBREVILLE",
+        "codeProjet": "N°148/MTP/SG/2024",
+        "statut": "INITIALISATION",
+        "type": "PONT",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 14805768664.0,
+        "dateDebut": "2024-01-01",
+        "dateFin": "2026-01-01",
+        "delaiMois": 24,
+        "avancementGlobal": 27.36,
+        "avancementPhysiquePct": 27.36,
+        "avancementFinancierPct": 38.25,
+        "delaiConsommePct": 54.42,
+        "description": "",
+        "responsable": "Yves Alexis  DITENGOU",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:16:04.774275",
+        "updatedAt": "2026-03-27T07:25:44.340217",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 47,
+        "nb_taches": 17,
+        "taches_par_statut": {
+          "A_FAIRE": 17
+        },
+        "taches_sans_assignation": 17,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 17,
+        "nb_previsions": 17,
+        "previsions_par_semaine": {
+          "2026-S13": 7,
+          "2026-S14": 10
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 7,
+        "points_bloquants_ouverts": 7,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 3,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 19,
+        "nom": "PROJET D'AMÉNAGEMENT DE VOIRIES DE DESSERTE CAMP DE GAULLE/JARDIN BOTANIQUE",
+        "codeProjet": "N°147/MTP/SG/2024",
+        "statut": "INITIALISATION",
+        "type": "VOIRIE",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 7000000000.0,
+        "dateDebut": "2025-02-25",
+        "dateFin": "2027-02-25",
+        "delaiMois": 24,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": 0.0,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "",
+        "responsable": "Ulrich Landry IBOUANA",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:16:03.991267",
+        "updatedAt": "2026-03-27T07:55:59.237057",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 45,
+        "nb_taches": 18,
+        "taches_par_statut": {
+          "A_FAIRE": 18
+        },
+        "taches_sans_assignation": 18,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 18,
+        "nb_previsions": 13,
+        "previsions_par_semaine": {
+          "2026-S13": 13
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 4,
+        "points_bloquants_ouverts": 1,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 5,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 11,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 12,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 40,
+        "nom": "CONSTRUCTION SALLE POLYVALENTE KANGO",
+        "codeProjet": "146/MTPC/SG/2024",
+        "statut": "EN_COURS_EXECUTION",
+        "type": "BATIMENT",
+        "province": "Estuaire",
+        "ville": "Kango",
+        "montantHT": 1357973070.0,
+        "dateDebut": "2026-03-03",
+        "dateFin": "2027-06-03",
+        "delaiMois": 15,
+        "avancementGlobal": 2.0,
+        "avancementPhysiquePct": 2.0,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": 93.0,
+        "description": "Construction d'une salle polyvalente à Kango (marché 146/MTPC/SG/2024). Chef de projet OPC : Adnen Ben SALAH.",
+        "responsable": "Adnen BEN SALAH",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:16:15.216599",
+        "updatedAt": "2026-06-12T08:27:10.323873",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 41,
+        "nb_taches": 6,
+        "taches_par_statut": {
+          "A_FAIRE": 6
+        },
+        "taches_sans_assignation": 6,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 6,
+        "nb_previsions": 3,
+        "previsions_par_semaine": {
+          "2026-S18": 2,
+          "2026-S20": 1
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 16,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 7,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 8,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 9,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 11,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 12,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 37,
+        "nom": "TRAVAUX D'AMÉNAGEMENT DU CARREFOUR CHARBONNAGES",
+        "codeProjet": "N°?../MTPC/SG/202?",
+        "statut": "EN_COURS_EXECUTION",
+        "type": "VOIRIE",
+        "province": "Non renseigne",
+        "ville": "",
+        "montantHT": 1883592982.0,
+        "dateDebut": "2025-10-01",
+        "dateFin": "2026-07-01",
+        "delaiMois": 9,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": 0.0,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "Travaux d'aménagement du carrefour  des charbonnages avec un plateau sportif, un poste de police, des WC publics, parking et spaces promenade",
+        "responsable": "Xavier NGUEMA",
+        "client": "État Gabon",
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:16:14.096206",
+        "updatedAt": "2026-04-23T11:07:58.338542",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 37,
+        "nb_taches": 7,
+        "taches_par_statut": {
+          "A_FAIRE": 7
+        },
+        "taches_sans_assignation": 7,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 7,
+        "nb_previsions": 7,
+        "previsions_par_semaine": {
+          "2026-S17": 4,
+          "2026-S18": 3
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 3,
+        "points_bloquants_ouverts": 3,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 10,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 11,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 12,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 7,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "nom": "MARCHÉ MUNICIPAL D'OWENDO",
+        "codeProjet": "93/MTPC/SG/2025",
+        "statut": "EN_COURS_EXECUTION",
+        "type": "BATIMENT",
+        "province": "Estuaire",
+        "ville": "Owendo",
+        "montantHT": 6722689076.0,
+        "dateDebut": "2026-03-03",
+        "dateFin": "2028-05-03",
+        "delaiMois": 26,
+        "avancementGlobal": 8.0,
+        "avancementPhysiquePct": 8.0,
+        "avancementFinancierPct": 14.0,
+        "delaiConsommePct": 12.0,
+        "description": "",
+        "responsable": "Adnen BEN SALAH",
+        "client": "État Gabon",
+        "sourceFinancement": "BGFIBANK",
+        "createdAt": "2026-03-16T12:09:00.846833",
+        "updatedAt": "2026-06-12T08:33:19.28884",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 28,
+        "nb_taches": 10,
+        "taches_par_statut": {
+          "A_FAIRE": 10
+        },
+        "taches_sans_assignation": 10,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 10,
+        "nb_previsions": 10,
+        "previsions_par_semaine": {
+          "2026-S12": 3,
+          "2026-S22": 6,
+          "2026-S23": 1
+        },
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 4,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 1135109646.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 143877399.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "nom": "MAUREL & PROM",
+        "codeProjet": "PRJ-9b4dae50",
+        "statut": "INITIALISATION",
+        "type": "AMENAGEMENT",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 2516639844.0,
+        "dateDebut": "2025-01-01",
+        "dateFin": "2026-01-01",
+        "delaiMois": 12,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": 0.0,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "",
+        "responsable": "Cindy  ANDRIANJAFY",
+        "client": "État Gabon",
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:09:03.939183",
+        "updatedAt": "2026-04-16T07:10:12.260261",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 26,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 13,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 7,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 8,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 9,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 11,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 12,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "nom": "TRÉSOR PUBLIC",
+        "codeProjet": "PRJ-cae1aefc",
+        "statut": "RECEPTION_DEFINITIVE",
+        "type": "VOIRIE",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 69184456.0,
+        "dateDebut": "2025-01-01",
+        "dateFin": "2026-01-01",
+        "delaiMois": 12,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": 0.0,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "",
+        "responsable": null,
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:09:03.568667",
+        "updatedAt": "2026-03-16T22:06:08.098473",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 26,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 13,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 7,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 8,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 9,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 11,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 12,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "nom": "COMILOG",
+        "codeProjet": "PRJ-aa20ca7c",
+        "statut": "RECEPTION_DEFINITIVE",
+        "type": "BATIMENT",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 0.0,
+        "dateDebut": "2025-01-01",
+        "dateFin": "2025-12-31",
+        "delaiMois": 11,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": 0.0,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "",
+        "responsable": "Ulrich NKWEME EFERA",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:09:02.696719",
+        "updatedAt": "2026-03-30T11:09:43.924716",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 24,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 12,
+        "suivi_mensuel_resume": [
+          {
+            "mois": 1,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 2,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 3,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 4,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 5,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 6,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 7,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 8,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 9,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 10,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 11,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          },
+          {
+            "mois": 12,
+            "caReel": null,
+            "caPrevisionnel": 0.0,
+            "avancementPhysique": null
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "nom": "CONSTRUCTION ROUTE D'ACCÈS AU CET DE NKOLTANG + AVENANT",
+        "codeProjet": "N°09/MTP/SG/2024",
+        "statut": "INITIALISATION",
+        "type": "VOIRIE",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 5456639781.0,
+        "dateDebut": "2024-10-25",
+        "dateFin": "2025-10-25",
+        "delaiMois": 12,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": null,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "Projet portant sur la construction de la route d?accès au Centre d?Enseignement Technique (CET) de Nkoltang, incluant tous les travaux nécessaires pour établir cette voie d?accès.",
+        "responsable": null,
+        "client": null,
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:16:03.603422",
+        "updatedAt": "2026-03-16T16:09:37.466216",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 7,
+        "nb_taches": 1,
+        "taches_par_statut": {
+          "A_FAIRE": 1
+        },
+        "taches_sans_assignation": 1,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 1,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 0,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": true,
+        "dqe_chapitres": 12,
+        "dqe_lignes": 62,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 36,
+        "nom": "AMÉNAGEMENT DU BASSIN VERSANT DE GUÉ-GUÉ AVAL/SECTION PRIX-IMPORT BAS GUÉ-GUÉ-PONT EXUTOIRE GUÉ-GUÉ",
+        "codeProjet": "N°?/ MTPC/CAB-M/UCET/2025",
+        "statut": "INITIALISATION",
+        "type": "VOIRIE",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 16064386555.0,
+        "dateDebut": "2025-10-01",
+        "dateFin": "2027-10-01",
+        "delaiMois": 24,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": null,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": null,
+        "responsable": null,
+        "client": null,
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:16:13.673551",
+        "updatedAt": "2026-03-16T16:29:26.795232",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 0,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 42,
+        "nom": "CONSTRUCTION DU CENTRE INTERNATIONAL DE CONFERENCE OMAR BONGO ONDIMBA",
+        "codeProjet": "PRJ-87b7fcc4",
+        "statut": "INITIALISATION",
+        "type": "BATIMENT",
+        "province": "Estuaire",
+        "ville": "Libreville",
+        "montantHT": 15303600000.0,
+        "dateDebut": null,
+        "dateFin": null,
+        "delaiMois": 18,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": null,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "",
+        "responsable": "Adnen BEN SALAH",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-05-15T10:23:51.149113",
+        "updatedAt": "2026-05-15T10:23:51.149113",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 0,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 17,
+        "nom": "GABOIL EXTENSION DÉPÔT PÉTROLIER",
+        "codeProjet": "PRJ-dae9dc6d",
+        "statut": "RECEPTION_DEFINITIVE",
+        "type": "BATIMENT",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": null,
+        "dateDebut": null,
+        "dateFin": null,
+        "delaiMois": null,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": 0.0,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "",
+        "responsable": "Cindy  ANDRIANJAFY",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-03-16T12:14:20.555675",
+        "updatedAt": "2026-04-16T07:09:02.684418",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 30,
+        "nom": "LALALA PLANIFICATION N° DEVIS GAO/PRZ/79/11/08/25",
+        "codeProjet": "PRJ-26233253",
+        "statut": "RECEPTION_DEFINITIVE",
+        "type": "VOIRIE",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 306722800.0,
+        "dateDebut": "2025-01-01",
+        "dateFin": "2025-12-31",
+        "delaiMois": 11,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": null,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": null,
+        "responsable": null,
+        "client": null,
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:16:11.443846",
+        "updatedAt": "2026-03-16T12:16:11.443849",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 0,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 26,
+        "nom": "PLANCHE D'ESSAI",
+        "codeProjet": "N°60/MTP/SG/2025",
+        "statut": "EN_COURS_EXECUTION",
+        "type": "VOIRIE",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 136847388.0,
+        "dateDebut": "2025-01-01",
+        "dateFin": "2025-12-31",
+        "delaiMois": 11,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": null,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": null,
+        "responsable": null,
+        "client": null,
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:16:09.917609",
+        "updatedAt": "2026-03-16T12:16:09.917612",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 0,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 33,
+        "nom": "RÉHABILITATION EXTENSION INTERNAT DU LYCÉE CHARLES",
+        "codeProjet": "N°004/ED/MENFPFC/CTRI/2024",
+        "statut": "EN_COURS_EXECUTION",
+        "type": "BATIMENT",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 915426859.0,
+        "dateDebut": "2025-10-01",
+        "dateFin": "2026-04-01",
+        "delaiMois": 6,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": null,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": null,
+        "responsable": null,
+        "client": null,
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:16:12.548753",
+        "updatedAt": "2026-03-16T16:09:40.838918",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 0,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 41,
+        "nom": "TRAVAUX D'AMÉNAGEMENT DE LA VOIE EXPRESS OWENDO : CARREFOUR POMPIER/CARREFOUR RAZEL",
+        "codeProjet": "02/MTPC/SG/2026",
+        "statut": "INITIALISATION",
+        "type": "VOIRIE",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": null,
+        "dateDebut": null,
+        "dateFin": null,
+        "delaiMois": null,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": null,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": null,
+        "responsable": null,
+        "client": null,
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:16:15.590501",
+        "updatedAt": "2026-03-16T16:29:27.766422",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 0,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 1,
+        "nom": "TRAVAUX D'AMÉNAGEMENT ET DE RÉHABILITATION DE L'ENA",
+        "codeProjet": "145/MTP/SG/2024",
+        "statut": "RECEPTION_DEFINITIVE",
+        "type": "BATIMENT",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 1601929755.0,
+        "dateDebut": "2024-05-01",
+        "dateFin": "2024-12-31",
+        "delaiMois": 7,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": null,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": null,
+        "responsable": null,
+        "client": null,
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:08:57.031615",
+        "updatedAt": "2026-03-16T16:29:20.953213",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 0,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 21,
+        "nom": "TRAVAUX DE RÉHABILITATION DE L'EPCA",
+        "codeProjet": "N°150/MTP/SG/2024",
+        "statut": "RECEPTION_DEFINITIVE",
+        "type": "BATIMENT",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 600000000.0,
+        "dateDebut": "2025-02-25",
+        "dateFin": "2025-10-25",
+        "delaiMois": 8,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": null,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": null,
+        "responsable": null,
+        "client": null,
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:16:05.62381",
+        "updatedAt": "2026-03-16T16:09:38.184615",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 0,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 38,
+        "nom": "TRAVAUX D'URGENCE DU CTRI KANGO",
+        "codeProjet": "N°149/MTP/SG/2024",
+        "statut": "RECEPTION_DEFINITIVE",
+        "type": "VOIRIE",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 885030971.0,
+        "dateDebut": "2025-10-01",
+        "dateFin": "2026-10-01",
+        "delaiMois": 12,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": null,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": null,
+        "responsable": null,
+        "client": null,
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:16:14.482307",
+        "updatedAt": "2026-03-16T16:29:27.455698",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 0,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 22,
+        "nom": "TRAVAUX PRIORITAIRES DES VOIRIES DE LIBREVILLE",
+        "codeProjet": "N°143/MTP/SG/2024",
+        "statut": "RECEPTION_DEFINITIVE",
+        "type": "VOIRIE",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 1817403915.0,
+        "dateDebut": "2024-01-01",
+        "dateFin": "2024-12-31",
+        "delaiMois": 11,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": null,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": null,
+        "responsable": null,
+        "client": null,
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:16:06.09688",
+        "updatedAt": "2026-03-16T16:09:38.573633",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 0,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 43,
+        "nom": "TRAVEAUX D'AMENAGEMENT DE LA VOIE EXPRESS OWENDO: CARREFOUR POMPIER/ CARREFOUR RAZEL",
+        "codeProjet": "N°02/MTPC/SG/2026",
+        "statut": "INITIALISATION",
+        "type": "AMENAGEMENT",
+        "province": "Estuaire",
+        "ville": "Owendo",
+        "montantHT": 5000000000.0,
+        "dateDebut": "2026-06-01",
+        "dateFin": "2028-06-01",
+        "delaiMois": 24,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": 0.0,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": "",
+        "responsable": "Evrard ZUE MINTSA",
+        "client": "État Gabon",
+        "sourceFinancement": "ETAT_GABONAIS",
+        "createdAt": "2026-06-24T13:38:40.535054",
+        "updatedAt": "2026-06-24T13:42:06.770234",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 7,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      },
+      {
+        "id": 28,
+        "nom": "USTM-TRAVAUX DE RÉHABILITATION /TRAVAUX SUPPLÉMENTAIRES",
+        "codeProjet": "N°34/MTPC/SG/2025",
+        "statut": "INITIALISATION",
+        "type": "BATIMENT",
+        "province": "Non renseigne",
+        "ville": null,
+        "montantHT": 1979462755.0,
+        "dateDebut": null,
+        "dateFin": null,
+        "delaiMois": null,
+        "avancementGlobal": 0.0,
+        "avancementPhysiquePct": null,
+        "avancementFinancierPct": null,
+        "delaiConsommePct": null,
+        "description": null,
+        "responsable": null,
+        "client": null,
+        "sourceFinancement": null,
+        "createdAt": "2026-03-16T12:16:10.68551",
+        "updatedAt": "2026-03-16T16:09:40.517246",
+        "chantierActif": true,
+        "motifArretChantier": null,
+        "score_activite": 0,
+        "nb_taches": 0,
+        "taches_par_statut": {},
+        "taches_sans_assignation": 0,
+        "taches_sans_echeance": 0,
+        "taches_en_retard": 0,
+        "nb_previsions": 0,
+        "previsions_par_semaine": {},
+        "nb_avancements_etude": 0,
+        "nb_points_bloquants": 0,
+        "points_bloquants_ouverts": 0,
+        "dqe_present": false,
+        "dqe_chapitres": 0,
+        "dqe_lignes": 0,
+        "nb_suivi_mensuel": 0,
+        "suivi_mensuel_resume": []
+      }
+    ]
+  },
+  "bloc3_taches": {
+    "total": 719,
+    "par_statut": {
+      "A_FAIRE": 719
+    },
+    "par_projet": {
+      "23 - TRAVAUX D'AMÉNAGEMENT DES VOIRIES DE DES": 126,
+      "25 - NOUVELLES VOIES JB-CAMP DE GAULLE + AMÉN": 98,
+      "27 - TRAVAUX DE RÉHABILITATION ET D'AMÉNAGEME": 89,
+      "34 - TRAVAUX DE RÉAMÉNAGEMENT DES VOIRIES DU ": 83,
+      "39 - Construction de 2 ponts sur le fleuve de": 77,
+      "3 - BERGE DE LA LOWE": 65,
+      "4 - TRAVAUX DE CONSTRUCTION D'UN CENTRE D'AP": 49,
+      "2 - AMÉNAGEMENT DE LA VOIE DE BEL AIR": 41,
+      "24 - EXTENSION VOIRIES AKEMIDJONGONI": 32,
+      "19 - PROJET D'AMÉNAGEMENT DE VOIRIES DE DESSE": 18,
+      "20 - CONSTRUCTION D'UN PONT SUR LE CARREFOUR ": 17,
+      "5 - MARCHÉ MUNICIPAL D'OWENDO": 10,
+      "37 - TRAVAUX D'AMÉNAGEMENT DU CARREFOUR CHARB": 7,
+      "40 - CONSTRUCTION SALLE POLYVALENTE KANGO": 6,
+      "18 - CONSTRUCTION ROUTE D'ACCÈS AU CET DE NKO": 1
+    },
+    "taux_sans_assignation_pct": 100.0,
+    "taux_sans_echeance_pct": 0.0,
+    "nb_en_retard": 676,
+    "assignation_par_personne": {}
+  },
+  "bloc4_avancements_suivi": {
+    "previsions_hebdo": {
+      "total": 467,
+      "par_semaine": {
+        "2026-S12": 3,
+        "2026-S13": 30,
+        "2026-S14": 24,
+        "2026-S15": 22,
+        "2026-S16": 14,
+        "2026-S17": 38,
+        "2026-S18": 15,
+        "2026-S19": 18,
+        "2026-S20": 9,
+        "2026-S21": 102,
+        "2026-S22": 44,
+        "2026-S23": 4,
+        "2026-S24": 48,
+        "2026-S25": 61,
+        "2026-S26": 35
+      },
+      "_note": "created_by NULL — auteur des previsions non identifiable"
+    },
+    "suivi_mensuel": {
+      "total": 161,
+      "par_projet": {
+        "27 - TRAVAUX DE RÉHABILITATION ET D'AMÉNAGEME": 25,
+        "40 - CONSTRUCTION SALLE POLYVALENTE KANGO": 16,
+        "8 - MAUREL & PROM": 13,
+        "25 - NOUVELLES VOIES JB-CAMP DE GAULLE + AMÉN": 13,
+        "4 - TRAVAUX DE CONSTRUCTION D'UN CENTRE D'AP": 13,
+        "7 - TRÉSOR PUBLIC": 13,
+        "6 - COMILOG": 12,
+        "34 - TRAVAUX DE RÉAMÉNAGEMENT DES VOIRIES DU ": 11,
+        "37 - TRAVAUX D'AMÉNAGEMENT DU CARREFOUR CHARB": 10,
+        "24 - EXTENSION VOIRIES AKEMIDJONGONI": 9,
+        "3 - BERGE DE LA LOWE": 7,
+        "19 - PROJET D'AMÉNAGEMENT DE VOIRIES DE DESSE": 5,
+        "23 - TRAVAUX D'AMÉNAGEMENT DES VOIRIES DE DES": 5,
+        "5 - MARCHÉ MUNICIPAL D'OWENDO": 4,
+        "20 - CONSTRUCTION D'UN PONT SUR LE CARREFOUR ": 3,
+        "39 - Construction de 2 ponts sur le fleuve de": 2
+      }
+    },
+    "points_bloquants": {
+      "total": 43,
+      "par_statut": {
+        "OUVERT": 35,
+        "FERME": 5,
+        "RESOLU": 2,
+        "EN_COURS": 1
+      },
+      "par_projet": {
+        "20 - CONSTRUCTION D'UN PONT SUR LE CARREFOUR ": 7,
+        "25 - NOUVELLES VOIES JB-CAMP DE GAULLE + AMÉN": 7,
+        "2 - AMÉNAGEMENT DE LA VOIE DE BEL AIR": 6,
+        "39 - Construction de 2 ponts sur le fleuve de": 6,
+        "3 - BERGE DE LA LOWE": 4,
+        "19 - PROJET D'AMÉNAGEMENT DE VOIRIES DE DESSE": 4,
+        "37 - TRAVAUX D'AMÉNAGEMENT DU CARREFOUR CHARB": 3,
+        "34 - TRAVAUX DE RÉAMÉNAGEMENT DES VOIRIES DU ": 3,
+        "27 - TRAVAUX DE RÉHABILITATION ET D'AMÉNAGEME": 2,
+        "4 - TRAVAUX DE CONSTRUCTION D'UN CENTRE D'AP": 1
+      },
+      "_note": "detectePar et assigneA NULL sur tous les PB"
+    }
+  },
+  "bloc5_fiches_operationnels": [
+    {
+      "userId": 22,
+      "nom": "ARMAND KARL NENE NZIENGUI",
+      "roles_systeme": [
+        "ADMIN",
+        "CHEF_PROJET"
+      ],
+      "lastLogin": "2026-05-20",
+      "logins": 3,
+      "page_views": 137,
+      "modifications_projet_pages": 17,
+      "premiere_activite": "2026-04-20",
+      "derniere_activite": "2026-06-25",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    },
+    {
+      "userId": 10,
+      "nom": "Adnen BEN SALAH",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "lastLogin": "2026-05-26",
+      "logins": 6,
+      "page_views": 176,
+      "modifications_projet_pages": 18,
+      "premiere_activite": "2026-03-24",
+      "derniere_activite": "2026-06-12",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [
+        {
+          "id": 40,
+          "nom": "CONSTRUCTION SALLE POLYVALENTE KANGO"
+        },
+        {
+          "id": 5,
+          "nom": "MARCHÉ MUNICIPAL D'OWENDO"
+        },
+        {
+          "id": 42,
+          "nom": "CONSTRUCTION DU CENTRE INTERNATIONAL DE CONFERENCE OMAR BONGO ONDIMBA"
+        }
+      ],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    },
+    {
+      "userId": 11,
+      "nom": "Berenger YEMBI",
+      "roles_systeme": [
+        "SUPER_ADMIN"
+      ],
+      "lastLogin": "2026-06-19",
+      "logins": 27,
+      "page_views": 154,
+      "modifications_projet_pages": 38,
+      "premiere_activite": "2026-03-25",
+      "derniere_activite": "2026-06-19",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    },
+    {
+      "userId": 16,
+      "nom": "Carine MOUGUIANA",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "lastLogin": "2026-06-19",
+      "logins": 11,
+      "page_views": 111,
+      "modifications_projet_pages": 33,
+      "premiere_activite": "2026-03-25",
+      "derniere_activite": "2026-06-19",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    },
+    {
+      "userId": 7,
+      "nom": "Cindy ANDRIANJAFY",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "lastLogin": "2026-05-22",
+      "logins": 5,
+      "page_views": 169,
+      "modifications_projet_pages": 40,
+      "premiere_activite": "2026-03-18",
+      "derniere_activite": "2026-06-11",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    },
+    {
+      "userId": 15,
+      "nom": "Davy NDONG ENGONE",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "lastLogin": "2026-06-12",
+      "logins": 14,
+      "page_views": 158,
+      "modifications_projet_pages": 22,
+      "premiere_activite": "2026-03-25",
+      "derniere_activite": "2026-06-12",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    },
+    {
+      "userId": 33,
+      "nom": "Evrard ZUE MINTSA",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "lastLogin": "2026-06-24",
+      "logins": 1,
+      "page_views": 4,
+      "modifications_projet_pages": 1,
+      "premiere_activite": "2026-06-24",
+      "derniere_activite": "2026-06-24",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [
+        {
+          "id": 43,
+          "nom": "TRAVEAUX D'AMENAGEMENT DE LA VOIE EXPRESS OWENDO: CARREFOUR POMPIER/ CARREFOUR RAZEL"
+        }
+      ],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    },
+    {
+      "userId": 14,
+      "nom": "Justin NDONG",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "lastLogin": "2026-06-23",
+      "logins": 41,
+      "page_views": 348,
+      "modifications_projet_pages": 51,
+      "premiere_activite": "2026-03-25",
+      "derniere_activite": "2026-06-23",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    },
+    {
+      "userId": 17,
+      "nom": "Ulrich Landry IBOUANA",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "lastLogin": null,
+      "logins": 14,
+      "page_views": 133,
+      "modifications_projet_pages": 22,
+      "premiere_activite": "2026-03-26",
+      "derniere_activite": "2026-06-22",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [
+        {
+          "id": 25,
+          "nom": "NOUVELLES VOIES JB-CAMP DE GAULLE + AMÉNAGEMENT BORD DE MER"
+        },
+        {
+          "id": 19,
+          "nom": "PROJET D'AMÉNAGEMENT DE VOIRIES DE DESSERTE CAMP DE GAULLE/JARDIN BOTANIQUE"
+        }
+      ],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    },
+    {
+      "userId": 31,
+      "nom": "Valaria Grace BIBALOU IKONDO",
+      "roles_systeme": [
+        "SUPER_ADMIN",
+        "ADMIN"
+      ],
+      "lastLogin": "2026-06-16",
+      "logins": 1,
+      "page_views": 59,
+      "modifications_projet_pages": 22,
+      "premiere_activite": "2026-06-16",
+      "derniere_activite": "2026-06-24",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    },
+    {
+      "userId": 20,
+      "nom": "Xavier NGUEMA",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "lastLogin": "2026-06-11",
+      "logins": 2,
+      "page_views": 34,
+      "modifications_projet_pages": 6,
+      "premiere_activite": "2026-04-16",
+      "derniere_activite": "2026-06-11",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [
+        {
+          "id": 2,
+          "nom": "AMÉNAGEMENT DE LA VOIE DE BEL AIR"
+        },
+        {
+          "id": 37,
+          "nom": "TRAVAUX D'AMÉNAGEMENT DU CARREFOUR CHARBONNAGES"
+        }
+      ],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    },
+    {
+      "userId": 23,
+      "nom": "Yannick Gerly OBAME ELLA",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "lastLogin": "2026-04-20",
+      "logins": 1,
+      "page_views": 12,
+      "modifications_projet_pages": 0,
+      "premiere_activite": "2026-04-20",
+      "derniere_activite": "2026-04-24",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    },
+    {
+      "userId": 12,
+      "nom": "Yves Alexis DITENGOU",
+      "roles_systeme": [
+        "CHEF_PROJET"
+      ],
+      "lastLogin": "2026-03-27",
+      "logins": 4,
+      "page_views": 28,
+      "modifications_projet_pages": 10,
+      "premiere_activite": "2026-03-25",
+      "derniere_activite": "2026-03-27",
+      "nb_taches_assignees": 0,
+      "responsable_projets": [],
+      "_note_created_by": "created_by NULL partout — nb_projets_crees et nb_avancements_saisis non mesurables"
+    }
+  ]
+}

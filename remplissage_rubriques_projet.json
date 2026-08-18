@@ -1,0 +1,1189 @@
+{
+  "_metadata": {
+    "source": "Production Render — API REST",
+    "date": "2026-06-25",
+    "N_rubriques": 5,
+    "rubriques": [
+      "taches",
+      "previsions",
+      "suivi_mensuel",
+      "points_bloquants",
+      "dqe"
+    ],
+    "regle_suivi_mensuel": "Rattache au 15 du mois -> semaine ISO",
+    "formule_pct_global": "sum(x_i/5*100 pour i=S12..S26) / 15",
+    "controle": {
+      "taches": {
+        "attendu": 719,
+        "obtenu": 719,
+        "ok": true
+      },
+      "previsions": {
+        "attendu": 467,
+        "obtenu": 467,
+        "ok": true
+      },
+      "suivi_mensuel": {
+        "attendu": 161,
+        "obtenu": 161,
+        "ok": true
+      },
+      "points_bloquants": {
+        "attendu": 43,
+        "obtenu": 43,
+        "ok": true
+      },
+      "dqe": {
+        "attendu": 594,
+        "obtenu": 594,
+        "ok": true
+      }
+    }
+  },
+  "partie1_matrice": [
+    {
+      "responsable": "Carine MOUGUIANA",
+      "projets": [
+        3
+      ],
+      "nb_projets": 1,
+      "pct_global": 30.7,
+      "semaines": {
+        "S12": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S13": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S14": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S15": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S16": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "suivi_mensuel",
+            "taches"
+          ]
+        },
+        "S17": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S18": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S19": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "points_bloquants",
+            "previsions",
+            "taches"
+          ]
+        },
+        "S20": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "suivi_mensuel",
+            "taches"
+          ]
+        },
+        "S21": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "points_bloquants",
+            "previsions",
+            "taches"
+          ]
+        },
+        "S22": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S23": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S24": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S25": {
+          "x": 4,
+          "pct": 80,
+          "rubriques": [
+            "points_bloquants",
+            "previsions",
+            "suivi_mensuel",
+            "taches"
+          ]
+        },
+        "S26": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        }
+      },
+      "rubriques_semaines_actives": {
+        "taches": 8,
+        "previsions": 9,
+        "suivi_mensuel": 3,
+        "points_bloquants": 3,
+        "dqe": 0
+      }
+    },
+    {
+      "responsable": "Davy NDONG ENGONE",
+      "projets": [
+        39
+      ],
+      "nb_projets": 1,
+      "pct_global": 29.3,
+      "semaines": {
+        "S12": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S13": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "points_bloquants",
+            "taches"
+          ]
+        },
+        "S14": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "points_bloquants",
+            "previsions",
+            "taches"
+          ]
+        },
+        "S15": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S16": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S17": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S18": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S19": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S20": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S21": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S22": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S23": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S24": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S25": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S26": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        }
+      },
+      "rubriques_semaines_actives": {
+        "taches": 8,
+        "previsions": 12,
+        "suivi_mensuel": 0,
+        "points_bloquants": 2,
+        "dqe": 0
+      }
+    },
+    {
+      "responsable": "Cindy ANDRIANJAFY",
+      "projets": [
+        8,
+        17,
+        23,
+        24,
+        34
+      ],
+      "nb_projets": 5,
+      "pct_global": 26.7,
+      "semaines": {
+        "S12": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S13": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "points_bloquants",
+            "taches"
+          ]
+        },
+        "S14": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "taches"
+          ]
+        },
+        "S15": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "taches"
+          ]
+        },
+        "S16": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "suivi_mensuel"
+          ]
+        },
+        "S17": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S18": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S19": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "dqe",
+            "taches"
+          ]
+        },
+        "S20": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "previsions",
+            "suivi_mensuel",
+            "taches"
+          ]
+        },
+        "S21": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "points_bloquants",
+            "previsions",
+            "taches"
+          ]
+        },
+        "S22": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S23": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S24": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S25": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "previsions",
+            "suivi_mensuel",
+            "taches"
+          ]
+        },
+        "S26": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        }
+      },
+      "rubriques_semaines_actives": {
+        "taches": 8,
+        "previsions": 6,
+        "suivi_mensuel": 3,
+        "points_bloquants": 2,
+        "dqe": 1
+      }
+    },
+    {
+      "responsable": "Jeremie OMPINDI AKAGA",
+      "projets": [
+        4
+      ],
+      "nb_projets": 1,
+      "pct_global": 22.7,
+      "semaines": {
+        "S12": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S13": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S14": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S15": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S16": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "suivi_mensuel"
+          ]
+        },
+        "S17": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S18": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S19": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "dqe",
+            "previsions",
+            "taches"
+          ]
+        },
+        "S20": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "suivi_mensuel"
+          ]
+        },
+        "S21": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "points_bloquants",
+            "previsions",
+            "taches"
+          ]
+        },
+        "S22": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S23": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S24": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S25": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "previsions",
+            "suivi_mensuel",
+            "taches"
+          ]
+        },
+        "S26": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        }
+      },
+      "rubriques_semaines_actives": {
+        "taches": 6,
+        "previsions": 6,
+        "suivi_mensuel": 3,
+        "points_bloquants": 1,
+        "dqe": 1
+      }
+    },
+    {
+      "responsable": "Justin NDONG",
+      "projets": [
+        27
+      ],
+      "nb_projets": 1,
+      "pct_global": 21.3,
+      "semaines": {
+        "S12": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S13": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "points_bloquants",
+            "taches"
+          ]
+        },
+        "S14": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S15": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S16": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "previsions",
+            "suivi_mensuel",
+            "taches"
+          ]
+        },
+        "S17": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S18": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S19": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S20": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "suivi_mensuel"
+          ]
+        },
+        "S21": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S22": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S23": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S24": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S25": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "previsions",
+            "suivi_mensuel",
+            "taches"
+          ]
+        },
+        "S26": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        }
+      },
+      "rubriques_semaines_actives": {
+        "taches": 6,
+        "previsions": 6,
+        "suivi_mensuel": 3,
+        "points_bloquants": 1,
+        "dqe": 0
+      }
+    },
+    {
+      "responsable": "Xavier NGUEMA",
+      "projets": [
+        2,
+        37
+      ],
+      "nb_projets": 2,
+      "pct_global": 18.7,
+      "semaines": {
+        "S12": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S13": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "points_bloquants",
+            "previsions",
+            "taches"
+          ]
+        },
+        "S14": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S15": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S16": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "suivi_mensuel"
+          ]
+        },
+        "S17": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "points_bloquants",
+            "previsions",
+            "taches"
+          ]
+        },
+        "S18": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S19": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "dqe"
+          ]
+        },
+        "S20": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "suivi_mensuel"
+          ]
+        },
+        "S21": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S22": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S23": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S24": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S25": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "suivi_mensuel"
+          ]
+        },
+        "S26": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        }
+      },
+      "rubriques_semaines_actives": {
+        "taches": 3,
+        "previsions": 5,
+        "suivi_mensuel": 3,
+        "points_bloquants": 2,
+        "dqe": 1
+      }
+    },
+    {
+      "responsable": "Adnen BEN SALAH",
+      "projets": [
+        5,
+        40,
+        42
+      ],
+      "nb_projets": 3,
+      "pct_global": 16.0,
+      "semaines": {
+        "S12": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S13": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "taches"
+          ]
+        },
+        "S14": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S15": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S16": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "suivi_mensuel"
+          ]
+        },
+        "S17": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "taches"
+          ]
+        },
+        "S18": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S19": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S20": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "previsions",
+            "suivi_mensuel",
+            "taches"
+          ]
+        },
+        "S21": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "taches"
+          ]
+        },
+        "S22": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S23": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S24": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S25": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "suivi_mensuel"
+          ]
+        },
+        "S26": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        }
+      },
+      "rubriques_semaines_actives": {
+        "taches": 4,
+        "previsions": 5,
+        "suivi_mensuel": 3,
+        "points_bloquants": 0,
+        "dqe": 0
+      }
+    },
+    {
+      "responsable": "Ulrich Landry IBOUANA",
+      "projets": [
+        19,
+        25
+      ],
+      "nb_projets": 2,
+      "pct_global": 16.0,
+      "semaines": {
+        "S12": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S13": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "points_bloquants",
+            "previsions",
+            "taches"
+          ]
+        },
+        "S14": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S15": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S16": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "suivi_mensuel"
+          ]
+        },
+        "S17": {
+          "x": 2,
+          "pct": 40,
+          "rubriques": [
+            "previsions",
+            "taches"
+          ]
+        },
+        "S18": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S19": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S20": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "suivi_mensuel"
+          ]
+        },
+        "S21": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "points_bloquants",
+            "previsions",
+            "taches"
+          ]
+        },
+        "S22": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S23": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S24": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S25": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "suivi_mensuel"
+          ]
+        },
+        "S26": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        }
+      },
+      "rubriques_semaines_actives": {
+        "taches": 3,
+        "previsions": 4,
+        "suivi_mensuel": 3,
+        "points_bloquants": 2,
+        "dqe": 0
+      }
+    },
+    {
+      "responsable": "Yves Alexis DITENGOU",
+      "projets": [
+        20
+      ],
+      "nb_projets": 1,
+      "pct_global": 5.3,
+      "semaines": {
+        "S12": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S13": {
+          "x": 3,
+          "pct": 60,
+          "rubriques": [
+            "points_bloquants",
+            "previsions",
+            "taches"
+          ]
+        },
+        "S14": {
+          "x": 1,
+          "pct": 20,
+          "rubriques": [
+            "previsions"
+          ]
+        },
+        "S15": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S16": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S17": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S18": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S19": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S20": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S21": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S22": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S23": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S24": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S25": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        },
+        "S26": {
+          "x": 0,
+          "pct": 0,
+          "rubriques": []
+        }
+      },
+      "rubriques_semaines_actives": {
+        "taches": 1,
+        "previsions": 2,
+        "suivi_mensuel": 0,
+        "points_bloquants": 1,
+        "dqe": 0
+      }
+    }
+  ],
+  "partie2_champs_non_datables": [
+    {
+      "responsable": "Adnen BEN SALAH",
+      "nb_projets": 3,
+      "besoinsHumain_rempli": 0,
+      "besoinsHumain_pct": 0,
+      "besoinsMateriel_rempli": 0,
+      "besoinsMateriel_pct": 0
+    },
+    {
+      "responsable": "Carine MOUGUIANA",
+      "nb_projets": 1,
+      "besoinsHumain_rempli": 1,
+      "besoinsHumain_pct": 100,
+      "besoinsMateriel_rempli": 1,
+      "besoinsMateriel_pct": 100
+    },
+    {
+      "responsable": "Cindy ANDRIANJAFY",
+      "nb_projets": 5,
+      "besoinsHumain_rempli": 1,
+      "besoinsHumain_pct": 20,
+      "besoinsMateriel_rempli": 0,
+      "besoinsMateriel_pct": 0
+    },
+    {
+      "responsable": "Davy NDONG ENGONE",
+      "nb_projets": 1,
+      "besoinsHumain_rempli": 1,
+      "besoinsHumain_pct": 100,
+      "besoinsMateriel_rempli": 1,
+      "besoinsMateriel_pct": 100
+    },
+    {
+      "responsable": "Evrard ZUE MINTSA",
+      "nb_projets": 1,
+      "besoinsHumain_rempli": 0,
+      "besoinsHumain_pct": 0,
+      "besoinsMateriel_rempli": 0,
+      "besoinsMateriel_pct": 0
+    },
+    {
+      "responsable": "Jeremie OMPINDI AKAGA",
+      "nb_projets": 1,
+      "besoinsHumain_rempli": 0,
+      "besoinsHumain_pct": 0,
+      "besoinsMateriel_rempli": 1,
+      "besoinsMateriel_pct": 100
+    },
+    {
+      "responsable": "Justin NDONG",
+      "nb_projets": 1,
+      "besoinsHumain_rempli": 1,
+      "besoinsHumain_pct": 100,
+      "besoinsMateriel_rempli": 0,
+      "besoinsMateriel_pct": 0
+    },
+    {
+      "responsable": "Ulrich Landry IBOUANA",
+      "nb_projets": 2,
+      "besoinsHumain_rempli": 1,
+      "besoinsHumain_pct": 50,
+      "besoinsMateriel_rempli": 1,
+      "besoinsMateriel_pct": 50
+    },
+    {
+      "responsable": "Ulrich NKWEME EFERA",
+      "nb_projets": 1,
+      "besoinsHumain_rempli": 0,
+      "besoinsHumain_pct": 0,
+      "besoinsMateriel_rempli": 0,
+      "besoinsMateriel_pct": 0
+    },
+    {
+      "responsable": "Xavier NGUEMA",
+      "nb_projets": 2,
+      "besoinsHumain_rempli": 1,
+      "besoinsHumain_pct": 50,
+      "besoinsMateriel_rempli": 1,
+      "besoinsMateriel_pct": 50
+    },
+    {
+      "responsable": "Yves Alexis DITENGOU",
+      "nb_projets": 1,
+      "besoinsHumain_rempli": 1,
+      "besoinsHumain_pct": 100,
+      "besoinsMateriel_rempli": 1,
+      "besoinsMateriel_pct": 100
+    }
+  ]
+}

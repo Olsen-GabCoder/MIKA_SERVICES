@@ -1,0 +1,246 @@
+{
+  "_metadata": {
+    "source": "Production Render — API REST",
+    "date": "2026-06-25",
+    "definition": "Semaine active = au moins 1 element date (prevision, tache createdAt, PB createdAt, suivi updatedAt) sur un projet dont le responsable est assigne",
+    "semaines": "S12 a S26 (2026) = 15 semaines",
+    "controle": {
+      "previsions": 467,
+      "taches": 719,
+      "pb": 43,
+      "suivi": 161
+    }
+  },
+  "matrice": [
+    {
+      "responsable": "Davy NDONG ENGONE",
+      "semaines": {
+        "S12": 0,
+        "S13": 25,
+        "S14": 15,
+        "S15": 7,
+        "S16": 3,
+        "S17": 16,
+        "S18": 5,
+        "S19": 14,
+        "S20": 8,
+        "S21": 17,
+        "S22": 5,
+        "S23": 3,
+        "S24": 12,
+        "S25": 3,
+        "S26": 0
+      },
+      "actives": 13,
+      "total_elements": 133,
+      "taux_pct": 87
+    },
+    {
+      "responsable": "Carine MOUGUIANA",
+      "semaines": {
+        "S12": 0,
+        "S13": 14,
+        "S14": 11,
+        "S15": 6,
+        "S16": 4,
+        "S17": 2,
+        "S18": 0,
+        "S19": 7,
+        "S20": 1,
+        "S21": 16,
+        "S22": 0,
+        "S23": 0,
+        "S24": 31,
+        "S25": 24,
+        "S26": 11
+      },
+      "actives": 11,
+      "total_elements": 127,
+      "taux_pct": 73
+    },
+    {
+      "responsable": "Cindy ANDRIANJAFY",
+      "semaines": {
+        "S12": 0,
+        "S13": 50,
+        "S14": 13,
+        "S15": 32,
+        "S16": 0,
+        "S17": 0,
+        "S18": 0,
+        "S19": 49,
+        "S20": 27,
+        "S21": 46,
+        "S22": 13,
+        "S23": 0,
+        "S24": 41,
+        "S25": 36,
+        "S26": 13
+      },
+      "actives": 10,
+      "total_elements": 320,
+      "taux_pct": 67
+    },
+    {
+      "responsable": "Adnen BEN SALAH",
+      "semaines": {
+        "S12": 3,
+        "S13": 3,
+        "S14": 0,
+        "S15": 0,
+        "S16": 0,
+        "S17": 5,
+        "S18": 2,
+        "S19": 0,
+        "S20": 2,
+        "S21": 7,
+        "S22": 6,
+        "S23": 1,
+        "S24": 0,
+        "S25": 0,
+        "S26": 0
+      },
+      "actives": 8,
+      "total_elements": 29,
+      "taux_pct": 53
+    },
+    {
+      "responsable": "Justin NDONG",
+      "semaines": {
+        "S12": 0,
+        "S13": 12,
+        "S14": 0,
+        "S15": 19,
+        "S16": 24,
+        "S17": 0,
+        "S18": 0,
+        "S19": 0,
+        "S20": 0,
+        "S21": 24,
+        "S22": 0,
+        "S23": 0,
+        "S24": 34,
+        "S25": 28,
+        "S26": 11
+      },
+      "actives": 7,
+      "total_elements": 152,
+      "taux_pct": 47
+    },
+    {
+      "responsable": "Jeremie OMPINDI AKAGA",
+      "semaines": {
+        "S12": 0,
+        "S13": 15,
+        "S14": 5,
+        "S15": 8,
+        "S16": 0,
+        "S17": 0,
+        "S18": 0,
+        "S19": 21,
+        "S20": 0,
+        "S21": 18,
+        "S22": 0,
+        "S23": 0,
+        "S24": 0,
+        "S25": 24,
+        "S26": 0
+      },
+      "actives": 6,
+      "total_elements": 91,
+      "taux_pct": 40
+    },
+    {
+      "responsable": "Xavier NGUEMA",
+      "semaines": {
+        "S12": 0,
+        "S13": 8,
+        "S14": 0,
+        "S15": 0,
+        "S16": 0,
+        "S17": 36,
+        "S18": 8,
+        "S19": 0,
+        "S20": 0,
+        "S21": 0,
+        "S22": 0,
+        "S23": 0,
+        "S24": 38,
+        "S25": 7,
+        "S26": 0
+      },
+      "actives": 5,
+      "total_elements": 97,
+      "taux_pct": 33
+    },
+    {
+      "responsable": "Ulrich Landry IBOUANA",
+      "semaines": {
+        "S12": 0,
+        "S13": 35,
+        "S14": 0,
+        "S15": 0,
+        "S16": 0,
+        "S17": 42,
+        "S18": 0,
+        "S19": 0,
+        "S20": 0,
+        "S21": 141,
+        "S22": 20,
+        "S23": 0,
+        "S24": 0,
+        "S25": 0,
+        "S26": 0
+      },
+      "actives": 4,
+      "total_elements": 238,
+      "taux_pct": 27
+    },
+    {
+      "responsable": "Yves Alexis DITENGOU",
+      "semaines": {
+        "S12": 0,
+        "S13": 31,
+        "S14": 10,
+        "S15": 0,
+        "S16": 0,
+        "S17": 0,
+        "S18": 0,
+        "S19": 0,
+        "S20": 0,
+        "S21": 0,
+        "S22": 0,
+        "S23": 0,
+        "S24": 0,
+        "S25": 0,
+        "S26": 0
+      },
+      "actives": 2,
+      "total_elements": 41,
+      "taux_pct": 13
+    },
+    {
+      "responsable": "Non attribue",
+      "semaines": {
+        "S12": 0,
+        "S13": 1,
+        "S14": 0,
+        "S15": 0,
+        "S16": 0,
+        "S17": 0,
+        "S18": 0,
+        "S19": 0,
+        "S20": 0,
+        "S21": 0,
+        "S22": 0,
+        "S23": 0,
+        "S24": 0,
+        "S25": 0,
+        "S26": 0
+      },
+      "actives": 1,
+      "total_elements": 1,
+      "taux_pct": 7
+    }
+  ]
+}

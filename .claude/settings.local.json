@@ -24,7 +24,8 @@
       "Bash(grep -r TypePermission /c/Projet_Mika_Services/backend/src/main/kotlin/com/mikaservices/platform --include=*.kt)",
       "Bash(find C:/Projet_Mika_Services/backend/src/test -type f -name *.kt)",
       "Bash(mkdir -p \"C:\\\\Projet_Mika_Services\\\\frontend_web\\\\mika-services-frontend\\\\src\\\\features\\\\dashboard\\\\data\")",
-      "Bash(mkdir -p \"C:\\\\Projet_Mika_Services\\\\frontend_web\\\\mika-services-frontend\\\\src\\\\features\\\\dashboard\\\\components\\\\premium\")"
+      "Bash(mkdir -p \"C:\\\\Projet_Mika_Services\\\\frontend_web\\\\mika-services-frontend\\\\src\\\\features\\\\dashboard\\\\components\\\\premium\")",
+      "Bash(pdflatex -interaction=nonstopmode main.tex)"
     ]
   }
 }

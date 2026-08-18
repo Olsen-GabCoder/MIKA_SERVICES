@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bebas+Neue&display=swap" />
+<style>
+:root{
+  --bg:#F5F4F1; --surface:#FFFFFF; --elev:#FFFFFF; --sunk:#FAF9F7;
+  --border:#E3E0DB; --border-strong:#CFCBC4;
+  --text:#17181A; --text2:#5F6167; --text3:#8A8C93;
+  --orange:#FF6B35; --orange-soft:#FFF1EB; --steel:#2E5266; --teal:#48B5A0;
+  --green:#2C9C7E; --green-soft:#EAF6F1; --amber:#C48A2B; --amber-soft:#FBF3E3;
+  --red:#C8553D; --red-soft:#FBEDE9; --blue:#3F6B83; --blue-soft:#EDF3F7;
+  --gray:#6B7280; --gray-soft:#F1F1F0;
+  --r:12px; --rs:8px; --rxs:6px; --row:44px;
+}
+[data-theme="dark"]{
+  --bg:#0F0F11; --surface:#18181B; --elev:#1F1F23; --sunk:#141417;
+  --border:#2A2A30; --border-strong:#3A3A42;
+  --text:#EDEDED; --text2:#A1A1AA; --text3:#7C7C85;
+  --orange:#FF8255; --orange-soft:#2A1B14; --steel:#3D6A85; --teal:#58C7B1;
+  --green:#39B693; --green-soft:#132420; --amber:#D9A03F; --amber-soft:#241D10;
+  --red:#E0664A; --red-soft:#271512; --blue:#5A8CA6; --blue-soft:#141D24;
+  --gray:#8A8D95; --gray-soft:#1E1E22;
+}
+[data-density="compact"]{ --row:36px; }
+[data-density="spacious"]{ --row:54px; }
+body{margin:0;background:#E9E7E3;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+*{box-sizing:border-box;}
+a{color:var(--orange);text-decoration:none;}
+a:hover{color:var(--red);}
+input,select,textarea,button{font-family:inherit;}
+@keyframes mkPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.82)}}
+@keyframes mkIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes mkModal{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+::-webkit-scrollbar{height:10px;width:10px}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+</style>
+</helmet>
+<div data-theme="{{ theme }}" data-density="{{ density }}" style="min-height:100vh;background:#E9E7E3;padding:22px 22px 60px;display:flex;flex-direction:column;align-items:flex-start;gap:16px;overflow-x:auto;font-family:Inter,sans-serif">
+
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;max-width:1200px">
+    <span style="font:600 10px/1 Inter;letter-spacing:.14em;text-transform:uppercase;color:#8A8579;padding-right:4px">Maquettes</span>
+    <sc-for list="{{ presets }}" as="p" hint-placeholder-count="10">
+      <button onClick="{{ p.onClick }}" style="{{ p.style }}" style-hover="border-color:#8A8579">{{ p.label }}</button>
+    </sc-for>
+  </div>
+
+  <div style="{{ frameStyle }}">
+
+    <!-- ============ MOBILE ============ -->
+    <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+      <div style="background:var(--bg);min-height:844px;color:var(--text)">
+        <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:var(--steel);color:#fff;font-size:11px;font-weight:600"><span>9:41</span><span style="letter-spacing:.08em">MIKA</span><span>100%</span></div>
+        <div style="padding:12px 14px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div>
+              <div style="font-size:17px;font-weight:800;letter-spacing:-.01em">Planning &amp; Tâches</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:2px">Les Manguiers · Libreville</div>
+            </div>
+            <button style="width:40px;height:40px;min-width:40px;border-radius:var(--rs);background:var(--orange);color:#fff;border:0;font-size:20px;font-weight:600;line-height:1">+</button>
+          </div>
+          <select style="width:100%;height:44px;border:1px solid var(--border);border-radius:var(--rs);background:var(--sunk);color:var(--text);font-size:13px;font-weight:500;padding:0 10px">
+            <option>Résidence Les Manguiers — Libreville</option>
+          </select>
+        </div>
+
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;gap:10px;align-items:center;background:var(--red-soft);border:1px solid var(--red);border-radius:var(--rs);padding:10px 12px">
+            <span style="width:8px;height:8px;min-width:8px;border-radius:50%;background:var(--red);animation:mkPulse 1.8s ease-in-out infinite"></span>
+            <span style="font-size:12px;font-weight:700;color:var(--red)">{{ alert.total }} tâches en retard</span>
+            <span style="font-size:11px;color:var(--text2);margin-left:auto">{{ alert.badge }}</span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="5">
+              <div style="{{ k.mobileStyle }}">
+                <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text2)">{{ k.label }}</div>
+                <div style="{{ k.valueStyle }}">{{ k.display }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px">
+            <sc-for list="{{ activeFilters }}" as="f" hint-placeholder-count="4">
+              <button onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</button>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ activeTasks }}" as="t" hint-placeholder-count="5">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px">
+                <div style="display:flex;gap:8px;align-items:flex-start">
+                  <div style="font-size:13px;font-weight:600;line-height:1.35;flex:1">{{ t.title }}</div>
+                  <span style="{{ t.prio.style }}">{{ t.prio.label }}</span>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap">
+                  <span style="{{ t.status.style }}">{{ t.status.label }}</span>
+                  <sc-if value="{{ t.late }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:10px;font-weight:700;color:var(--red);border:1px solid var(--red);border-radius:var(--rxs);padding:2px 5px">⚠ {{ t.lateDays }}j de retard</span>
+                  </sc-if>
+                  <span style="font-size:11px;color:var(--text2);margin-left:auto">{{ t.dueLabel }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+                  <div style="flex:1;height:6px;border-radius:4px;background:var(--gray-soft);overflow:hidden">
+                    <div style="{{ t.progStyle }}"></div>
+                  </div>
+                  <span style="font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;min-width:34px;text-align:right">{{ t.progress }}%</span>
+                </div>
+                <div style="font-size:11px;color:var(--text3);margin-top:8px">{{ t.assigneeLabel }} · {{ t.weekLabel }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ DESKTOP ============ -->
+    <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+      <div style="background:var(--bg);color:var(--text);min-height:900px">
+
+        <div style="height:56px;background:var(--steel);display:flex;align-items:center;gap:18px;padding:0 20px;color:#fff">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span style="font-family:'Bebas Neue',Inter,sans-serif;font-size:26px;letter-spacing:.06em;line-height:1">MIKA</span>
+            <span style="font-size:10px;font-weight:600;letter-spacing:.18em;opacity:.72">SERVICES</span>
+          </div>
+          <div style="width:1px;height:22px;background:rgba(255,255,255,.22)"></div>
+          <div style="display:flex;gap:8px;align-items:center;font-size:12px;opacity:.8">
+            <span>Chantiers</span><span style="opacity:.5">/</span>
+            <span style="font-weight:700;opacity:1">Planning &amp; Tâches</span>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+            <div style="display:flex;border:1px solid rgba(255,255,255,.24);border-radius:var(--rxs);overflow:hidden;font-size:11px;font-weight:700">
+              <span style="padding:5px 9px;background:rgba(255,255,255,.16)">FR</span>
+              <span style="padding:5px 9px;opacity:.7">EN</span>
+            </div>
+            <button onClick="{{ toggleTheme }}" style="border:1px solid rgba(255,255,255,.24);background:transparent;color:#fff;border-radius:var(--rxs);padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer">{{ themeLabel }}</button>
+            <div style="width:30px;height:30px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800">JM</div>
+          </div>
+        </div>
+
+        <div style="padding:20px 24px 34px;display:flex;flex-direction:column;gap:16px">
+
+          <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+            <div>
+              <h1 style="margin:0;font-size:23px;font-weight:800;letter-spacing:-.02em">Planning &amp; Tâches</h1>
+              <div style="font-size:12px;color:var(--text2);margin-top:5px">{{ subtitle }}</div>
+            </div>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+              <select onChange="{{ onProjectChange }}" value="{{ projectId }}" style="height:38px;min-width:330px;border:1px solid var(--border-strong);border-radius:var(--rs);background:var(--surface);color:var(--text);font-size:13px;font-weight:500;padding:0 10px">
+                <sc-for list="{{ projectOptions }}" as="o" hint-placeholder-count="4">
+                  <option value="{{ o.id }}">{{ o.label }}</option>
+                </sc-for>
+              </select>
+              <sc-if value="{{ canCreate }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ openCreate }}" style="height:38px;padding:0 16px;border:0;border-radius:var(--rs);background:var(--orange);color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px" style-hover="filter:brightness(1.06)"><span style="font-size:16px;line-height:1">+</span>Nouvelle tâche</button>
+              </sc-if>
+            </div>
+          </div>
+
+          <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:12px;background:var(--blue-soft);border:1px solid var(--blue);border-radius:var(--r);padding:12px 16px">
+              <span style="width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">i</span>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--blue)">Mode consultation — lecture seule</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:2px">Vous consultez ce projet sans droits d’édition. Création, modification et suppression sont désactivées. Contactez le chef de projet pour obtenir l’accès.</div>
+              </div>
+              <span style="margin-left:auto;font-size:11px;font-weight:700;color:var(--blue);border:1px solid var(--blue);border-radius:var(--rxs);padding:4px 8px">Rôle : Conducteur de travaux</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ alert.show }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:14px;background:var(--red-soft);border:1px solid var(--red);border-radius:var(--r);padding:12px 16px">
+              <span style="width:9px;height:9px;min-width:9px;border-radius:50%;background:var(--red);animation:mkPulse 1.8s ease-in-out infinite"></span>
+              <span style="font-size:14px;font-weight:800;color:var(--red)">{{ alert.total }} tâches en retard</span>
+              <div style="display:flex;gap:7px">
+                <sc-for list="{{ alert.chips }}" as="c" hint-placeholder-count="2">
+                  <span style="{{ c.style }}">{{ c.label }}</span>
+                </sc-for>
+              </div>
+              <span style="font-size:12px;color:var(--text2)">À traiter en priorité — l’échéance contractuelle est dépassée.</span>
+              <button style="margin-left:auto;height:30px;padding:0 12px;border:1px solid var(--red);background:transparent;color:var(--red);border-radius:var(--rxs);font-size:12px;font-weight:700;cursor:pointer">Voir les retards</button>
+            </div>
+          </sc-if>
+
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">
+            <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="5">
+              <div style="{{ k.style }}" style-hover="transform:translateY(-2px)">
+                <div style="display:flex;align-items:center;gap:7px">
+                  <span style="{{ k.dotStyle }}"></span>
+                  <span style="font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text2)">{{ k.label }}</span>
+                </div>
+                <div style="{{ k.valueStyle }}">{{ k.display }}</div>
+                <div style="font-size:11px;color:var(--text3)">{{ k.sub }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <!-- GLOBAL VIEW -->
+          <sc-if value="{{ isGlobal }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;grid-template-columns:1fr 350px;gap:16px;align-items:start">
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;display:flex;gap:22px;align-items:center">
+                  <div style="width:56px;height:56px;min-width:56px;border-radius:var(--r);background:var(--orange-soft);border:1px solid var(--orange);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--orange);font-weight:700">↗</div>
+                  <div>
+                    <div style="font-size:16px;font-weight:800">Sélectionnez un projet pour commencer la planification</div>
+                    <div style="font-size:12.5px;color:var(--text2);margin-top:5px;max-width:620px;line-height:1.5">Cette vue globale rassemble vos responsabilités sur l’ensemble de vos chantiers. Choisissez un projet dans le sélecteur ci-dessus pour accéder au planning détaillé — tableau, Gantt, Kanban, dépendances et chemin critique.</div>
+                  </div>
+                </div>
+
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+                  <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+                    <span style="font-size:13.5px;font-weight:800">Mes projets accessibles</span>
+                    <span style="font-size:11px;font-weight:700;color:var(--text2);background:var(--gray-soft);border-radius:20px;padding:2px 8px">4</span>
+                  </div>
+                  <sc-for list="{{ globalProjects }}" as="p" hint-placeholder-count="4">
+                    <div onClick="{{ p.onClick }}" style="display:grid;grid-template-columns:1fr 90px 90px 110px 150px;gap:12px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--border);cursor:pointer" style-hover="background:var(--sunk)">
+                      <div>
+                        <div style="font-size:13px;font-weight:700">{{ p.name }}</div>
+                        <div style="font-size:11px;color:var(--text3);margin-top:2px">{{ p.city }} · {{ p.role }}</div>
+                      </div>
+                      <div style="font-size:12px;color:var(--text2)"><b style="color:var(--text);font-size:13px">{{ p.total }}</b> tâches</div>
+                      <div style="font-size:12px;color:var(--text2)"><b style="color:var(--text);font-size:13px">{{ p.doing }}</b> en cours</div>
+                      <div style="{{ p.lateStyle }}">{{ p.lateLabel }}</div>
+                      <div style="display:flex;align-items:center;gap:8px">
+                        <div style="flex:1;height:6px;border-radius:4px;background:var(--gray-soft);overflow:hidden"><div style="{{ p.progStyle }}"></div></div>
+                        <span style="font-size:11px;font-weight:700;font-variant-numeric:tabular-nums">{{ p.progress }}%</span>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+                  <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+                    <span style="width:8px;height:8px;border-radius:50%;background:var(--red);animation:mkPulse 1.8s ease-in-out infinite"></span>
+                    <span style="font-size:13.5px;font-weight:800">Mes tâches en retard — tous projets</span>
+                    <span style="font-size:11px;font-weight:700;color:#fff;background:var(--red);border-radius:20px;padding:2px 8px">9</span>
+                    <span style="margin-left:auto;font-size:11px;color:var(--text3)">5 affichées sur 9</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:30px 1fr 200px 70px 100px 110px;gap:12px;padding:9px 18px;background:var(--sunk);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3)">
+                    <span></span><span>Tâche</span><span>Projet</span><span>Sem.</span><span>Priorité</span><span>Échéance</span>
+                  </div>
+                  <sc-for list="{{ globalOverdue }}" as="t" hint-placeholder-count="5">
+                    <div style="display:grid;grid-template-columns:30px 1fr 200px 70px 100px 110px;gap:12px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--border)" style-hover="background:var(--sunk)">
+                      <span style="width:8px;height:8px;border-radius:50%;background:var(--red);animation:mkPulse 1.8s ease-in-out infinite"></span>
+                      <div style="font-size:13px;font-weight:600">{{ t.title }}</div>
+                      <div style="font-size:12px;color:var(--text2)">{{ t.project }}</div>
+                      <div style="font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums">{{ t.weekLabel }}</div>
+                      <div><span style="{{ t.prio.style }}">{{ t.prio.label }}</span></div>
+                      <div style="font-size:12px;font-weight:700;color:var(--red);font-variant-numeric:tabular-nums">{{ t.dueLabel }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div style="{{ cardStyle }}">
+                  <div style="font-size:13.5px;font-weight:800">Répartition globale par statut</div>
+                  <div style="font-size:11px;color:var(--text3);margin-top:3px;margin-bottom:14px">63 tâches · 4 projets</div>
+                  <div style="display:flex;align-items:center;gap:18px">
+                    <div style="position:relative;width:140px;height:140px;min-width:140px">
+                      <div style="{{ donut.style }}"></div>
+                      <div style="position:absolute;inset:34px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center">
+                        <div style="font-size:24px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums">{{ donut.centerValue }}</div>
+                        <div style="font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-top:3px">{{ donut.centerLabel }}</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:8px;flex:1">
+                      <sc-for list="{{ donut.legend }}" as="l" hint-placeholder-count="5">
+                        <div onMouseEnter="{{ l.onEnter }}" onMouseLeave="{{ l.onLeave }}" style="{{ l.style }}">
+                          <span style="{{ l.dotStyle }}"></span>
+                          <span style="font-size:12px;font-weight:600;flex:1">{{ l.label }}</span>
+                          <span style="font-size:12px;font-weight:800;font-variant-numeric:tabular-nums">{{ l.value }}</span>
+                          <span style="font-size:11px;color:var(--text3);min-width:34px;text-align:right">{{ l.pct }}%</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+                <div style="{{ cardStyle }}">
+                  <div style="font-size:13.5px;font-weight:800;margin-bottom:14px">Charge par priorité</div>
+                  <div style="display:flex;flex-direction:column;gap:11px">
+                    <sc-for list="{{ prioRows }}" as="p" hint-placeholder-count="5">
+                      <div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+                          <span style="{{ p.dotStyle }}"></span>
+                          <span style="font-size:12px;font-weight:600;flex:1">{{ p.label }}</span>
+                          <span style="font-size:12px;font-weight:800;font-variant-numeric:tabular-nums">{{ p.value }}</span>
+                          <span style="font-size:11px;color:var(--text3);min-width:34px;text-align:right">{{ p.pct }}%</span>
+                        </div>
+                        <div style="height:7px;border-radius:4px;background:var(--gray-soft);overflow:hidden"><div style="{{ p.barStyle }}"></div></div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- PROJECT VIEW -->
+          <sc-if value="{{ isProject }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:1fr 350px;gap:16px;align-items:start">
+              <div style="display:flex;flex-direction:column;gap:14px">
+
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="display:flex;gap:3px;background:var(--sunk);border:1px solid var(--border);border-radius:var(--rs);padding:3px">
+                    <sc-for list="{{ viewTabs }}" as="v" hint-placeholder-count="3">
+                      <button onClick="{{ v.onClick }}" style="{{ v.style }}">{{ v.label }}</button>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ isGantt }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:11.5px;font-weight:700;color:var(--red);background:var(--red-soft);border:1px solid var(--red);border-radius:var(--rxs);padding:5px 9px">Chemin critique : {{ gantt.criticalCount }} tâches</span>
+                  </sc-if>
+                  <span style="margin-left:auto;font-size:11.5px;color:var(--text2)">Tri par semaine de prévision · {{ counts.total }} tâches</span>
+                </div>
+
+                <!-- EMPTY -->
+                <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:64px 24px;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center">
+                    <div style="width:200px;height:120px;border-radius:var(--rs);border:1px dashed var(--border-strong);background:repeating-linear-gradient(135deg,var(--sunk) 0 8px,transparent 8px 16px);display:flex;align-items:center;justify-content:center">
+                      <span style="font:500 10px/1.4 ui-monospace,SFMono-Regular,monospace;color:var(--text3);letter-spacing:.06em">illustration planning vide</span>
+                    </div>
+                    <div>
+                      <div style="font-size:17px;font-weight:800">Aucune tâche sur ce projet</div>
+                      <div style="font-size:13px;color:var(--text2);margin-top:6px;max-width:430px;line-height:1.55">Le planning de <b>Extension Lycée Technique — Owendo</b> est vide. Créez la première tâche, ou importez les chapitres du DQE pour générer automatiquement la structure du planning.</div>
+                    </div>
+                    <div style="display:flex;gap:10px">
+                      <button onClick="{{ openCreate }}" style="height:40px;padding:0 18px;border:0;border-radius:var(--rs);background:var(--orange);color:#fff;font-size:13px;font-weight:700;cursor:pointer">+ Créer une tâche</button>
+                      <button style="height:40px;padding:0 18px;border:1px solid var(--border-strong);border-radius:var(--rs);background:var(--surface);color:var(--text);font-size:13px;font-weight:600;cursor:pointer">Importer depuis le DQE</button>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <!-- TABLE -->
+                <sc-if value="{{ showTable }}" hint-placeholder-val="{{ true }}">
+                  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+                    <div style="padding:13px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+                      <span style="font-size:13.5px;font-weight:800">Tâches actives</span>
+                      <span style="font-size:11px;font-weight:700;color:var(--text2);background:var(--gray-soft);border-radius:20px;padding:2px 8px">{{ counts.activeLabel }}</span>
+                      <div style="margin-left:auto;display:flex;gap:5px">
+                        <sc-for list="{{ activeFilters }}" as="f" hint-placeholder-count="4">
+                          <button onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</button>
+                        </sc-for>
+                      </div>
+                    </div>
+
+                    <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--orange-soft);border-bottom:1px solid var(--orange)">
+                        <span style="font-size:12.5px;font-weight:800;color:var(--orange)">{{ selectionCount }} tâches sélectionnées</span>
+                        <button onClick="{{ clearSelection }}" style="height:28px;padding:0 10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:var(--rxs);font-size:12px;font-weight:600;cursor:pointer">Tout désélectionner</button>
+                        <button onClick="{{ openBulkDelete }}" style="height:28px;padding:0 10px;border:0;background:var(--red);color:#fff;border-radius:var(--rxs);font-size:12px;font-weight:700;cursor:pointer;margin-left:auto">Supprimer la sélection</button>
+                      </div>
+                    </sc-if>
+
+                    <div style="display:grid;grid-template-columns:34px 1fr 132px 96px 74px 104px 150px 120px;gap:10px;padding:9px 16px;background:var(--sunk);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3)">
+                      <span><input type="checkbox" checked="{{ allSelected }}" onChange="{{ toggleAll }}" style="width:14px;height:14px;accent-color:#FF6B35" /></span>
+                      <span>Tâche</span><span>Statut</span><span>Priorité</span><span>Sem.</span><span>Échéance</span><span>Avancement</span><span>Assigné à</span>
+                    </div>
+
+                    <sc-for list="{{ activeTasks }}" as="t" hint-placeholder-count="6">
+                      <div style="{{ t.rowStyle }}" style-hover="background:var(--sunk)">
+                        <span><input type="checkbox" checked="{{ t.selected }}" onChange="{{ t.onToggle }}" style="width:14px;height:14px;accent-color:#FF6B35" /></span>
+                        <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                          <sc-if value="{{ t.milestone }}" hint-placeholder-val="{{ false }}">
+                            <span style="width:9px;height:9px;min-width:9px;background:var(--steel);transform:rotate(45deg)"></span>
+                          </sc-if>
+                          <span style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span>
+                          <sc-if value="{{ t.late }}" hint-placeholder-val="{{ false }}">
+                            <span style="font-size:10px;font-weight:800;color:#fff;background:var(--red);border-radius:var(--rxs);padding:2px 6px;white-space:nowrap">⚠ J+{{ t.lateDays }}</span>
+                          </sc-if>
+                          <sc-if value="{{ t.isCritical }}" hint-placeholder-val="{{ false }}">
+                            <span style="font-size:10px;font-weight:700;color:var(--red);border:1px solid var(--red);border-radius:var(--rxs);padding:1px 5px;white-space:nowrap">critique</span>
+                          </sc-if>
+                        </div>
+                        <div>
+                          <select disabled="{{ readOnly }}" value="{{ t.status.key }}" onChange="{{ t.onStatus }}" style="{{ t.statusSelectStyle }}">
+                            <option value="todo">À faire</option>
+                            <option value="doing">En cours</option>
+                            <option value="pending">En attente</option>
+                            <option value="done">Terminée</option>
+                            <option value="cancelled">Annulée</option>
+                          </select>
+                        </div>
+                        <div><span style="{{ t.prio.style }}">{{ t.prio.label }}</span></div>
+                        <div style="font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums">{{ t.weekLabel }}</div>
+                        <div style="{{ t.dueStyle }}">{{ t.dueLabel }}</div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                          <div style="flex:1;height:6px;border-radius:4px;background:var(--gray-soft);overflow:hidden"><div style="{{ t.progStyle }}"></div></div>
+                          <span style="font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;min-width:32px;text-align:right">{{ t.progress }}%</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:7px;min-width:0">
+                          <span style="{{ t.avatarStyle }}">{{ t.initials }}</span>
+                          <span style="font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.assigneeLabel }}</span>
+                          <sc-if value="{{ canCreate }}" hint-placeholder-val="{{ true }}">
+                            <span style="margin-left:auto;display:flex;gap:4px">
+                              <button onClick="{{ openCreate }}" style="width:24px;height:24px;border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:var(--rxs);font-size:11px;cursor:pointer" style-hover="border-color:var(--orange);color:var(--orange)">✎</button>
+                              <button onClick="{{ openBulkDelete }}" style="width:24px;height:24px;border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:var(--rxs);font-size:11px;cursor:pointer" style-hover="border-color:var(--red);color:var(--red)">✕</button>
+                            </span>
+                          </sc-if>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+
+                  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+                    <div style="padding:13px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)">
+                      <span style="font-size:13.5px;font-weight:800">Historique</span>
+                      <span style="font-size:11px;font-weight:700;color:var(--text2);background:var(--gray-soft);border-radius:20px;padding:2px 8px">{{ counts.historyLabel }}</span>
+                      <div style="margin-left:auto;display:flex;gap:5px">
+                        <sc-for list="{{ historyFilters }}" as="f" hint-placeholder-count="3">
+                          <button onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</button>
+                        </sc-for>
+                      </div>
+                    </div>
+                    <sc-for list="{{ historyTasks }}" as="t" hint-placeholder-count="4">
+                      <div style="display:grid;grid-template-columns:34px 1fr 132px 96px 74px 104px 150px 120px;gap:10px;align-items:center;padding:0 16px;height:var(--row);border-bottom:1px solid var(--border);opacity:.82" style-hover="background:var(--sunk);opacity:1">
+                        <span><input type="checkbox" style="width:14px;height:14px;accent-color:#FF6B35" /></span>
+                        <div style="font-size:13px;font-weight:500;text-decoration:{{ t.strike }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</div>
+                        <div><span style="{{ t.status.style }}">{{ t.status.label }}</span></div>
+                        <div><span style="{{ t.prio.style }}">{{ t.prio.label }}</span></div>
+                        <div style="font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums">{{ t.weekLabel }}</div>
+                        <div style="font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums">{{ t.dueLabel }}</div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                          <div style="flex:1;height:6px;border-radius:4px;background:var(--gray-soft);overflow:hidden"><div style="{{ t.progStyle }}"></div></div>
+                          <span style="font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;min-width:32px;text-align:right">{{ t.progress }}%</span>
+                        </div>
+                        <div style="font-size:12px;color:var(--text2)">{{ t.assigneeLabel }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+
+                <!-- GANTT -->
+                <sc-if value="{{ isGantt }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+                    <div style="display:flex">
+                      <div style="width:264px;min-width:264px;border-right:1px solid var(--border)">
+                        <div style="height:56px;display:flex;align-items:flex-end;padding:0 14px 8px;background:var(--sunk);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3)">Tâches ({{ gantt.rows.length }})</div>
+                        <sc-for list="{{ gantt.rows }}" as="r" hint-placeholder-count="8">
+                          <div onMouseEnter="{{ r.onEnter }}" onMouseLeave="{{ r.onLeave }}" style="{{ r.listStyle }}">
+                            <span style="{{ r.markStyle }}"></span>
+                            <span style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.title }}</span>
+                            <sc-if value="{{ r.isCritical }}" hint-placeholder-val="{{ false }}">
+                              <span style="margin-left:auto;font-size:9.5px;font-weight:800;color:var(--red);border:1px solid var(--red);border-radius:3px;padding:1px 4px">CC</span>
+                            </sc-if>
+                          </div>
+                        </sc-for>
+                      </div>
+                      <div style="flex:1;overflow-x:auto">
+                        <div style="{{ gantt.canvasStyle }}">
+                          <div style="display:flex;height:28px;border-bottom:1px solid var(--border);background:var(--sunk)">
+                            <sc-for list="{{ gantt.months }}" as="m" hint-placeholder-count="3">
+                              <div style="{{ m.style }}">{{ m.label }}</div>
+                            </sc-for>
+                          </div>
+                          <div style="display:flex;height:27px;border-bottom:1px solid var(--border);background:var(--sunk)">
+                            <sc-for list="{{ gantt.days }}" as="d" hint-placeholder-count="30">
+                              <div style="{{ d.style }}">{{ d.label }}</div>
+                            </sc-for>
+                          </div>
+                          <div style="{{ gantt.bodyStyle }}">
+                            <sc-for list="{{ gantt.weekendBands }}" as="w" hint-placeholder-count="8">
+                              <div style="{{ w.style }}"></div>
+                            </sc-for>
+                            <div style="{{ gantt.todayStyle }}"></div>
+                            <div style="{{ gantt.todayFlagStyle }}">aujourd’hui</div>
+                            <sc-for list="{{ gantt.gridRows }}" as="g" hint-placeholder-count="8">
+                              <div style="{{ g.style }}"></div>
+                            </sc-for>
+                            <sc-for list="{{ gantt.depSegs }}" as="s" hint-placeholder-count="6">
+                              <div style="{{ s.style }}"></div>
+                            </sc-for>
+                            <sc-for list="{{ gantt.bars }}" as="b" hint-placeholder-count="8">
+                              <div onMouseEnter="{{ b.onEnter }}" onMouseLeave="{{ b.onLeave }}" onClick="{{ openCreate }}" style="{{ b.style }}">
+                                <div style="{{ b.fillStyle }}"></div>
+                                <span style="{{ b.labelStyle }}">{{ b.label }}</span>
+                              </div>
+                            </sc-for>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:18px;padding:11px 16px;border-top:1px solid var(--border);background:var(--sunk);flex-wrap:wrap">
+                      <span style="font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3)">Légende</span>
+                      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2)"><span style="width:22px;height:9px;border-radius:3px;background:var(--blue)"></span>en cours</span>
+                      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2)"><span style="width:22px;height:9px;border-radius:3px;background:var(--green)"></span>terminée</span>
+                      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2)"><span style="width:22px;height:9px;border-radius:3px;background:var(--gray)"></span>à faire</span>
+                      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2)"><span style="width:22px;height:9px;border-radius:3px;background:var(--amber)"></span>en attente</span>
+                      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2)"><span style="width:10px;height:10px;background:var(--steel);transform:rotate(45deg)"></span>jalon</span>
+                      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2)"><span style="width:22px;height:9px;border-radius:3px;border:1.5px solid var(--red);background:transparent"></span>chemin critique</span>
+                      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2)"><span style="width:22px;border-top:1.5px solid var(--text3)"></span>dépendance fin→début</span>
+                      <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2)"><span style="width:22px;border-top:1.5px dashed var(--text3)"></span>autres types</span>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <!-- KANBAN -->
+                <sc-if value="{{ isKanban }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start">
+                    <sc-for list="{{ kanban }}" as="c" hint-placeholder-count="4">
+                      <div data-col="{{ c.key }}" style="{{ c.style }}">
+                        <div style="display:flex;align-items:center;gap:8px;padding:2px 4px 10px">
+                          <span style="{{ c.dotStyle }}"></span>
+                          <span style="font-size:12.5px;font-weight:800">{{ c.label }}</span>
+                          <span style="{{ c.countStyle }}">{{ c.count }}</span>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:9px;min-height:120px">
+                          <sc-for list="{{ c.cards }}" as="k" hint-placeholder-count="3">
+                            <div onPointerDown="{{ k.onPointerDown }}" style="{{ k.style }}" style-hover="border-color:var(--border-strong)">
+                              <div style="display:flex;align-items:center;gap:6px">
+                                <span style="{{ k.prio.style }}">{{ k.prio.label }}</span>
+                                <sc-if value="{{ k.late }}" hint-placeholder-val="{{ false }}">
+                                  <span style="font-size:9.5px;font-weight:800;color:#fff;background:var(--red);border-radius:3px;padding:2px 5px">⚠ J+{{ k.lateDays }}</span>
+                                </sc-if>
+                                <sc-if value="{{ k.milestone }}" hint-placeholder-val="{{ false }}">
+                                  <span style="margin-left:auto;width:9px;height:9px;background:var(--steel);transform:rotate(45deg)"></span>
+                                </sc-if>
+                              </div>
+                              <div style="font-size:12.5px;font-weight:600;line-height:1.4;margin-top:8px">{{ k.title }}</div>
+                              <div style="font-size:11px;color:var(--text3);margin-top:7px;font-variant-numeric:tabular-nums">{{ k.dateRange }}</div>
+                              <div style="display:flex;align-items:center;gap:7px;margin-top:9px">
+                                <span style="{{ k.avatarStyle }}">{{ k.initials }}</span>
+                                <span style="font-size:11px;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.assigneeLabel }}</span>
+                                <span style="font-size:11px;font-weight:800;font-variant-numeric:tabular-nums">{{ k.progress }}%</span>
+                              </div>
+                              <div style="height:5px;border-radius:3px;background:var(--gray-soft);overflow:hidden;margin-top:6px"><div style="{{ k.progStyle }}"></div></div>
+                            </div>
+                          </sc-for>
+                          <sc-if value="{{ c.empty }}" hint-placeholder-val="{{ false }}">
+                            <div style="border:1px dashed var(--border-strong);border-radius:var(--rs);padding:22px 10px;text-align:center;font-size:11.5px;color:var(--text3)">{{ c.emptyLabel }}</div>
+                          </sc-if>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="font-size:11.5px;color:var(--text3)">{{ kanbanHint }}</div>
+                </sc-if>
+              </div>
+
+              <!-- RIGHT PANEL -->
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div style="{{ cardStyle }}">
+                  <div style="font-size:13.5px;font-weight:800">Répartition par statut</div>
+                  <div style="font-size:11px;color:var(--text3);margin-top:3px;margin-bottom:14px">{{ counts.total }} tâches du projet</div>
+                  <div style="display:flex;align-items:center;gap:18px">
+                    <div style="position:relative;width:132px;height:132px;min-width:132px">
+                      <div style="{{ donut.style }}"></div>
+                      <div style="position:absolute;inset:32px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center">
+                        <div style="font-size:23px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums">{{ donut.centerValue }}</div>
+                        <div style="font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-top:3px">{{ donut.centerLabel }}</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:7px;flex:1">
+                      <sc-for list="{{ donut.legend }}" as="l" hint-placeholder-count="5">
+                        <div onMouseEnter="{{ l.onEnter }}" onMouseLeave="{{ l.onLeave }}" style="{{ l.style }}">
+                          <span style="{{ l.dotStyle }}"></span>
+                          <span style="font-size:11.5px;font-weight:600;flex:1">{{ l.label }}</span>
+                          <span style="font-size:11.5px;font-weight:800;font-variant-numeric:tabular-nums">{{ l.value }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="{{ cardStyle }}">
+                  <div style="font-size:13.5px;font-weight:800;margin-bottom:14px">Répartition par priorité</div>
+                  <div style="display:flex;flex-direction:column;gap:10px">
+                    <sc-for list="{{ prioRows }}" as="p" hint-placeholder-count="5">
+                      <div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+                          <span style="{{ p.dotStyle }}"></span>
+                          <span style="font-size:11.5px;font-weight:600;flex:1">{{ p.label }}</span>
+                          <span style="font-size:11.5px;font-weight:800;font-variant-numeric:tabular-nums">{{ p.value }}</span>
+                          <span style="font-size:10.5px;color:var(--text3);min-width:32px;text-align:right">{{ p.pct }}%</span>
+                        </div>
+                        <div style="height:7px;border-radius:4px;background:var(--gray-soft);overflow:hidden"><div style="{{ p.barStyle }}"></div></div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+                  <div style="padding:13px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)">
+                    <span style="{{ overdueDotStyle }}"></span>
+                    <span style="font-size:13.5px;font-weight:800">Tâches en retard</span>
+                    <span style="{{ overdueBadgeStyle }}">{{ overdueCount }}</span>
+                  </div>
+                  <sc-if value="{{ noOverdue }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:22px 16px;text-align:center;font-size:12px;color:var(--text2)">Aucun retard sur ce projet — toutes les échéances sont respectées.</div>
+                  </sc-if>
+                  <sc-for list="{{ overdue }}" as="t" hint-placeholder-count="4">
+                    <div style="padding:11px 16px;border-bottom:1px solid var(--border)" style-hover="background:var(--sunk)">
+                      <div style="display:flex;align-items:center;gap:7px">
+                        <span style="font-size:9.5px;font-weight:800;color:#fff;background:var(--red);border-radius:3px;padding:2px 5px">J+{{ t.lateDays }}</span>
+                        <span style="font-size:12px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
+                        <span style="{{ t.prio.style }}">{{ t.prio.label }}</span>
+                        <span style="font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums">{{ t.weekLabel }}</span>
+                        <span style="font-size:11px;font-weight:700;color:var(--red);margin-left:auto;font-variant-numeric:tabular-nums">éch. {{ t.dueLabel }}</span>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ hasOverdue }}" hint-placeholder-val="{{ true }}">
+                    <div style="padding:10px 16px;font-size:11.5px;color:var(--text2);display:flex;justify-content:space-between;align-items:center">
+                      <span>{{ overdueCount }} affichées</span>
+                      <a href="#" style="font-weight:700">Tout parcourir →</a>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- CREATE MODAL -->
+        <sc-if value="{{ showCreate }}" hint-placeholder-val="{{ false }}">
+          <div style="position:fixed;inset:0;background:rgba(15,18,22,.52);display:flex;align-items:flex-start;justify-content:center;padding:44px 0;z-index:50;overflow:auto">
+            <div style="width:820px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 24px 60px rgba(0,0,0,.28);animation:mkModal .18s ease-out">
+              <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+                <div>
+                  <div style="font-size:16px;font-weight:800">Nouvelle tâche</div>
+                  <div style="font-size:11.5px;color:var(--text2);margin-top:3px">Résidence Les Manguiers — Libreville</div>
+                </div>
+                <button onClick="{{ closeModals }}" style="margin-left:auto;width:32px;height:32px;border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:var(--rs);font-size:14px;cursor:pointer">✕</button>
+              </div>
+
+              <div style="padding:20px 22px;display:flex;flex-direction:column;gap:18px">
+                <div style="position:relative">
+                  <label style="display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Titre de la tâche <span style="color:var(--red)">*</span></label>
+                  <input value="{{ titleQuery }}" onChange="{{ onTitleInput }}" placeholder="Ex. Coulage dalle R+1" style="width:100%;height:42px;border:1.5px solid var(--orange);border-radius:var(--rs);background:var(--surface);color:var(--text);font-size:13.5px;font-weight:500;padding:0 12px;outline:none" />
+                  <div style="display:flex;justify-content:space-between;margin-top:5px">
+                    <span style="font-size:11px;color:var(--text3)">Suggestions BTP filtrées en temps réel</span>
+                    <span style="font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums">{{ titleLen }}/300</span>
+                  </div>
+                  <div style="position:absolute;top:70px;left:0;right:0;background:var(--elev);border:1px solid var(--border-strong);border-radius:var(--rs);box-shadow:0 16px 40px rgba(0,0,0,.18);max-height:300px;overflow:auto;z-index:5">
+                    <sc-for list="{{ suggestions }}" as="g" hint-placeholder-count="3">
+                      <div>
+                        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--sunk);border-bottom:1px solid var(--border);position:sticky;top:0">
+                          <span style="{{ g.dotStyle }}"></span>
+                          <span style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text2)">{{ g.category }}</span>
+                          <span style="margin-left:auto;font-size:10px;color:var(--text3)">{{ g.source }}</span>
+                        </div>
+                        <sc-for list="{{ g.items }}" as="s" hint-placeholder-count="3">
+                          <div onClick="{{ s.onClick }}" style="padding:9px 12px 9px 32px;font-size:12.5px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;gap:8px;align-items:center" style-hover="background:var(--orange-soft);color:var(--orange)">
+                            <span style="flex:1">{{ s.label }}</span>
+                            <span style="font-size:10px;color:var(--text3)">↵</span>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <div style="height:238px"></div>
+
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Description</label>
+                  <textarea placeholder="Contexte, mode opératoire, réserves…" style="width:100%;height:70px;border:1px solid var(--border-strong);border-radius:var(--rs);background:var(--surface);color:var(--text);font-size:13px;padding:10px 12px;resize:vertical"></textarea>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+                  <div>
+                    <label style="display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Statut</label>
+                    <select style="{{ inputStyle }}"><option>À faire</option><option>En cours</option><option>En attente</option><option>Terminée</option><option>Annulée</option></select>
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Priorité</label>
+                    <select style="{{ inputStyle }}"><option>Haute</option><option>Basse</option><option>Normale</option><option>Urgente</option><option>Critique</option></select>
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Assigné à</label>
+                    <select style="{{ inputStyle }}"><option>S. Mba — Chef de chantier</option><option>M. Ndong</option><option>A. Koumba</option><option>Non assignée</option></select>
+                  </div>
+                  <div>
+                    <label style="display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Tâche parente</label>
+                    <select style="{{ inputStyle }}"><option>Aucune</option><option>Gros œuvre R+1</option><option>Ferraillage poteaux R+0</option></select>
+                  </div>
+                </div>
+
+                <div style="border:1px solid var(--border);border-radius:var(--rs);padding:14px 16px;background:var(--sunk)">
+                  <div style="font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text2);margin-bottom:10px">Dates</div>
+                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+                    <div><label style="display:block;font-size:11.5px;color:var(--text2);margin-bottom:5px">Début</label><input type="date" value="2026-08-28" style="{{ inputStyle }}" /></div>
+                    <div><label style="display:block;font-size:11.5px;color:var(--text2);margin-bottom:5px">Fin</label><input type="date" value="2026-09-08" style="{{ inputStyle }}" /></div>
+                    <div><label style="display:block;font-size:11.5px;color:var(--text2);margin-bottom:5px">Échéance</label><input type="date" value="2026-09-10" style="{{ inputStyle }}" /></div>
+                  </div>
+                </div>
+
+                <div style="border:1px solid var(--border);border-radius:var(--rs);padding:14px 16px">
+                  <div style="font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text2);margin-bottom:10px">Avancement</div>
+                  <div style="display:flex;align-items:center;gap:14px">
+                    <input type="range" min="0" max="100" value="{{ progressValue }}" onChange="{{ onProgress }}" style="flex:1;accent-color:#FF6B35" />
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <input value="{{ progressValue }}" onChange="{{ onProgress }}" style="width:66px;height:36px;border:1px solid var(--border-strong);border-radius:var(--rxs);background:var(--surface);color:var(--text);font-size:13px;font-weight:700;text-align:center" />
+                      <span style="font-size:13px;font-weight:700;color:var(--text2)">%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="border:1px dashed var(--border-strong);border-radius:var(--rs);padding:14px 16px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                    <span style="font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text2)">Prévision</span>
+                    <span style="font-size:10.5px;font-weight:600;color:var(--text3);border:1px solid var(--border);border-radius:3px;padding:1px 5px">optionnel</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:110px 110px 1fr;gap:12px">
+                    <div><label style="display:block;font-size:11.5px;color:var(--text2);margin-bottom:5px">Semaine</label><select style="{{ inputStyle }}"><option>S35</option><option>S36</option><option>S37</option></select></div>
+                    <div><label style="display:block;font-size:11.5px;color:var(--text2);margin-bottom:5px">Année</label><select style="{{ inputStyle }}"><option>2026</option><option>2027</option></select></div>
+                    <div><label style="display:block;font-size:11.5px;color:var(--text2);margin-bottom:5px">Type de prévision</label><select style="{{ inputStyle }}"><option>Hebdomadaire (auto)</option><option>Mensuelle</option><option>Trimestrielle</option><option>Production</option><option>Approvisionnement</option><option>Ressources humaines</option><option>Matériel</option></select></div>
+                  </div>
+                </div>
+
+                <label style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text2)">
+                  <input type="checkbox" style="width:15px;height:15px;accent-color:#FF6B35" />
+                  Définir comme jalon du planning
+                </label>
+              </div>
+
+              <div style="padding:14px 22px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--sunk)">
+                <span style="font-size:11.5px;color:var(--text3)">Le titre est obligatoire · la date de fin ne peut précéder la date de début</span>
+                <button onClick="{{ closeModals }}" style="margin-left:auto;height:38px;padding:0 16px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer">Annuler</button>
+                <button onClick="{{ closeModals }}" style="{{ submitStyle }}">Créer la tâche</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- BULK DELETE MODAL -->
+        <sc-if value="{{ showBulk }}" hint-placeholder-val="{{ false }}">
+          <div style="position:fixed;inset:0;background:rgba(15,18,22,.52);display:flex;align-items:center;justify-content:center;z-index:60">
+            <div style="width:520px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 24px 60px rgba(0,0,0,.3);animation:mkModal .18s ease-out;overflow:hidden">
+              <div style="padding:20px 22px;display:flex;gap:14px">
+                <div style="width:40px;height:40px;min-width:40px;border-radius:var(--rs);background:var(--red-soft);border:1px solid var(--red);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800">!</div>
+                <div>
+                  <div style="font-size:16px;font-weight:800">Supprimer {{ selectionCount }} tâches ?</div>
+                  <div style="font-size:12.5px;color:var(--text2);margin-top:6px;line-height:1.55">Cette action est irréversible. Les sous-tâches rattachées seront supprimées avec leur tâche parente et les dépendances associées seront nettoyées.</div>
+                </div>
+              </div>
+              <div style="margin:0 22px;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
+                <sc-for list="{{ bulkList }}" as="b" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--border);font-size:12.5px">
+                    <span style="{{ b.dotStyle }}"></span>
+                    <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ b.title }}</span>
+                    <span style="font-size:11px;color:var(--text3)">{{ b.meta }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <label style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text2);padding:14px 22px 0">
+                <input type="checkbox" style="width:15px;height:15px;accent-color:#C8553D" />
+                Je confirme la suppression définitive de ces éléments
+              </label>
+              <div style="padding:16px 22px;display:flex;gap:10px;justify-content:flex-end">
+                <button onClick="{{ closeModals }}" style="height:38px;padding:0 16px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer">Annuler</button>
+                <button onClick="{{ closeModals }}" style="height:38px;padding:0 16px;border:0;background:var(--red);color:#fff;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer">Supprimer {{ selectionCount }} tâches</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ drag.active }}" hint-placeholder-val="{{ false }}">
+          <div style="{{ drag.ghostStyle }}">{{ drag.title }}</div>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:1100}}">
+class Component extends DCLogic {
+  TODAY = new Date(2026, 7, 14);
+
+  projects = [
+    { id: "", label: "— Aucun projet sélectionné (vue globale)" },
+    { id: "p1", label: "Résidence Les Manguiers — Libreville" },
+    { id: "p2", label: "Extension Lycée Technique — Owendo" },
+    { id: "p3", label: "Réfection voirie PK9 — Libreville" },
+    { id: "p4", label: "Base logistique Port-Gentil" }
+  ];
+
+  tasks = [
+    { id: 1, t: "Terrassement général plateforme", s: "done", p: "normal", a: "K. Obame", st: "2026-07-20", en: "2026-08-01", due: "2026-08-01", pr: 100, w: 30 },
+    { id: 2, t: "Fondations — semelles filantes", s: "done", p: "high", a: "M. Ndong", st: "2026-08-03", en: "2026-08-12", due: "2026-08-12", pr: 100, w: 32 },
+    { id: 3, t: "Ferraillage poteaux R+0", s: "doing", p: "high", a: "S. Mba", st: "2026-08-10", en: "2026-08-20", due: "2026-08-18", pr: 65, w: 33, cc: true },
+    { id: 4, t: "Coulage dalle R+0", s: "todo", p: "urgent", a: "S. Mba", st: "2026-08-21", en: "2026-08-27", due: "2026-08-27", pr: 0, w: 34, cc: true },
+    { id: 5, t: "Réception ferraillage (contrôle externe)", s: "todo", p: "critical", a: "Bureau Véritas", st: "2026-08-11", en: "2026-08-12", due: "2026-08-12", pr: 0, w: 32, ms: true },
+    { id: 6, t: "Élévation murs R+1", s: "todo", p: "normal", a: "M. Ndong", st: "2026-08-28", en: "2026-09-08", due: "2026-09-08", pr: 0, w: 35, cc: true },
+    { id: 7, t: "Étanchéité toiture terrasse", s: "todo", p: "low", a: "", st: "2026-09-10", en: "2026-09-18", due: "2026-09-18", pr: 0, w: 37 },
+    { id: 8, t: "Plomberie — réseaux enterrés", s: "doing", p: "normal", a: "A. Koumba", st: "2026-08-05", en: "2026-08-13", due: "2026-08-13", pr: 40, w: 32 },
+    { id: 11, t: "Commande acier HA — lot 2", s: "doing", p: "urgent", a: "Achats", st: "2026-08-04", en: "2026-08-11", due: "2026-08-11", pr: 30, w: 32 },
+    { id: 14, t: "Contrôle compacité plateforme", s: "doing", p: "high", a: "Labo Géo", st: "2026-08-06", en: "2026-08-10", due: "2026-08-10", pr: 55, w: 32 },
+    { id: 17, t: "Ouverture compte prorata chantier", s: "todo", p: "high", a: "QSE", st: "2026-08-05", en: "2026-08-08", due: "2026-08-08", pr: 0, w: 31 },
+    { id: 16, t: "Location grue à tour — mobilisation", s: "pending", p: "normal", a: "Logistique", st: "2026-08-24", en: "2026-08-30", due: "2026-08-30", pr: 10, w: 35 },
+    { id: 13, t: "Mise à jour du PPSPS", s: "pending", p: "normal", a: "QSE", st: "2026-08-19", en: "2026-08-25", due: "2026-08-25", pr: 20, w: 34 },
+    { id: 15, t: "Réception provisoire fondations", s: "todo", p: "high", a: "MOE", st: "2026-09-01", en: "2026-09-01", due: "2026-09-01", pr: 0, w: 36, ms: true },
+    { id: 9, t: "Étude structure béton armé", s: "done", p: "normal", a: "BET Sotega", st: "2026-07-15", en: "2026-07-30", due: "2026-07-30", pr: 100, w: 29 },
+    { id: 10, t: "Plan d’installation de chantier", s: "done", p: "low", a: "K. Obame", st: "2026-07-10", en: "2026-07-18", due: "2026-07-18", pr: 100, w: 28 },
+    { id: 12, t: "Levée des réserves lot gros œuvre", s: "cancelled", p: "normal", a: "MOE", st: "", en: "", due: "2026-09-30", pr: 0, w: 0 }
+  ];
+
+  deps = [
+    { from: 2, to: 3, type: "FS" }, { from: 3, to: 4, type: "FS" },
+    { from: 4, to: 6, type: "FS" }, { from: 5, to: 4, type: "SS" },
+    { from: 6, to: 7, type: "FS" }
+  ];
+
+  statusMeta = {
+    todo: { label: "À faire", color: "var(--gray)", soft: "var(--gray-soft)" },
+    doing: { label: "En cours", color: "var(--blue)", soft: "var(--blue-soft)" },
+    pending: { label: "En attente", color: "var(--amber)", soft: "var(--amber-soft)" },
+    done: { label: "Terminée", color: "var(--green)", soft: "var(--green-soft)" },
+    cancelled: { label: "Annulée", color: "#B08078", soft: "var(--gray-soft)" }
+  };
+  prioMeta = {
+    low: { label: "Basse", color: "#8FA3AD", soft: "rgba(143,163,173,.16)" },
+    normal: { label: "Normale", color: "var(--gray)", soft: "var(--gray-soft)" },
+    high: { label: "Haute", color: "var(--orange)", soft: "var(--orange-soft)" },
+    urgent: { label: "Urgente", color: "#E4572E", soft: "rgba(228,87,46,.14)" },
+    critical: { label: "Critique", color: "var(--red)", soft: "var(--red-soft)" }
+  };
+
+  suggestionData = [
+    { category: "Travaux", source: "référentiel BTP", color: "var(--orange)", items: ["Coulage dalle R+1", "Coffrage voiles béton", "Ferraillage poutres", "Remblaiement périphérique", "Pose de charpente métallique"] },
+    { category: "Études & qualité", source: "référentiel BTP", color: "var(--blue)", items: ["Contrôle qualité béton — éprouvettes", "Plan d’exécution coffrage", "Contrôle géométrique des niveaux"] },
+    { category: "Chapitres DQE — Les Manguiers", source: "DQE du projet", color: "var(--teal)", items: ["02.3 — Coulage béton de propreté", "03.1 — Coffrage traditionnel poteaux", "04.2 — Dallage sur terre-plein"] },
+    { category: "Pilotage & administratif", source: "référentiel BTP", color: "var(--steel)", items: ["Réunion de chantier hebdomadaire", "Constat d’avancement mensuel", "Demande d’agrément sous-traitant"] },
+    { category: "Logistique & sécurité", source: "référentiel BTP", color: "var(--amber)", items: ["Approvisionnement ciment — 40 t", "Contrôle EPI équipes", "Balisage zone de levage"] }
+  ];
+
+  state = {
+    project: "p1", view: "table", theme: "light", density: "comfortable",
+    readOnly: false, empty: false, mobile: false,
+    selected: [3, 4, 11], activeFilter: "all", historyFilter: "all",
+    showCreate: false, showBulk: false, titleQuery: "Coulage", progress: 35,
+    hoverStatus: null, hoverRow: null, anim: 0,
+    drag: null, dragOver: null, pending: null
+  };
+
+  componentDidMount() {
+    const t0 = performance.now();
+    const tick = () => {
+      const k = Math.min(1, (performance.now() - t0) / 900);
+      this.setState({ anim: k });
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    this._move = (e) => {
+      const p = this.state.pending;
+      if (p && !this.state.drag) {
+        if (Math.abs(e.clientX - p.x) + Math.abs(e.clientY - p.y) > 6) this.setState({ drag: { id: p.id, x: e.clientX, y: e.clientY } });
+        return;
+      }
+      if (this.state.drag) {
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const col = el && el.closest ? el.closest("[data-col]") : null;
+        this.setState({ drag: { id: this.state.drag.id, x: e.clientX, y: e.clientY }, dragOver: col ? col.getAttribute("data-col") : null });
+      }
+    };
+    this._up = () => {
+      const d = this.state.drag, over = this.state.dragOver;
+      if (d && over) {
+        const task = this.tasks.find(x => x.id === d.id);
+        if (task) { task.s = over; if (over === "done") task.pr = 100; }
+      }
+      this.setState({ drag: null, dragOver: null, pending: null });
+    };
+    window.addEventListener("pointermove", this._move);
+    window.addEventListener("pointerup", this._up);
+  }
+  componentWillUnmount() {
+    window.removeEventListener("pointermove", this._move);
+    window.removeEventListener("pointerup", this._up);
+  }
+
+  d(s) { if (!s) return null; const p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  fmt(s) { if (!s) return "—"; const d = this.d(s); return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + String(d.getFullYear()).slice(2); }
+  lateDays(t) {
+    if (!t.due || (t.s !== "todo" && t.s !== "doing")) return 0;
+    const diff = Math.floor((this.TODAY - this.d(t.due)) / 86400000);
+    return diff > 0 ? diff : 0;
+  }
+  chip(color, soft, strong) {
+    return { display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "11px", fontWeight: strong ? 800 : 700,
+      color: strong ? "#fff" : color, background: strong ? color : soft, border: "1px solid " + color,
+      borderRadius: "var(--rxs)", padding: "3px 7px", whiteSpace: "nowrap" };
+  }
+  initials(name) { if (!name) return "?"; return name.split(/[\s.]+/).filter(Boolean).slice(0, 2).map(x => x[0].toUpperCase()).join(""); }
+
+  taskVM(t, list) {
+    const sm = this.statusMeta[t.s], pm = this.prioMeta[t.p], ld = this.lateDays(t);
+    const sel = this.state.selected.indexOf(t.id) >= 0;
+    return {
+      id: t.id, title: t.t, progress: t.pr, milestone: !!t.ms, isCritical: !!t.cc, late: ld > 0, lateDays: ld,
+      selected: sel, strike: t.s === "cancelled" ? "line-through" : "none",
+      status: { key: t.s, label: sm.label, style: this.chip(sm.color, sm.soft, false) },
+      prio: { label: pm.label, style: this.chip(pm.color, pm.soft, t.p === "critical") },
+      weekLabel: t.w ? "S" + t.w + "·" + 26 : "—",
+      dueLabel: this.fmt(t.due),
+      dueStyle: { fontSize: "12px", fontWeight: ld > 0 ? 800 : 500, color: ld > 0 ? "var(--red)" : "var(--text2)", fontVariantNumeric: "tabular-nums" },
+      assigneeLabel: t.a || "Non assignée",
+      initials: this.initials(t.a),
+      avatarStyle: { width: "22px", height: "22px", minWidth: "22px", borderRadius: "50%", background: t.a ? "var(--steel)" : "var(--gray-soft)", color: t.a ? "#fff" : "var(--text3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9.5px", fontWeight: 800 },
+      progStyle: { width: t.pr + "%", height: "100%", borderRadius: "4px", background: t.s === "done" ? "var(--green)" : t.s === "doing" ? "var(--teal)" : "var(--orange)", transition: "width .5s ease" },
+      rowStyle: { display: "grid", gridTemplateColumns: "34px 1fr 132px 96px 74px 104px 150px 120px", gap: "10px", alignItems: "center", padding: "0 16px", height: "var(--row)", borderBottom: "1px solid var(--border)", background: sel ? "var(--orange-soft)" : "transparent" },
+      statusSelectStyle: { width: "100%", height: "30px", border: "1px solid " + sm.color, borderRadius: "var(--rxs)", background: sm.soft, color: sm.color, fontSize: "11.5px", fontWeight: 700, padding: "0 5px", cursor: this.state.readOnly ? "not-allowed" : "pointer", opacity: this.state.readOnly ? .6 : 1 },
+      onToggle: () => this.setState(s => ({ selected: sel ? s.selected.filter(x => x !== t.id) : s.selected.concat([t.id]) })),
+      onStatus: (e) => { const v = e.target.value; const task = this.tasks.find(x => x.id === t.id); task.s = v; if (v === "done") task.pr = 100; this.forceUpdate(); }
+    };
+  }
+
+  set(patch) { this.setState(patch); }
+
+  renderVals() {
+    const S = this.state, A = S.anim, ease = 1 - Math.pow(1 - A, 3);
+    const isGlobal = !S.project, isProject = !!S.project;
+    const empty = S.empty && isProject;
+    const all = empty ? [] : this.tasks;
+    const active = all.filter(t => ["todo", "doing", "pending"].indexOf(t.s) >= 0);
+    const history = all.filter(t => ["done", "cancelled"].indexOf(t.s) >= 0);
+    const overdueTasks = all.filter(t => this.lateDays(t) > 0).sort((a, b) => this.lateDays(b) - this.lateDays(a));
+    const counts = { total: all.length, todo: all.filter(t => t.s === "todo").length, doing: all.filter(t => t.s === "doing").length, done: all.filter(t => t.s === "done").length, late: overdueTasks.length };
+
+    const g = isGlobal;
+    const kpiData = g
+      ? [{ k: "total", label: "Total tâches", v: 63, sub: "sur 4 projets", c: "var(--steel)" },
+         { k: "todo", label: "À faire", v: 24, sub: "sur 4 projets", c: "var(--gray)" },
+         { k: "doing", label: "En cours", v: 15, sub: "sur 4 projets", c: "var(--teal)" },
+         { k: "done", label: "Terminées", v: 20, sub: "sur 4 projets", c: "var(--green)" },
+         { k: "late", label: "En retard", v: 9, sub: "action requise", c: "var(--red)" }]
+      : [{ k: "total", label: "Total tâches", v: counts.total, sub: "planning projet", c: "var(--steel)" },
+         { k: "todo", label: "À faire", v: counts.todo, sub: "non démarrées", c: "var(--gray)" },
+         { k: "doing", label: "En cours", v: counts.doing, sub: "en production", c: "var(--teal)" },
+         { k: "done", label: "Terminées", v: counts.done, sub: counts.total ? Math.round(counts.done / counts.total * 100) + "% du planning" : "—", c: "var(--green)" },
+         { k: "late", label: "En retard", v: counts.late, sub: counts.late ? "action requise" : "aucun retard", c: "var(--red)" }];
+
+    const kpis = kpiData.map(k => {
+      const hot = k.k === "late" && k.v > 0;
+      return {
+        label: k.label, sub: k.sub, display: Math.round(k.v * ease),
+        dotStyle: { width: "8px", height: "8px", borderRadius: "50%", background: k.c, animation: hot ? "mkPulse 1.8s ease-in-out infinite" : "none" },
+        valueStyle: { fontSize: hot ? "32px" : "29px", fontWeight: 800, lineHeight: 1, letterSpacing: "-.02em", fontVariantNumeric: "tabular-nums", color: hot ? "var(--red)" : "var(--text)", margin: "10px 0 6px" },
+        style: { background: hot ? "var(--red-soft)" : "var(--surface)", border: "1px solid " + (hot ? "var(--red)" : "var(--border)"), borderRadius: "var(--r)", padding: "14px 16px", transition: "transform .18s ease, box-shadow .18s ease", cursor: "default", boxShadow: hot ? "0 2px 10px rgba(200,85,61,.14)" : "none" },
+        mobileStyle: { background: hot ? "var(--red-soft)" : "var(--surface)", border: "1px solid " + (hot ? "var(--red)" : "var(--border)"), borderRadius: "var(--rs)", padding: "11px 12px" }
+      };
+    });
+
+    const alertTotal = g ? 9 : counts.late;
+    const alertChips = g
+      ? [{ n: 3, l: "critiques / urgentes" }, { n: 4, l: "haute priorité" }]
+      : [{ n: overdueTasks.filter(t => t.p === "critical" || t.p === "urgent").length, l: "critiques / urgentes" },
+         { n: overdueTasks.filter(t => t.p === "high").length, l: "haute priorité" }];
+
+    const donutSrc = g
+      ? [{ k: "todo", v: 24 }, { k: "doing", v: 15 }, { k: "pending", v: 4 }, { k: "done", v: 20 }, { k: "cancelled", v: 0 }]
+      : ["todo", "doing", "pending", "done", "cancelled"].map(k => ({ k: k, v: all.filter(t => t.s === k).length }));
+    const dSum = donutSrc.reduce((s, x) => s + x.v, 0);
+    const dTotal = dSum || 1;
+    let acc = 0; const stops = [];
+    donutSrc.forEach(x => {
+      const from = acc / dTotal * 360 * ease, to = (acc + x.v) / dTotal * 360 * ease;
+      if (x.v) stops.push(this.statusMeta[x.k].color + " " + from + "deg " + to + "deg");
+      acc += x.v;
+    });
+    const hov = S.hoverStatus ? donutSrc.find(x => x.k === S.hoverStatus) : null;
+    const donut = {
+      style: { position: "absolute", inset: 0, borderRadius: "50%", background: "conic-gradient(" + (stops.join(",") || "var(--gray-soft) 0deg 360deg") + ")" },
+      centerValue: hov ? hov.v : Math.round(dSum * ease),
+      centerLabel: hov ? this.statusMeta[S.hoverStatus].label : "tâches",
+      legend: donutSrc.map(x => ({
+        label: this.statusMeta[x.k].label, value: x.v, pct: Math.round(x.v / dTotal * 100),
+        dotStyle: { width: "9px", height: "9px", minWidth: "9px", borderRadius: "3px", background: this.statusMeta[x.k].color },
+        style: { display: "flex", alignItems: "center", gap: "8px", padding: "3px 6px", borderRadius: "var(--rxs)", cursor: "default", background: S.hoverStatus === x.k ? "var(--sunk)" : "transparent" },
+        onEnter: () => this.set({ hoverStatus: x.k }), onLeave: () => this.set({ hoverStatus: null })
+      }))
+    };
+
+    const prioSrc = g
+      ? [{ k: "low", v: 8 }, { k: "normal", v: 26 }, { k: "high", v: 17 }, { k: "urgent", v: 8 }, { k: "critical", v: 4 }]
+      : ["low", "normal", "high", "urgent", "critical"].map(k => ({ k: k, v: all.filter(t => t.p === k).length }));
+    const pTotal = prioSrc.reduce((s, x) => s + x.v, 0) || 1;
+    const prioRows = prioSrc.map(x => ({
+      label: this.prioMeta[x.k].label, value: x.v, pct: Math.round(x.v / pTotal * 100),
+      dotStyle: { width: "9px", height: "9px", minWidth: "9px", borderRadius: "3px", background: this.prioMeta[x.k].color },
+      barStyle: { width: (x.v / pTotal * 100 * ease) + "%", height: "100%", borderRadius: "4px", background: this.prioMeta[x.k].color, transition: "width .5s ease" }
+    }));
+
+    // Gantt
+    const dated = all.filter(t => t.st && t.en);
+    const dayW = 26, rowH = 34, headH = 55;
+    let min = new Date(2026, 6, 27), max = new Date(2026, 9, 4);
+    if (dated.length) {
+      min = new Date(Math.min.apply(null, dated.map(t => this.d(t.st)))); min.setDate(min.getDate() - 6);
+      max = new Date(Math.max.apply(null, dated.map(t => this.d(t.en)))); max.setDate(max.getDate() + 8);
+    }
+    const nDays = Math.round((max - min) / 86400000) + 1;
+    const days = [], weekendBands = [], monthAgg = [];
+    for (let i = 0; i < nDays; i++) {
+      const dd = new Date(min); dd.setDate(min.getDate() + i);
+      const we = dd.getDay() === 0 || dd.getDay() === 6;
+      days.push({ label: dd.getDate(), style: { width: dayW + "px", minWidth: dayW + "px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9.5px", fontWeight: we ? 700 : 500, color: we ? "var(--text3)" : "var(--text2)", background: we ? "var(--gray-soft)" : "transparent", borderRight: "1px solid var(--border)" } });
+      if (we) weekendBands.push({ style: { position: "absolute", left: i * dayW + "px", top: 0, bottom: 0, width: dayW + "px", background: "var(--sunk)" } });
+      const mk = dd.getFullYear() + "-" + dd.getMonth();
+      const last = monthAgg[monthAgg.length - 1];
+      if (last && last.k === mk) last.n++; else monthAgg.push({ k: mk, n: 1, d: dd });
+    }
+    const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+    const months = monthAgg.map(m => ({ label: monthNames[m.d.getMonth()] + " " + m.d.getFullYear(), style: { width: m.n * dayW + "px", minWidth: m.n * dayW + "px", display: "flex", alignItems: "center", padding: "0 10px", fontSize: "11px", fontWeight: 800, letterSpacing: ".04em", color: "var(--text)", borderRight: "1px solid var(--border)" } }));
+    const gRows = dated.map((t, i) => {
+      const sm = this.statusMeta[t.s];
+      const hovered = S.hoverRow === t.id;
+      return {
+        id: t.id, title: t.t, isCritical: !!t.cc,
+        listStyle: { display: "flex", alignItems: "center", gap: "8px", padding: "0 14px", height: rowH + "px", borderBottom: "1px solid var(--border)", background: hovered ? "var(--sunk)" : "transparent", cursor: "pointer" },
+        markStyle: t.ms
+          ? { width: "9px", height: "9px", minWidth: "9px", background: "var(--steel)", transform: "rotate(45deg)" }
+          : { width: "9px", height: "9px", minWidth: "9px", borderRadius: "3px", background: sm.color },
+        onEnter: () => this.set({ hoverRow: t.id }), onLeave: () => this.set({ hoverRow: null })
+      };
+    });
+    const barOf = (t, i) => {
+      const s = this.d(t.st), e = this.d(t.en || t.due);
+      const x = Math.round((s - min) / 86400000) * dayW;
+      const w = Math.max(dayW, (Math.round((e - s) / 86400000) + 1) * dayW);
+      return { x: x, w: w, y: i * rowH + 8 };
+    };
+    const bars = dated.map((t, i) => {
+      const b = barOf(t, i), sm = this.statusMeta[t.s], hovered = S.hoverRow === t.id;
+      if (t.ms) return {
+        label: "", labelStyle: { display: "none" }, fillStyle: { display: "none" },
+        style: { position: "absolute", left: (b.x + dayW / 2 - 9) + "px", top: (b.y - 1) + "px", width: "18px", height: "18px", background: "var(--steel)", transform: "rotate(45deg)", border: t.cc ? "2px solid var(--red)" : "1px solid var(--steel)", boxShadow: hovered ? "0 0 0 3px rgba(46,82,102,.22)" : "none", cursor: "pointer" },
+        onEnter: () => this.set({ hoverRow: t.id }), onLeave: () => this.set({ hoverRow: null })
+      };
+      return {
+        label: b.w > 74 ? t.t : "",
+        labelStyle: { position: "relative", zIndex: 2, fontSize: "10.5px", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 7px", textShadow: "0 1px 2px rgba(0,0,0,.28)" },
+        fillStyle: { position: "absolute", left: 0, top: 0, bottom: 0, width: t.pr + "%", background: "rgba(255,255,255,.32)", borderRadius: "5px 0 0 5px" },
+        style: { position: "absolute", left: b.x + "px", top: b.y + "px", width: b.w + "px", height: "19px", borderRadius: "5px", background: sm.color, border: t.cc ? "2px solid var(--red)" : "1px solid rgba(0,0,0,.12)", display: "flex", alignItems: "center", overflow: "hidden", cursor: "pointer", boxShadow: hovered ? "0 2px 10px rgba(0,0,0,.25)" : "none", filter: hovered ? "brightness(1.07)" : "none" },
+        onEnter: () => this.set({ hoverRow: t.id }), onLeave: () => this.set({ hoverRow: null })
+      };
+    });
+    const idx = {}; dated.forEach((t, i) => { idx[t.id] = i; });
+    const depSegs = [];
+    this.deps.forEach(dp => {
+      const i = idx[dp.from], j = idx[dp.to];
+      if (i === undefined || j === undefined) return;
+      const a = barOf(this.tasks.find(t => t.id === dp.from), i), b = barOf(this.tasks.find(t => t.id === dp.to), j);
+      const y1 = a.y + 10, y2 = b.y + 10, x1 = a.x + a.w, x2 = b.x, mx = Math.max(x1 + 8, x2 - 10);
+      const line = dp.type === "FS" ? "solid" : "dashed";
+      depSegs.push({ style: { position: "absolute", left: x1 + "px", top: y1 + "px", width: (mx - x1) + "px", borderTop: "1.5px " + line + " var(--text3)", opacity: .75 } });
+      depSegs.push({ style: { position: "absolute", left: mx + "px", top: Math.min(y1, y2) + "px", height: Math.abs(y2 - y1) + "px", borderLeft: "1.5px " + line + " var(--text3)", opacity: .75 } });
+      depSegs.push({ style: { position: "absolute", left: mx + "px", top: y2 + "px", width: Math.max(0, x2 - mx - 5) + "px", borderTop: "1.5px " + line + " var(--text3)", opacity: .75 } });
+      depSegs.push({ style: { position: "absolute", left: (x2 - 6) + "px", top: (y2 - 4) + "px", width: 0, height: 0, borderTop: "4px solid transparent", borderBottom: "4px solid transparent", borderLeft: "6px solid var(--text3)", opacity: .85 } });
+    });
+    const todayX = Math.round((this.TODAY - min) / 86400000) * dayW + dayW / 2;
+    const gantt = {
+      months: months, days: days, weekendBands: weekendBands, rows: gRows, bars: bars, depSegs: depSegs,
+      criticalCount: all.filter(t => t.cc).length,
+      canvasStyle: { width: nDays * dayW + "px", minWidth: nDays * dayW + "px" },
+      bodyStyle: { position: "relative", height: dated.length * rowH + "px" },
+      gridRows: dated.map((t, i) => ({ style: { position: "absolute", left: 0, right: 0, top: (i + 1) * rowH - 1 + "px", height: "1px", background: "var(--border)" } })),
+      todayStyle: { position: "absolute", left: todayX + "px", top: 0, bottom: 0, width: "2px", background: "var(--orange)", zIndex: 3 },
+      todayFlagStyle: { position: "absolute", left: (todayX + 4) + "px", top: "2px", fontSize: "9.5px", fontWeight: 800, color: "#fff", background: "var(--orange)", borderRadius: "3px", padding: "2px 5px", zIndex: 4, whiteSpace: "nowrap" }
+    };
+
+    // Kanban
+    const kanban = ["todo", "doing", "pending", "done"].map(k => {
+      const sm = this.statusMeta[k];
+      const cards = all.filter(t => t.s === k && (!S.drag || t.id !== S.drag.id)).map(t => {
+        const pm = this.prioMeta[t.p], ld = this.lateDays(t);
+        return {
+          title: t.t, progress: t.pr, milestone: !!t.ms, late: ld > 0, lateDays: ld,
+          prio: { label: pm.label, style: this.chip(pm.color, pm.soft, t.p === "critical") },
+          dateRange: t.st ? this.fmt(t.st) + " → " + this.fmt(t.en) : "sans dates",
+          assigneeLabel: t.a || "Non assignée", initials: this.initials(t.a),
+          avatarStyle: { width: "20px", height: "20px", minWidth: "20px", borderRadius: "50%", background: t.a ? "var(--steel)" : "var(--gray-soft)", color: t.a ? "#fff" : "var(--text3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: 800 },
+          progStyle: { width: t.pr + "%", height: "100%", borderRadius: "3px", background: t.s === "done" ? "var(--green)" : "var(--teal)" },
+          style: { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--rs)", padding: "11px 12px", cursor: S.readOnly ? "default" : "grab", boxShadow: "0 1px 2px rgba(0,0,0,.04)" },
+          onPointerDown: S.readOnly ? null : ((e) => this.set({ pending: { id: t.id, x: e.clientX, y: e.clientY } }))
+        };
+      });
+      const over = S.dragOver === k && S.drag;
+      return {
+        key: k, label: sm.label, count: all.filter(t => t.s === k).length, cards: cards,
+        empty: cards.length === 0,
+        emptyLabel: S.readOnly ? "Aucune tâche" : "Déposez une tâche ici",
+        dotStyle: { width: "9px", height: "9px", borderRadius: "3px", background: sm.color },
+        countStyle: { fontSize: "10.5px", fontWeight: 800, color: sm.color, background: sm.soft, border: "1px solid " + sm.color, borderRadius: "20px", padding: "1px 7px" },
+        style: { background: over ? sm.soft : "var(--sunk)", border: "1px " + (over ? "solid " + sm.color : "solid var(--border)") , borderRadius: "var(--r)", padding: "12px", minHeight: "260px", transition: "background .15s ease" }
+      };
+    });
+    const dragTask = S.drag ? this.tasks.find(t => t.id === S.drag.id) : null;
+
+    const globalProjects = [
+      { name: "Résidence Les Manguiers", city: "Libreville", role: "Chef de projet", total: 17, doing: 4, late: 5, progress: 42 },
+      { name: "Extension Lycée Technique", city: "Owendo", role: "Conducteur de travaux", total: 0, doing: 0, late: 0, progress: 0 },
+      { name: "Réfection voirie PK9", city: "Libreville", role: "Lecture seule", total: 22, doing: 7, late: 3, progress: 61 },
+      { name: "Base logistique", city: "Port-Gentil", role: "Chef de projet", total: 24, doing: 4, late: 1, progress: 78 }
+    ].map((p, i) => ({
+      name: p.name, city: p.city, role: p.role, total: p.total, doing: p.doing, progress: p.progress,
+      lateLabel: p.late ? p.late + " en retard" : "à jour",
+      lateStyle: { fontSize: "11.5px", fontWeight: 700, color: p.late ? "var(--red)" : "var(--green)", background: p.late ? "var(--red-soft)" : "var(--green-soft)", border: "1px solid " + (p.late ? "var(--red)" : "var(--green)"), borderRadius: "var(--rxs)", padding: "3px 7px", textAlign: "center" },
+      progStyle: { width: (p.progress * ease) + "%", height: "100%", borderRadius: "4px", background: "var(--teal)" },
+      onClick: () => this.set({ project: ["p1", "p2", "p3", "p4"][i], view: "table", empty: i === 1, readOnly: i === 2 })
+    }));
+
+    const globalOverdue = [
+      { t: "Réception ferraillage (contrôle externe)", pj: "Les Manguiers", w: 32, p: "critical", due: "12/08/26" },
+      { t: "Commande acier HA — lot 2", pj: "Les Manguiers", w: 32, p: "urgent", due: "11/08/26" },
+      { t: "Reprise enrobés section 3", pj: "Réfection voirie PK9", w: 31, p: "high", due: "07/08/26" },
+      { t: "Contrôle compacité plateforme", pj: "Les Manguiers", w: 32, p: "high", due: "10/08/26" },
+      { t: "Réception clôture périmétrique", pj: "Base logistique", w: 30, p: "normal", due: "31/07/26" }
+    ].map(x => ({ title: x.t, project: x.pj, weekLabel: "S" + x.w + "·26", dueLabel: x.due, prio: { label: this.prioMeta[x.p].label, style: this.chip(this.prioMeta[x.p].color, this.prioMeta[x.p].soft, x.p === "critical") } }));
+
+    const filt = (list, key, sel) => [{ k: "all", l: "Toutes" }].concat(key === "active"
+      ? [{ k: "todo", l: "À faire" }, { k: "doing", l: "En cours" }, { k: "pending", l: "En attente" }]
+      : [{ k: "done", l: "Terminées" }, { k: "cancelled", l: "Annulées" }]
+    ).map(f => {
+      const on = sel === f.k;
+      const n = f.k === "all" ? list.length : list.filter(t => t.s === f.k).length;
+      return { label: f.l + " " + n, onClick: () => this.set(key === "active" ? { activeFilter: f.k } : { historyFilter: f.k }),
+        style: { height: "28px", padding: "0 10px", borderRadius: "var(--rxs)", border: "1px solid " + (on ? "var(--orange)" : "var(--border)"), background: on ? "var(--orange)" : "var(--surface)", color: on ? "#fff" : "var(--text2)", fontSize: "11.5px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" } };
+    });
+
+    const shownActive = active.filter(t => S.activeFilter === "all" || t.s === S.activeFilter)
+      .sort((a, b) => (b.w ? 1 : 0) - (a.w ? 1 : 0) || (a.w || 99) - (b.w || 99));
+    const shownHistory = history.filter(t => S.historyFilter === "all" || t.s === S.historyFilter);
+
+    const q = S.titleQuery.trim().toLowerCase();
+    const suggestions = this.suggestionData.map(gr => ({
+      category: gr.category, source: gr.source,
+      dotStyle: { width: "8px", height: "8px", borderRadius: "2px", background: gr.color },
+      items: gr.items.filter(i => !q || i.toLowerCase().indexOf(q) >= 0).map(i => ({ label: i, onClick: () => this.set({ titleQuery: i }) }))
+    })).filter(gr => gr.items.length);
+
+    const presetDefs = [
+      { l: "Vue globale", s: { project: "", view: "table", theme: "light", mobile: false, readOnly: false, empty: false, showCreate: false, showBulk: false } },
+      { l: "Tableau", s: { project: "p1", view: "table", theme: "light", mobile: false, readOnly: false, empty: false, showCreate: false, showBulk: false } },
+      { l: "Gantt", s: { project: "p1", view: "gantt", theme: "light", mobile: false, readOnly: false, empty: false, showCreate: false, showBulk: false } },
+      { l: "Kanban", s: { project: "p1", view: "kanban", theme: "light", mobile: false, readOnly: false, empty: false, showCreate: false, showBulk: false } },
+      { l: "Création + suggestions", s: { project: "p1", view: "table", theme: "light", mobile: false, readOnly: false, empty: false, showCreate: true, showBulk: false } },
+      { l: "Suppression multiple", s: { project: "p1", view: "table", theme: "light", mobile: false, readOnly: false, empty: false, showCreate: false, showBulk: true, selected: [3, 4, 11] } },
+      { l: "État vide", s: { project: "p2", view: "table", theme: "light", mobile: false, readOnly: false, empty: true, showCreate: false, showBulk: false } },
+      { l: "Lecture seule", s: { project: "p3", view: "table", theme: "light", mobile: false, readOnly: true, empty: false, showCreate: false, showBulk: false } },
+      { l: "Mobile — Tableau", s: { project: "p1", view: "table", mobile: true, theme: "light", readOnly: false, empty: false, showCreate: false, showBulk: false } },
+      { l: "Kanban — sombre", s: { project: "p1", view: "kanban", theme: "dark", mobile: false, readOnly: false, empty: false, showCreate: false, showBulk: false } }
+    ];
+    const activePreset = presetDefs.findIndex(p =>
+      (p.s.project === S.project) && (!!p.s.mobile === !!S.mobile) && (p.s.theme === S.theme) &&
+      (!!p.s.readOnly === !!S.readOnly) && (!!p.s.empty === !!S.empty) &&
+      (!!p.s.showCreate === !!S.showCreate) && (!!p.s.showBulk === !!S.showBulk) &&
+      (S.mobile || p.s.view === S.view));
+    const presets = presetDefs.map((p, i) => ({
+      label: p.l, onClick: () => this.set(p.s),
+      style: { height: "30px", padding: "0 12px", borderRadius: "20px", border: "1px solid " + (i === activePreset ? "#2E5266" : "#D6D2CB"), background: i === activePreset ? "#2E5266" : "#FCFBF9", color: i === activePreset ? "#fff" : "#5A574F", fontSize: "11.5px", fontWeight: 700, cursor: "pointer", transition: "all .15s ease" }
+    }));
+
+    const bulkList = S.selected.map(id => this.tasks.find(t => t.id === id)).filter(Boolean).map(t => ({
+      title: t.t, meta: this.statusMeta[t.s].label + " · " + this.prioMeta[t.p].label,
+      dotStyle: { width: "8px", height: "8px", minWidth: "8px", borderRadius: "3px", background: this.statusMeta[t.s].color }
+    }));
+
+    return {
+      theme: S.theme, density: S.density, isDark: S.theme === "dark",
+      isMobile: !!S.mobile, isDesktop: !S.mobile,
+      frameStyle: { width: S.mobile ? "390px" : "1440px", borderRadius: "16px", overflow: "hidden", background: "var(--bg)", border: "1px solid rgba(0,0,0,.10)", boxShadow: "0 18px 50px rgba(20,22,26,.16)", position: "relative" },
+      cardStyle: { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r)", padding: "16px 18px" },
+      inputStyle: { width: "100%", height: "36px", border: "1px solid var(--border-strong)", borderRadius: "var(--rxs)", background: "var(--surface)", color: "var(--text)", fontSize: "12.5px", fontWeight: 500, padding: "0 9px" },
+      submitStyle: { height: "38px", padding: "0 18px", border: 0, borderRadius: "var(--rs)", background: S.titleQuery.trim() ? "var(--orange)" : "var(--gray-soft)", color: S.titleQuery.trim() ? "#fff" : "var(--text3)", fontSize: "13px", fontWeight: 700, cursor: S.titleQuery.trim() ? "pointer" : "not-allowed" },
+      presets: presets,
+      themeLabel: S.theme === "dark" ? "☾ Sombre" : "☀ Clair",
+      toggleTheme: () => this.set({ theme: S.theme === "dark" ? "light" : "dark" }),
+      projectOptions: this.projects.map(p => ({ id: p.id, label: p.label })),
+      projectId: S.project,
+      onProjectChange: (e) => { const v = e.target.value; this.set({ project: v, empty: v === "p2", readOnly: v === "p3" }); },
+      subtitle: isGlobal ? "Vue globale — 4 projets accessibles · semaine S33 · 14/08/2026"
+        : (this.projects.find(p => p.id === S.project) || {}).label + " · semaine S33 · 14/08/2026",
+      isGlobal: isGlobal, isProject: isProject, isEmpty: empty,
+      showTable: isProject && !empty && S.view === "table",
+      isGantt: isProject && !empty && S.view === "gantt",
+      isKanban: isProject && !empty && S.view === "kanban",
+      readOnly: !!S.readOnly, canCreate: isProject && !S.readOnly,
+      viewTabs: [{ k: "table", l: "Tableau" }, { k: "gantt", l: "Gantt" }, { k: "kanban", l: "Kanban" }].map(v => ({
+        label: v.l, onClick: () => this.set({ view: v.k }),
+        style: { height: "30px", padding: "0 16px", borderRadius: "var(--rxs)", border: 0, background: S.view === v.k ? "var(--surface)" : "transparent", color: S.view === v.k ? "var(--text)" : "var(--text2)", fontSize: "12.5px", fontWeight: 700, cursor: "pointer", boxShadow: S.view === v.k ? "0 1px 3px rgba(0,0,0,.12)" : "none" }
+      })),
+      kpis: kpis,
+      alert: { show: alertTotal > 0, total: alertTotal, badge: alertChips.filter(c => c.n > 0).map(c => c.n + " " + c.l).join(" · "),
+        chips: alertChips.filter(c => c.n > 0).map(c => ({ label: c.n + " " + c.l, style: this.chip("var(--red)", "transparent", false) })) },
+      counts: { total: counts.total, activeLabel: shownActive.length + " / " + active.length, historyLabel: shownHistory.length + " / " + history.length },
+      activeFilters: filt(active, "active", S.activeFilter),
+      historyFilters: filt(history, "history", S.historyFilter),
+      activeTasks: shownActive.map(t => this.taskVM(t)),
+      historyTasks: shownHistory.map(t => this.taskVM(t)),
+      allSelected: S.selected.length === active.length && active.length > 0,
+      toggleAll: () => this.setState(s => ({ selected: s.selected.length ? [] : active.map(t => t.id) })),
+      hasSelection: S.selected.length > 0 && !S.readOnly,
+      selectionCount: S.selected.length,
+      clearSelection: () => this.set({ selected: [] }),
+      openBulkDelete: () => this.set({ showBulk: true }),
+      bulkList: bulkList,
+      overdue: overdueTasks.slice(0, 4).map(t => this.taskVM(t)),
+      overdueCount: overdueTasks.length,
+      hasOverdue: overdueTasks.length > 0,
+      noOverdue: overdueTasks.length === 0,
+      overdueDotStyle: { width: "8px", height: "8px", borderRadius: "50%", background: overdueTasks.length ? "var(--red)" : "var(--green)", animation: overdueTasks.length ? "mkPulse 1.8s ease-in-out infinite" : "none" },
+      overdueBadgeStyle: { fontSize: "11px", fontWeight: 700, color: "#fff", background: overdueTasks.length ? "var(--red)" : "var(--green)", borderRadius: "20px", padding: "2px 8px" },
+      globalProjects: globalProjects, globalOverdue: globalOverdue,
+      donut: donut, prioRows: prioRows, gantt: gantt, kanban: kanban,
+      kanbanHint: S.readOnly ? "Glisser-déposer désactivé en lecture seule." : "Glissez une carte vers une autre colonne pour changer son statut — le passage en « Terminée » fixe l’avancement à 100 %.",
+      drag: { active: !!dragTask, title: dragTask ? dragTask.t : "",
+        ghostStyle: dragTask ? { position: "fixed", left: (S.drag.x + 10) + "px", top: (S.drag.y - 14) + "px", zIndex: 90, pointerEvents: "none", background: "var(--surface)", border: "1px solid var(--orange)", borderRadius: "var(--rs)", padding: "9px 12px", fontSize: "12.5px", fontWeight: 700, color: "var(--text)", boxShadow: "0 12px 28px rgba(0,0,0,.26)", transform: "rotate(-1.5deg)", maxWidth: "220px" } : {} },
+      showCreate: !!S.showCreate, showBulk: !!S.showBulk,
+      closeModals: () => this.set({ showCreate: false, showBulk: false }),
+      openCreate: () => this.set({ showCreate: true }),
+      titleQuery: S.titleQuery, titleLen: S.titleQuery.length,
+      onTitleInput: (e) => this.set({ titleQuery: e.target.value }),
+      suggestions: suggestions,
+      progressValue: S.progress,
+      onProgress: (e) => this.set({ progress: Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0)) })
+    };
+  }
+}
+</script>
+</body>
+</html>

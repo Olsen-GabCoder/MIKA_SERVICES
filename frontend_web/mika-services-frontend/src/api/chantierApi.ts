@@ -7,6 +7,9 @@ import type {
   MembreEquipeRequest,
   AffectationChantierResponse,
   AffectationChantierRequest,
+  AffectationUtilisateurResponse,
+  AffectationUtilisateurRequest,
+  AffectationUtilisateurUpdateRequest,
   PageResponse,
 } from '@/types/chantier'
 import { USE_MOCK, USE_MOCK_FALLBACK } from '@/config/mock'
@@ -46,6 +49,10 @@ export const equipeApi = {
     const response = await apiClient.post<MembreEquipeResponse>(`/equipes/${equipeId}/membres`, { ...data, equipeId })
     return response.data
   },
+  getAffectationsByEquipe: async (equipeId: number): Promise<AffectationChantierResponse[]> => {
+    const response = await apiClient.get<AffectationChantierResponse[]>(`/equipes/${equipeId}/affectations`)
+    return response.data
+  },
   affecterEquipe: async (data: AffectationChantierRequest): Promise<AffectationChantierResponse> => {
     const response = await apiClient.post<AffectationChantierResponse>('/equipes/affectations', data)
     return response.data
@@ -59,6 +66,38 @@ export const equipeApi = {
       `/equipes/affectations/projet/${projetId}`,
       { params: { page, size } }
     )
+    return response.data
+  },
+}
+
+/** Positionnement individuel des utilisateurs sur les chantiers. */
+export const affectationUtilisateurApi = {
+  affecter: async (data: AffectationUtilisateurRequest): Promise<AffectationUtilisateurResponse> => {
+    const response = await apiClient.post<AffectationUtilisateurResponse>('/affectations-utilisateurs', data)
+    return response.data
+  },
+  getEnCours: async (): Promise<AffectationUtilisateurResponse[]> => {
+    const response = await apiClient.get<AffectationUtilisateurResponse[]>('/affectations-utilisateurs/en-cours')
+    return response.data
+  },
+  getByProjet: async (projetId: number): Promise<AffectationUtilisateurResponse[]> => {
+    const response = await apiClient.get<AffectationUtilisateurResponse[]>(`/affectations-utilisateurs/projet/${projetId}`)
+    return response.data
+  },
+  getByUser: async (userId: number): Promise<AffectationUtilisateurResponse[]> => {
+    const response = await apiClient.get<AffectationUtilisateurResponse[]>(`/affectations-utilisateurs/user/${userId}`)
+    return response.data
+  },
+  update: async (id: number, data: AffectationUtilisateurUpdateRequest): Promise<AffectationUtilisateurResponse> => {
+    const response = await apiClient.put<AffectationUtilisateurResponse>(`/affectations-utilisateurs/${id}`, data)
+    return response.data
+  },
+  terminer: async (id: number): Promise<AffectationUtilisateurResponse> => {
+    const response = await apiClient.put<AffectationUtilisateurResponse>(`/affectations-utilisateurs/${id}/terminer`)
+    return response.data
+  },
+  annuler: async (id: number): Promise<AffectationUtilisateurResponse> => {
+    const response = await apiClient.put<AffectationUtilisateurResponse>(`/affectations-utilisateurs/${id}/annuler`)
     return response.data
   },
 }

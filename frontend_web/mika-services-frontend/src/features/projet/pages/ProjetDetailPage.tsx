@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
@@ -16,7 +16,7 @@ import { ProjetChatbotDrawer, ChatbotFloatingButton } from '@/features/projet/co
 import { fetchProjetById, clearProjetDetail, updateProjet } from '@/store/slices/projetSlice'
 import { projetApi, pointBloquantApi } from '@/api/projetApi'
 import { reportingApi } from '@/api/reportingApi'
-import { ProjetVisualisationsSection } from '@/features/projet/components/ProjetVisualisations'
+import { ProjetEquipeSection } from '@/features/projet/components/ProjetEquipeSection'
 import type { PointBloquant, Prevision, ModeSuiviMensuel, StatutPointBloquant, MotifArretChantier } from '@/types/projet'
 import { getTypeProjetDisplay, getProjetTypes } from '@/types/projet'
 import type { ProjetReport } from '@/types/reporting'
@@ -151,11 +151,23 @@ export const ProjetDetailPage = () => {
     return () => { dispatch(clearProjetDetail()) }
   }, [dispatch, id])
 
+  // Un seul toast même si plusieurs chargements de sections échouent
+  const loadErrorNotified = useRef(false)
+  const notifyLoadError = (err: unknown) => {
+    console.error('ProjetDetailPage: chargement de section échoué', err)
+    if (loadErrorNotified.current) return
+    loadErrorNotified.current = true
+    toast({
+      message: t('detail.loadPartialError', { defaultValue: "Certaines données du projet n'ont pas pu être chargées." }),
+      variant: 'error',
+    })
+  }
+
   useEffect(() => {
     if (!projet?.id) return
-    pointBloquantApi.findByProjet(projet.id).then((res) => setPointsBloquants(res.content ?? [])).catch(() => setPointsBloquants([]))
-    projetApi.getPrevisions(projet.id).then(setPrevisions).catch(() => setPrevisions([]))
-    reportingApi.getProjetReport(projet.id).then(setRapport).catch(() => setRapport(null))
+    pointBloquantApi.findByProjet(projet.id).then((res) => setPointsBloquants(res.content ?? [])).catch((e) => { setPointsBloquants([]); notifyLoadError(e) })
+    projetApi.getPrevisions(projet.id).then(setPrevisions).catch((e) => { setPrevisions([]); notifyLoadError(e) })
+    reportingApi.getProjetReport(projet.id).then(setRapport).catch((e) => { setRapport(null); notifyLoadError(e) })
     projetApi.getSuiviMensuel(projet.id).then((list) => {
       setSuiviMensuel(list.map((r) => ({
         mois: r.mois,
@@ -165,7 +177,8 @@ export const ProjetDetailPage = () => {
         ecart: typeof r.ecart === 'number' ? r.ecart : Number(r.ecart) || 0,
         avancementCumule: typeof r.avancementCumule === 'number' ? r.avancementCumule : Number(r.avancementCumule) || 0,
       })))
-    }).catch(() => setSuiviMensuel([]))
+    }).catch((e) => { setSuiviMensuel([]); notifyLoadError(e) })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projet?.id])
 
   const formatDate = useFormatDate()
@@ -1185,7 +1198,7 @@ export const ProjetDetailPage = () => {
                   </div>
                   <div className={`text-3xl font-bold ${isAlert ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400'}`}>{count}</div>
                   <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mt-1">{t('detail.pointsBloquantsOuverts')}</p>
-                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">{isAlert ? 'À traiter' : 'Aucun blocage'}</p>
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">{isAlert ? t('detail.pointsATraiter', { defaultValue: 'À traiter' }) : t('detail.aucunBlocage', { defaultValue: 'Aucun blocage' })}</p>
                 </div>
               )
             })()}
@@ -1306,14 +1319,8 @@ export const ProjetDetailPage = () => {
         </div>
         </div>
 
-        {/* VUE STRATÉGIQUE - PLEINE LARGEUR */}
-        <div>
-          <ProjetVisualisationsSection 
-            projet={projet} 
-            rapport={rapport} 
-            formatMontantFn={formatMontant} 
-          />
-        </div>
+        {/* Équipe du projet */}
+        <ProjetEquipeSection projetId={projet.id} projetNom={projet.nom} canManage={canEditProjet} />
       </div>
 
       {/* Assistant IA Chatbot */}

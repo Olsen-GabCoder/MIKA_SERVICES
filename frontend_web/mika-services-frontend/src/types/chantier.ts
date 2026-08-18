@@ -63,6 +63,36 @@ export interface AffectationChantierResponse {
   createdAt?: string
 }
 
+export interface AffectationUtilisateurResponse {
+  id: number
+  user: ProjetUserSummary
+  projetId: number
+  projetNom: string
+  poste: string
+  dateDebut: string
+  dateFin?: string
+  statut: StatutAffectation
+  observations?: string
+  createdAt?: string
+}
+
+export interface AffectationUtilisateurRequest {
+  userId: number
+  projetId: number
+  poste: string
+  dateDebut: string
+  dateFin?: string
+  observations?: string
+}
+
+/** Modification d'une affectation existante (utilisateur et projet non modifiables). */
+export interface AffectationUtilisateurUpdateRequest {
+  poste: string
+  dateDebut: string
+  dateFin?: string
+  observations?: string
+}
+
 export interface AffectationChantierRequest {
   projetId: number
   equipeId: number

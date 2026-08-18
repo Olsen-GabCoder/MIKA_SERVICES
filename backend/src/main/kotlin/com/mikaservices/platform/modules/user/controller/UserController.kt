@@ -12,6 +12,7 @@ import com.mikaservices.platform.modules.user.dto.request.UserUpdateRequest
 import com.mikaservices.platform.modules.user.dto.response.LoginHistoryEntryResponse
 import com.mikaservices.platform.modules.user.dto.response.UserForMessagingResponse
 import com.mikaservices.platform.modules.user.dto.response.UserResponse
+import com.mikaservices.platform.modules.user.dto.response.UserStatsResponse
 import com.mikaservices.platform.modules.user.dto.response.UserSummaryResponse
 import com.mikaservices.platform.modules.user.service.UserService
 import io.swagger.v3.oas.annotations.Operation
@@ -63,6 +64,13 @@ class UserController(
         return ResponseEntity.ok(users)
     }
     
+    @GetMapping("/stats")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @Operation(summary = "Statistiques des effectifs", description = "Statistiques agrégées pour le tableau de bord Utilisateurs & Organisation")
+    fun getStats(): ResponseEntity<UserStatsResponse> {
+        return ResponseEntity.ok(userService.getStats())
+    }
+
     @GetMapping("/me")
     @Operation(summary = "Utilisateur connecté", description = "Récupération des informations de l'utilisateur connecté")
     fun getCurrentUser(): ResponseEntity<UserResponse> {
@@ -74,6 +82,13 @@ class UserController(
     @Operation(summary = "Chefs de projet actifs", description = "Liste pour le filtre « chef de projet » sur la liste des projets (tout utilisateur connecté).")
     fun listChefsProjet(): ResponseEntity<List<UserSummaryResponse>> {
         return ResponseEntity.ok(userService.findChefsProjetActifs())
+    }
+
+    @GetMapping("/affectables")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET')")
+    @Operation(summary = "Utilisateurs affectables", description = "Liste légère des utilisateurs actifs pour le formulaire d'affectation à un projet (admins et chefs de projet).")
+    fun listAffectables(): ResponseEntity<List<UserSummaryResponse>> {
+        return ResponseEntity.ok(userService.findActifsPourAffectation())
     }
 
     @GetMapping("/me/peers")

@@ -87,7 +87,7 @@
     "avancementEtudesTitle": "2. État d'avancement des études",
     "avancementEtudesHint": "Avancement par phase d'étude, dépôt et état de validation.",
     "phase": "Phase",
-    "avancementPct": "Avancement %",
+    "avancementPct": "Avancement (%)",
     "depot": "Dépôt",
     "etatValidation": "État validation",
     "etatValidationNonRenseigne": "— Non renseigné —",
@@ -106,7 +106,6 @@
     "previsionsHint": "Saisissez des prévisions pour n'importe quelle semaine (passée, en cours ou future). Choisissez la semaine ci-dessous puis ajoutez les tâches prévues.",
     "previsionsCentralized": "La gestion des tâches et prévisions est désormais centralisée dans le module Planning & Tâches. Créez, modifiez et suivez toutes les tâches depuis cet espace dédié.",
     "goToPlanning": "Accéder au Planning & Tâches",
-    "avancementPct": "Avancement (%)",
     "avancementPctPlaceholder": "0–100",
     "annee": "Année",
     "semaine": "Semaine (1–53)",
@@ -132,8 +131,55 @@
     "createProject": "Créer le projet",
     "besoinsObservations": "Besoins et observations (PV)",
     "besoinsObservationsHint": "Choisissez dans la liste ou ajoutez un besoin non listé.",
-    "besoinsMateriel": "Besoins matériels",
-    "besoinsHumain": "Besoins humains",
+    "besoinsMateriel": {
+      "groups": {
+        "engins": "Engins",
+        "equipements": "Équipements",
+        "combinaisons": "Combinaisons"
+      },
+      "options": {
+        "niveleuse_1_unite": "Niveleuse (1 unité)",
+        "compacteur_1_unite": "Compacteur (1 unité)",
+        "pelle_hydraulique_1_unite": "Pelle hydraulique (1 unité)",
+        "bulldozer_1_unite": "Bulldozer (1 unité)",
+        "camion_benne_2_unites": "Camion benne (2 unités)",
+        "dumper_1_unite": "Dumper (1 unité)",
+        "chargeur_1_unite": "Chargeur (1 unité)",
+        "rouleau_compresseur_1_unite": "Rouleau compresseur (1 unité)",
+        "presse_a_beton_1_unite": "Presse à béton (1 unité)",
+        "betonniere_1_unite": "Bétonnière (1 unité)",
+        "groupe_electrogene_1_unite": "Groupe électrogène (1 unité)",
+        "pompe_a_beton_1_unite": "Pompe à béton (1 unité)",
+        "niveleuse_compacteur": "Niveleuse + compacteur",
+        "niveleuse_2_camions_benne": "Niveleuse + 2 camions benne",
+        "pelle_2_dumpers": "Pelle + 2 dumpers",
+        "2_presses_a_beton_betonniere": "2 presses à béton + bétonnière",
+        "camion_citerne_eau": "Camion-citerne (eau)",
+        "grue_a_tour_1_unite": "Grue à tour (1 unité)"
+      }
+    },
+    "besoinsHumain": {
+      "groups": {
+        "roles": "Rôles",
+        "combinaisons": "Combinaisons"
+      },
+      "options": {
+        "chef_de_chantier_1": "Chef de chantier (1)",
+        "conducteur_de_travaux_1": "Conducteur de travaux (1)",
+        "conducteur_engins_2": "Conducteur engins (2)",
+        "ouvrier_qualifie_2": "Ouvrier qualifié (2)",
+        "stagiaire_genie_civil_1": "Stagiaire génie civil (1)",
+        "topographe_1": "Topographe (1)",
+        "geometre_1": "Géomètre (1)",
+        "soudeur_1": "Soudeur (1)",
+        "grutier_1": "Grutier (1)",
+        "agent_de_securite_1": "Agent de sécurité (1)",
+        "1_chef_chantier_2_conducteurs_engins": "1 chef de chantier + 2 conducteurs engins",
+        "1_conducteur_travaux_2_ouvriers": "1 conducteur de travaux + 2 ouvriers",
+        "1_topographe_1_geometre": "1 topographe + 1 géomètre",
+        "2_conducteurs_engins_1_grutier": "2 conducteurs engins + 1 grutier"
+      }
+    },
     "choisirBesoinMateriel": "— Choisir un besoin matériel —",
     "choisirBesoinHumain": "— Choisir un besoin humain —",
     "ajouterBesoinNonListe": "Ajouter un besoin non listé...",
@@ -277,55 +323,7 @@
         "formation_securite_equipe": "Formation sécurité équipe"
       }
     },
-    "besoinsMateriel": {
-      "groups": {
-        "engins": "Engins",
-        "equipements": "Équipements",
-        "combinaisons": "Combinaisons"
-      },
-      "options": {
-        "niveleuse_1_unite": "Niveleuse (1 unité)",
-        "compacteur_1_unite": "Compacteur (1 unité)",
-        "pelle_hydraulique_1_unite": "Pelle hydraulique (1 unité)",
-        "bulldozer_1_unite": "Bulldozer (1 unité)",
-        "camion_benne_2_unites": "Camion benne (2 unités)",
-        "dumper_1_unite": "Dumper (1 unité)",
-        "chargeur_1_unite": "Chargeur (1 unité)",
-        "rouleau_compresseur_1_unite": "Rouleau compresseur (1 unité)",
-        "presse_a_beton_1_unite": "Presse à béton (1 unité)",
-        "betonniere_1_unite": "Bétonnière (1 unité)",
-        "groupe_electrogene_1_unite": "Groupe électrogène (1 unité)",
-        "pompe_a_beton_1_unite": "Pompe à béton (1 unité)",
-        "niveleuse_compacteur": "Niveleuse + compacteur",
-        "niveleuse_2_camions_benne": "Niveleuse + 2 camions benne",
-        "pelle_2_dumpers": "Pelle + 2 dumpers",
-        "2_presses_a_beton_betonniere": "2 presses à béton + bétonnière",
-        "camion_citerne_eau": "Camion-citerne (eau)",
-        "grue_a_tour_1_unite": "Grue à tour (1 unité)"
-      }
-    },
-    "besoinsHumain": {
-      "groups": {
-        "roles": "Rôles",
-        "combinaisons": "Combinaisons"
-      },
-      "options": {
-        "chef_de_chantier_1": "Chef de chantier (1)",
-        "conducteur_de_travaux_1": "Conducteur de travaux (1)",
-        "conducteur_engins_2": "Conducteur engins (2)",
-        "ouvrier_qualifie_2": "Ouvrier qualifié (2)",
-        "stagiaire_genie_civil_1": "Stagiaire génie civil (1)",
-        "topographe_1": "Topographe (1)",
-        "geometre_1": "Géomètre (1)",
-        "soudeur_1": "Soudeur (1)",
-        "grutier_1": "Grutier (1)",
-        "agent_de_securite_1": "Agent de sécurité (1)",
-        "1_chef_chantier_2_conducteurs_engins": "1 chef de chantier + 2 conducteurs engins",
-        "1_conducteur_travaux_2_ouvriers": "1 conducteur de travaux + 2 ouvriers",
-        "1_topographe_1_geometre": "1 topographe + 1 géomètre",
-        "2_conducteurs_engins_1_grutier": "2 conducteurs engins + 1 grutier"
-      }
-    }
+    "suiviMensuelLoadError": "Le suivi mensuel sauvegardé n'a pas pu être chargé. Rechargez la page avant de sauvegarder."
   },
   "validation": {
     "dateFinBeforeDebut": "La date de fin contractuelle ne peut pas être antérieure à la date de début.",
@@ -411,7 +409,8 @@
         "statut": "Statut",
         "manager": "Chef de projet"
       }
-    }
+    },
+    "pageGuide": "Gérez tous vos projets BTP depuis cette page. Filtrez par statut, type ou client. Cliquez sur un projet pour accéder à ses détails, son budget et son planning."
   },
   "enums": {
     "statut": {
@@ -609,7 +608,10 @@
     "enRetard": "En retard",
     "addLocalisation": "Ajouter la localisation",
     "progressComparaison": "Avancement physique vs délai consommé",
-    "localisationAbsente": "Localisation non renseignée"
+    "localisationAbsente": "Localisation non renseignée",
+    "loadPartialError": "Certaines données du projet n'ont pas pu être chargées.",
+    "pointsATraiter": "À traiter",
+    "aucunBlocage": "Aucun blocage"
   },
   "chantier": {
     "actif": "Chantier actif",
@@ -790,5 +792,32 @@
     "excelDesc": "Classeur .xlsx avec feuilles par section (suivi mensuel, études, etc.).",
     "pdfLabel": "PDF",
     "pdfDesc": "Document .pdf fixe, prêt à l'impression et à l'archivage."
+  },
+  "equipe": {
+    "title": "Équipe du projet",
+    "subtitle": "Affectations des utilisateurs sur ce projet",
+    "assign": "Affecter",
+    "assignTitle": "Affecter un utilisateur — {{projet}}",
+    "editTitle": "Modifier l'affectation",
+    "edit": "Modifier",
+    "finish": "Terminer",
+    "cancelAssign": "Annuler",
+    "cancelConfirmTitle": "Annuler l'affectation",
+    "cancelConfirmMessage": "Annuler l'affectation de {{user}} ({{poste}}) ? L'affectation passera au statut « Annulée ».",
+    "history": "Afficher l'historique ({{count}})",
+    "hideHistory": "Masquer l'historique",
+    "empty": "Aucun membre affecté à ce projet pour le moment.",
+    "loadError": "Impossible de charger l'équipe du projet.",
+    "form": {
+      "user": "Utilisateur",
+      "role": "Rôle sur le projet",
+      "dateDebut": "Date de début",
+      "dateFin": "Date de fin",
+      "observations": "Observations",
+      "save": "Enregistrer",
+      "confirm": "Affecter",
+      "cancel": "Annuler",
+      "required": "Veuillez renseigner l'utilisateur, le rôle et la date de début."
+    }
   }
 }

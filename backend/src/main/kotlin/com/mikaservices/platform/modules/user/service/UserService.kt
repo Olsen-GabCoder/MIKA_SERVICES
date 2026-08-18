@@ -18,6 +18,9 @@ import com.mikaservices.platform.modules.user.dto.response.LoginHistoryEntryResp
 import com.mikaservices.platform.modules.user.dto.response.UserForMessagingResponse
 import com.mikaservices.platform.modules.user.dto.response.UserSummaryResponse
 import com.mikaservices.platform.modules.user.dto.response.UserResponse
+import com.mikaservices.platform.modules.user.dto.response.UserStatsResponse
+import com.mikaservices.platform.modules.user.dto.response.RecentHireResponse
+import com.mikaservices.platform.modules.user.dto.response.CountByLabelResponse
 import com.mikaservices.platform.modules.user.entity.Departement
 import com.mikaservices.platform.modules.user.entity.Role
 import com.mikaservices.platform.modules.user.entity.Specialite
@@ -183,6 +186,67 @@ class UserService(
         }
     }
     
+    @Transactional(readOnly = true)
+    fun getStats(): UserStatsResponse {
+        val users = userRepository.findAll()
+        val now = java.time.LocalDateTime.now()
+        val ninetyDaysAgo = java.time.LocalDate.now().minusDays(90)
+
+        val actifs = users.count { it.actif }.toLong()
+        val verrouilles = users.count { it.lockoutUntil != null && it.lockoutUntil!!.isAfter(now) }.toLong()
+        val sansRole = users.count { it.roles.isEmpty() }.toLong()
+
+        val departements = departementRepository.findAll().filter { it.actif }
+        val deptsSansResponsable = departements.filter { it.responsable == null }.map { it.nom }
+
+        val recentHires = users
+            .filter { it.dateEmbauche != null && !it.dateEmbauche!!.isBefore(ninetyDaysAgo) }
+            .sortedByDescending { it.dateEmbauche }
+        val recentHiresDto = recentHires.take(10).map { u ->
+            RecentHireResponse(
+                id = u.id!!,
+                nom = u.nom,
+                prenom = u.prenom,
+                matricule = u.matricule,
+                departement = u.departements.firstOrNull()?.nom,
+                role = u.roles.firstOrNull()?.nom,
+                dateEmbauche = u.dateEmbauche
+            )
+        }
+
+        val parStatut = listOf(
+            CountByLabelResponse("ACTIF", actifs),
+            CountByLabelResponse("INACTIF", users.size - actifs),
+            CountByLabelResponse("VERROUILLE", verrouilles)
+        )
+        val parDepartement = departements.map { dept ->
+            CountByLabelResponse(
+                dept.nom,
+                users.count { u -> u.departements.any { it.id == dept.id } }.toLong()
+            )
+        }.sortedByDescending { it.count }
+        val parRole = users
+            .flatMap { it.roles }
+            .groupingBy { it.nom }
+            .eachCount()
+            .map { (nom, count) -> CountByLabelResponse(nom, count.toLong()) }
+            .sortedByDescending { it.count }
+
+        return UserStatsResponse(
+            total = users.size.toLong(),
+            actifs = actifs,
+            inactifs = users.size - actifs,
+            verrouilles = verrouilles,
+            sansRole = sansRole,
+            departementsSansResponsable = deptsSansResponsable,
+            embauches90Jours = recentHires.size.toLong(),
+            embauchesRecentes = recentHiresDto,
+            parStatut = parStatut,
+            parDepartement = parDepartement,
+            parRole = parRole
+        )
+    }
+
     fun findById(id: Long): UserResponse {
         val user = userRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Utilisateur introuvable avec l'ID: $id") }
@@ -204,6 +268,17 @@ class UserService(
     @Transactional(readOnly = true)
     fun findChefsProjetActifs(): List<UserSummaryResponse> {
         return userRepository.findByRoleCode("CHEF_PROJET")
+            .asSequence()
+            .filter { it.actif }
+            .sortedWith(compareBy({ it.nom.lowercase() }, { it.prenom.lowercase() }))
+            .map { UserMapper.toSummaryResponse(it) }
+            .toList()
+    }
+
+    /** Utilisateurs actifs affectables à un projet (liste légère pour le formulaire d'affectation, admin + chef de projet). */
+    @Transactional(readOnly = true)
+    fun findActifsPourAffectation(): List<UserSummaryResponse> {
+        return userRepository.findAll()
             .asSequence()
             .filter { it.actif }
             .sortedWith(compareBy({ it.nom.lowercase() }, { it.prenom.lowercase() }))
@@ -350,7 +425,12 @@ class UserService(
         }
         
         // Mise à jour du supérieur hiérarchique uniquement si un id est fourni (évite d'effacer en mise à jour partielle, ex. toggle actif)
-        request.superieurHierarchiqueId?.let { superieurId ->
+        if (request.clearSuperieurHierarchique) {
+            user.superieurHierarchique = null
+        } else request.superieurHierarchiqueId?.let { superieurId ->
+            if (superieurId == user.id) {
+                throw BadRequestException("Un utilisateur ne peut pas être son propre supérieur hiérarchique")
+            }
             val superieur = userRepository.findById(superieurId)
                 .orElseThrow { ResourceNotFoundException("Supérieur hiérarchique introuvable") }
             user.superieurHierarchique = superieur

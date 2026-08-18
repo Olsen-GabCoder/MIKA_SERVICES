@@ -57,20 +57,8 @@ export const UserList = ({
   const formatDate = useFormatDate()
   const dispatch = useAppDispatch()
   const [toggleActifUser, setToggleActifUser] = useState<User | null>(null)
-  const [openActionsId, setOpenActionsId] = useState<number | null>(null)
-  const actionsMenuRef = useRef<HTMLDivElement>(null)
   const [searchInput, setSearchInput] = useState(search)
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (actionsMenuRef.current && !actionsMenuRef.current.contains(e.target as Node)) {
-        setOpenActionsId(null)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   useEffect(() => {
     setSearchInput(search)
@@ -160,7 +148,7 @@ export const UserList = ({
 
       {/* Vue cartes mobile */}
       <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-600">
-        {isLoading ? (
+        {isLoading && users.length === 0 ? (
           <div className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
@@ -258,7 +246,7 @@ export const UserList = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-            {isLoading ? (
+            {isLoading && users.length === 0 ? (
               <tr>
                 <td colSpan={9} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
                   <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -302,8 +290,7 @@ export const UserList = ({
                     {formatDate(user.createdAt, { includeTime: true })}
                   </td>
                   <td className="px-4 py-3 text-right text-sm">
-                    {/* Desktop: boutons alignés */}
-                    <div className="hidden md:flex flex-wrap items-center justify-end gap-1.5">
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
                       <Link to={`/users/${user.id}`}>
                         <Button variant="outline" size="sm">
                           {t('list.view')}
@@ -322,47 +309,6 @@ export const UserList = ({
                       >
                         {user.actif ? t('list.deactivate') : t('list.activate')}
                       </Button>
-                    </div>
-                    {/* Mobile: menu déroulant */}
-                    <div className="md:hidden relative" ref={openActionsId === user.id ? actionsMenuRef : undefined}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setOpenActionsId((id) => (id === user.id ? null : user.id))}
-                        aria-haspopup="true"
-                        aria-expanded={openActionsId === user.id}
-                      >
-                        {t('list.columns.actions')} ▾
-                      </Button>
-                      {openActionsId === user.id && (
-                        <div className="absolute right-0 top-full mt-1 z-10 min-w-[160px] py-1 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg">
-                          <Link
-                            to={`/users/${user.id}`}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                            onClick={() => setOpenActionsId(null)}
-                          >
-                            {t('list.view')}
-                          </Link>
-                          <Link
-                            to={`/users/${user.id}`}
-                            state={{ openEdit: true }}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                            onClick={() => setOpenActionsId(null)}
-                          >
-                            {t('list.edit')}
-                          </Link>
-                          <button
-                            type="button"
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                            onClick={() => {
-                              setToggleActifUser(user)
-                              setOpenActionsId(null)
-                            }}
-                          >
-                            {user.actif ? t('list.deactivate') : t('list.activate')}
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </td>
                 </tr>

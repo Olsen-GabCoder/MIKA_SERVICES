@@ -112,17 +112,18 @@ object UserMapper {
         user.nom = request.nom
         user.prenom = request.prenom
         user.email = request.email
-        request.telephone?.let { user.telephone = it }
+        // Champs texte optionnels : null = non fourni (mise à jour partielle, intouché) ; "" = effacer la valeur
+        request.telephone?.let { user.telephone = it.trim().ifBlank { null } }
         request.dateNaissance?.let { user.dateNaissance = it }
-        request.adresse?.let { user.adresse = it }
-        request.ville?.let { user.ville = it }
-        request.quartier?.let { user.quartier = it }
-        request.province?.let { user.province = it }
-        request.numeroCNI?.let { user.numeroCNI = it }
-        request.numeroPasseport?.let { user.numeroPasseport = it }
+        request.adresse?.let { user.adresse = it.trim().ifBlank { null } }
+        request.ville?.let { user.ville = it.trim().ifBlank { null } }
+        request.quartier?.let { user.quartier = it.trim().ifBlank { null } }
+        request.province?.let { user.province = it.trim().ifBlank { null } }
+        request.numeroCNI?.let { user.numeroCNI = it.trim().ifBlank { null } }
+        request.numeroPasseport?.let { user.numeroPasseport = it.trim().ifBlank { null } }
         request.dateEmbauche?.let { user.dateEmbauche = it }
         request.photo?.let { user.photo = it }
-        request.ficheMission?.let { user.ficheMission = it }
+        request.ficheMission?.let { user.ficheMission = it.trim().ifBlank { null } }
         request.salaireMensuel?.let { user.salaireMensuel = it }
         request.typeContrat?.let { user.typeContrat = it }
         request.niveauExperience?.let { user.niveauExperience = it }

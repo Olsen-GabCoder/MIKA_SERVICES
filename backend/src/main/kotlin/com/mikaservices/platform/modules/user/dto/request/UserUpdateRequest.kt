@@ -69,5 +69,8 @@ data class UserUpdateRequest(
     
     val specialiteIds: List<Long>? = null,
     
-    val superieurHierarchiqueId: Long? = null
+    val superieurHierarchiqueId: Long? = null,
+
+    /** true = retirer le supérieur hiérarchique (null seul est ambigu : il signifie « champ non fourni » pour les mises à jour partielles). */
+    val clearSuperieurHierarchique: Boolean = false
 )

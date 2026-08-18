@@ -114,6 +114,13 @@ class EquipeService(
     }
 
     @Transactional(readOnly = true)
+    fun findAffectationsByEquipeId(equipeId: Long): List<AffectationChantierResponse> {
+        return affectationChantierRepository.findByEquipeId(equipeId)
+            .map { EquipeMapper.toAffectationResponse(it) }
+            .sortedByDescending { it.dateDebut }
+    }
+
+    @Transactional(readOnly = true)
     fun findAffectationsByUserId(userId: Long): List<AffectationChantierResponse> {
         val membres = membreEquipeRepository.findByUserIdAndActifTrue(userId)
         val equipeIds = membres.map { it.equipe.id!! }.distinct()

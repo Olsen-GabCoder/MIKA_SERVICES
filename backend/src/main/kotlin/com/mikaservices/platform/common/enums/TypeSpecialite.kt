@@ -13,5 +13,15 @@ enum class TypeSpecialite {
     TOPOGRAPHE,
     LABORANTIN,
     MECANICIEN,
-    AUTRE
+    AUTRE,
+
+    // Catégories du référentiel métiers BTP (regroupement des spécialités seedées)
+    ENCADREMENT_CHANTIER,
+    ETUDES_TECHNIQUE,
+    GROS_OEUVRE_VRD,
+    SECOND_OEUVRE,
+    MATERIEL_CONDUITE,
+    LOGISTIQUE_SUPPORT,
+    QSHE,
+    ADMINISTRATIF
 }

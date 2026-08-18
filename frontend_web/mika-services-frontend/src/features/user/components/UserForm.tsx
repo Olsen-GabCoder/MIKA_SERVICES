@@ -37,7 +37,7 @@ export const UserForm = ({ onSuccess, onCancel }: UserFormProps) => {
 
   useEffect(() => {
     roleApi.getActive().then(setRoles).catch(() => setRoles([]))
-    userApi.getAll({ page: 0, size: 500 }).then((res) =>
+    userApi.getAll({ page: 0, size: 500, actif: true }).then((res) =>
       setUsers(res.content.map((u) => ({ id: u.id, prenom: u.prenom, nom: u.nom })))
     ).catch(() => setUsers([]))
   }, [])

@@ -76,6 +76,12 @@ class EquipeController(
         return ResponseEntity.ok(equipeService.findAffectations(projetId, pageable))
     }
 
+    @GetMapping("/{id}/affectations")
+    @Operation(summary = "Lister les affectations d'une équipe")
+    fun findAffectationsByEquipe(@PathVariable id: Long): ResponseEntity<List<AffectationChantierResponse>> {
+        return ResponseEntity.ok(equipeService.findAffectationsByEquipeId(id))
+    }
+
     @GetMapping("/affectations/user/{userId}")
     @Operation(summary = "Lister les affectations d'un utilisateur")
     fun findAffectationsByUser(@PathVariable userId: Long): ResponseEntity<List<AffectationChantierResponse>> {

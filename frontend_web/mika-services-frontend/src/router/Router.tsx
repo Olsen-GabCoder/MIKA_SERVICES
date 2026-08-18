@@ -8,7 +8,7 @@ import App from '@/App'
 
 const ProfilePage = lazy(() => import('@/features/user/pages/ProfilePage').then(m => ({ default: m.ProfilePage })))
 const ParametresPage = lazy(() => import('@/features/user/pages/ParametresPage').then(m => ({ default: m.ParametresPage })))
-const UserManagementPage = lazy(() => import('@/features/user/pages/UserManagementPage').then(m => ({ default: m.UserManagementPage })))
+const UsersOrganisationPage = lazy(() => import('@/features/user/pages/UsersOrganisationPage').then(m => ({ default: m.UsersOrganisationPage })))
 const UserDetailPage = lazy(() => import('@/features/user/pages/UserDetailPage').then(m => ({ default: m.UserDetailPage })))
 const ProjetListPage = lazy(() => import('@/features/projet/pages/ProjetListPage').then(m => ({ default: m.ProjetListPage })))
 const ProjetDetailPage = lazy(() => import('@/features/projet/pages/ProjetDetailPage').then(m => ({ default: m.ProjetDetailPage })))
@@ -128,7 +128,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'users',
-        element: <ProtectedRoute requireAdmin><L><UserManagementPage /></L></ProtectedRoute>,
+        element: <ProtectedRoute requireAdmin><L><UsersOrganisationPage /></L></ProtectedRoute>,
       },
       {
         path: 'users/:id',

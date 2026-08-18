@@ -61,24 +61,28 @@ export const fetchUsers = createAsyncThunk(
     const state = getState() as RootState
     const cacheDuration = state.ui.cacheDuration
     const offline = typeof navigator !== 'undefined' && !navigator.onLine
-    const unfiltered = isUnfilteredListRequest(params)
+    // Seule la première page SANS filtre est cacheable : servir ce cache pour une
+    // requête filtrée/paginée renverrait de mauvais résultats.
+    const cacheable = isUnfilteredListRequest(params) && (params.page ?? 0) === 0
 
     if (offline) {
-      const cached = getUsersCache()
-      if (cached) return cached as PaginatedResponse<User>
+      if (cacheable) {
+        const cached = getUsersCache()
+        if (cached) return cached as PaginatedResponse<User>
+      }
       return rejectWithValue('offline_no_cache')
     }
-    if (!unfiltered) {
+    if (cacheable) {
       const maxAgeMs = CACHE_DURATION_MS[cacheDuration as keyof typeof CACHE_DURATION_MS]
       const cached = getUsersCacheIfValid(maxAgeMs)
       if (cached) return cached as PaginatedResponse<User>
     }
     try {
       const response = await userApi.getAll(params)
-      setUsersCache(response)
+      if (cacheable) setUsersCache(response)
       return response
     } catch (e) {
-      if (isNetworkError(e)) {
+      if (cacheable && isNetworkError(e)) {
         const cached = getUsersCache()
         if (cached) return cached as PaginatedResponse<User>
       }
@@ -235,9 +239,9 @@ const userSlice = createSlice({
       state.isLoading = true
       state.error = null
     })
-    builder.addCase(createUser.fulfilled, (state, action) => {
+    // Pas d'insertion locale : la liste est rechargée par le composant (tri/pagination respectés)
+    builder.addCase(createUser.fulfilled, (state) => {
       state.isLoading = false
-      state.users.push(action.payload)
     })
     builder.addCase(createUser.rejected, (state, action) => {
       state.isLoading = false

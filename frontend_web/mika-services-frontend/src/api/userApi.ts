@@ -108,6 +108,8 @@ export interface UserUpdateRequest {
   departementIds?: number[]
   specialiteIds?: number[]
   superieurHierarchiqueId?: number | null
+  /** true = retirer le supérieur hiérarchique (absent/null = champ non fourni, intouché). */
+  clearSuperieurHierarchique?: boolean
 }
 
 /** Payload pour PATCH /users/me (mise à jour du profil par l'utilisateur connecté). */
@@ -157,6 +159,29 @@ export interface UserForMessaging {
   roleLabel: string
 }
 
+/** Réponse GET /users/stats : statistiques agrégées des effectifs. */
+export interface UserStats {
+  total: number
+  actifs: number
+  inactifs: number
+  verrouilles: number
+  sansRole: number
+  departementsSansResponsable: string[]
+  embauches90Jours: number
+  embauchesRecentes: {
+    id: number
+    nom: string
+    prenom: string
+    matricule: string
+    departement: string | null
+    role: string | null
+    dateEmbauche: string | null
+  }[]
+  parStatut: { label: string; count: number }[]
+  parDepartement: { label: string; count: number }[]
+  parRole: { label: string; count: number }[]
+}
+
 export interface PaginatedResponse<T> {
   content: T[]
   totalElements: number
@@ -193,6 +218,11 @@ export const userApi = {
     return response.data
   },
 
+  getStats: async (): Promise<UserStats> => {
+    const response = await apiClient.get<UserStats>('/users/stats')
+    return response.data
+  },
+
   getById: async (id: number): Promise<User> => {
     const response = await apiClient.get<User>(`/users/${id}`)
     return response.data
@@ -211,6 +241,12 @@ export const userApi = {
   /** Chefs de projet actifs (filtre liste projets). Accessible à tout utilisateur connecté. */
   getChefsProjet: async (): Promise<UserSummary[]> => {
     const response = await apiClient.get<UserSummary[]>(`${API_ENDPOINTS.USERS.BASE}/chefs-projet`)
+    return response.data ?? []
+  },
+
+  /** Utilisateurs actifs affectables à un projet (admins + chefs de projet). */
+  getAffectables: async (): Promise<UserSummary[]> => {
+    const response = await apiClient.get<UserSummary[]>(`${API_ENDPOINTS.USERS.BASE}/affectables`)
     return response.data ?? []
   },
 

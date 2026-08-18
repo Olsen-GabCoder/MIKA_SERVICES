@@ -87,7 +87,7 @@
     "avancementEtudesTitle": "2. Study progress",
     "avancementEtudesHint": "Progress by study phase, submission and validation status.",
     "phase": "Phase",
-    "avancementPct": "Progress %",
+    "avancementPct": "Progress (%)",
     "depot": "Submission",
     "etatValidation": "Validation status",
     "etatValidationNonRenseigne": "— Not specified —",
@@ -106,7 +106,6 @@
     "previsionsHint": "Enter forecasts for any week (past, current or future). Select the week below then add planned tasks.",
     "previsionsCentralized": "Task and forecast management is now centralized in the Planning & Tasks module. Create, edit and track all tasks from this dedicated space.",
     "goToPlanning": "Go to Planning & Tasks",
-    "avancementPct": "Progress (%)",
     "avancementPctPlaceholder": "0–100",
     "annee": "Year",
     "semaine": "Week (1–53)",
@@ -132,8 +131,55 @@
     "createProject": "Create project",
     "besoinsObservations": "Needs and observations (PV)",
     "besoinsObservationsHint": "Choose from the list or add an unlisted need.",
-    "besoinsMateriel": "Material needs",
-    "besoinsHumain": "Staff needs",
+    "besoinsMateriel": {
+      "groups": {
+        "engins": "Plant",
+        "equipements": "Equipment",
+        "combinaisons": "Combinations"
+      },
+      "options": {
+        "niveleuse_1_unite": "Grader (1 unit)",
+        "compacteur_1_unite": "Compactor (1 unit)",
+        "pelle_hydraulique_1_unite": "Hydraulic excavator (1 unit)",
+        "bulldozer_1_unite": "Bulldozer (1 unit)",
+        "camion_benne_2_unites": "Dump truck (2 units)",
+        "dumper_1_unite": "Dumper (1 unit)",
+        "chargeur_1_unite": "Loader (1 unit)",
+        "rouleau_compresseur_1_unite": "Road roller (1 unit)",
+        "presse_a_beton_1_unite": "Concrete press (1 unit)",
+        "betonniere_1_unite": "Concrete mixer (1 unit)",
+        "groupe_electrogene_1_unite": "Generator (1 unit)",
+        "pompe_a_beton_1_unite": "Concrete pump (1 unit)",
+        "niveleuse_compacteur": "Grader + compactor",
+        "niveleuse_2_camions_benne": "Grader + 2 dump trucks",
+        "pelle_2_dumpers": "Excavator + 2 dumpers",
+        "2_presses_a_beton_betonniere": "2 concrete presses + mixer",
+        "camion_citerne_eau": "Water tanker",
+        "grue_a_tour_1_unite": "Tower crane (1 unit)"
+      }
+    },
+    "besoinsHumain": {
+      "groups": {
+        "roles": "Roles",
+        "combinaisons": "Combinations"
+      },
+      "options": {
+        "chef_de_chantier_1": "Site manager (1)",
+        "conducteur_de_travaux_1": "Site engineer (1)",
+        "conducteur_engins_2": "Plant operator (2)",
+        "ouvrier_qualifie_2": "Skilled worker (2)",
+        "stagiaire_genie_civil_1": "Civil engineering intern (1)",
+        "topographe_1": "Surveyor (1)",
+        "geometre_1": "Land surveyor (1)",
+        "soudeur_1": "Welder (1)",
+        "grutier_1": "Crane operator (1)",
+        "agent_de_securite_1": "Security officer (1)",
+        "1_chef_chantier_2_conducteurs_engins": "1 site manager + 2 plant operators",
+        "1_conducteur_travaux_2_ouvriers": "1 site engineer + 2 workers",
+        "1_topographe_1_geometre": "1 surveyor + 1 land surveyor",
+        "2_conducteurs_engins_1_grutier": "2 plant operators + 1 crane operator"
+      }
+    },
     "choisirBesoinMateriel": "— Choose a material need —",
     "choisirBesoinHumain": "— Choose a staff need —",
     "ajouterBesoinNonListe": "Add an unlisted need...",
@@ -277,55 +323,7 @@
         "formation_securite_equipe": "Team safety training"
       }
     },
-    "besoinsMateriel": {
-      "groups": {
-        "engins": "Plant",
-        "equipements": "Equipment",
-        "combinaisons": "Combinations"
-      },
-      "options": {
-        "niveleuse_1_unite": "Grader (1 unit)",
-        "compacteur_1_unite": "Compactor (1 unit)",
-        "pelle_hydraulique_1_unite": "Hydraulic excavator (1 unit)",
-        "bulldozer_1_unite": "Bulldozer (1 unit)",
-        "camion_benne_2_unites": "Dump truck (2 units)",
-        "dumper_1_unite": "Dumper (1 unit)",
-        "chargeur_1_unite": "Loader (1 unit)",
-        "rouleau_compresseur_1_unite": "Road roller (1 unit)",
-        "presse_a_beton_1_unite": "Concrete press (1 unit)",
-        "betonniere_1_unite": "Concrete mixer (1 unit)",
-        "groupe_electrogene_1_unite": "Generator (1 unit)",
-        "pompe_a_beton_1_unite": "Concrete pump (1 unit)",
-        "niveleuse_compacteur": "Grader + compactor",
-        "niveleuse_2_camions_benne": "Grader + 2 dump trucks",
-        "pelle_2_dumpers": "Excavator + 2 dumpers",
-        "2_presses_a_beton_betonniere": "2 concrete presses + mixer",
-        "camion_citerne_eau": "Water tanker",
-        "grue_a_tour_1_unite": "Tower crane (1 unit)"
-      }
-    },
-    "besoinsHumain": {
-      "groups": {
-        "roles": "Roles",
-        "combinaisons": "Combinations"
-      },
-      "options": {
-        "chef_de_chantier_1": "Site manager (1)",
-        "conducteur_de_travaux_1": "Site engineer (1)",
-        "conducteur_engins_2": "Plant operator (2)",
-        "ouvrier_qualifie_2": "Skilled worker (2)",
-        "stagiaire_genie_civil_1": "Civil engineering intern (1)",
-        "topographe_1": "Surveyor (1)",
-        "geometre_1": "Land surveyor (1)",
-        "soudeur_1": "Welder (1)",
-        "grutier_1": "Crane operator (1)",
-        "agent_de_securite_1": "Security officer (1)",
-        "1_chef_chantier_2_conducteurs_engins": "1 site manager + 2 plant operators",
-        "1_conducteur_travaux_2_ouvriers": "1 site engineer + 2 workers",
-        "1_topographe_1_geometre": "1 surveyor + 1 land surveyor",
-        "2_conducteurs_engins_1_grutier": "2 plant operators + 1 crane operator"
-      }
-    }
+    "suiviMensuelLoadError": "The saved monthly tracking could not be loaded. Reload the page before saving."
   },
   "validation": {
     "dateFinBeforeDebut": "End date cannot be before start date.",
@@ -411,7 +409,8 @@
         "statut": "Status",
         "manager": "Project manager"
       }
-    }
+    },
+    "pageGuide": "Manage all your construction projects from this page. Filter by status, type or client. Click a project to access its details, budget and planning."
   },
   "enums": {
     "statut": {
@@ -609,7 +608,10 @@
     "enRetard": "Late",
     "addLocalisation": "Add location",
     "progressComparaison": "Physical progress vs time elapsed",
-    "localisationAbsente": "Location not set"
+    "localisationAbsente": "Location not set",
+    "loadPartialError": "Some project data could not be loaded.",
+    "pointsATraiter": "To address",
+    "aucunBlocage": "No blockers"
   },
   "chantier": {
     "actif": "Site active",
@@ -780,5 +782,32 @@
     "excelDesc": "Spreadsheet .xlsx with sheets per section (monthly tracking, studies, etc.).",
     "pdfLabel": "PDF",
     "pdfDesc": "Fixed .pdf document, ready for printing and archiving."
+  },
+  "equipe": {
+    "title": "Project team",
+    "subtitle": "User assignments on this project",
+    "assign": "Assign",
+    "assignTitle": "Assign a user — {{projet}}",
+    "editTitle": "Edit assignment",
+    "edit": "Edit",
+    "finish": "End",
+    "cancelAssign": "Cancel",
+    "cancelConfirmTitle": "Cancel assignment",
+    "cancelConfirmMessage": "Cancel the assignment of {{user}} ({{poste}})? The assignment will move to \"Cancelled\" status.",
+    "history": "Show history ({{count}})",
+    "hideHistory": "Hide history",
+    "empty": "No member assigned to this project yet.",
+    "loadError": "Unable to load the project team.",
+    "form": {
+      "user": "User",
+      "role": "Role on the project",
+      "dateDebut": "Start date",
+      "dateFin": "End date",
+      "observations": "Notes",
+      "save": "Save",
+      "confirm": "Assign",
+      "cancel": "Cancel",
+      "required": "Please fill in the user, the role and the start date."
+    }
   }
 }

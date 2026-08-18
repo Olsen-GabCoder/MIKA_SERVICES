@@ -131,10 +131,15 @@ export const UserDetailPage = () => {
       email: user.email,
       actif: !user.actif,
     }
-    dispatch(updateUser({ id: user.id, data }))
+    const wasActif = user.actif
     setConfirmToggleActif(false)
-    setActionMessage({ type: 'success', text: user.actif ? t('detail.actions.deactivated') : t('detail.actions.activated') })
-    setTimeout(() => setActionMessage(null), 4000)
+    dispatch(updateUser({ id: user.id, data }))
+      .unwrap()
+      .then(() => {
+        setActionMessage({ type: 'success', text: wasActif ? t('detail.actions.deactivated') : t('detail.actions.activated') })
+        setTimeout(() => setActionMessage(null), 4000)
+      })
+      .catch(() => {}) // l'erreur du slice est affichée via l'effet sur `error`
   }
 
   const handleResetPassword = async () => {

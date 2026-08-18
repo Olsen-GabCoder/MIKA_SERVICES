@@ -19,7 +19,7 @@ import { InspectionCreateModal } from '../components/InspectionCreateModal'
 import { DocumentEditModal } from '../components/DocumentEditModal'
 import { TransfertCreateModal } from '../components/TransfertCreateModal'
 import { mouvementEnginApi } from '@/api/mouvementEnginApi'
-import apiClient from '@/api/axios'
+import apiClient, { peekCachedGet } from '@/api/axios'
 import { QrCodeModal } from '../components/QrCodeModal'
 import { PlanMaintenanceFormModal } from '../components/PlanMaintenanceFormModal'
 import { LeafletCarteEngins } from '../map/LeafletCarteEngins'
@@ -182,7 +182,24 @@ const EQUIPEMENTS_STATIC = [
 
 type Screen = 'dashboard' | 'fiche' | 'carte' | 'planning' | 'chantiers' | 'maintenance'
 
+/** Vrai si viewport mobile (<= 767px) — suit les changements d'orientation. */
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return isMobile
+}
+
+/** Photo engin : URL Cloudinary directe (CDN) si disponible, sinon null (fallback blob backend). */
+const directPhotoUrl = (photo?: string | null): string | null =>
+  photo && /^https?:\/\//.test(photo) ? photo : null
+
 export const EnginListPage = () => {
+  const isMobile = useIsMobile()
 
   const confirm = useConfirm()
   const toast = useToast()
@@ -294,6 +311,30 @@ export const EnginListPage = () => {
   useEffect(() => {
     let cancelled = false
     const doSearch = searchQuery.trim().length > 0
+
+    // Stale-while-revalidate : affichage instantané depuis le cache local, puis rafraîchissement réseau
+    const listParams: Record<string, unknown> = { page: 0, size: PAGE_SIZE }
+    if (filterStatut) listParams.statut = filterStatut
+    if (filterType) listParams.type = filterType
+    if (filterChantier) listParams.projetId = Number(filterChantier)
+    if (sortParam) listParams.sort = sortParam
+    const cachedPage = doSearch
+      ? peekCachedGet<{ content: EnginSummary[]; totalPages: number; totalElements: number }>('/engins/search', { q: searchQuery.trim(), page: 0, size: PAGE_SIZE })
+      : peekCachedGet<{ content: EnginSummary[]; totalPages: number; totalElements: number }>('/engins', listParams)
+    if (cachedPage?.content) {
+      setEngins(cachedPage.content)
+      setTotalPages(cachedPage.totalPages ?? 1)
+      setTotalElements(cachedPage.totalElements ?? cachedPage.content.length)
+      setCurrentPage(0)
+      setLoading(false)
+    }
+    const cachedStats = peekCachedGet<EnginStats>('/engins/stats')
+    if (cachedStats) setStats(cachedStats)
+    const cachedAlertes = peekCachedGet<AlerteEngin[]>('/engins/alertes')
+    if (cachedAlertes) setAlertes(cachedAlertes)
+    const cachedEcheances = peekCachedGet<EcheanceEngin[]>('/engins/echeances', { jours: 7 })
+    if (cachedEcheances) setEcheances(cachedEcheances)
+
     const enginPromise = doSearch
       ? enginApi.search(searchQuery.trim(), 0, PAGE_SIZE)
       : enginApi.findAll(0, PAGE_SIZE, filterStatut || undefined, filterType || undefined, filterChantier ? Number(filterChantier) : undefined, sortParam)
@@ -320,11 +361,24 @@ export const EnginListPage = () => {
     if (engins.length === 0) return
     const withPhoto = engins.filter(e => e.photo && !enginThumbs[e.id])
     if (withPhoto.length === 0) return
+
+    // Photos Cloudinary : URL directe (CDN, cache navigateur) — aucun appel backend
+    const direct = withPhoto.filter(e => directPhotoUrl(e.photo))
+    if (direct.length > 0) {
+      setEnginThumbs(prev => {
+        const next = { ...prev }
+        direct.forEach(e => { next[e.id] = e.photo as string })
+        return next
+      })
+    }
+
+    // Photos legacy (chemin local) : fallback blob via backend
+    const legacy = withPhoto.filter(e => !directPhotoUrl(e.photo))
+    if (legacy.length === 0) return
     let cancelled = false
     const urls: string[] = []
-    // Load in small batches to avoid flooding
     const load = async () => {
-      for (const e of withPhoto) {
+      for (const e of legacy) {
         if (cancelled) break
         try {
           const blob = await enginApi.getPhotoBlob(e.id)
@@ -369,6 +423,40 @@ export const EnginListPage = () => {
     if (screen !== 'fiche' || !selectedEnginId) return
     let cancelled = false
     setFicheLoading(true)
+
+    // Stale-while-revalidate : pré-remplir la fiche depuis le cache local pendant le fetch réseau
+    const id = selectedEnginId
+    const p2050 = { page: 0, size: 50 }
+    const p2020 = { page: 0, size: 20 }
+    const cEng = peekCachedGet<Engin>(`/engins/${id}`)
+    if (cEng) { setFicheEngin(cEng); setFicheLoading(false) }
+    const cCarnet = peekCachedGet<CarnetEngin>(`/engins/${id}/carnet`)
+    if (cCarnet) setFicheCarnet(cCarnet)
+    const cMaint = peekCachedGet<{ content: OperationMaintenance[] }>(`/engins/${id}/maintenances`, p2050)
+    if (cMaint?.content) setFicheMaintenances(cMaint.content)
+    const cInc = peekCachedGet<{ content: IncidentEngin[] }>(`/engins/${id}/incidents`, p2050)
+    if (cInc?.content) setFicheIncidents(cInc.content)
+    const cDocs = peekCachedGet<{ content: DocumentEngin[] }>(`/engins/${id}/documents`, p2050)
+    if (cDocs?.content) setFicheDocuments(cDocs.content)
+    const cAff = peekCachedGet<AffectationEnginResponse[]>(`/engins/${id}/affectations`)
+    if (cAff) setFicheAffectations(cAff)
+    const cRel = peekCachedGet<{ content: ReleveCompteur[] }>(`/engins/${id}/releves-compteur`, p2020)
+    if (cRel?.content) setFicheReleves(cRel.content)
+    const cConso = peekCachedGet<{ content: ConsommationCarburant[] }>(`/engins/${id}/consommations`, p2020)
+    if (cConso?.content) setFicheConsos(cConso.content)
+    const cHm = peekCachedGet<HeuresMensuelles>(`/engins/${id}/heures-mensuelles`)
+    if (cHm) setFicheHeuresMensuelles(cHm)
+    const cPlans = peekCachedGet<PlanMaintenance[]>(`/engins/${id}/plans-maintenance`)
+    if (cPlans) setFichePlans(cPlans)
+    const cCouts = peekCachedGet<CoutEngin>(`/engins/${id}/couts`)
+    if (cCouts) setFicheCouts(cCouts)
+    const cInsp = peekCachedGet<{ content: InspectionEngin[] }>(`/engins/${id}/inspections`, p2050)
+    if (cInsp?.content) setFicheInspections(cInsp.content)
+    const cPos = peekCachedGet<{ content: PositionEngin[] }>(`/engins/${id}/positions`, p2050)
+    if (cPos?.content) setFichePositions(cPos.content)
+    const cMvts = peekCachedGet<MouvementEnginSummary[]>(`/engins/${id}/mouvements`)
+    if (cMvts) setFicheMouvements(cMvts)
+
     Promise.all([
       enginApi.findById(selectedEnginId).catch(() => null),
       enginApi.getCarnet(selectedEnginId).catch(() => null),
@@ -386,7 +474,7 @@ export const EnginListPage = () => {
       enginApi.getMouvements(selectedEnginId).catch(() => []),
     ]).then(([eng, carnet, maint, inc, docs, aff, rel, conso, hm, plans, couts, insp, pos, mvts]) => {
       if (cancelled) return
-      setFicheEngin(eng)
+      if (eng) setFicheEngin(eng)
       setFicheCarnet(carnet)
       setFicheMaintenances(maint)
       setFicheIncidents(inc)
@@ -409,6 +497,12 @@ export const EnginListPage = () => {
   useEffect(() => {
     if (screen !== 'fiche' || !selectedEnginId || !ficheEngin?.photo) {
       setEnginPhotoUrl(null)
+      return
+    }
+    // Photo Cloudinary : URL directe (CDN), pas d'appel backend
+    const direct = directPhotoUrl(ficheEngin.photo)
+    if (direct) {
+      setEnginPhotoUrl(direct)
       return
     }
     let objectUrl: string | null = null
@@ -1443,10 +1537,10 @@ ${couts}
 
           {/* Fiche card */}
           <div style={{ background: '#fff', border: '1px solid #DFE5EB', borderRadius: 8, overflow: 'hidden' }}>
-            {/* Header with photo */}
-            <div style={{ display: 'flex', gap: 24, padding: '20px 22px' }}>
+            {/* Header with photo — passe en colonne sur mobile pour ne rien tronquer */}
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 16 : 24, padding: isMobile ? '16px 14px' : '20px 22px' }}>
               <div
-                style={{ width: 230, height: 160, borderRadius: 7, flex: 'none', background: '#3F6B83', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', cursor: 'pointer', overflow: 'hidden' }}
+                style={{ width: isMobile ? '100%' : 230, height: 160, borderRadius: 7, flex: 'none', background: '#3F6B83', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', cursor: 'pointer', overflow: 'hidden' }}
                 onClick={() => photoInputRef.current?.click()}
                 title="Cliquer pour changer la photo"
               >
@@ -1485,7 +1579,7 @@ ${couts}
                   {(() => { const s = ST[ficheEngin?.statut || 'EN_SERVICE'] || ST.EN_SERVICE; return <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.05em', padding: '5px 11px', borderRadius: 5, color: s.color, background: s.bg }}>{s.label.toUpperCase()}</span> })()}
                 </div>
                 <div style={{ fontFamily: "'Barlow Semi Condensed',sans-serif", fontSize: 15, letterSpacing: '.06em', color: '#7A8B9A', marginTop: 2 }}>{ficheEngin?.code || 'ENG-2024-042'} · {ficheEngin?.marque || 'Caterpillar'} {ficheEngin?.modele || '320'} · {TYPE_LABEL[ficheEngin?.type || 'PELLETEUSE'] || 'Engin'}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginTop: 18 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 16, marginTop: 18 }}>
                   {ficheStats.map((s, i) => (
                     <div key={i}>
                       <div style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: '.09em', textTransform: 'uppercase' as const, color: '#7A8B9A' }}>{s.label}</div>
@@ -1494,8 +1588,8 @@ ${couts}
                   ))}
                 </div>
               </div>
-              {/* Action buttons */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 190 }}>
+              {/* Action buttons — pleine largeur sur mobile, forme intacte */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: isMobile ? '100%' : 190, flex: 'none' }}>
                 <button onClick={() => setShowEditModal(true)} style={{ appearance: 'none' as const, cursor: 'pointer', fontFamily: 'Barlow,sans-serif', fontSize: 14, fontWeight: 700, padding: 10, borderRadius: 6, border: 'none', background: '#2563EB', color: '#fff' }}>Modifier</button>
                 <button onClick={() => setShowAffectationModal(true)} style={{ appearance: 'none' as const, cursor: 'pointer', fontFamily: 'Barlow,sans-serif', fontSize: 14, fontWeight: 600, padding: 10, borderRadius: 6, border: '1px solid #B8D4C6', background: '#F0FAF4', color: '#16A34A' }}>Affecter à un chantier</button>
                 <button onClick={() => setShowMaintenanceModal(true)} style={{ appearance: 'none' as const, cursor: 'pointer', fontFamily: 'Barlow,sans-serif', fontSize: 14, fontWeight: 600, padding: 10, borderRadius: 6, border: '1px solid #C9D3DC', background: '#fff', color: '#33465A' }}>Planifier maintenance</button>

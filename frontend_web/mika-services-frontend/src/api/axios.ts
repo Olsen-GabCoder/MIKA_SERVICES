@@ -51,6 +51,14 @@ function getRequestCacheKey(config: InternalAxiosRequestConfig): { url: string; 
   return { url, params }
 }
 
+/**
+ * Lecture synchrone du cache des GET (stale-while-revalidate côté pages).
+ * Les params doivent être le même objet que celui passé à apiClient.get (même ordre de clés).
+ */
+export function peekCachedGet<T>(url: string, params?: Record<string, unknown>): T | null {
+  return getCachedResponse(url, params ? JSON.stringify(params) : undefined) as T | null
+}
+
 const apiClient: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
   headers: { 'Content-Type': 'application/json' },

@@ -14,6 +14,7 @@ import java.util.Optional
 @Repository
 interface EnginRepository : JpaRepository<Engin, Long> {
     fun findByCode(code: String): Optional<Engin>
+    fun findByQrCodeToken(qrCodeToken: String): Optional<Engin>
     fun existsByCode(code: String): Boolean
     fun findByActifTrue(pageable: Pageable): Page<Engin>
     fun findByStatut(statut: StatutEngin): List<Engin>
@@ -38,4 +39,21 @@ interface EnginRepository : JpaRepository<Engin, Long> {
         @Param("type") type: TypeEngin?,
         pageable: Pageable
     ): Page<Engin>
+
+    /** Engins actuellement affectés (EN_COURS) à un chantier donné, avec filtres optionnels. */
+    @Query("SELECT a.engin FROM AffectationEnginChantier a WHERE a.projet.id = :projetId " +
+           "AND a.statut = com.mikaservices.platform.common.enums.StatutAffectation.EN_COURS " +
+           "AND a.engin.actif = true " +
+           "AND (:statut IS NULL OR a.engin.statut = :statut) " +
+           "AND (:type IS NULL OR a.engin.type = :type)")
+    fun findByChantier(
+        @Param("projetId") projetId: Long,
+        @Param("statut") statut: StatutEngin?,
+        @Param("type") type: TypeEngin?,
+        pageable: Pageable
+    ): Page<Engin>
+
+    /** Retourne le plus grand numéro de séquence pour le préfixe donné (ex: ENG-2026-%). */
+    @Query("SELECT MAX(CAST(SUBSTRING(e.code, LENGTH(:prefix) + 1) AS int)) FROM Engin e WHERE e.code LIKE :prefix")
+    fun findMaxSequenceForPrefix(@Param("prefix") prefix: String): Int?
 }

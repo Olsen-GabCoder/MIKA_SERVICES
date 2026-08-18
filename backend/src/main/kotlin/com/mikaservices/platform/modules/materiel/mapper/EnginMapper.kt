@@ -12,19 +12,27 @@ object EnginMapper {
         id = entity.id!!, code = entity.code, nom = entity.nom, type = entity.type,
         marque = entity.marque, modele = entity.modele, immatriculation = entity.immatriculation,
         numeroSerie = entity.numeroSerie, anneeFabrication = entity.anneeFabrication,
-        dateAcquisition = entity.dateAcquisition, valeurAcquisition = entity.valeurAcquisition,
+        dateAcquisition = entity.dateAcquisition, dateMiseEnService = entity.dateMiseEnService,
+        valeurAcquisition = entity.valeurAcquisition,
         heuresCompteur = entity.heuresCompteur, statut = entity.statut,
+        etat = entity.etat, modeAcquisition = entity.modeAcquisition,
         proprietaire = entity.proprietaire, estLocation = entity.estLocation,
         coutLocationJournalier = entity.coutLocationJournalier,
-        photo = entity.photo,
+        carburant = entity.carburant, puissance = entity.puissance,
+        poids = entity.poids, capacite = entity.capacite,
+        caracteristiques = entity.caracteristiques,
+        photo = entity.photo, qrCodeToken = entity.qrCodeToken,
+        latitude = entity.latitude, longitude = entity.longitude,
+        notes = entity.notes,
         actif = entity.actif, createdAt = entity.createdAt, updatedAt = entity.updatedAt
     )
 
     fun toSummaryResponse(entity: Engin, chantierActuel: String? = null): EnginSummaryResponse = EnginSummaryResponse(
         id = entity.id!!, code = entity.code, nom = entity.nom, type = entity.type,
         marque = entity.marque, immatriculation = entity.immatriculation,
-        statut = entity.statut, estLocation = entity.estLocation,
-        photo = entity.photo, chantierActuel = chantierActuel
+        statut = entity.statut, etat = entity.etat, estLocation = entity.estLocation,
+        photo = entity.photo, chantierActuel = chantierActuel,
+        heuresCompteur = entity.heuresCompteur
     )
 
     fun toAffectationResponse(entity: AffectationEnginChantier): AffectationEnginResponse = AffectationEnginResponse(

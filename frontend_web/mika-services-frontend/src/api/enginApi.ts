@@ -1,12 +1,16 @@
 import apiClient from './axios'
 import type {
-  Engin, EnginSummary, EnginCreateRequest, MouvementEnginSummary, AffectationEnginResponse, PageResponse,
-  EnginStats, CarnetEngin, EnginCarte, AlerteEngin, EcheanceEngin, HeuresMensuelles,
+  Engin, EnginSummary, EnginCreateRequest, EnginUpdateRequest,
+  MouvementEnginSummary, AffectationEnginResponse, AffectationEnginUpdateRequest, PageResponse,
+  EnginStats, CarnetEngin, EnginCarte, AlerteEngin, EcheanceEngin, HeuresMensuelles, CoutEngin,
+  InspectionEngin, InspectionEnginCreateRequest,
+  PositionEngin, PositionEnginCreateRequest,
   OperationMaintenance, OperationMaintenanceCreateRequest, OperationMaintenanceUpdateRequest,
   IncidentEngin, IncidentEnginCreateRequest, IncidentEnginUpdateRequest,
-  DocumentEngin, DocumentEnginCreateRequest,
+  DocumentEngin, DocumentEnginCreateRequest, DocumentEnginUpdateRequest,
   ReleveCompteur, ReleveCompteurCreateRequest,
-  ConsommationCarburant, ConsommationCarburantCreateRequest
+  ConsommationCarburant, ConsommationCarburantCreateRequest,
+  PlanMaintenance, PlanMaintenanceCreateRequest, PlanMaintenanceUpdateRequest
 } from '@/types/materiel'
 import { USE_MOCK, USE_MOCK_FALLBACK } from '@/config/mock'
 import { getMockEnginsPage, getMockEnginsSearchPage } from '@/mock/data/engins'
@@ -16,12 +20,14 @@ export const enginApi = {
     const response = await apiClient.post<Engin>('/engins', data)
     return response.data
   },
-  findAll: async (page = 0, size = 20, statut?: string, type?: string): Promise<PageResponse<EnginSummary>> => {
+  findAll: async (page = 0, size = 20, statut?: string, type?: string, projetId?: number, sort?: string): Promise<PageResponse<EnginSummary>> => {
     if (USE_MOCK) return Promise.resolve(getMockEnginsPage(page, size))
     try {
       const params: Record<string, unknown> = { page, size }
       if (statut) params.statut = statut
       if (type) params.type = type
+      if (projetId) params.projetId = projetId
+      if (sort) params.sort = sort
       const response = await apiClient.get<PageResponse<EnginSummary>>('/engins', { params })
       return response.data
     } catch {
@@ -47,7 +53,7 @@ export const enginApi = {
     const response = await apiClient.get<EnginSummary[]>('/engins/disponibles')
     return response.data
   },
-  update: async (id: number, data: Partial<Engin>): Promise<Engin> => {
+  update: async (id: number, data: EnginUpdateRequest): Promise<Engin> => {
     const response = await apiClient.put<Engin>(`/engins/${id}`, data)
     return response.data
   },
@@ -62,9 +68,40 @@ export const enginApi = {
     const response = await apiClient.get<PageResponse<AffectationEnginResponse>>(`/engins/affectations/projet/${projetId}`, { params: { page, size } })
     return response.data
   },
+  createPosition: async (enginId: number, data: PositionEnginCreateRequest): Promise<PositionEngin> => {
+    const response = await apiClient.post<PositionEngin>(`/engins/${enginId}/positions`, data)
+    return response.data
+  },
+  getPositionsHistorique: async (enginId: number, page = 0, size = 20): Promise<PageResponse<PositionEngin>> => {
+    const response = await apiClient.get<PageResponse<PositionEngin>>(`/engins/${enginId}/positions`, { params: { page, size } })
+    return response.data
+  },
+  createInspection: async (enginId: number, data: InspectionEnginCreateRequest): Promise<InspectionEngin> => {
+    const response = await apiClient.post<InspectionEngin>(`/engins/${enginId}/inspections`, data)
+    return response.data
+  },
+  getInspections: async (enginId: number, page = 0, size = 20): Promise<PageResponse<InspectionEngin>> => {
+    const response = await apiClient.get<PageResponse<InspectionEngin>>(`/engins/${enginId}/inspections`, { params: { page, size } })
+    return response.data
+  },
+  getCouts: async (enginId: number): Promise<CoutEngin> => {
+    const response = await apiClient.get<CoutEngin>(`/engins/${enginId}/couts`)
+    return response.data
+  },
   getAffectationsByEngin: async (enginId: number): Promise<AffectationEnginResponse[]> => {
     const response = await apiClient.get<AffectationEnginResponse[]>(`/engins/${enginId}/affectations`)
     return response.data
+  },
+  updateAffectation: async (affectationId: number, data: AffectationEnginUpdateRequest): Promise<AffectationEnginResponse> => {
+    const response = await apiClient.put<AffectationEnginResponse>(`/engins/affectations/${affectationId}`, data)
+    return response.data
+  },
+  terminerAffectation: async (affectationId: number): Promise<AffectationEnginResponse> => {
+    const response = await apiClient.patch<AffectationEnginResponse>(`/engins/affectations/${affectationId}/terminer`)
+    return response.data
+  },
+  deleteAffectation: async (affectationId: number): Promise<void> => {
+    await apiClient.delete(`/engins/affectations/${affectationId}`)
   },
 
   // Planning (toutes affectations actives/planifiées)
@@ -91,13 +128,34 @@ export const enginApi = {
     return response.data
   },
 
-  // Echeances a venir
+  // Échéances à venir
   getEcheances: async (jours = 7): Promise<EcheanceEngin[]> => {
     const response = await apiClient.get<EcheanceEngin[]>('/engins/echeances', { params: { jours } })
     return response.data
   },
 
+  // Maintenances globales (tout le parc)
+  getAllMaintenances: async (page = 0, size = 50, statut?: string, type?: string, enginId?: number): Promise<PageResponse<OperationMaintenance>> => {
+    const params: Record<string, unknown> = { page, size, sort: 'echeanceDate,asc' }
+    if (statut) params.statut = statut
+    if (type) params.type = type
+    if (enginId) params.enginId = enginId
+    const response = await apiClient.get<PageResponse<OperationMaintenance>>('/engins/maintenances', { params })
+    return response.data
+  },
+  getMaintenancesCalendrier: async (debut: string, fin: string): Promise<OperationMaintenance[]> => {
+    const response = await apiClient.get<OperationMaintenance[]>('/engins/maintenances/calendrier', { params: { debut, fin } })
+    return response.data
+  },
+
   // QR Code
+  getQrCodeBlob: async (enginId: number, size = 400): Promise<Blob> => {
+    const response = await apiClient.get(`/engins/${enginId}/qrcode`, {
+      params: { size, baseUrl: window.location.origin },
+      responseType: 'blob',
+    })
+    return new Blob([response.data], { type: 'image/png' })
+  },
   getQrCode: async (enginId: number): Promise<void> => {
     const response = await apiClient.get(`/engins/${enginId}/qrcode`, {
       params: { size: 400, baseUrl: window.location.origin },
@@ -151,6 +209,31 @@ export const enginApi = {
     await apiClient.delete(`/engins/${enginId}/maintenances/${maintenanceId}`)
   },
 
+  // Plans de maintenance récurrents
+  getPlansMaintenance: async (enginId: number): Promise<PlanMaintenance[]> => {
+    const response = await apiClient.get<PlanMaintenance[]>(`/engins/${enginId}/plans-maintenance`)
+    return response.data
+  },
+  createPlanMaintenance: async (enginId: number, data: PlanMaintenanceCreateRequest): Promise<PlanMaintenance> => {
+    const response = await apiClient.post<PlanMaintenance>(`/engins/${enginId}/plans-maintenance`, data)
+    return response.data
+  },
+  updatePlanMaintenance: async (enginId: number, planId: number, data: PlanMaintenanceUpdateRequest): Promise<PlanMaintenance> => {
+    const response = await apiClient.put<PlanMaintenance>(`/engins/${enginId}/plans-maintenance/${planId}`, data)
+    return response.data
+  },
+  deletePlanMaintenance: async (enginId: number, planId: number): Promise<void> => {
+    await apiClient.delete(`/engins/${enginId}/plans-maintenance/${planId}`)
+  },
+  executerPlanMaintenance: async (enginId: number, planId: number): Promise<OperationMaintenance> => {
+    const response = await apiClient.post<OperationMaintenance>(`/engins/${enginId}/plans-maintenance/${planId}/executer`)
+    return response.data
+  },
+  getPlansMaintenanceEnAlerte: async (): Promise<PlanMaintenance[]> => {
+    const response = await apiClient.get<PlanMaintenance[]>('/engins/plans-maintenance/alertes')
+    return response.data
+  },
+
   // Incidents
   getIncidents: async (enginId: number, page = 0, size = 20): Promise<PageResponse<IncidentEngin>> => {
     const response = await apiClient.get<PageResponse<IncidentEngin>>(`/engins/${enginId}/incidents`, { params: { page, size } })
@@ -167,6 +250,10 @@ export const enginApi = {
   deleteIncident: async (enginId: number, incidentId: number): Promise<void> => {
     await apiClient.delete(`/engins/${enginId}/incidents/${incidentId}`)
   },
+  creerMaintenanceCorrective: async (enginId: number, incidentId: number): Promise<OperationMaintenance> => {
+    const response = await apiClient.post<OperationMaintenance>(`/engins/${enginId}/incidents/${incidentId}/maintenance-corrective`)
+    return response.data
+  },
 
   // Documents
   getDocuments: async (enginId: number, page = 0, size = 20): Promise<PageResponse<DocumentEngin>> => {
@@ -177,11 +264,15 @@ export const enginApi = {
     const response = await apiClient.post<DocumentEngin>(`/engins/${enginId}/documents`, data)
     return response.data
   },
+  updateDocument: async (enginId: number, documentId: number, data: DocumentEnginUpdateRequest): Promise<DocumentEngin> => {
+    const response = await apiClient.put<DocumentEngin>(`/engins/${enginId}/documents/${documentId}`, data)
+    return response.data
+  },
   deleteDocument: async (enginId: number, documentId: number): Promise<void> => {
     await apiClient.delete(`/engins/${enginId}/documents/${documentId}`)
   },
 
-  // Releves compteur
+  // Relevés compteur
   getReleves: async (enginId: number, page = 0, size = 20): Promise<PageResponse<ReleveCompteur>> => {
     const response = await apiClient.get<PageResponse<ReleveCompteur>>(`/engins/${enginId}/releves-compteur`, { params: { page, size } })
     return response.data

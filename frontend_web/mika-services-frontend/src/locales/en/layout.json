@@ -48,7 +48,8 @@
     "assistantQualite": "Quality Assistant",
     "technicienLaboratoire": "Laboratory Technician",
     "technicienTopographie": "Survey Technician",
-    "chefChantier": "Site Manager"
+    "chefChantier": "Site Manager",
+    "conducteur": "Plant Operator"
   },
   "header": {
     "tagline": "Management platform",

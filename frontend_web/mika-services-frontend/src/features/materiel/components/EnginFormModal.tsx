@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAppDispatch } from '@/store/hooks'
 import { createEngin, updateEngin } from '@/store/slices/enginSlice'
 import { enginApi } from '@/api/enginApi'
-import type { Engin, EnginCreateRequest, TypeEngin } from '@/types/materiel'
+import type { Engin, EnginCreateRequest, TypeEngin, EtatEngin, ModeAcquisition, TypeCarburant } from '@/types/materiel'
 import { handleApiError } from '@/utils/errorHandler'
 import { useToast } from '@/contexts/ToastContext'
 
@@ -12,6 +12,20 @@ const ALL_TYPES: TypeEngin[] = [
   'GRUE', 'CHARGEUSE', 'RETROCHARGEUSE', 'BETONNIERE', 'FINISSEUR',
   'GROUPE_ELECTROGENE', 'POMPE', 'FOREUSE', 'CONCASSEUR', 'AUTRE',
 ]
+
+const ALL_ETATS: EtatEngin[] = ['NEUF', 'BON', 'CORRECT', 'USE', 'MAUVAIS', 'IRREPARABLE']
+const ALL_MODES: ModeAcquisition[] = ['ACHAT', 'LOCATION_LONGUE_DUREE', 'LOCATION_COURTE', 'CREDIT_BAIL', 'PRET']
+const ALL_CARBURANTS: TypeCarburant[] = ['DIESEL', 'ESSENCE', 'ELECTRIQUE', 'HYBRIDE', 'AUCUN']
+
+const ETAT_LABELS: Record<EtatEngin, string> = {
+  NEUF: 'Neuf', BON: 'Bon', CORRECT: 'Correct', USE: 'Usé', MAUVAIS: 'Mauvais', IRREPARABLE: 'Irréparable',
+}
+const MODE_LABELS: Record<ModeAcquisition, string> = {
+  ACHAT: 'Achat', LOCATION_LONGUE_DUREE: 'Location longue durée', LOCATION_COURTE: 'Location courte', CREDIT_BAIL: 'Crédit-bail', PRET: 'Prêt',
+}
+const CARBURANT_LABELS: Record<TypeCarburant, string> = {
+  DIESEL: 'Diesel', ESSENCE: 'Essence', ELECTRIQUE: 'Électrique', HYBRIDE: 'Hybride', AUCUN: 'Aucun',
+}
 
 interface Props {
   engin?: Engin
@@ -37,6 +51,15 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
     proprietaire: engin?.proprietaire ?? '',
     estLocation: engin?.estLocation ?? false,
     coutLocationJournalier: engin?.coutLocationJournalier,
+    etat: engin?.etat,
+    modeAcquisition: engin?.modeAcquisition,
+    carburant: engin?.carburant,
+    puissance: engin?.puissance ?? '',
+    poids: engin?.poids ?? '',
+    capacite: engin?.capacite ?? '',
+    caracteristiques: engin?.caracteristiques ?? '',
+    dateMiseEnService: engin?.dateMiseEnService ?? '',
+    notes: engin?.notes ?? '',
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -73,19 +96,21 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.code.trim() || !form.nom.trim()) {
+    if (!form.nom.trim()) {
       setError(t('form.errorRequired'))
       return
     }
     setSubmitting(true)
     setError(null)
     try {
+      // Send code as null if empty so backend auto-generates
+      const payload = { ...form, code: form.code?.trim() || null }
       let enginId: number
       if (isEdit) {
-        const result = await dispatch(updateEngin({ id: engin.id, data: form })).unwrap()
+        const result = await dispatch(updateEngin({ id: engin.id, data: payload })).unwrap()
         enginId = result.id
       } else {
-        const result = await dispatch(createEngin(form)).unwrap()
+        const result = await dispatch(createEngin(payload)).unwrap()
         enginId = result.id
       }
       // Upload photo if selected
@@ -93,7 +118,6 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
         try {
           await enginApi.uploadPhoto(enginId, photoFile)
         } catch {
-          // Don't fail the whole operation if photo upload fails
           toast({ message: 'Engin sauvegardé mais erreur lors de l\'upload de la photo', variant: 'warning' })
           onSuccess()
           return
@@ -109,11 +133,12 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
   }
 
   const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent'
+  const labelCls = 'block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="relative z-10 w-full max-w-3xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
           <h2 className="text-base font-bold text-gray-900 dark:text-white">
@@ -131,7 +156,7 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
           {error && (
             <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/50 text-red-700 dark:text-red-300 text-sm">
               <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -184,150 +209,284 @@ export function EnginFormModal({ engin, onClose, onSuccess }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Code */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                {t('form.code')} <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={form.code}
-                onChange={(e) => handleChange('code', e.target.value)}
-                disabled={isEdit}
-                placeholder="ENG-001"
-                className={inputCls + ' disabled:opacity-50 disabled:cursor-not-allowed'}
-              />
+          {/* Section: Identification */}
+          <fieldset className="border border-gray-200 dark:border-gray-600 rounded-xl p-4 space-y-3">
+            <legend className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2">Identification</legend>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Code */}
+              <div>
+                <label className={labelCls}>
+                  {t('form.code')} <span className="text-gray-400 text-[10px] font-normal">(auto-généré si vide)</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.code ?? ''}
+                  onChange={(e) => handleChange('code', e.target.value)}
+                  disabled={isEdit}
+                  placeholder="Auto-généré (ex: ENG-2026-001)"
+                  className={inputCls + ' disabled:opacity-50 disabled:cursor-not-allowed'}
+                />
+              </div>
+
+              {/* Nom */}
+              <div>
+                <label className={labelCls}>
+                  {t('form.nom')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.nom}
+                  onChange={(e) => handleChange('nom', e.target.value)}
+                  placeholder={t('form.nomPlaceholder')}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Type */}
+              <div>
+                <label className={labelCls}>
+                  {t('form.type')} <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={form.type}
+                  onChange={(e) => handleChange('type', e.target.value as TypeEngin)}
+                  className={inputCls}
+                >
+                  {ALL_TYPES.map((ty) => (
+                    <option key={ty} value={ty}>{t(`engin.type.${ty}`)}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Marque */}
+              <div>
+                <label className={labelCls}>{t('form.marque')}</label>
+                <input
+                  type="text"
+                  value={form.marque ?? ''}
+                  onChange={(e) => handleChange('marque', e.target.value)}
+                  placeholder="Caterpillar, Volvo..."
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Modèle */}
+              <div>
+                <label className={labelCls}>{t('form.modele')}</label>
+                <input
+                  type="text"
+                  value={form.modele ?? ''}
+                  onChange={(e) => handleChange('modele', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Immatriculation */}
+              <div>
+                <label className={labelCls}>{t('form.immatriculation')}</label>
+                <input
+                  type="text"
+                  value={form.immatriculation ?? ''}
+                  onChange={(e) => handleChange('immatriculation', e.target.value)}
+                  placeholder="LB-1234-A"
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Numéro de série */}
+              <div>
+                <label className={labelCls}>{t('form.numeroSerie')}</label>
+                <input
+                  type="text"
+                  value={form.numeroSerie ?? ''}
+                  onChange={(e) => handleChange('numeroSerie', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Année */}
+              <div>
+                <label className={labelCls}>{t('form.anneeFabrication')}</label>
+                <input
+                  type="number"
+                  value={form.anneeFabrication ?? ''}
+                  onChange={(e) => handleChange('anneeFabrication', e.target.value ? Number(e.target.value) : undefined)}
+                  min={1970}
+                  max={new Date().getFullYear()}
+                  className={inputCls}
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          {/* Section: État & Technique */}
+          <fieldset className="border border-gray-200 dark:border-gray-600 rounded-xl p-4 space-y-3">
+            <legend className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2">État & Technique</legend>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* État */}
+              <div>
+                <label className={labelCls}>État général</label>
+                <select
+                  value={form.etat ?? ''}
+                  onChange={(e) => handleChange('etat', e.target.value || undefined)}
+                  className={inputCls}
+                >
+                  <option value="">— Non renseigné —</option>
+                  {ALL_ETATS.map((et) => (
+                    <option key={et} value={et}>{ETAT_LABELS[et]}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Carburant */}
+              <div>
+                <label className={labelCls}>Carburant</label>
+                <select
+                  value={form.carburant ?? ''}
+                  onChange={(e) => handleChange('carburant', e.target.value || undefined)}
+                  className={inputCls}
+                >
+                  <option value="">— Non renseigné —</option>
+                  {ALL_CARBURANTS.map((c) => (
+                    <option key={c} value={c}>{CARBURANT_LABELS[c]}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Puissance */}
+              <div>
+                <label className={labelCls}>Puissance</label>
+                <input
+                  type="text"
+                  value={form.puissance ?? ''}
+                  onChange={(e) => handleChange('puissance', e.target.value)}
+                  placeholder="ex: 150 CV, 110 kW"
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Poids */}
+              <div>
+                <label className={labelCls}>Poids</label>
+                <input
+                  type="text"
+                  value={form.poids ?? ''}
+                  onChange={(e) => handleChange('poids', e.target.value)}
+                  placeholder="ex: 20 T, 3 500 kg"
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Capacité */}
+              <div>
+                <label className={labelCls}>Capacité</label>
+                <input
+                  type="text"
+                  value={form.capacite ?? ''}
+                  onChange={(e) => handleChange('capacite', e.target.value)}
+                  placeholder="ex: 1.2 m³, 19 T"
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Date mise en service */}
+              <div>
+                <label className={labelCls}>Date de mise en service</label>
+                <input
+                  type="date"
+                  value={form.dateMiseEnService ?? ''}
+                  onChange={(e) => handleChange('dateMiseEnService', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
             </div>
 
-            {/* Nom */}
+            {/* Caractéristiques (full width) */}
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                {t('form.nom')} <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={form.nom}
-                onChange={(e) => handleChange('nom', e.target.value)}
-                placeholder={t('form.nomPlaceholder')}
-                className={inputCls}
+              <label className={labelCls}>Caractéristiques techniques</label>
+              <textarea
+                value={form.caracteristiques ?? ''}
+                onChange={(e) => handleChange('caracteristiques', e.target.value)}
+                placeholder="Détails techniques supplémentaires..."
+                rows={2}
+                className={inputCls + ' resize-y'}
               />
             </div>
+          </fieldset>
 
-            {/* Type */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                {t('form.type')} <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={form.type}
-                onChange={(e) => handleChange('type', e.target.value as TypeEngin)}
-                className={inputCls}
-              >
-                {ALL_TYPES.map((ty) => (
-                  <option key={ty} value={ty}>{t(`engin.type.${ty}`)}</option>
-                ))}
-              </select>
-            </div>
+          {/* Section: Propriété & Acquisition */}
+          <fieldset className="border border-gray-200 dark:border-gray-600 rounded-xl p-4 space-y-3">
+            <legend className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2">Propriété & Acquisition</legend>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Mode acquisition */}
+              <div>
+                <label className={labelCls}>Mode d'acquisition</label>
+                <select
+                  value={form.modeAcquisition ?? ''}
+                  onChange={(e) => handleChange('modeAcquisition', e.target.value || undefined)}
+                  className={inputCls}
+                >
+                  <option value="">— Non renseigné —</option>
+                  {ALL_MODES.map((m) => (
+                    <option key={m} value={m}>{MODE_LABELS[m]}</option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Marque */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{t('form.marque')}</label>
-              <input
-                type="text"
-                value={form.marque ?? ''}
-                onChange={(e) => handleChange('marque', e.target.value)}
-                placeholder="Caterpillar, Volvo..."
-                className={inputCls}
-              />
-            </div>
+              {/* Propriétaire */}
+              <div>
+                <label className={labelCls}>{t('form.proprietaire')}</label>
+                <input
+                  type="text"
+                  value={form.proprietaire ?? ''}
+                  onChange={(e) => handleChange('proprietaire', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
 
-            {/* Modèle */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{t('form.modele')}</label>
-              <input
-                type="text"
-                value={form.modele ?? ''}
-                onChange={(e) => handleChange('modele', e.target.value)}
-                className={inputCls}
-              />
-            </div>
+              {/* Coût location */}
+              <div>
+                <label className={labelCls}>{t('form.coutLocation')}</label>
+                <input
+                  type="number"
+                  value={form.coutLocationJournalier ?? ''}
+                  onChange={(e) => handleChange('coutLocationJournalier', e.target.value ? Number(e.target.value) : undefined)}
+                  min={0}
+                  step="0.01"
+                  className={inputCls}
+                />
+              </div>
 
-            {/* Immatriculation */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{t('form.immatriculation')}</label>
-              <input
-                type="text"
-                value={form.immatriculation ?? ''}
-                onChange={(e) => handleChange('immatriculation', e.target.value)}
-                placeholder="LB-1234-A"
-                className={inputCls}
-              />
+              {/* Location toggle */}
+              <div className="flex items-end pb-1">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={form.estLocation ?? false}
+                      onChange={(e) => handleChange('estLocation', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-10 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer-checked:bg-primary transition-colors duration-200" />
+                    <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('form.estLocation')}</span>
+                </label>
+              </div>
             </div>
+          </fieldset>
 
-            {/* Numéro de série */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{t('form.numeroSerie')}</label>
-              <input
-                type="text"
-                value={form.numeroSerie ?? ''}
-                onChange={(e) => handleChange('numeroSerie', e.target.value)}
-                className={inputCls}
-              />
-            </div>
-
-            {/* Année */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{t('form.anneeFabrication')}</label>
-              <input
-                type="number"
-                value={form.anneeFabrication ?? ''}
-                onChange={(e) => handleChange('anneeFabrication', e.target.value ? Number(e.target.value) : undefined)}
-                min={1970}
-                max={new Date().getFullYear()}
-                className={inputCls}
-              />
-            </div>
-
-            {/* Propriétaire */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{t('form.proprietaire')}</label>
-              <input
-                type="text"
-                value={form.proprietaire ?? ''}
-                onChange={(e) => handleChange('proprietaire', e.target.value)}
-                className={inputCls}
-              />
-            </div>
-
-            {/* Coût location */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{t('form.coutLocation')}</label>
-              <input
-                type="number"
-                value={form.coutLocationJournalier ?? ''}
-                onChange={(e) => handleChange('coutLocationJournalier', e.target.value ? Number(e.target.value) : undefined)}
-                min={0}
-                step="0.01"
-                className={inputCls}
-              />
-            </div>
+          {/* Section: Notes */}
+          <div>
+            <label className={labelCls}>Notes internes</label>
+            <textarea
+              value={form.notes ?? ''}
+              onChange={(e) => handleChange('notes', e.target.value)}
+              placeholder="Remarques, observations..."
+              rows={2}
+              className={inputCls + ' resize-y'}
+            />
           </div>
-
-          {/* Location toggle */}
-          <label className="flex items-center gap-3 cursor-pointer select-none">
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={form.estLocation ?? false}
-                onChange={(e) => handleChange('estLocation', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-10 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer-checked:bg-primary transition-colors duration-200" />
-              <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 peer-checked:translate-x-4" />
-            </div>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('form.estLocation')}</span>
-          </label>
         </form>
 
         {/* Footer */}

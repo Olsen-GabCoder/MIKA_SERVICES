@@ -64,6 +64,7 @@ const BaremePage = lazy(() => import('@/features/bareme/pages/BaremePage').then(
 const BaremeArticleDetailPage = lazy(() => import('@/features/bareme/pages/BaremeArticleDetailPage').then(m => ({ default: m.BaremeArticleDetailPage })))
 const BaremeArticleCreatePage = lazy(() => import('@/features/bareme/pages/BaremeArticleCreatePage').then(m => ({ default: m.BaremeArticleCreatePage })))
 const BaremeArticleEditPage = lazy(() => import('@/features/bareme/pages/BaremeArticleEditPage').then(m => ({ default: m.BaremeArticleEditPage })))
+const TerrainAppPage = lazy(() => import('@/features/terrain/pages/TerrainAppPage').then(m => ({ default: m.TerrainAppPage })))
 
 const LazyFallback = () => (
   <div className="flex items-center justify-center min-h-[40vh]">
@@ -97,6 +98,15 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute requireAuth={false}>
         <ResetPasswordPage />
+      </ProtectedRoute>
+    ),
+  },
+  // ── Application mobile terrain (hors layout desktop) ─────
+  {
+    path: '/terrain/*',
+    element: (
+      <ProtectedRoute>
+        <L><TerrainAppPage /></L>
       </ProtectedRoute>
     ),
   },

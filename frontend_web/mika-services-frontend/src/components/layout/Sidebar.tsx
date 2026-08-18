@@ -154,6 +154,7 @@ export const Sidebar = () => {
       ASSISTANT_QUALITE: 'roles.assistantQualite',
       TECHNICIEN_LABORATOIRE: 'roles.technicienLaboratoire',
       TECHNICIEN_TOPOGRAPHIE: 'roles.technicienTopographie',
+      CONDUCTEUR: 'roles.conducteur',
     }
     if (code && roleI18nMap[code]) return t(roleI18nMap[code])
     return role.nom || t('roles.employe')

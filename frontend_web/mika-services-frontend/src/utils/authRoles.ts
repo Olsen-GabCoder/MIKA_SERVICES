@@ -56,6 +56,18 @@ export function canEditProjetEffective(
   return responsableProjetId != null && responsableProjetId === user.id
 }
 
+/**
+ * Vrai si l'utilisateur ne possède QUE le rôle CONDUCTEUR (application mobile terrain).
+ * Ces utilisateurs sont confinés à /terrain et ne doivent jamais accéder au reste de la plateforme.
+ */
+export function isConducteurOnlyEffective(
+  user: { roles?: { code: string }[] } | null | undefined,
+  accessToken: string | null | undefined
+): boolean {
+  const codes = getEffectiveRoleCodes(user, accessToken)
+  return codes.length > 0 && codes.every((c) => c === 'CONDUCTEUR')
+}
+
 /** Désactivation projet : réservé aux administrateurs (aligné backend). */
 export function canDeleteProjetEffective(
   user: { roles?: { code: string }[] } | null | undefined,

@@ -45,7 +45,15 @@ class OperationMaintenance(
     var executePar: String? = null,
 
     @Column(name = "date_realisation")
-    var dateRealisation: LocalDate? = null
+    var dateRealisation: LocalDate? = null,
+
+    /** Référence vers l'incident source si maintenance corrective. */
+    @Column(name = "incident_source_id")
+    var incidentSourceId: Long? = null,
+
+    /** Référence vers le plan de maintenance récurrent ayant déclenché cette opération. */
+    @Column(name = "plan_maintenance_id")
+    var planMaintenanceId: Long? = null
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

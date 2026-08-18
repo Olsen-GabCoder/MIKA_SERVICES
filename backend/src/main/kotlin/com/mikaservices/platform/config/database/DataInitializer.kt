@@ -245,6 +245,21 @@ class DataInitializer(
         }
         mergePermissionsIntoRole("USER", setOf("DMA_CREATE"))
 
+        // Rôle CONDUCTEUR : conducteurs d'engins — accès exclusivement à l'application mobile terrain (/terrain)
+        // Aucun @PreAuthorize existant ne le référence : 403 par défaut sur tout le reste de la plateforme
+        roleRepository.findByCode("CONDUCTEUR").orElseGet {
+            val role = Role(
+                code = "CONDUCTEUR",
+                nom = "Conducteur d'engin",
+                description = "Accès terrain mobile uniquement : scan QR, relevés, inspections, signalements",
+                niveau = NiveauHierarchique.EMPLOYE,
+                actif = true
+            )
+            roleRepository.save(role)
+            logger.info("Rôle CONDUCTEUR créé")
+            role
+        }
+
         val chefProjetPermissionCodes = setOf(
             "PROJET_READ", "PROJET_UPDATE", "PROJET_CREATE",
             "CHANTIER_READ", "CHANTIER_UPDATE", "CHANTIER_CREATE",

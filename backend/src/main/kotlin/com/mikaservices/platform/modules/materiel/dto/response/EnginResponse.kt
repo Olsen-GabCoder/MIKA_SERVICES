@@ -1,7 +1,10 @@
 package com.mikaservices.platform.modules.materiel.dto.response
 
+import com.mikaservices.platform.common.enums.EtatEngin
+import com.mikaservices.platform.common.enums.ModeAcquisition
 import com.mikaservices.platform.common.enums.StatutAffectation
 import com.mikaservices.platform.common.enums.StatutEngin
+import com.mikaservices.platform.common.enums.TypeCarburant
 import com.mikaservices.platform.common.enums.TypeEngin
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -18,13 +21,25 @@ data class EnginResponse(
     val numeroSerie: String?,
     val anneeFabrication: Int?,
     val dateAcquisition: LocalDate?,
+    val dateMiseEnService: LocalDate?,
     val valeurAcquisition: BigDecimal?,
     val heuresCompteur: Int,
     val statut: StatutEngin,
+    val etat: EtatEngin?,
+    val modeAcquisition: ModeAcquisition?,
     val proprietaire: String?,
     val estLocation: Boolean,
     val coutLocationJournalier: BigDecimal?,
+    val carburant: TypeCarburant?,
+    val puissance: String?,
+    val poids: String?,
+    val capacite: String?,
+    val caracteristiques: String?,
     val photo: String?,
+    val qrCodeToken: String?,
+    val latitude: Double?,
+    val longitude: Double?,
+    val notes: String?,
     val actif: Boolean,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
@@ -38,10 +53,11 @@ data class EnginSummaryResponse(
     val marque: String?,
     val immatriculation: String?,
     val statut: StatutEngin,
+    val etat: EtatEngin?,
     val estLocation: Boolean,
     val photo: String? = null,
-    /** Nom du chantier/projet actuel (affectation EN_COURS), null si aucun. */
-    val chantierActuel: String? = null
+    val chantierActuel: String? = null,
+    val heuresCompteur: Int = 0
 )
 
 data class AffectationEnginResponse(

@@ -9,6 +9,7 @@ object OperationMaintenanceMapper {
         id = entity.id!!,
         enginId = entity.engin.id!!,
         enginCode = entity.engin.code,
+        enginNom = entity.engin.nom,
         typeOperation = entity.typeOperation,
         statut = entity.statut,
         description = entity.description,
@@ -18,6 +19,8 @@ object OperationMaintenanceMapper {
         coutReel = entity.coutReel,
         executePar = entity.executePar,
         dateRealisation = entity.dateRealisation,
+        incidentSourceId = entity.incidentSourceId,
+        planMaintenanceId = entity.planMaintenanceId,
         createdAt = entity.createdAt,
         updatedAt = entity.updatedAt
     )

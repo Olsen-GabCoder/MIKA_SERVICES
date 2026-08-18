@@ -10,6 +10,7 @@ data class OperationMaintenanceResponse(
     val id: Long,
     val enginId: Long,
     val enginCode: String,
+    val enginNom: String? = null,
     val typeOperation: TypeOperationMaintenance,
     val statut: StatutMaintenance,
     val description: String?,
@@ -19,6 +20,8 @@ data class OperationMaintenanceResponse(
     val coutReel: BigDecimal?,
     val executePar: String?,
     val dateRealisation: LocalDate?,
+    val incidentSourceId: Long?,
+    val planMaintenanceId: Long?,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
 )

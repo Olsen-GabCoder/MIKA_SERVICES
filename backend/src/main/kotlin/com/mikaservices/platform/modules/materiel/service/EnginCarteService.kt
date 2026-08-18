@@ -12,19 +12,23 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class EnginCarteService(
     private val enginRepository: EnginRepository,
-    private val affectationRepository: AffectationEnginChantierRepository
+    private val affectationRepository: AffectationEnginChantierRepository,
+    private val positionRepository: com.mikaservices.platform.modules.materiel.repository.PositionEnginRepository
 ) {
     fun getPositions(): List<EnginCarteResponse> {
         val engins = enginRepository.findByActifTrue(Pageable.unpaged()).content
         val enginIds = engins.mapNotNull { it.id }
         val affectationsEnCours = affectationRepository.findByEnginIdInAndStatut(enginIds, StatutAffectation.EN_COURS)
         val affMap = affectationsEnCours.associateBy { it.engin.id }
+        // Derniere position GPS reelle par engin (prioritaire sur les coordonnees du chantier)
+        val dernieresPositions = positionRepository.findLatestByEnginIds(enginIds).associateBy { it.engin.id }
 
         return engins.mapNotNull { engin ->
             val aff = affMap[engin.id]
             val projet = aff?.projet
-            val lat = projet?.latitude ?: return@mapNotNull null
-            val lng = projet.longitude ?: return@mapNotNull null
+            val derniere = dernieresPositions[engin.id]
+            val lat = derniere?.latitude ?: projet?.latitude ?: return@mapNotNull null
+            val lng = derniere?.longitude ?: projet?.longitude ?: return@mapNotNull null
             EnginCarteResponse(
                 id = engin.id!!,
                 code = engin.code,
@@ -32,9 +36,11 @@ class EnginCarteService(
                 type = engin.type,
                 statut = engin.statut,
                 marque = engin.marque,
-                chantierNom = projet.nom,
+                chantierNom = derniere?.chantierNom ?: projet?.nom,
                 latitude = lat,
-                longitude = lng
+                longitude = lng,
+                horodatage = derniere?.horodatage,
+                sourcePosition = derniere?.source?.name ?: if (projet != null) "CHANTIER" else null
             )
         }
     }

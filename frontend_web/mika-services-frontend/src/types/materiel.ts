@@ -4,7 +4,10 @@ import type { PageResponse } from './projet'
 // Engins
 // ============================================
 export type TypeEngin = 'PELLETEUSE' | 'BULLDOZER' | 'NIVELEUSE' | 'COMPACTEUR' | 'CAMION_BENNE' | 'CAMION_CITERNE' | 'GRUE' | 'CHARGEUSE' | 'RETROCHARGEUSE' | 'BETONNIERE' | 'FINISSEUR' | 'GROUPE_ELECTROGENE' | 'POMPE' | 'FOREUSE' | 'CONCASSEUR' | 'AUTRE'
-export type StatutEngin = 'DISPONIBLE' | 'EN_SERVICE' | 'EN_MAINTENANCE' | 'EN_PANNE' | 'HORS_SERVICE' | 'EN_TRANSIT'
+export type StatutEngin = 'DISPONIBLE' | 'EN_SERVICE' | 'EN_MAINTENANCE' | 'EN_PANNE' | 'IMMOBILISE' | 'HORS_SERVICE' | 'EN_TRANSIT' | 'REFORME'
+export type EtatEngin = 'NEUF' | 'BON' | 'CORRECT' | 'USE' | 'MAUVAIS' | 'IRREPARABLE'
+export type ModeAcquisition = 'ACHAT' | 'LOCATION_LONGUE_DUREE' | 'LOCATION_COURTE' | 'CREDIT_BAIL' | 'PRET'
+export type TypeCarburant = 'DIESEL' | 'ESSENCE' | 'ELECTRIQUE' | 'HYBRIDE' | 'AUCUN'
 
 export interface EnginSummary {
   id: number
@@ -14,6 +17,7 @@ export interface EnginSummary {
   marque?: string
   immatriculation?: string
   statut: StatutEngin
+  etat?: EtatEngin
   estLocation: boolean
   photo?: string
   chantierActuel?: string
@@ -24,18 +28,28 @@ export interface Engin extends EnginSummary {
   numeroSerie?: string
   anneeFabrication?: number
   dateAcquisition?: string
+  dateMiseEnService?: string
   valeurAcquisition?: number
   heuresCompteur: number
+  modeAcquisition?: ModeAcquisition
   proprietaire?: string
   coutLocationJournalier?: number
-  photo?: string
+  carburant?: TypeCarburant
+  puissance?: string
+  poids?: string
+  capacite?: string
+  caracteristiques?: string
+  qrCodeToken?: string
+  latitude?: number
+  longitude?: number
+  notes?: string
   actif: boolean
   createdAt?: string
   updatedAt?: string
 }
 
 export interface EnginCreateRequest {
-  code: string
+  code?: string | null
   nom: string
   type: TypeEngin
   marque?: string
@@ -44,14 +58,49 @@ export interface EnginCreateRequest {
   numeroSerie?: string
   anneeFabrication?: number
   dateAcquisition?: string
+  dateMiseEnService?: string
   valeurAcquisition?: number
   proprietaire?: string
   estLocation?: boolean
   coutLocationJournalier?: number
+  etat?: EtatEngin
+  modeAcquisition?: ModeAcquisition
+  carburant?: TypeCarburant
+  puissance?: string
+  poids?: string
+  capacite?: string
+  caracteristiques?: string
+  notes?: string
+}
+
+export interface EnginUpdateRequest {
+  nom?: string
+  type?: TypeEngin
+  marque?: string
+  modele?: string
+  immatriculation?: string
+  numeroSerie?: string
+  anneeFabrication?: number
+  heuresCompteur?: number
+  statut?: StatutEngin
+  proprietaire?: string
+  estLocation?: boolean
+  coutLocationJournalier?: number
+  etat?: EtatEngin
+  modeAcquisition?: ModeAcquisition
+  dateMiseEnService?: string
+  carburant?: TypeCarburant
+  puissance?: string
+  poids?: string
+  capacite?: string
+  caracteristiques?: string
+  notes?: string
+  latitude?: number
+  longitude?: number
 }
 
 // ============================================
-// Affectations Engin ↔ Chantier
+// Affectations Engin <-> Chantier
 // ============================================
 export type StatutAffectation = 'PLANIFIEE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE' | 'SUSPENDUE'
 
@@ -69,6 +118,98 @@ export interface AffectationEnginResponse {
   statut: StatutAffectation
   observations?: string
   createdAt?: string
+}
+
+export interface AffectationEnginUpdateRequest {
+  dateDebut?: string
+  dateFin?: string
+  heuresPrevues?: number
+  heuresReelles?: number
+  statut?: StatutAffectation
+  observations?: string
+}
+
+// ============================================
+// Positions (historique)
+// ============================================
+export type SourcePosition = 'QR_SCAN' | 'GPS_AUTO' | 'MANUEL' | 'CHANTIER'
+
+export interface PositionEngin {
+  id: number
+  enginId: number
+  latitude: number
+  longitude: number
+  source: SourcePosition
+  precisionMetres?: number
+  chantierNom?: string
+  confirmePar?: string
+  horodatage: string
+}
+
+export interface PositionEnginCreateRequest {
+  latitude: number
+  longitude: number
+  source?: SourcePosition
+  precisionMetres?: number
+  chantierNom?: string
+  confirmePar?: string
+}
+
+// ============================================
+// Inspections quotidiennes
+// ============================================
+export type EtatGeneralInspection = 'BON' | 'CORRECT' | 'MAUVAIS'
+
+export interface ChecklistItem {
+  code: string
+  label: string
+  ok: boolean
+  commentaire?: string
+}
+
+export interface InspectionEngin {
+  id: number
+  enginId: number
+  dateInspection: string
+  inspectePar?: string
+  compteurHeures?: number
+  checklist: ChecklistItem[]
+  etatGeneral: EtatGeneralInspection
+  anomaliesDetectees: boolean
+  commentaire?: string
+  signature?: string
+  incidentCreeId?: number
+  createdAt?: string
+}
+
+export interface InspectionEnginCreateRequest {
+  dateInspection: string
+  inspectePar?: string
+  compteurHeures?: number
+  checklist: ChecklistItem[]
+  etatGeneral: EtatGeneralInspection
+  commentaire?: string
+  signature?: string
+}
+
+// ============================================
+// Coûts / TCO
+// ============================================
+export interface LigneCout {
+  type: string // MAINTENANCE, CARBURANT, LOCATION, ACQUISITION
+  description: string
+  date?: string
+  montant: number
+}
+
+export interface CoutEngin {
+  enginId: number
+  totalMaintenance: number
+  totalCarburant: number
+  totalLocation: number
+  valeurAcquisition?: number
+  tco: number
+  lignes: LigneCout[]
 }
 
 // ============================================
@@ -115,7 +256,6 @@ export interface MateriauCreateRequest {
 export type StatutMouvementEngin = 'EN_ATTENTE_DEPART' | 'EN_TRANSIT' | 'RECU' | 'ANNULE'
 export type TypeMouvementEnginEvenement = 'DEPART_CONFIRME' | 'RECEPTION_CONFIRMEE' | 'ANNULATION' | 'COMMENTAIRE'
 
-/** Correspond au MouvementEnginResponse du backend (list + détail). */
 export interface MouvementEnginSummary {
   id: number
   enginId: number
@@ -230,6 +370,7 @@ export interface OperationMaintenance {
   id: number
   enginId: number
   enginCode: string
+  enginNom?: string
   typeOperation: TypeOperationMaintenance
   statut: StatutMaintenance
   description?: string
@@ -239,6 +380,8 @@ export interface OperationMaintenance {
   coutReel?: number
   executePar?: string
   dateRealisation?: string
+  incidentSourceId?: number
+  planMaintenanceId?: number
   createdAt?: string
   updatedAt?: string
 }
@@ -262,6 +405,52 @@ export interface OperationMaintenanceUpdateRequest {
   coutReel?: number
   executePar?: string
   dateRealisation?: string
+}
+
+// ============================================
+// Plans de maintenance récurrents
+// ============================================
+export interface PlanMaintenance {
+  id: number
+  enginId: number
+  enginCode: string
+  titre: string
+  description?: string
+  typeOperation: TypeOperationMaintenance
+  intervalleJours?: number
+  intervalleHeures?: number
+  intervalleKm?: number
+  seuilAlerte: number
+  actif: boolean
+  derniereExecution?: string
+  dernierCompteur?: number
+  prochaineEcheance?: string
+  prochainCompteur?: number
+  echeanceDateDepassee: boolean
+  echeanceCompteurDepassee: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface PlanMaintenanceCreateRequest {
+  titre: string
+  description?: string
+  typeOperation: TypeOperationMaintenance
+  intervalleJours?: number
+  intervalleHeures?: number
+  intervalleKm?: number
+  seuilAlerte?: number
+}
+
+export interface PlanMaintenanceUpdateRequest {
+  titre?: string
+  description?: string
+  typeOperation?: TypeOperationMaintenance
+  intervalleJours?: number
+  intervalleHeures?: number
+  intervalleKm?: number
+  seuilAlerte?: number
+  actif?: boolean
 }
 
 // ============================================
@@ -333,8 +522,16 @@ export interface DocumentEnginCreateRequest {
   commentaire?: string
 }
 
+export interface DocumentEnginUpdateRequest {
+  typeDocument?: TypeDocumentEngin
+  nom?: string
+  urlFichier?: string
+  dateExpiration?: string
+  commentaire?: string
+}
+
 // ============================================
-// Releves compteur
+// Relevés compteur
 // ============================================
 export interface ReleveCompteur {
   id: number
@@ -423,6 +620,10 @@ export interface EnginCarte {
   chantierNom?: string
   latitude: number
   longitude: number
+  /** Horodatage de la dernière position GPS réelle (absent si position déduite du chantier) */
+  horodatage?: string
+  /** GPS_AUTO, QR_SCAN, MANUEL ou CHANTIER */
+  sourcePosition?: string
 }
 
 // ============================================
@@ -440,7 +641,7 @@ export interface HeuresMois {
 }
 
 // ============================================
-// Echeances
+// Échéances
 // ============================================
 export interface EcheanceEngin {
   date: string
@@ -457,14 +658,14 @@ export interface EcheanceEngin {
 // Alertes actives du parc
 // ============================================
 export interface AlerteEngin {
-  niveau: string       // CRITIQUE | HAUTE | NORMALE | BASSE | INFO
+  niveau: string
   titre: string
   detail: string
   enginId?: number
   enginCode?: string
   couleur: string
   pulse: boolean
-  sourceType: string   // MAINTENANCE | INCIDENT | DOCUMENT | ENGIN
+  sourceType: string
   sourceId?: number
 }
 

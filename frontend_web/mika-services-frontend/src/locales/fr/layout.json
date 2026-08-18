@@ -48,7 +48,8 @@
     "assistantQualite": "Assistant Qualité",
     "technicienLaboratoire": "Technicien Laboratoire",
     "technicienTopographie": "Technicien Topographie",
-    "chefChantier": "Chef de chantier"
+    "chefChantier": "Chef de chantier",
+    "conducteur": "Conducteur d'engin"
   },
   "header": {
     "tagline": "Plateforme de gestion",

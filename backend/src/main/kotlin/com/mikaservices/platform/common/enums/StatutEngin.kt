@@ -7,6 +7,10 @@ enum class StatutEngin {
     EN_SERVICE,
     EN_MAINTENANCE,
     EN_PANNE,
+    /** Immobilisé volontairement (hivernage, attente pièces, attente décision). */
+    IMMOBILISE,
     HORS_SERVICE,
-    EN_TRANSIT
+    EN_TRANSIT,
+    /** Réformé : fin de vie définitive (irréversible). */
+    REFORME
 }

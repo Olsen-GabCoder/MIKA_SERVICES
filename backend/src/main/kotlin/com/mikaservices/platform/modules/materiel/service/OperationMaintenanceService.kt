@@ -47,6 +47,22 @@ class OperationMaintenanceService(
     }
 
     @Transactional(readOnly = true)
+    fun findAllGlobal(
+        pageable: Pageable,
+        statut: StatutMaintenance? = null,
+        type: com.mikaservices.platform.common.enums.TypeOperationMaintenance? = null,
+        enginId: Long? = null
+    ): Page<OperationMaintenanceResponse> {
+        return maintenanceRepository.findAllGlobal(statut, type, enginId, pageable)
+            .map { OperationMaintenanceMapper.toResponse(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun findByPeriode(debut: java.time.LocalDate, fin: java.time.LocalDate): List<OperationMaintenanceResponse> {
+        return maintenanceRepository.findByPeriode(debut, fin).map { OperationMaintenanceMapper.toResponse(it) }
+    }
+
+    @Transactional(readOnly = true)
     fun findById(enginId: Long, maintenanceId: Long): OperationMaintenanceResponse {
         val op = getAndVerify(enginId, maintenanceId)
         return OperationMaintenanceMapper.toResponse(op)

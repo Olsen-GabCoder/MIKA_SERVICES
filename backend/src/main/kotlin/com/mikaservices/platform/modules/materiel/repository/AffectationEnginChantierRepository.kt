@@ -32,6 +32,20 @@ interface AffectationEnginChantierRepository : JpaRepository<AffectationEnginCha
         @Param("statuts") statuts: Collection<StatutAffectation>,
     ): List<AffectationEnginChantier>
 
+    /** Détection de conflit : affectations chevauchantes pour un engin donné. */
+    @Query("""
+        SELECT a FROM AffectationEnginChantier a
+        WHERE a.engin.id = :enginId
+        AND a.statut IN ('PLANIFIEE', 'EN_COURS')
+        AND a.dateDebut <= :dateFin
+        AND (a.dateFin IS NULL OR a.dateFin >= :dateDebut)
+    """)
+    fun findConflits(
+        @Param("enginId") enginId: Long,
+        @Param("dateDebut") dateDebut: java.time.LocalDate,
+        @Param("dateFin") dateFin: java.time.LocalDate
+    ): List<AffectationEnginChantier>
+
     /** Affectations avec date de fin dans la plage donnee (retours location, fins d'affectation) */
     @Query("SELECT a FROM AffectationEnginChantier a JOIN FETCH a.engin e JOIN FETCH a.projet p WHERE a.dateFin IS NOT NULL AND a.dateFin >= :debut AND a.dateFin <= :fin AND a.statut IN ('PLANIFIEE','EN_COURS') AND e.actif = true ORDER BY a.dateFin ASC")
     fun findAffectationsFinissantEntre(@Param("debut") debut: java.time.LocalDate, @Param("fin") fin: java.time.LocalDate): List<AffectationEnginChantier>

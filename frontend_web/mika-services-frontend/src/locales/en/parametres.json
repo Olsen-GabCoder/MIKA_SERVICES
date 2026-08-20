@@ -296,7 +296,10 @@
     "checkForUpdateDesc": "Check right now if a new version is available and apply it.",
     "checkNow": "Check now",
     "checking": "Checking…",
-    "upToDate": "You're up to date"
+    "upToDate": "You're up to date",
+    "installApp": "Install the app",
+    "installAppDesc": "Install MIKA Services on this device (dedicated window, no browser bar).",
+    "installNow": "Install"
   },
   "raccourcis": {
     "shortcutsList": "Shortcuts list",

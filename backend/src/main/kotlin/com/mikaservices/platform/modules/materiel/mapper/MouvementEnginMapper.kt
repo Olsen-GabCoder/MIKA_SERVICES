@@ -25,6 +25,12 @@ object MouvementEnginMapper {
             dateDepartConfirmee = entity.dateDepartConfirmee,
             dateReceptionConfirmee = entity.dateReceptionConfirmee,
             commentaire = entity.commentaire,
+            validePar = entity.validePar,
+            dateValidation = entity.dateValidation,
+            motifRejet = entity.motifRejet,
+            receptionAvecReserves = entity.receptionAvecReserves,
+            receptionParCodeManuel = entity.receptionParCodeManuel,
+            incidentReceptionId = entity.incidentReceptionId,
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt,
         )

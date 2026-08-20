@@ -173,11 +173,8 @@ class ProjetService(
             projet.client = clientService.getClientById(clientId)
         }
 
-        // Associer le responsable
-        request.responsableProjetId?.let { userId ->
-            projet.responsableProjet = userRepository.findById(userId)
-                .orElseThrow { ResourceNotFoundException("Utilisateur non trouvé avec l'ID: $userId") }
-        }
+        // responsableProjet : dénormalisation synchronisée par les affectations RP-CHEF-PROJET
+        // (cf. docs/matrice-roles-perimetres.md §4) — plus jamais renseigné via l'API projet.
 
         // Associer les partenaires
         if (request.partenaireIds.isNotEmpty()) {
@@ -367,10 +364,7 @@ class ProjetService(
             projet.client = clientService.getClientById(clientId)
         }
 
-        request.responsableProjetId?.let { userId ->
-            projet.responsableProjet = userRepository.findById(userId)
-                .orElseThrow { ResourceNotFoundException("Utilisateur non trouvé avec l'ID: $userId") }
-        }
+        // responsableProjet : synchronisé par les affectations RP-CHEF-PROJET, ignoré ici.
 
         request.partenaireIds?.let { ids ->
             projet.partenaires.clear()

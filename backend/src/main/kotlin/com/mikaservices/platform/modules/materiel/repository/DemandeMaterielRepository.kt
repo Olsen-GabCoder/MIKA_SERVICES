@@ -21,4 +21,6 @@ interface DemandeMaterielRepository : JpaRepository<DemandeMateriel, Long>, JpaS
     fun existsByReference(reference: String): Boolean
 
     fun findFirstByReferenceStartingWithOrderByReferenceDesc(prefix: String): DemandeMateriel?
+
+    fun findByClientRequestId(clientRequestId: String): DemandeMateriel?
 }

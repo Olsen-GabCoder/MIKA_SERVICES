@@ -41,7 +41,11 @@ class PositionEngin(
     var confirmePar: String? = null,
 
     @Column(name = "horodatage", nullable = false)
-    var horodatage: Instant = Instant.now()
+    var horodatage: Instant = Instant.now(),
+
+    /** Idempotence offline : UUID fourni par le client, unique. */
+    @Column(name = "client_request_id", unique = true, length = 36)
+    var clientRequestId: String? = null
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

@@ -17,4 +17,6 @@ interface IncidentEnginRepository : JpaRepository<IncidentEngin, Long> {
     /** Tous les incidents non resolus, tries par gravite (CRITIQUE d'abord) puis date desc */
     @Query("SELECT i FROM IncidentEngin i JOIN FETCH i.engin e WHERE i.resolu = false AND e.actif = true ORDER BY i.gravite ASC, i.dateIncident DESC")
     fun findIncidentsNonResolus(): List<IncidentEngin>
+
+    fun findByClientRequestId(clientRequestId: String): IncidentEngin?
 }

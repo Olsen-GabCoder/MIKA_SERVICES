@@ -10,5 +10,7 @@ data class ConsommationCarburantCreateRequest(
     val coutTotal: BigDecimal? = null,
     val heuresCompteurAuPlein: Int? = null,
     val pleinPar: String? = null,
-    val commentaire: String? = null
+    val commentaire: String? = null,
+    /** Idempotence offline : UUID client, unique en base. */
+    val clientRequestId: String? = null
 )

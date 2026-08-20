@@ -21,6 +21,11 @@ class ConsommationCarburantService(
     private val logger = LoggerFactory.getLogger(ConsommationCarburantService::class.java)
 
     fun create(enginId: Long, request: ConsommationCarburantCreateRequest): ConsommationCarburantResponse {
+        // Idempotence offline : requête déjà traitée -> renvoyer l'existant (pas de doublon au replay).
+        request.clientRequestId?.let { crid ->
+            consoRepository.findByClientRequestId(crid)?.let { return toResponse(it) }
+        }
+
         val engin = enginRepository.findById(enginId)
             .orElseThrow { ResourceNotFoundException("Engin non trouve avec l'ID: $enginId") }
         val conso = ConsommationCarburant(
@@ -30,7 +35,8 @@ class ConsommationCarburantService(
             coutTotal = request.coutTotal,
             heuresCompteurAuPlein = request.heuresCompteurAuPlein,
             pleinPar = request.pleinPar,
-            commentaire = request.commentaire
+            commentaire = request.commentaire,
+            clientRequestId = request.clientRequestId
         )
         val saved = consoRepository.save(conso)
         logger.info("Consommation carburant engin ${engin.code}: ${saved.quantiteLitres}L")

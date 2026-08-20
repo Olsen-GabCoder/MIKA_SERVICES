@@ -400,8 +400,15 @@ class UserService(
             if (roles.size != roleIds.size) {
                 throw BadRequestException("Un ou plusieurs rôles sont introuvables")
             }
+            val rolesChanged = roles.map { it.id }.toSet() != user.roles.map { it.id }.toSet()
             user.roles.clear()
             user.roles.addAll(roles)
+            // Sécurité : les rôles sont embarqués dans le JWT à la génération. Tout changement
+            // de rôles révoque les sessions actives — l'utilisateur devra se reconnecter
+            // (pas de tokens porteurs de droits obsolètes en circulation).
+            if (rolesChanged) {
+                sessionRepository.deactivateAllUserSessions(user.id!!)
+            }
         }
         
         // Mise à jour des départements si fournis

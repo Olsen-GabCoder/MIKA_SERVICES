@@ -6,7 +6,6 @@ import com.mikaservices.platform.modules.materiel.dto.request.DemandeMaterielCre
 import com.mikaservices.platform.modules.materiel.dto.request.DemandeMaterielLignePayload
 import com.mikaservices.platform.modules.materiel.dto.request.DemandeMaterielCommanderRequest
 import com.mikaservices.platform.modules.materiel.dto.request.DemandeMaterielRejetRequest
-import com.mikaservices.platform.modules.materiel.dto.request.DemandeMaterielValidationRequest
 import com.mikaservices.platform.modules.materiel.dto.response.DemandeMaterielHistoriqueResponse
 import com.mikaservices.platform.modules.materiel.dto.response.DemandeMaterielResponse
 import com.mikaservices.platform.modules.materiel.service.DemandeMaterielService
@@ -68,26 +67,6 @@ class DemandeMaterielController(
         @Valid @RequestBody payload: DemandeMaterielLignePayload,
     ): ResponseEntity<DemandeMaterielResponse> {
         return ResponseEntity.ok(demandeMaterielService.addLigne(id, payload))
-    }
-
-    @PatchMapping("/{id}/valider-chantier")
-    @PreAuthorize("hasAnyRole('CHEF_CHANTIER','LOGISTIQUE','SUPER_ADMIN')")
-    @Operation(summary = "Validation ou rejet chef de chantier")
-    fun validerChantier(
-        @PathVariable id: Long,
-        @Valid @RequestBody request: DemandeMaterielValidationRequest,
-    ): ResponseEntity<DemandeMaterielResponse> {
-        return ResponseEntity.ok(demandeMaterielService.validerChantier(id, request))
-    }
-
-    @PatchMapping("/{id}/valider-projet")
-    @PreAuthorize("hasAnyRole('CHEF_PROJET','LOGISTIQUE','SUPER_ADMIN')")
-    @Operation(summary = "Validation ou rejet chef de projet")
-    fun validerProjet(
-        @PathVariable id: Long,
-        @Valid @RequestBody request: DemandeMaterielValidationRequest,
-    ): ResponseEntity<DemandeMaterielResponse> {
-        return ResponseEntity.ok(demandeMaterielService.validerProjet(id, request))
     }
 
     @PatchMapping("/{id}/prendre-en-charge")

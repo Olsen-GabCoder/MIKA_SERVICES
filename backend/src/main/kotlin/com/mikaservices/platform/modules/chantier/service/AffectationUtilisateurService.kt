@@ -55,6 +55,7 @@ class AffectationUtilisateurService(
             statut = request.statut, observations = request.observations
         )
         val saved = affectationRepository.save(affectation)
+        synchroniserResponsable(projet)
         logger.info("Utilisateur ${user.prenom} ${user.nom} affecté au chantier ${projet.nom} comme ${request.poste}")
         return toResponse(saved)
     }
@@ -75,6 +76,7 @@ class AffectationUtilisateurService(
         affectation.dateFin = request.dateFin
         affectation.observations = request.observations
         val saved = affectationRepository.save(affectation)
+        synchroniserResponsable(affectation.projet)
         logger.info("Affectation $id modifiée : ${affectation.user.prenom} ${affectation.user.nom} — ${request.poste} sur ${affectation.projet.nom}")
         return toResponse(saved)
     }
@@ -163,14 +165,18 @@ class AffectationUtilisateurService(
         requireCanManage(affectation.projet)
         affectation.statut = StatutAffectation.TERMINEE
         if (affectation.dateFin == null) affectation.dateFin = LocalDate.now()
-        return toResponse(affectationRepository.save(affectation))
+        val saved = affectationRepository.save(affectation)
+        synchroniserResponsable(affectation.projet)
+        return toResponse(saved)
     }
 
     fun annuler(id: Long): AffectationUtilisateurResponse {
         val affectation = getById(id)
         requireCanManage(affectation.projet)
         affectation.statut = StatutAffectation.ANNULEE
-        return toResponse(affectationRepository.save(affectation))
+        val saved = affectationRepository.save(affectation)
+        synchroniserResponsable(affectation.projet)
+        return toResponse(saved)
     }
 
     /**
@@ -184,6 +190,28 @@ class AffectationUtilisateurService(
                     "Le projet « ${projet.nom} » est sous la responsabilité de " +
                     (projet.responsableProjet?.let { "${it.prenom} ${it.nom}" }
                         ?: "personne (aucun responsable désigné — contactez un administrateur)") + "."
+            )
+        }
+    }
+
+    private fun estChefProjet(poste: String): Boolean =
+        roleProjetRepository.findFirstByNomIgnoreCaseAndActifTrue(poste.trim())?.code == CODE_CHEF_PROJET
+
+    /**
+     * Synchronise la dénormalisation projets.responsable_projet_id depuis la source de vérité
+     * (affectation EN_COURS dont le poste résout vers RP-CHEF-PROJET). Idempotent : recalcul
+     * complet à chaque mutation d'affectation ; ne sauvegarde que si la valeur change.
+     */
+    private fun synchroniserResponsable(projet: Projet) {
+        val chef = affectationRepository
+            .findByProjetIdAndStatutIn(projet.id!!, listOf(StatutAffectation.EN_COURS))
+            .firstOrNull { estChefProjet(it.poste) }
+        if (projet.responsableProjet?.id != chef?.user?.id) {
+            projet.responsableProjet = chef?.user
+            projetRepository.save(projet)
+            logger.info(
+                "Synchro responsable projet « ${projet.nom} » : " +
+                    (chef?.let { "${it.user.prenom} ${it.user.nom}" } ?: "aucun (vidé)")
             )
         }
     }

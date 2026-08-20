@@ -49,6 +49,47 @@ class MouvementEngin(
 
     @Column(name = "commentaire", columnDefinition = "TEXT")
     var commentaire: String? = null,
+
+    /** Idempotence offline : UUID fourni par le client, unique. */
+    @Column(name = "client_request_id", unique = true, length = 36)
+    var clientRequestId: String? = null,
+
+    /** Token opaque du QR de réception, généré à la validation. Seul chemin vers RECU. */
+    @Column(name = "qr_token", unique = true, length = 64)
+    var qrToken: String? = null,
+
+    /** Code manuel 6 chiffres (mode dégradé sans caméra). */
+    @Column(name = "code_reception", length = 6)
+    var codeReception: String? = null,
+
+    @Column(name = "valide_par", length = 150)
+    var validePar: String? = null,
+
+    @Column(name = "date_validation")
+    var dateValidation: LocalDateTime? = null,
+
+    @Column(name = "motif_rejet", columnDefinition = "TEXT")
+    var motifRejet: String? = null,
+
+    @Column(name = "reception_avec_reserves")
+    var receptionAvecReserves: Boolean = false,
+
+    /** Réception par code manuel (traçage explicite du mode dégradé). */
+    @Column(name = "reception_par_code_manuel")
+    var receptionParCodeManuel: Boolean = false,
+
+    @Column(name = "reception_latitude")
+    var receptionLatitude: Double? = null,
+
+    @Column(name = "reception_longitude")
+    var receptionLongitude: Double? = null,
+
+    @Column(name = "reception_precision_metres")
+    var receptionPrecisionMetres: Double? = null,
+
+    /** Incident auto-créé lors d'une réception avec réserves. */
+    @Column(name = "incident_reception_id")
+    var incidentReceptionId: Long? = null,
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

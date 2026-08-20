@@ -14,4 +14,6 @@ interface ConsommationCarburantRepository : JpaRepository<ConsommationCarburant,
 
     @Query("SELECT COALESCE(SUM(c.quantiteLitres), 0) FROM ConsommationCarburant c WHERE c.engin.id = :enginId AND c.datePlein >= :depuis")
     fun sumLitresByEnginIdSince(enginId: Long, depuis: LocalDate): BigDecimal
+
+    fun findByClientRequestId(clientRequestId: String): ConsommationCarburant?
 }

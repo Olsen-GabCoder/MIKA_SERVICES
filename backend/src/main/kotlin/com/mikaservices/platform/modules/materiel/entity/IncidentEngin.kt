@@ -43,7 +43,11 @@ class IncidentEngin(
     var dateResolution: LocalDate? = null,
 
     @Column(name = "actions_correctives", columnDefinition = "TEXT")
-    var actionsCorrectives: String? = null
+    var actionsCorrectives: String? = null,
+
+    /** Idempotence offline : UUID fourni par le client, unique. */
+    @Column(name = "client_request_id", unique = true, length = 36)
+    var clientRequestId: String? = null
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

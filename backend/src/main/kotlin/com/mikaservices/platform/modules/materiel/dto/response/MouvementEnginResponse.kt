@@ -19,6 +19,19 @@ data class MouvementEnginResponse(
     val dateDepartConfirmee: LocalDateTime?,
     val dateReceptionConfirmee: LocalDateTime?,
     val commentaire: String?,
+    val validePar: String?,
+    val dateValidation: LocalDateTime?,
+    val motifRejet: String?,
+    val receptionAvecReserves: Boolean,
+    val receptionParCodeManuel: Boolean,
+    val incidentReceptionId: Long?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
+)
+
+/** Bon de transfert : tokens de réception, exposés UNIQUEMENT via l'endpoint /bon (jamais en liste). */
+data class TransfertBonResponse(
+    val mouvementId: Long,
+    val qrToken: String,
+    val codeReception: String,
 )

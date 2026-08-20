@@ -28,37 +28,27 @@ class DmaNotificationListener(
         val lien = "/materiel/dma/${e.dmaId}"
         when (e.kind) {
             DmaNotificationKind.SOUMISE -> {
-                val chefs = userRepository.findByRoleCode("CHEF_CHANTIER")
-                if (chefs.isEmpty()) {
-                    log.debug("Aucun CHEF_CHANTIER : notification DMA_SOUMISE ignorée pour ${e.reference}")
-                    return
-                }
+                // Circuit à une porte : la logistique arbitre ; les chefs de projet affectés
+                // sont informés immédiatement (garde-fou informel — pas de veto formel,
+                // mais jamais de perte d'information).
                 val titre = "Nouvelle DMA ${e.reference}"
-                val contenu = "Projet : ${e.projetNom}. À valider au niveau chantier."
-                chefs.forEach { u ->
-                    notificationService.envoyerNotification(
-                        u.id!!, titre, contenu, TypeNotification.DMA_SOUMISE, lien,
-                    )
+                val contenuLogistique = "Projet : ${e.projetNom}. En attente logistique."
+                val notifies = mutableSetOf<Long>()
+                userRepository.findByRoleCode("LOGISTIQUE").forEach { u ->
+                    if (notifies.add(u.id!!)) {
+                        notificationService.envoyerNotification(
+                            u.id!!, titre, contenuLogistique, TypeNotification.DMA_SOUMISE, lien,
+                        )
+                    }
                 }
-            }
-            DmaNotificationKind.VALIDEE_CHANTIER -> {
-                val rid = e.responsableProjetId ?: return
-                notificationService.envoyerNotification(
-                    rid,
-                    "DMA ${e.reference} — validation projet",
-                    "Le chef de chantier a validé. Action requise côté chef de projet (${e.projetNom}).",
-                    TypeNotification.DMA_VALIDEE_CHANTIER,
-                    lien,
-                )
-            }
-            DmaNotificationKind.VALIDEE_PROJET -> {
-                val logistiques = userRepository.findByRoleCode("LOGISTIQUE")
-                val titre = "DMA ${e.reference} — à traiter"
-                val contenu = "Validée par le chef de projet. Projet : ${e.projetNom}."
-                logistiques.forEach { u ->
-                    notificationService.envoyerNotification(
-                        u.id!!, titre, contenu, TypeNotification.DMA_VALIDEE_PROJET, lien,
-                    )
+                val contenuChef = "Demande émise sur votre projet ${e.projetNom}. " +
+                    "Vous pouvez demander le rejet à la logistique avant engagement."
+                e.chefsProjetAffectesIds.forEach { cid ->
+                    if (cid != e.createurId && notifies.add(cid)) {
+                        notificationService.envoyerNotification(
+                            cid, titre, contenuChef, TypeNotification.DMA_SOUMISE, lien,
+                        )
+                    }
                 }
             }
             DmaNotificationKind.PRISE_EN_CHARGE -> {

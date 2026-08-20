@@ -20,4 +20,6 @@ interface PositionEnginRepository : JpaRepository<PositionEngin, Long> {
         """
     )
     fun findLatestByEnginIds(enginIds: List<Long>): List<PositionEngin>
+
+    fun findByClientRequestId(clientRequestId: String): PositionEngin?
 }

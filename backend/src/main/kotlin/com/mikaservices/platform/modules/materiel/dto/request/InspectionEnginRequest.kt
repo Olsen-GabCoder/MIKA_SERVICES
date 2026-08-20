@@ -19,5 +19,7 @@ data class InspectionEnginCreateRequest(
     val checklist: List<ChecklistItemDto> = emptyList(),
     val etatGeneral: EtatGeneralInspection = EtatGeneralInspection.BON,
     val commentaire: String? = null,
-    val signature: String? = null
+    val signature: String? = null,
+    /** Idempotence offline : UUID client, unique en base. */
+    val clientRequestId: String? = null
 )

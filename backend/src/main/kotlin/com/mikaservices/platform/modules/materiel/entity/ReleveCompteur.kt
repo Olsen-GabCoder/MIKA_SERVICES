@@ -24,7 +24,11 @@ class ReleveCompteur(
     var relevePar: String? = null,
 
     @Column(name = "commentaire", columnDefinition = "TEXT")
-    var commentaire: String? = null
+    var commentaire: String? = null,
+
+    /** Idempotence offline : UUID fourni par le client, unique. */
+    @Column(name = "client_request_id", unique = true, length = 36)
+    var clientRequestId: String? = null
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

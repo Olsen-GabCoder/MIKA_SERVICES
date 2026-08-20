@@ -7,5 +7,7 @@ data class ReleveCompteurCreateRequest(
     @field:NotNull val dateReleve: LocalDate,
     @field:NotNull val valeurHeures: Int,
     val relevePar: String? = null,
-    val commentaire: String? = null
+    val commentaire: String? = null,
+    /** Idempotence offline : UUID client, unique en base. */
+    val clientRequestId: String? = null
 )

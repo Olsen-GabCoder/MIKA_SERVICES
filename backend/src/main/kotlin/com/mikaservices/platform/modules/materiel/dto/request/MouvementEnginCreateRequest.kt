@@ -13,4 +13,7 @@ data class MouvementEnginCreateRequest(
     val projetDestinationId: Long?,
 
     val commentaire: String? = null,
+
+    /** Idempotence offline : UUID client, unique en base. */
+    val clientRequestId: String? = null,
 )

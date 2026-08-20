@@ -11,7 +11,9 @@ data class IncidentEnginCreateRequest(
     @field:NotNull val dateIncident: LocalDate,
     val description: String? = null,
     val lieu: String? = null,
-    val signalePar: String? = null
+    val signalePar: String? = null,
+    /** Idempotence offline : UUID client, unique en base. */
+    val clientRequestId: String? = null
 )
 
 data class IncidentEnginUpdateRequest(

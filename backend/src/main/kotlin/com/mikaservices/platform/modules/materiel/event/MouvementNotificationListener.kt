@@ -28,6 +28,67 @@ class MouvementNotificationListener(
         val lien = "/materiel/mouvements/${e.mouvementId}"
         when (e.kind) {
 
+            // Circuit de validation — demande initiée par un non-logistique → Logistique
+            MouvementNotificationKind.DEMANDE_CREEE -> {
+                val titre = "Demande de transfert — ${e.enginCode} ${e.enginNom}"
+                val contenu = buildString {
+                    append("Transfert demandé vers ${e.projetDestinationNom}.")
+                    if (e.projetOrigineNom != null) append(" Depuis : ${e.projetOrigineNom}.")
+                    append(" En attente de validation logistique.")
+                }
+                userRepository.findByRoleCode("LOGISTIQUE").forEach { u ->
+                    notificationService.envoyerNotification(u.id!!, titre, contenu, TypeNotification.MOUVEMENT_DEMANDE, lien)
+                }
+            }
+
+            // Validation logistique → initiateur + CP origine
+            MouvementNotificationKind.VALIDE -> {
+                val titre = "Transfert validé — ${e.enginCode} ${e.enginNom}"
+                val contenu = "Le transfert vers ${e.projetDestinationNom} a été validé par la logistique."
+                val notifies = mutableSetOf<Long>()
+                e.initiateurUserId?.let { notifies.add(it) }
+                e.projetOrigineResponsableId?.let { notifies.add(it) }
+                notifies.forEach { uid ->
+                    notificationService.envoyerNotification(uid, titre, contenu, TypeNotification.MOUVEMENT_VALIDE, lien)
+                }
+            }
+
+            // Rejet logistique → initiateur
+            MouvementNotificationKind.REJETE -> {
+                val titre = "Transfert rejeté — ${e.enginCode} ${e.enginNom}"
+                val contenu = buildString {
+                    append("La demande de transfert vers ${e.projetDestinationNom} a été rejetée.")
+                    if (!e.detail.isNullOrBlank()) append(" Motif : ${e.detail}")
+                }
+                e.initiateurUserId?.let { uid ->
+                    notificationService.envoyerNotification(uid, titre, contenu, TypeNotification.MOUVEMENT_REJETE, lien)
+                }
+            }
+
+            // Réception avec réserves → Logistique + CP destination
+            MouvementNotificationKind.RECEPTION_AVEC_RESERVES -> {
+                val titre = "Réception avec réserves — ${e.enginCode} ${e.enginNom}"
+                val contenu = buildString {
+                    append("Engin réceptionné sur ${e.projetDestinationNom} AVEC RÉSERVES. Un incident a été créé.")
+                    if (!e.detail.isNullOrBlank()) append(" ${e.detail}")
+                }
+                val notifies = mutableSetOf<Long>()
+                userRepository.findByRoleCode("LOGISTIQUE").mapNotNullTo(notifies) { it.id }
+                e.projetDestinationResponsableId?.let { notifies.add(it) }
+                notifies.forEach { uid ->
+                    notificationService.envoyerNotification(uid, titre, contenu, TypeNotification.MOUVEMENT_RESERVES, lien)
+                }
+            }
+
+            // Alerte : engin en transit depuis trop longtemps → Logistique
+            MouvementNotificationKind.EN_TRANSIT_TROP_LONG -> {
+                val titre = "Engin en transit prolongé — ${e.enginCode} ${e.enginNom}"
+                val contenu = "L'engin est en transit vers ${e.projetDestinationNom} depuis plus de 3 jours sans réception confirmée."
+                userRepository.findByRoleCode("LOGISTIQUE").forEach { u ->
+                    notificationService.envoyerNotification(u.id!!, titre, contenu, TypeNotification.ALERTE, lien)
+                }
+            }
+
             // Spec §7 — Déclencheur : création de l'ordre → CP + Chef Chantier source
             MouvementNotificationKind.ORDRE_CREE -> {
                 val titre = "Ordre de mouvement — ${e.enginCode} ${e.enginNom}"

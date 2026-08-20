@@ -11,4 +11,5 @@ interface ReleveCompteurRepository : JpaRepository<ReleveCompteur, Long> {
     fun findByEnginIdOrderByDateReleveDesc(enginId: Long): List<ReleveCompteur>
     fun findFirstByEnginIdOrderByDateReleveDesc(enginId: Long): ReleveCompteur?
     fun findByEnginIdAndDateReleveGreaterThanEqualOrderByDateReleveAsc(enginId: Long, depuis: LocalDate): List<ReleveCompteur>
+    fun findByClientRequestId(clientRequestId: String): ReleveCompteur?
 }

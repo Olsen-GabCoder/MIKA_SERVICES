@@ -42,7 +42,11 @@ class InspectionEngin(
     var signature: String? = null,
 
     @Column(name = "incident_cree_id")
-    var incidentCreeId: Long? = null
+    var incidentCreeId: Long? = null,
+
+    /** Idempotence offline : UUID fourni par le client, unique. */
+    @Column(name = "client_request_id", unique = true, length = 36)
+    var clientRequestId: String? = null
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

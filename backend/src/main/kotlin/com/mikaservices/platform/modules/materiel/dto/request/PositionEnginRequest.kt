@@ -11,5 +11,7 @@ data class PositionEnginCreateRequest(
     val source: SourcePosition = SourcePosition.MANUEL,
     val precisionMetres: Int? = null,
     val chantierNom: String? = null,
-    val confirmePar: String? = null
+    val confirmePar: String? = null,
+    /** Idempotence offline : UUID client, unique en base. */
+    val clientRequestId: String? = null
 )

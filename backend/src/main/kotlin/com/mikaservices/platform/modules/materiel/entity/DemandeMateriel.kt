@@ -60,6 +60,10 @@ class DemandeMateriel(
     @OneToMany(mappedBy = "demande", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     @BatchSize(size = 32)
     var historique: MutableList<DemandeMaterielHistorique> = mutableListOf(),
+
+    /** Idempotence offline : UUID fourni par le client, unique. */
+    @Column(name = "client_request_id", unique = true, length = 36)
+    var clientRequestId: String? = null,
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

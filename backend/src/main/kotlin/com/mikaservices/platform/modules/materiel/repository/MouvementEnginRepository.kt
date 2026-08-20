@@ -12,4 +12,11 @@ interface MouvementEnginRepository : JpaRepository<MouvementEngin, Long>, JpaSpe
     fun findByEnginIdAndStatutIn(enginId: Long, statuts: Collection<StatutMouvementEngin>): List<MouvementEngin>
 
     fun findByEnginIdOrderByDateDemandeDesc(enginId: Long): List<MouvementEngin>
+
+    fun findByClientRequestId(clientRequestId: String): MouvementEngin?
+
+    fun findByStatutAndDateDepartConfirmeeBefore(
+        statut: StatutMouvementEngin,
+        seuil: java.time.LocalDateTime,
+    ): List<MouvementEngin>
 }

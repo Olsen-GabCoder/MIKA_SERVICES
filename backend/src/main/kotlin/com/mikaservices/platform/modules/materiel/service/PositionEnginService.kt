@@ -22,6 +22,11 @@ class PositionEnginService(
     private val logger = LoggerFactory.getLogger(PositionEnginService::class.java)
 
     fun create(enginId: Long, request: PositionEnginCreateRequest): PositionEnginResponse {
+        // Idempotence offline : requête déjà traitée -> renvoyer l'existant (pas de doublon au replay).
+        request.clientRequestId?.let { crid ->
+            positionRepository.findByClientRequestId(crid)?.let { return toResponse(it) }
+        }
+
         val engin = enginRepository.findById(enginId)
             .orElseThrow { ResourceNotFoundException("Engin non trouvé avec l'ID: $enginId") }
 
@@ -34,7 +39,8 @@ class PositionEnginService(
             precisionMetres = request.precisionMetres,
             chantierNom = request.chantierNom,
             confirmePar = request.confirmePar,
-            horodatage = horodatage
+            horodatage = horodatage,
+            clientRequestId = request.clientRequestId
         ))
 
         // Mise à jour de la dernière position connue de l'engin

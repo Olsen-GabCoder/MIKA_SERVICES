@@ -14,10 +14,14 @@ import com.mikaservices.platform.modules.materiel.entity.IncidentEngin
 import com.mikaservices.platform.modules.materiel.entity.OperationMaintenance
 import com.mikaservices.platform.modules.materiel.mapper.IncidentEnginMapper
 import com.mikaservices.platform.modules.materiel.mapper.OperationMaintenanceMapper
+import com.mikaservices.platform.common.enums.StatutAffectation
+import com.mikaservices.platform.modules.materiel.event.IncidentNotificationEvent
+import com.mikaservices.platform.modules.materiel.repository.AffectationEnginChantierRepository
 import com.mikaservices.platform.modules.materiel.repository.EnginRepository
 import com.mikaservices.platform.modules.materiel.repository.IncidentEnginRepository
 import com.mikaservices.platform.modules.materiel.repository.OperationMaintenanceRepository
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -28,11 +32,18 @@ import org.springframework.transaction.annotation.Transactional
 class IncidentEnginService(
     private val incidentRepository: IncidentEnginRepository,
     private val enginRepository: EnginRepository,
-    private val maintenanceRepository: OperationMaintenanceRepository
+    private val maintenanceRepository: OperationMaintenanceRepository,
+    private val affectationRepository: AffectationEnginChantierRepository,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     private val logger = LoggerFactory.getLogger(IncidentEnginService::class.java)
 
     fun create(enginId: Long, request: IncidentEnginCreateRequest): IncidentEnginResponse {
+        // Idempotence offline : requête déjà traitée -> renvoyer l'existant (pas de doublon au replay).
+        request.clientRequestId?.let { crid ->
+            incidentRepository.findByClientRequestId(crid)?.let { return IncidentEnginMapper.toResponse(it) }
+        }
+
         val engin = enginRepository.findById(enginId)
             .orElseThrow { ResourceNotFoundException("Engin non trouvé avec l'ID: $enginId") }
         val incident = IncidentEngin(
@@ -42,7 +53,8 @@ class IncidentEnginService(
             dateIncident = request.dateIncident,
             description = request.description,
             lieu = request.lieu,
-            signalePar = request.signalePar
+            signalePar = request.signalePar,
+            clientRequestId = request.clientRequestId
         )
         val saved = incidentRepository.save(incident)
 
@@ -56,6 +68,24 @@ class IncidentEnginService(
         }
 
         logger.info("Incident créé pour engin ${engin.code}: ${saved.typeIncident}")
+
+        // Notifier après commit : responsable du chantier de l'engin + logistique
+        val projetEnCours = affectationRepository
+            .findByEnginIdAndStatut(enginId, StatutAffectation.EN_COURS)
+            .firstOrNull()?.projet
+        eventPublisher.publishEvent(
+            IncidentNotificationEvent(
+                incidentId = saved.id!!,
+                enginId = enginId,
+                enginCode = engin.code,
+                enginNom = engin.nom,
+                gravite = saved.gravite,
+                typeIncident = saved.typeIncident.toString(),
+                description = saved.description,
+                projetNom = projetEnCours?.nom,
+                projetResponsableId = projetEnCours?.responsableProjetId,
+            )
+        )
         return IncidentEnginMapper.toResponse(saved)
     }
 

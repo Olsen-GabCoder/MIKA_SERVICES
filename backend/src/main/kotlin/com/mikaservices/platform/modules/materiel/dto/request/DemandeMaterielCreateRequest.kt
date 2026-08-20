@@ -28,4 +28,6 @@ data class DemandeMaterielCreateRequest(
     @field:NotEmpty(message = "Au moins une ligne est requise")
     @field:Valid
     val lignes: List<DemandeMaterielLignePayload>?,
+    /** Idempotence offline : UUID client, unique en base. */
+    val clientRequestId: String? = null,
 )

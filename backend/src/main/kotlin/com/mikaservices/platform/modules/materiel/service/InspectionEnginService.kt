@@ -32,6 +32,11 @@ class InspectionEnginService(
     private val logger = LoggerFactory.getLogger(InspectionEnginService::class.java)
 
     fun create(enginId: Long, request: InspectionEnginCreateRequest): InspectionEnginResponse {
+        // Idempotence offline : requête déjà traitée -> renvoyer l'existant (pas de doublon au replay).
+        request.clientRequestId?.let { crid ->
+            inspectionRepository.findByClientRequestId(crid)?.let { return toResponse(it) }
+        }
+
         val engin = enginRepository.findById(enginId)
             .orElseThrow { ResourceNotFoundException("Engin non trouvé avec l'ID: $enginId") }
 
@@ -49,7 +54,8 @@ class InspectionEnginService(
             etatGeneral = request.etatGeneral,
             anomaliesDetectees = anomalies,
             commentaire = request.commentaire,
-            signature = request.signature
+            signature = request.signature,
+            clientRequestId = request.clientRequestId
         )
 
         // Anomalie détectée -> incident créé automatiquement

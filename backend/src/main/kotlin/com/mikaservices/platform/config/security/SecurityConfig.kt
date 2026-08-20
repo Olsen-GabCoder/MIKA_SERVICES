@@ -27,6 +27,14 @@ class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
     private val corsConfigurationSource: CorsConfigurationSource
 ) {
+
+    companion object {
+        /** Rôles autorisés sur la partie web (pilotage). Les autres sont mobile-only. */
+        val WEB_ROLES = arrayOf(
+            "SUPER_ADMIN", "ADMIN", "CHEF_PROJET", "LOGISTIQUE",
+            "DIRECTEUR_TECHNIQUE", "RESPONSABLE_QUALITE", "INGENIEUR_QUALITE", "CONTROLEUR_TECHNIQUE"
+        )
+    }
     
     @Bean
     fun passwordEncoder(): PasswordEncoder {
@@ -71,9 +79,24 @@ class SecurityConfig(
                     .requestMatchers("/webjars/**").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/health").permitAll()
+                    // Auth terrain (cookie dédié, cloisonnée du web) : mêmes règles que /auth
+                    .requestMatchers(HttpMethod.POST, "/terrain/auth/login").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/terrain/auth/refresh").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/terrain/auth/verify-2fa").permitAll()
+                    // Application mobile terrain : authentification requise, tous rôles
+                    // (le périmètre des données est imposé dans les services terrain)
+                    .requestMatchers("/terrain/**").authenticated()
                     .requestMatchers("/error").permitAll()
                     .requestMatchers("/").permitAll()
-                    .anyRequest().authenticated()
+                    // Auth & 2FA : self-service, tous rôles authentifiés (logout, me, refresh…)
+                    .requestMatchers("/auth/**", "/2fa/**").authenticated()
+                    // Profil self-service (/users/me…) : accessible aussi aux rôles terrain-only
+                    // (l'app mobile affiche et modifie le profil de l'utilisateur connecté)
+                    .requestMatchers("/users/me/**", "/users/me").authenticated()
+                    // Toutes les autres API = partie web (pilotage) : réservées aux rôles web.
+                    // Les rôles terrain-only (USER, CONDUCTEUR, CHEF_CHANTIER, ASSISTANT_QUALITE,
+                    // TECHNICIEN_LABORATOIRE, TECHNICIEN_TOPOGRAPHIE) reçoivent 403 même avec un token valide.
+                    .anyRequest().hasAnyRole(*WEB_ROLES)
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
         

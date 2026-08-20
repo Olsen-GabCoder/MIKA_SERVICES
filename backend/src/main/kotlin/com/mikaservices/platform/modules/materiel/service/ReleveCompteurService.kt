@@ -26,6 +26,11 @@ class ReleveCompteurService(
     private val logger = LoggerFactory.getLogger(ReleveCompteurService::class.java)
 
     fun create(enginId: Long, request: ReleveCompteurCreateRequest): ReleveCompteurResponse {
+        // Idempotence offline : requête déjà traitée -> renvoyer l'existant (pas de doublon au replay).
+        request.clientRequestId?.let { crid ->
+            releveRepository.findByClientRequestId(crid)?.let { return toResponse(it) }
+        }
+
         val engin = enginRepository.findById(enginId)
             .orElseThrow { ResourceNotFoundException("Engin non trouve avec l'ID: $enginId") }
         val releve = ReleveCompteur(
@@ -33,7 +38,8 @@ class ReleveCompteurService(
             dateReleve = request.dateReleve,
             valeurHeures = request.valeurHeures,
             relevePar = request.relevePar,
-            commentaire = request.commentaire
+            commentaire = request.commentaire,
+            clientRequestId = request.clientRequestId
         )
         val saved = releveRepository.save(releve)
         engin.heuresCompteur = request.valeurHeures

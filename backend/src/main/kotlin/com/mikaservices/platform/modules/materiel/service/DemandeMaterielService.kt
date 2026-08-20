@@ -1,5 +1,6 @@
 package com.mikaservices.platform.modules.materiel.service
 
+import com.mikaservices.platform.common.enums.StatutAffectation
 import com.mikaservices.platform.common.enums.StatutDemandeMateriel
 import com.mikaservices.platform.common.exception.BadRequestException
 import com.mikaservices.platform.common.exception.ConflictException
@@ -11,7 +12,6 @@ import com.mikaservices.platform.modules.materiel.dto.request.DemandeMaterielCre
 import com.mikaservices.platform.modules.materiel.dto.request.DemandeMaterielLignePayload
 import com.mikaservices.platform.modules.materiel.dto.request.DemandeMaterielCommanderRequest
 import com.mikaservices.platform.modules.materiel.dto.request.DemandeMaterielRejetRequest
-import com.mikaservices.platform.modules.materiel.dto.request.DemandeMaterielValidationRequest
 import com.mikaservices.platform.modules.materiel.dto.response.DemandeMaterielHistoriqueResponse
 import com.mikaservices.platform.modules.materiel.dto.response.DemandeMaterielResponse
 import com.mikaservices.platform.modules.materiel.entity.DemandeMateriel
@@ -20,6 +20,7 @@ import com.mikaservices.platform.modules.materiel.entity.DemandeMaterielLigne
 import com.mikaservices.platform.modules.materiel.mapper.DemandeMaterielMapper
 import com.mikaservices.platform.modules.materiel.repository.DemandeMaterielRepository
 import com.mikaservices.platform.modules.materiel.repository.MateriauRepository
+import com.mikaservices.platform.modules.chantier.repository.AffectationUtilisateurProjetRepository
 import com.mikaservices.platform.modules.fournisseur.repository.CommandeRepository
 import com.mikaservices.platform.modules.projet.entity.Projet
 import com.mikaservices.platform.modules.projet.repository.ProjetRepository
@@ -47,11 +48,23 @@ class DemandeMaterielService(
     private val commandeRepository: CommandeRepository,
     private val currentUserService: CurrentUserService,
     private val eventPublisher: ApplicationEventPublisher,
+    private val affectationUtilisateurRepository: AffectationUtilisateurProjetRepository,
+    private val pdfGenerator: com.mikaservices.platform.modules.materiel.pdf.DemandeMaterielPdfGenerator,
 ) {
     private val logger = LoggerFactory.getLogger(DemandeMaterielService::class.java)
 
+    /** Utilisateur connecté (routes web et terrain exigent un token, cf. SecurityConfig). */
+    private fun actingUser(): User =
+        currentUserService.getCurrentUser()
+            ?: throw UnauthorizedException("Authentification requise")
+
     fun create(request: DemandeMaterielCreateRequest): DemandeMaterielResponse {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
+        // Idempotence offline : requête déjà traitée -> renvoyer l'existant (pas de doublon au replay).
+        request.clientRequestId?.let { crid ->
+            demandeMaterielRepository.findByClientRequestId(crid)?.let { return DemandeMaterielMapper.toResponse(it) }
+        }
+
+        val user = actingUser()
         val projetId = request.projetId ?: throw BadRequestException("projetId obligatoire")
         val lignesPayload = request.lignes ?: throw BadRequestException("Au moins une ligne est requise")
         if (lignesPayload.isEmpty()) throw BadRequestException("Au moins une ligne est requise")
@@ -59,6 +72,19 @@ class DemandeMaterielService(
         val projet = projetRepository.findById(projetId)
             .orElseThrow { ResourceNotFoundException("Projet non trouvé: $projetId") }
 
+        // Périmètre : impossible de créer une DMA sur un projet hors affectation
+        // (sauf trio logistique/admin). Responsable ⇒ affecté, par construction (synchro).
+        if (!isLogistiqueOuAdmin(user) && projet.id !in projetsAffectes(user)) {
+            throw ForbiddenException("Vous n'êtes pas affecté à ce chantier")
+        }
+        request.dateSouhaitee?.let {
+            if (it.isBefore(java.time.LocalDate.now())) {
+                throw BadRequestException("La date souhaitée ne peut pas être dans le passé")
+            }
+        }
+
+        // Circuit à une seule porte (réforme 2026-08-20, aligné transferts) : le chantier
+        // soumet, la logistique arbitre. La DMA naît SOUMISE = en attente logistique.
         val reference = generateUniqueReference()
         val dma = DemandeMateriel(
             reference = reference,
@@ -68,6 +94,7 @@ class DemandeMaterielService(
             priorite = request.priorite,
             dateSouhaitee = request.dateSouhaitee,
             commentaire = request.commentaire,
+            clientRequestId = request.clientRequestId,
         )
         for (p in lignesPayload) {
             dma.lignes.add(buildLigne(dma, p))
@@ -81,7 +108,7 @@ class DemandeMaterielService(
     }
 
     fun addLigne(demandeId: Long, payload: DemandeMaterielLignePayload): DemandeMaterielResponse {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
+        val user = actingUser()
         val dma = getDemandeWithCollections(demandeId)
         assertCanView(user, dma)
         if (dma.statut != StatutDemandeMateriel.SOUMISE && dma.statut != StatutDemandeMateriel.EN_ATTENTE_COMPLEMENT) {
@@ -96,10 +123,19 @@ class DemandeMaterielService(
 
     @Transactional(readOnly = true)
     fun findById(id: Long): DemandeMaterielResponse {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
+        val user = actingUser()
         val dma = getDemandeWithCollections(id)
         assertCanView(user, dma)
         return DemandeMaterielMapper.toResponse(dma)
+    }
+
+    /** Export PDF : exactement le même contrôle de périmètre que le détail (404 hors périmètre). */
+    @Transactional(readOnly = true)
+    fun exportPdf(id: Long): Pair<String, ByteArray> {
+        val user = actingUser()
+        val dma = getDemandeWithCollections(id)
+        assertCanView(user, dma)
+        return dma.reference to pdfGenerator.generate(dma)
     }
 
     @Transactional(readOnly = true)
@@ -108,7 +144,7 @@ class DemandeMaterielService(
         projetId: Long?,
         pageable: Pageable,
     ): Page<DemandeMaterielResponse> {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
+        val user = actingUser()
         val spec = listSpecification(user, statut, projetId)
         return demandeMaterielRepository.findAll(spec, pageable).map { dma ->
             touchDmaCollections(dma)
@@ -118,70 +154,18 @@ class DemandeMaterielService(
 
     @Transactional(readOnly = true)
     fun findHistorique(demandeId: Long): List<DemandeMaterielHistoriqueResponse> {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
+        val user = actingUser()
         val dma = getDemandeWithCollections(demandeId)
         assertCanView(user, dma)
         return dma.historique.sortedBy { it.dateTransition }.map { DemandeMaterielMapper.toHistoriqueResponse(it) }
     }
 
-    fun validerChantier(id: Long, request: DemandeMaterielValidationRequest): DemandeMaterielResponse {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
-        val approuve = request.approuve ?: throw BadRequestException("approuve est obligatoire")
-        val dma = getDemandeWithCollections(id)
-        if (dma.statut != StatutDemandeMateriel.SOUMISE) {
-            throw BadRequestException("La DMA doit être au statut SOUMISE pour validation chantier")
-        }
-        if (!user.hasRole("CHEF_CHANTIER") && !user.hasRole("LOGISTIQUE") && !user.hasRole("SUPER_ADMIN")) {
-            throw ForbiddenException("Rôle non autorisé pour cette action")
-        }
-        val from = dma.statut
-        if (approuve) {
-            dma.statut = StatutDemandeMateriel.EN_VALIDATION_CHANTIER
-            appendHistorique(dma, user, from, dma.statut, request.commentaire)
-        } else {
-            val c = request.commentaire?.trim().orEmpty()
-            if (c.isEmpty()) throw BadRequestException("Un commentaire de rejet est obligatoire")
-            dma.statut = StatutDemandeMateriel.REJETEE
-            appendHistorique(dma, user, from, dma.statut, c)
-        }
-        val saved = demandeMaterielRepository.save(dma)
-        if (approuve) publishDmaNotification(DmaNotificationKind.VALIDEE_CHANTIER, saved)
-        else publishDmaNotification(DmaNotificationKind.REJETEE, saved)
-        return DemandeMaterielMapper.toResponse(saved)
-    }
-
-    fun validerProjet(id: Long, request: DemandeMaterielValidationRequest): DemandeMaterielResponse {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
-        val approuve = request.approuve ?: throw BadRequestException("approuve est obligatoire")
-        val dma = getDemandeWithCollections(id)
-        if (dma.statut != StatutDemandeMateriel.EN_VALIDATION_CHANTIER) {
-            throw BadRequestException("La DMA doit être au statut EN_VALIDATION_CHANTIER pour validation projet")
-        }
-        val can = user.hasRole("LOGISTIQUE") || user.hasRole("SUPER_ADMIN") ||
-            (user.hasRole("CHEF_PROJET") && currentUserService.canEditProjet(dma.projet.responsableProjetId))
-        if (!can) throw ForbiddenException("Seul le chef de projet responsable peut valider à ce stade")
-        val from = dma.statut
-        if (approuve) {
-            dma.statut = StatutDemandeMateriel.EN_VALIDATION_PROJET
-            appendHistorique(dma, user, from, dma.statut, request.commentaire)
-        } else {
-            val c = request.commentaire?.trim().orEmpty()
-            if (c.isEmpty()) throw BadRequestException("Un commentaire de rejet est obligatoire")
-            dma.statut = StatutDemandeMateriel.REJETEE
-            appendHistorique(dma, user, from, dma.statut, c)
-        }
-        val saved = demandeMaterielRepository.save(dma)
-        if (approuve) publishDmaNotification(DmaNotificationKind.VALIDEE_PROJET, saved)
-        else publishDmaNotification(DmaNotificationKind.REJETEE, saved)
-        return DemandeMaterielMapper.toResponse(saved)
-    }
-
     fun prendreEnCharge(id: Long, body: DemandeMaterielCommentaireRequest?): DemandeMaterielResponse {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
+        val user = actingUser()
         requireLogistiqueOuAdmin(user)
         val dma = getDemandeWithCollections(id)
-        if (dma.statut != StatutDemandeMateriel.EN_VALIDATION_PROJET) {
-            throw BadRequestException("La DMA doit être au statut EN_VALIDATION_PROJET pour prise en charge")
+        if (dma.statut != StatutDemandeMateriel.SOUMISE) {
+            throw BadRequestException("La DMA doit être au statut SOUMISE pour prise en charge")
         }
         val from = dma.statut
         dma.statut = StatutDemandeMateriel.PRISE_EN_CHARGE
@@ -192,7 +176,7 @@ class DemandeMaterielService(
     }
 
     fun demanderComplement(id: Long, body: DemandeMaterielCommentaireRequest?): DemandeMaterielResponse {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
+        val user = actingUser()
         requireLogistiqueOuAdmin(user)
         val dma = getDemandeWithCollections(id)
         if (dma.statut != StatutDemandeMateriel.PRISE_EN_CHARGE) {
@@ -207,12 +191,12 @@ class DemandeMaterielService(
     }
 
     fun completer(id: Long, body: DemandeMaterielCommentaireRequest?): DemandeMaterielResponse {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
+        val user = actingUser()
         val dma = getDemandeWithCollections(id)
         if (dma.statut != StatutDemandeMateriel.EN_ATTENTE_COMPLEMENT) {
             throw BadRequestException("La DMA n'est pas en attente de complément")
         }
-        val ok = dma.createur.id == user.id || user.hasRole("LOGISTIQUE") || user.hasRole("SUPER_ADMIN")
+        val ok = dma.createur.id == user.id || isLogistiqueOuAdmin(user)
         if (!ok) throw ForbiddenException("Seul le créateur ou la logistique peut renvoyer la demande après complément")
         val from = dma.statut
         dma.statut = StatutDemandeMateriel.PRISE_EN_CHARGE
@@ -222,7 +206,7 @@ class DemandeMaterielService(
     }
 
     fun commander(id: Long, request: DemandeMaterielCommanderRequest): DemandeMaterielResponse {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
+        val user = actingUser()
         requireLogistiqueOuAdmin(user)
         val dma = getDemandeWithCollections(id)
         if (dma.statut != StatutDemandeMateriel.PRISE_EN_CHARGE) {
@@ -243,12 +227,12 @@ class DemandeMaterielService(
     }
 
     fun livrer(id: Long, body: DemandeMaterielCommentaireRequest?): DemandeMaterielResponse {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
+        val user = actingUser()
         val dma = getDemandeWithCollections(id)
         if (dma.statut != StatutDemandeMateriel.EN_COMMANDE) {
             throw BadRequestException("La DMA doit être en EN_COMMANDE pour enregistrer la livraison")
         }
-        val ok = user.hasRole("LOGISTIQUE") || user.hasRole("SUPER_ADMIN") || dma.createur.id == user.id
+        val ok = isLogistiqueOuAdmin(user) || dma.createur.id == user.id
         if (!ok) throw ForbiddenException("Livraison : logistique ou créateur de la demande")
         val from = dma.statut
         dma.statut = StatutDemandeMateriel.LIVRE
@@ -259,7 +243,7 @@ class DemandeMaterielService(
     }
 
     fun cloturer(id: Long, body: DemandeMaterielCommentaireRequest?): DemandeMaterielResponse {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
+        val user = actingUser()
         requireLogistiqueOuAdmin(user)
         val dma = getDemandeWithCollections(id)
         if (dma.statut != StatutDemandeMateriel.LIVRE) {
@@ -272,23 +256,15 @@ class DemandeMaterielService(
     }
 
     fun rejeter(id: Long, request: DemandeMaterielRejetRequest): DemandeMaterielResponse {
-        val user = currentUserService.getCurrentUser() ?: throw UnauthorizedException("Authentification requise")
+        val user = actingUser()
         val commentaire = request.commentaire.trim()
         if (commentaire.isEmpty()) throw BadRequestException("Le commentaire de rejet est obligatoire")
         val dma = getDemandeWithCollections(id)
+        assertCanView(user, dma)
         val from = dma.statut
         when (from) {
-            StatutDemandeMateriel.SOUMISE -> {
-                if (!user.hasRole("CHEF_CHANTIER") && !user.hasRole("LOGISTIQUE") && !user.hasRole("SUPER_ADMIN")) {
-                    throw ForbiddenException("Rejet à ce stade : chef de chantier ou logistique")
-                }
-            }
-            StatutDemandeMateriel.EN_VALIDATION_CHANTIER -> {
-                val can = user.hasRole("LOGISTIQUE") || user.hasRole("SUPER_ADMIN") ||
-                    (user.hasRole("CHEF_PROJET") && currentUserService.canEditProjet(dma.projet.responsableProjetId))
-                if (!can) throw ForbiddenException("Rejet : chef de projet responsable ou logistique")
-            }
-            StatutDemandeMateriel.EN_VALIDATION_PROJET -> requireLogistiqueOuAdmin(user)
+            StatutDemandeMateriel.SOUMISE, StatutDemandeMateriel.PRISE_EN_CHARGE ->
+                requireLogistiqueOuAdmin(user)
             else -> throw BadRequestException("Rejet impossible depuis le statut $from")
         }
         dma.statut = StatutDemandeMateriel.REJETEE
@@ -308,40 +284,56 @@ class DemandeMaterielService(
                 projetId = dma.projet.id!!,
                 createurId = dma.createur.id!!,
                 responsableProjetId = dma.projet.responsableProjetId,
+                chefsProjetAffectesIds = chefsProjetAffectes(dma.projet.id!!),
             ),
         )
     }
 
+    /** CP affectés EN_COURS au projet — destinataires du garde-fou informel à la création. */
+    private fun chefsProjetAffectes(projetId: Long): List<Long> =
+        affectationUtilisateurRepository
+            .findByProjetIdAndStatutIn(projetId, listOf(StatutAffectation.EN_COURS))
+            .filter { a -> a.user.roles.any { it.code == "CHEF_PROJET" } }
+            .mapNotNull { it.user.id }
+            .distinct()
+
     private fun User.hasRole(code: String): Boolean = roles.any { it.code == code }
 
+    private fun isLogistiqueOuAdmin(user: User): Boolean =
+        user.hasRole("LOGISTIQUE") || user.hasRole("SUPER_ADMIN") || user.hasRole("ADMIN")
+
     private fun requireLogistiqueOuAdmin(user: User) {
-        if (!user.hasRole("LOGISTIQUE") && !user.hasRole("SUPER_ADMIN") && !user.hasRole("ADMIN")) {
-            throw ForbiddenException("Action réservée à la logistique")
-        }
+        if (!isLogistiqueOuAdmin(user)) throw ForbiddenException("Action réservée à la logistique")
     }
 
-    private fun assertCanView(user: User, dma: DemandeMateriel) {
-        if (!canView(user, dma)) throw ForbiddenException("Accès à cette DMA refusé")
-    }
+    /** Projets affectés EN_COURS de l'utilisateur (périmètre recalculé à chaque requête). */
+    private fun projetsAffectes(user: User): List<Long> =
+        affectationUtilisateurRepository
+            .findByUserIdAndStatutIn(user.id!!, listOf(StatutAffectation.EN_COURS))
+            .mapNotNull { it.projet.id }
 
-    private fun canView(user: User, dma: DemandeMateriel): Boolean {
-        if (user.hasRole("LOGISTIQUE") || user.hasRole("SUPER_ADMIN") || user.hasRole("ADMIN")) return true
+    /**
+     * Périmètre DMA (règle unique, docs/matrice-roles-perimetres.md) : trio logistique/admin = tout ;
+     * sinon projet affecté EN_COURS OU créateur — sur TOUT le cycle de vie.
+     */
+    private fun estDansPerimetre(user: User, dma: DemandeMateriel): Boolean {
+        if (isLogistiqueOuAdmin(user)) return true
         if (dma.createur.id == user.id) return true
-        if (user.hasRole("CHEF_PROJET") && user.id == dma.projet.responsableProjetId) return true
-        if (user.hasRole("CHEF_CHANTIER")) {
-            if (dma.statut == StatutDemandeMateriel.SOUMISE) return true
-            if (user.id == dma.projet.responsableProjetId) return true
-            if (dma.createur.id == user.id) return true
-        }
-        return false
+        return dma.projet.id in projetsAffectes(user)
+    }
+
+    /** Lecture hors périmètre → 404 (un 403 confirmerait l'existence de la DMA). */
+    private fun assertCanView(user: User, dma: DemandeMateriel) {
+        if (!estDansPerimetre(user, dma)) throw ResourceNotFoundException("DMA non trouvée: ${dma.id}")
     }
 
     private fun canEditLignes(user: User, dma: DemandeMateriel): Boolean {
-        if (user.hasRole("LOGISTIQUE") || user.hasRole("SUPER_ADMIN")) return true
+        if (isLogistiqueOuAdmin(user)) return true
         return dma.createur.id == user.id
     }
 
     private fun listSpecification(user: User, statut: StatutDemandeMateriel?, projetId: Long?): Specification<DemandeMateriel> {
+        val affectes = if (isLogistiqueOuAdmin(user)) emptyList() else projetsAffectes(user)
         return Specification { root, query, cb ->
             query?.distinct(true)
             val preds = mutableListOf<Predicate>()
@@ -351,27 +343,16 @@ class DemandeMaterielService(
                 preds.add(cb.equal(p.get<Long>("id"), pid))
             }
 
-            val scope: Predicate = when {
-                user.hasRole("LOGISTIQUE") || user.hasRole("SUPER_ADMIN") || user.hasRole("ADMIN") -> cb.conjunction()
-                user.hasRole("CHEF_PROJET") -> {
-                    val p = root.join<DemandeMateriel, Projet>("projet")
-                    cb.equal(p.get<Long>("responsableProjetId"), user.id!!)
-                }
-                user.hasRole("CHEF_CHANTIER") -> {
-                    val p = root.join<DemandeMateriel, Projet>("projet")
-                    val cr = root.join<DemandeMateriel, User>("createur")
-                    cb.or(
-                        cb.equal(root.get<StatutDemandeMateriel>("statut"), StatutDemandeMateriel.SOUMISE),
-                        cb.equal(p.get<Long>("responsableProjetId"), user.id!!),
-                        cb.equal(cr.get<Long>("id"), user.id!!)
-                    )
-                }
-                else -> {
-                    val cr = root.join<DemandeMateriel, User>("createur")
-                    cb.equal(cr.get<Long>("id"), user.id!!)
-                }
+            // Périmètre : trio = tout ; sinon projet affecté EN_COURS OU créateur.
+            if (!isLogistiqueOuAdmin(user)) {
+                val p = root.join<DemandeMateriel, Projet>("projet")
+                val cr = root.join<DemandeMateriel, User>("createur")
+                val ors = mutableListOf<Predicate>(
+                    cb.equal(cr.get<Long>("id"), user.id!!),
+                )
+                if (affectes.isNotEmpty()) ors.add(p.get<Long>("id").`in`(affectes))
+                preds.add(cb.or(*ors.toTypedArray()))
             }
-            preds.add(scope)
             cb.and(*preds.toTypedArray())
         }
     }

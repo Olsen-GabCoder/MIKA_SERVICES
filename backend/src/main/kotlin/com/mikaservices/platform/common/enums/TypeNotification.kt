@@ -21,6 +21,10 @@ enum class TypeNotification {
     DMA_REJETEE,
 
     /** Mouvements d'engins inter-chantiers (spec Engins & DMA §7) */
+    MOUVEMENT_DEMANDE,
+    MOUVEMENT_VALIDE,
+    MOUVEMENT_REJETE,
+    MOUVEMENT_RESERVES,
     MOUVEMENT_ORDRE_CREE,
     MOUVEMENT_DEPART_CONFIRME,
     MOUVEMENT_RECEPTION_CONFIRMEE,

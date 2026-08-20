@@ -3,6 +3,9 @@ package com.mikaservices.platform.modules.materiel.controller
 import com.mikaservices.platform.common.enums.StatutMouvementEngin
 import com.mikaservices.platform.modules.materiel.dto.request.MouvementEnginActionRequest
 import com.mikaservices.platform.modules.materiel.dto.request.MouvementEnginCreateRequest
+import com.mikaservices.platform.modules.materiel.dto.request.ReceptionTransfertRequest
+import com.mikaservices.platform.modules.materiel.dto.request.RejetTransfertRequest
+import com.mikaservices.platform.modules.materiel.dto.request.ValidationTransfertRequest
 import com.mikaservices.platform.modules.materiel.dto.response.MouvementEnginResponse
 import com.mikaservices.platform.modules.materiel.service.MouvementEnginService
 import io.swagger.v3.oas.annotations.Operation
@@ -65,14 +68,34 @@ class MouvementEnginController(
         return ResponseEntity.ok(mouvementEnginService.confirmerDepart(id, body))
     }
 
-    @PatchMapping("/{id}/confirmer-reception")
-    @PreAuthorize("hasAnyRole('CHEF_PROJET','CHEF_CHANTIER','LOGISTIQUE','SUPER_ADMIN')")
-    @Operation(summary = "Confirmer la réception (chantier destination ou logistique)")
-    fun confirmerReception(
+    @PatchMapping("/{id}/valider")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Valider une demande de transfert (destination modifiable)")
+    fun valider(
         @PathVariable id: Long,
-        @RequestBody(required = false) body: MouvementEnginActionRequest?,
+        @RequestBody(required = false) body: ValidationTransfertRequest?,
     ): ResponseEntity<MouvementEnginResponse> {
-        return ResponseEntity.ok(mouvementEnginService.confirmerReception(id, body))
+        return ResponseEntity.ok(mouvementEnginService.valider(id, body))
+    }
+
+    @PatchMapping("/{id}/rejeter")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Rejeter une demande de transfert (motif obligatoire)")
+    fun rejeter(
+        @PathVariable id: Long,
+        @Valid @RequestBody request: RejetTransfertRequest,
+    ): ResponseEntity<MouvementEnginResponse> {
+        return ResponseEntity.ok(mouvementEnginService.rejeter(id, request))
+    }
+
+    @PatchMapping("/{id}/receptionner")
+    @PreAuthorize("hasAnyRole('CHEF_CHANTIER','LOGISTIQUE','SUPER_ADMIN')")
+    @Operation(summary = "Réceptionner l'engin à destination (QR scanné ou code manuel requis)")
+    fun receptionner(
+        @PathVariable id: Long,
+        @Valid @RequestBody request: ReceptionTransfertRequest,
+    ): ResponseEntity<MouvementEnginResponse> {
+        return ResponseEntity.ok(mouvementEnginService.receptionner(id, request))
     }
 
     @PatchMapping("/{id}/annuler")

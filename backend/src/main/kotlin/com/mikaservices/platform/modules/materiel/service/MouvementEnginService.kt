@@ -104,8 +104,19 @@ class MouvementEnginService(
         val projetDestination = projetRepository.findById(projetDestinationId)
             .orElseThrow { ResourceNotFoundException("Projet destination non trouvé: $projetDestinationId") }
 
-        val projetOrigine = request.projetOrigineId?.let { oid ->
-            projetRepository.findById(oid).orElseThrow { ResourceNotFoundException("Projet origine non trouvé: $oid") }
+        // L'origine n'est pas un choix : elle est déduite de la localisation réelle de l'engin
+        // (affectation ouverte → chantier ; sinon dépôt/parc). Si le client fournit une origine,
+        // elle doit correspondre à cette localisation, sinon la demande est refusée.
+        val projetOrigine = affectationRepository
+            .findOuvertesParEngin(enginId, statutsAffectationOuverte)
+            .firstOrNull()?.projet
+        request.projetOrigineId?.let { demandee ->
+            if (demandee != projetOrigine?.id) {
+                throw BadRequestException(
+                    "Origine incohérente : l'engin ${engin.code} se trouve actuellement " +
+                        (projetOrigine?.let { "sur le chantier « ${it.nom} »" } ?: "au dépôt / parc")
+                )
+            }
         }
 
         if (projetOrigine != null && projetOrigine.id == projetDestination.id) {

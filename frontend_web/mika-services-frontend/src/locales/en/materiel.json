@@ -225,7 +225,8 @@
       "selectProjet": "Select a site…",
       "depotCentral": "Central depot (no site)",
       "optionnel": "optional",
-      "origineHint": "Leave empty if the equipment departs from the central depot."
+      "origineHint": "Leave empty if the equipment departs from the central depot.",
+      "origineAuto": "Determined automatically from the equipment's actual location (current site assignment, otherwise depot / yard)."
     },
     "statut": {
       "EN_ATTENTE_DEPART": "Awaiting departure",

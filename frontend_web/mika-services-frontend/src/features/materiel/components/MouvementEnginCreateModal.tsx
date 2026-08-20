@@ -24,7 +24,6 @@ export function MouvementEnginCreateModal({ onClose, onSuccess }: Props) {
   const [loadingData, setLoadingData] = useState(true)
 
   const [enginId, setEnginId] = useState<number | ''>('')
-  const [projetOrigineId, setProjetOrigineId] = useState<number | ''>('')
   const [projetDestinationId, setProjetDestinationId] = useState<number | ''>('')
   const [commentaire, setCommentaire] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -49,16 +48,12 @@ export function MouvementEnginCreateModal({ onClose, onSuccess }: Props) {
       setError(t('mouvement.errorRequired'))
       return
     }
-    if (projetOrigineId && projetOrigineId === projetDestinationId) {
-      setError(t('mouvement.errorSameProjet'))
-      return
-    }
     setSubmitting(true)
     setError(null)
     try {
+      // L'origine n'est pas envoyée : le backend la déduit de la localisation réelle de l'engin.
       await dispatch(createMouvement({
         enginId: Number(enginId),
-        projetOrigineId: projetOrigineId ? Number(projetOrigineId) : undefined,
         projetDestinationId: Number(projetDestinationId),
         commentaire: commentaire.trim() || undefined,
       })).unwrap()
@@ -123,23 +118,12 @@ export function MouvementEnginCreateModal({ onClose, onSuccess }: Props) {
                 )}
               </div>
 
-              {/* Projet origine (optionnel) */}
+              {/* Origine automatique (localisation réelle de l'engin, déterminée côté serveur) */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
                   {t('mouvement.form.projetOrigine')}
-                  <span className="ml-1 text-gray-400 font-normal text-[10px]">({t('mouvement.form.optionnel')})</span>
                 </label>
-                <select
-                  value={projetOrigineId}
-                  onChange={(e) => setProjetOrigineId(e.target.value ? Number(e.target.value) : '')}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                >
-                  <option value="">{t('mouvement.form.depotCentral')}</option>
-                  {projets.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nom}</option>
-                  ))}
-                </select>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{t('mouvement.form.origineHint')}</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400">{t('mouvement.form.origineAuto')}</p>
               </div>
 
               {/* Projet destination */}
@@ -153,11 +137,9 @@ export function MouvementEnginCreateModal({ onClose, onSuccess }: Props) {
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="">{t('mouvement.form.selectProjet')}</option>
-                  {projets
-                    .filter((p) => p.id !== projetOrigineId)
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>{p.nom}</option>
-                    ))}
+                  {projets.map((p) => (
+                    <option key={p.id} value={p.id}>{p.nom}</option>
+                  ))}
                 </select>
               </div>
 

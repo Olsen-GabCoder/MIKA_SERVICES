@@ -30,7 +30,12 @@ export function TransfertFormScreen({ engins, enginInitial, onBack, onDone, onQu
   }, [onError])
 
   const engin = engins.find((e) => String(e.id) === enginId) ?? enginInitial
-  const valide = enginId !== '' && destinationId !== ''
+  // Origine = localisation réelle de l'engin, jamais un choix : chantier d'affectation ouverte,
+  // sinon dépôt/parc si l'engin y est bien DISPONIBLE. Tout autre cas = données incohérentes.
+  const origineIncoherente = !!engin && !engin.chantierNom && engin.statut !== 'DISPONIBLE'
+  const origine = !engin ? '—'
+    : engin.chantierNom ?? (engin.statut === 'DISPONIBLE' ? 'Dépôt / parc' : 'Localisation inconnue')
+  const valide = enginId !== '' && destinationId !== '' && !origineIncoherente
 
   const submit = async () => {
     if (!valide || saving) return
@@ -70,11 +75,17 @@ export function TransfertFormScreen({ engins, enginInitial, onBack, onDone, onQu
             />
           </div>
 
-          {/* Trajet : origine auto → destination */}
+          {/* Trajet : origine auto (lecture seule) → destination */}
           <TrajetBlock
-            origine={engin?.chantierNom ?? 'Dépôt / parc'}
+            origine={origine}
             destination={chantiers.find((c) => String(c.id) === destinationId)?.nom ?? '—'}
           />
+          {origineIncoherente && (
+            <div style={{ fontSize: 13, color: AMBER, fontWeight: 600 }}>
+              Localisation incohérente : cet engin n'est affecté à aucun chantier et n'est pas
+              marqué disponible au dépôt. Corrigez son affectation avant de demander un transfert.
+            </div>
+          )}
 
           <div>
             <label style={label13}>Chantier de destination *</label>
@@ -104,7 +115,7 @@ export function TransfertFormScreen({ engins, enginInitial, onBack, onDone, onQu
         <button onClick={() => void submit()} disabled={!valide || saving} className="tk-press" style={{ ...bigBtn(valide && !saving ? ORANGE : DISABLED), cursor: valide && !saving ? 'pointer' : 'default' }}>
           {saving ? 'Envoi en cours…' : 'Demander le transfert'}
         </button>
-        {!valide && (
+        {!valide && !origineIncoherente && (
           <div style={{ fontSize: 13, color: AMBER, fontWeight: 600, textAlign: 'center', marginTop: -8 }}>
             Choisissez l'engin et le chantier de destination.
           </div>

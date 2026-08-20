@@ -36,6 +36,19 @@ interface AffectationEnginChantierRepository : JpaRepository<AffectationEnginCha
         @Param("statuts") statuts: Collection<StatutAffectation>,
     ): List<AffectationEnginChantier>
 
+    /** Localisation réelle d'un engin : son affectation ouverte (non clôturée), tous chantiers confondus. */
+    @Query(
+        """
+        SELECT a FROM AffectationEnginChantier a
+        WHERE a.engin.id = :enginId
+        AND a.statut IN :statuts AND a.dateFin IS NULL
+        """
+    )
+    fun findOuvertesParEngin(
+        @Param("enginId") enginId: Long,
+        @Param("statuts") statuts: Collection<StatutAffectation>,
+    ): List<AffectationEnginChantier>
+
     /** Détection de conflit : affectations chevauchantes pour un engin donné. */
     @Query("""
         SELECT a FROM AffectationEnginChantier a

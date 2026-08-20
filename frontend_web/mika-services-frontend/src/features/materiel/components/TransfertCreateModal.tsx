@@ -41,9 +41,9 @@ export function TransfertCreateModal({ enginId, enginNom, projetOrigineId, proje
     setSubmitting(true)
     setError(null)
     try {
+      // L'origine n'est pas envoyée : le backend la déduit de la localisation réelle de l'engin.
       await mouvementEnginApi.create({
         enginId,
-        projetOrigineId,
         projetDestinationId: Number(form.projetDestinationId),
         commentaire: form.commentaire || undefined,
       })

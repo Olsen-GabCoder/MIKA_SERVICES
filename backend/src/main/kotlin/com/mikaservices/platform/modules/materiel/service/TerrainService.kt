@@ -108,13 +108,18 @@ class TerrainService(
     fun marquerToutesNotificationsLues(): Int =
         notificationService.marquerToutesLues(actingUser().id!!)
 
+    /** Affectation « ouverte » — même définition que MouvementEnginService (localisation réelle de l'engin). */
+    private val statutsAffectationOuverte = listOf(StatutAffectation.PLANIFIEE, StatutAffectation.EN_COURS)
+
+    private fun affectationOuverte(enginId: Long) =
+        affectationRepository.findOuvertesParEngin(enginId, statutsAffectationOuverte).firstOrNull()
+
     private fun chantierEnCours(enginId: Long): String? =
-        affectationRepository.findByEnginIdAndStatut(enginId, StatutAffectation.EN_COURS)
-            .firstOrNull()?.projet?.nom
+        affectationOuverte(enginId)?.projet?.nom
 
     private fun toTerrainResponse(engin: Engin): TerrainEnginResponse {
         val id = engin.id!!
-        val affectation = affectationRepository.findByEnginIdAndStatut(id, StatutAffectation.EN_COURS).firstOrNull()
+        val affectation = affectationOuverte(id)
         return TerrainEnginResponse(
             id = id,
             code = engin.code,
@@ -279,12 +284,8 @@ class TerrainService(
 
     /** Demande de transfert terrain : le chantier d'origine est résolu automatiquement (affectation EN_COURS). */
     @Transactional
-    fun creerTransfert(request: MouvementEnginCreateRequest): MouvementEnginResponse {
-        val origineId = request.projetOrigineId
-            ?: request.enginId?.let { enginId ->
-                affectationRepository.findByEnginIdAndStatut(enginId, StatutAffectation.EN_COURS)
-                    .firstOrNull()?.projet?.id
-            }
-        return mouvementEnginService.create(request.copy(projetOrigineId = origineId))
-    }
+    fun creerTransfert(request: MouvementEnginCreateRequest): MouvementEnginResponse =
+        // L'origine est résolue par le serveur (MouvementEnginService.create) depuis la
+        // localisation réelle de l'engin : toute origine fournie par le client est ignorée.
+        mouvementEnginService.create(request.copy(projetOrigineId = null))
 }

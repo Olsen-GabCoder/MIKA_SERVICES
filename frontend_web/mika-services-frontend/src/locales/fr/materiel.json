@@ -225,7 +225,8 @@
       "selectProjet": "Sélectionner un chantier…",
       "depotCentral": "Dépôt central (aucun chantier)",
       "optionnel": "optionnel",
-      "origineHint": "Laisser vide si l'engin part du dépôt central."
+      "origineHint": "Laisser vide si l'engin part du dépôt central.",
+      "origineAuto": "Déterminée automatiquement d'après la localisation réelle de l'engin (chantier d'affectation en cours, sinon dépôt / parc)."
     },
     "statut": {
       "EN_ATTENTE_DEPART": "En attente départ",

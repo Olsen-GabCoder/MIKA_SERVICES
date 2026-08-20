@@ -4,6 +4,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 import fs from 'fs'
 
+// Cible de build : 'terrain' (site mika-terrain) ou 'pilotage'/absent (site web).
+const isTerrainBuild = process.env.VITE_APP_TARGET === 'terrain'
+
 // https://vite.dev/config/
 export default defineConfig({
   optimizeDeps: {
@@ -21,14 +24,16 @@ export default defineConfig({
         'flags/gb.png',
       ],
       manifest: {
-        name: 'MIKA Services',
-        short_name: 'MIKA',
-        description: 'Plateforme de gestion de projets BTP — MIKA Services',
+        name: isTerrainBuild ? 'MIKA Terrain' : 'MIKA Services',
+        short_name: isTerrainBuild ? 'Terrain' : 'MIKA',
+        description: isTerrainBuild
+          ? 'Application mobile terrain — MIKA Services'
+          : 'Plateforme de gestion de projets BTP — MIKA Services',
         theme_color: '#FF6B35',
         background_color: '#ffffff',
         display: 'standalone',
         scope: '/',
-        start_url: '/',
+        start_url: isTerrainBuild ? '/terrain' : '/',
         icons: [
           {
             src: 'pwa-192x192.png',

@@ -4,6 +4,7 @@ import { i18n } from '@/i18n'
 import { getAccessToken, setAccessToken, removeAllTokens, getRefreshToken } from '@/utils/tokenStorage'
 import { cacheResponse, getCachedResponse } from '@/utils/responseCache'
 import type { AuthResponse } from '@/types'
+import { IS_TERRAIN_BUILD } from '@/appTarget'
 
 /** Callback defini par le store pour deconnecter proprement via Redux au lieu d'un hard redirect. */
 let onAuthFailure: (() => void) | null = null
@@ -154,7 +155,7 @@ let refreshPromise: Promise<AuthResponse | null> | null = null
  * cookie httpOnly distinct (nom + Path dédiés) — cloisonnement strict web/mobile.
  */
 export function isTerrainContext(): boolean {
-  return window.location.pathname.startsWith('/terrain')
+  return IS_TERRAIN_BUILD || window.location.pathname.startsWith('/terrain')
 }
 
 async function doRefresh(): Promise<AuthResponse | null> {

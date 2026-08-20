@@ -63,6 +63,9 @@ app:
       same-site: ${REFRESH_COOKIE_SAME_SITE:Lax}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}  # Origines séparées par virgule
+  frontend:
+    # URL de l'app mobile terrain (QR engins, liens vers /terrain). En local : même origine que le web.
+    terrain-base-url: ${FRONTEND_TERRAIN_BASE_URL:https://mika-terrain.onrender.com}
   upload:
     dir: ${UPLOAD_DIR:uploads}
   storage:

@@ -2,6 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAppSelector } from '@/store/hooks'
 import { Loading } from '@/components/ui/Loading'
 import { isTerrainOnlyEffective } from '@/utils/authRoles'
+import { externalTerrainRedirect } from '@/appTarget'
 
 /**
  * Cible terrain pour un utilisateur mobile-only : si l'URL vient d'un scan QR engin
@@ -46,6 +47,7 @@ export const ProtectedRoute = ({
 
   // Confinement mobile-only (aucun rôle web) : accès exclusif à l'application terrain (/terrain)
   if (isAuthenticated && terrainOnly && !location.pathname.startsWith('/terrain')) {
+    if (externalTerrainRedirect(terrainTarget(location.pathname))) return null
     return <Navigate to={terrainTarget(location.pathname)} replace />
   }
 
@@ -67,6 +69,7 @@ export const ProtectedRoute = ({
     const fromSearch: string = fromLoc?.search || ''
     if (terrainOnly) {
       // Conserver l'engin scanné avant login (QR → /login → /terrain?engin=...)
+      if (externalTerrainRedirect(terrainTarget(fromPath, fromSearch))) return null
       return <Navigate to={terrainTarget(fromPath, fromSearch)} replace />
     }
     return <Navigate to={fromPath ? `${fromPath}${fromSearch}` : '/'} replace />

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { ProtectedRoute } from './ProtectedRoute'
+import { APP_TARGET } from '@/appTarget'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage'
@@ -77,7 +78,19 @@ function L({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<LazyFallback />}>{children}</Suspense>
 }
 
-const router = createBrowserRouter([
+// Build terrain : uniquement l'app mobile, tout le reste redirige vers /terrain.
+const terrainRoutes = [
+  {
+    path: '/terrain/*',
+    element: <L><TerrainAppPage /></L>,
+  },
+  {
+    path: '*',
+    element: <Navigate to="/terrain" replace />,
+  },
+]
+
+const webRoutes = [
   {
     path: '/login',
     element: (
@@ -102,11 +115,10 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
-  // ── Application mobile terrain (hors layout desktop, accès libre sans login) ─────
-  {
-    path: '/terrain/*',
-    element: <L><TerrainAppPage /></L>,
-  },
+  // ── Application mobile terrain (dev local uniquement — en prod, site séparé mika-terrain) ─────
+  ...(APP_TARGET === 'full'
+    ? [{ path: '/terrain/*', element: <L><TerrainAppPage /></L> }]
+    : []),
   {
     path: '/',
     element: <App />,
@@ -355,7 +367,9 @@ const router = createBrowserRouter([
       },
     ],
   },
-])
+]
+
+const router = createBrowserRouter(APP_TARGET === 'terrain' ? terrainRoutes : webRoutes)
 
 export const AppRouter = () => {
   return <RouterProvider router={router} />

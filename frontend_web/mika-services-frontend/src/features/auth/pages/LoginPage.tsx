@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { login, verify2FA } from '@/store/slices/authSlice'
 import { isLogin2FAPending } from '@/api/authApi'
 import { isTerrainOnlyEffective } from '@/utils/authRoles'
+import { externalTerrainRedirect } from '@/appTarget'
 import { LoginCanvas } from '../components/LoginCanvas'
 import { LoginForm } from '../components/LoginForm'
 import { Verify2FAForm } from '../components/Verify2FAForm'
@@ -27,21 +28,27 @@ export const LoginPage = () => {
     ? '/terrain'
     : user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from)
 
+  // Build pilotage : les utilisateurs mobile-only sont renvoyés vers le site terrain externe
+  const goTo = (dest: string) => {
+    if (dest.startsWith('/terrain') && externalTerrainRedirect(dest)) return
+    navigate(dest, { replace: true })
+  }
+
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(destination, { replace: true })
+      goTo(destination)
     }
-  }, [isAuthenticated, navigate, destination])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, destination])
 
   const handleLogin = async (email: string, password: string, rememberMe: boolean) => {
     try {
       const result = await dispatch(login({ email, password, rememberMe })).unwrap()
       if (!isLogin2FAPending(result)) {
-        navigate(
+        goTo(
           isTerrainOnlyEffective(result.user, result.accessToken)
             ? '/terrain'
             : result.user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from),
-          { replace: true },
         )
       }
     } catch {
@@ -53,11 +60,10 @@ export const LoginPage = () => {
     if (!twoFactorPending) return
     try {
       const result = await dispatch(verify2FA({ tempToken: twoFactorPending.tempToken, code, rememberMe: twoFactorPending.rememberMe })).unwrap()
-      navigate(
+      goTo(
         isTerrainOnlyEffective(result.user, result.accessToken)
           ? '/terrain'
           : result.user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from),
-        { replace: true },
       )
     } catch {
       // Erreur affichée par Verify2FAForm

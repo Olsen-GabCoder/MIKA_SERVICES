@@ -57,6 +57,7 @@ import com.google.zxing.qrcode.QRCodeWriter
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.Resource
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -86,6 +87,7 @@ class EnginController(
     private val coutService: CoutEnginService,
     private val inspectionService: InspectionEnginService,
     private val positionService: PositionEnginService,
+    @Value("\${app.frontend.terrain-base-url}") private val terrainBaseUrl: String,
 ) {
     @PostMapping
     @PreAuthorize("hasAnyRole('LOGISTIQUE','ADMIN','SUPER_ADMIN')")
@@ -216,8 +218,8 @@ class EnginController(
         @RequestParam(required = false) baseUrl: String?
     ): ResponseEntity<ByteArray> {
         val engin = enginService.findById(id)
-        // Le QR pointe vers l'app mobile terrain : tout scan passe par /login puis atterrit sur /terrain
-        val url = "${baseUrl ?: "https://mika-services.onrender.com"}/terrain?engin=${engin.id}"
+        // Le QR pointe vers l'app mobile terrain (domaine dédié FRONTEND_TERRAIN_BASE_URL)
+        val url = "${baseUrl ?: terrainBaseUrl}/terrain?engin=${engin.id}"
         val writer = QRCodeWriter()
         val matrix = writer.encode(url, BarcodeFormat.QR_CODE, size, size)
         val stream = java.io.ByteArrayOutputStream()

@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { login, verify2FA } from '@/store/slices/authSlice'
 import { isLogin2FAPending } from '@/api/authApi'
+import { isTerrainOnlyEffective } from '@/utils/authRoles'
 import { LoginCanvas } from '../components/LoginCanvas'
 import { LoginForm } from '../components/LoginForm'
 import { Verify2FAForm } from '../components/Verify2FAForm'
@@ -21,7 +22,10 @@ export const LoginPage = () => {
   const rawFrom = fromLoc ? `${fromLoc.pathname}${fromLoc.search ?? ''}` : '/'
   // Sécurité : accepter uniquement les chemins relatifs internes (pas de redirect externe)
   const from = rawFrom.startsWith('/') && !rawFrom.startsWith('//') ? rawFrom : '/'
-  const destination = user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from)
+  // Mobile-only (aucun rôle web) : direction l'app terrain, jamais le pilotage web
+  const destination = isTerrainOnlyEffective(user, null)
+    ? '/terrain'
+    : user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from)
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -33,7 +37,12 @@ export const LoginPage = () => {
     try {
       const result = await dispatch(login({ email, password, rememberMe })).unwrap()
       if (!isLogin2FAPending(result)) {
-        navigate(result.user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from), { replace: true })
+        navigate(
+          isTerrainOnlyEffective(result.user, result.accessToken)
+            ? '/terrain'
+            : result.user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from),
+          { replace: true },
+        )
       }
     } catch {
       // Erreur affichée par le formulaire
@@ -44,7 +53,12 @@ export const LoginPage = () => {
     if (!twoFactorPending) return
     try {
       const result = await dispatch(verify2FA({ tempToken: twoFactorPending.tempToken, code, rememberMe: twoFactorPending.rememberMe })).unwrap()
-      navigate(result.user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from), { replace: true })
+      navigate(
+        isTerrainOnlyEffective(result.user, result.accessToken)
+          ? '/terrain'
+          : result.user?.mustChangePassword ? '/profile' : (from === '/' ? defaultHomePath : from),
+        { replace: true },
+      )
     } catch {
       // Erreur affichée par Verify2FAForm
     }

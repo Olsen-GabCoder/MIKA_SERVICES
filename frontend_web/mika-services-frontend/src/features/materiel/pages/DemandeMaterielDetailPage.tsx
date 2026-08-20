@@ -8,8 +8,6 @@ import {
   fetchDmaById,
   fetchDmaHistorique,
   clearDmaDetail,
-  validerChantierDma,
-  validerProjetDma,
   prendreEnChargeDma,
   demanderComplementDma,
   completerDma,
@@ -51,10 +49,6 @@ const STATUT_DOT: Record<StatutDemandeMateriel, string> = {
 // ─── Action modal ────────────────────────────────────────────────────────────
 
 type ActionKind =
-  | 'valider_chantier'
-  | 'refuser_chantier'
-  | 'valider_projet'
-  | 'refuser_projet'
   | 'prendre_en_charge'
   | 'demander_complement'
   | 'completer'
@@ -73,7 +67,7 @@ interface ActionModalProps {
 
 function ActionModal({ kind, onConfirm, onCancel, loading, t }: ActionModalProps) {
   const [commentaire, setCommentaire] = useState('')
-  const requiresComment = kind === 'rejeter' || kind === 'demander_complement' || kind === 'refuser_chantier' || kind === 'refuser_projet'
+  const requiresComment = kind === 'rejeter' || kind === 'demander_complement'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
@@ -154,10 +148,6 @@ export function DemandeMaterielDetailPage() {
     const numId = dma.id
 
     const actionMap: Record<ActionKind, () => Promise<unknown>> = {
-      valider_chantier:    () => dispatch(validerChantierDma({ id: numId, approuve: true, commentaire: commentaire || undefined })).unwrap(),
-      refuser_chantier:    () => dispatch(validerChantierDma({ id: numId, approuve: false, commentaire: commentaire || undefined })).unwrap(),
-      valider_projet:      () => dispatch(validerProjetDma({ id: numId, approuve: true, commentaire: commentaire || undefined })).unwrap(),
-      refuser_projet:      () => dispatch(validerProjetDma({ id: numId, approuve: false, commentaire: commentaire || undefined })).unwrap(),
       prendre_en_charge:   () => dispatch(prendreEnChargeDma({ id: numId, commentaire: commentaire || undefined })).unwrap(),
       demander_complement: () => dispatch(demanderComplementDma({ id: numId, commentaire: commentaire || undefined })).unwrap(),
       completer:           () => dispatch(completerDma({ id: numId, commentaire: commentaire || undefined })).unwrap(),
@@ -211,20 +201,9 @@ export function DemandeMaterielDetailPage() {
 
   const workflowButtons: { kind: ActionKind; labelKey: string; variant?: 'primary' | 'secondary' | 'danger' }[] = (() => {
     switch (dma.statut) {
-      // SOUMISE : en attente de la validation chantier
+      // Circuit à une porte (réforme 2026-08-20) : SOUMISE = en attente logistique.
+      // EN_VALIDATION_* = statuts legacy sans action (tombent dans default).
       case 'SOUMISE':
-        return [
-          { kind: 'valider_chantier', labelKey: 'dma.action.valider_chantier.btn' },
-          { kind: 'refuser_chantier', labelKey: 'dma.action.refuser_chantier.btn', variant: 'danger' as const },
-        ]
-      // EN_VALIDATION_CHANTIER : validation chantier acquise, en attente de la validation projet
-      case 'EN_VALIDATION_CHANTIER':
-        return [
-          { kind: 'valider_projet', labelKey: 'dma.action.valider_projet.btn' },
-          { kind: 'refuser_projet', labelKey: 'dma.action.refuser_projet.btn', variant: 'danger' as const },
-        ]
-      // EN_VALIDATION_PROJET : validation projet acquise, en attente de prise en charge logistique
-      case 'EN_VALIDATION_PROJET':
         return [
           { kind: 'prendre_en_charge', labelKey: 'dma.action.prendre_en_charge.btn' },
           { kind: 'rejeter', labelKey: 'dma.action.rejeter.btn', variant: 'danger' as const },

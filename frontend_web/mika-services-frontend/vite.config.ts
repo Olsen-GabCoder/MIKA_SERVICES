@@ -96,6 +96,12 @@ export default defineConfig({
             urlPattern: /\/ws(\/|$|\?)/,
             handler: 'NetworkOnly',
           },
+          // App terrain : un seul mécanisme de cache (responseCache localStorage) —
+          // pas de cache SW qui masquerait l'état réel après un replay offline.
+          {
+            urlPattern: /\/api\/terrain\//,
+            handler: 'NetworkOnly',
+          },
           // API REST générale : Network-First avec fallback cache
           {
             urlPattern: /\/api\//,

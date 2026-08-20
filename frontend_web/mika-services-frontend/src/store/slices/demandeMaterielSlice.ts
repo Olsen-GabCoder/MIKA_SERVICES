@@ -51,20 +51,6 @@ export const createDma = createAsyncThunk('dma/create', async (data: DemandeMate
   return await demandeMaterielApi.create(data)
 })
 
-export const validerChantierDma = createAsyncThunk(
-  'dma/validerChantier',
-  async ({ id, approuve, commentaire }: { id: number; approuve: boolean; commentaire?: string }) => {
-    return await demandeMaterielApi.validerChantier(id, approuve, commentaire)
-  }
-)
-
-export const validerProjetDma = createAsyncThunk(
-  'dma/validerProjet',
-  async ({ id, approuve, commentaire }: { id: number; approuve: boolean; commentaire?: string }) => {
-    return await demandeMaterielApi.validerProjet(id, approuve, commentaire)
-  }
-)
-
 export const prendreEnChargeDma = createAsyncThunk(
   'dma/prendreEnCharge',
   async ({ id, commentaire }: { id: number; commentaire?: string }) => {
@@ -152,14 +138,6 @@ const demandeMaterielSlice = createSlice({
       })
 
       // Toutes les actions workflow suivent le même pattern
-      .addCase(validerChantierDma.pending, (state, a) => { state.actionLoading = a.meta.arg.id })
-      .addCase(validerChantierDma.fulfilled, (state, a) => updateDetail(state, a.payload))
-      .addCase(validerChantierDma.rejected, (state, a) => { state.actionLoading = null; state.error = handleApiError(a.error) })
-
-      .addCase(validerProjetDma.pending, (state, a) => { state.actionLoading = a.meta.arg.id })
-      .addCase(validerProjetDma.fulfilled, (state, a) => updateDetail(state, a.payload))
-      .addCase(validerProjetDma.rejected, (state, a) => { state.actionLoading = null; state.error = handleApiError(a.error) })
-
       .addCase(prendreEnChargeDma.pending, (state, a) => { state.actionLoading = a.meta.arg.id })
       .addCase(prendreEnChargeDma.fulfilled, (state, a) => updateDetail(state, a.payload))
       .addCase(prendreEnChargeDma.rejected, (state, a) => { state.actionLoading = null; state.error = handleApiError(a.error) })

@@ -23,6 +23,7 @@ const EnginListPage = lazy(() => import('@/features/materiel/pages/EnginListPage
 const EnginDetailPage = lazy(() => import('@/features/materiel/pages/EnginDetailPage').then(m => ({ default: m.EnginDetailPage })))
 const MouvementEnginListPage = lazy(() => import('@/features/materiel/pages/MouvementEnginListPage').then(m => ({ default: m.MouvementEnginListPage })))
 const MateriauListPage = lazy(() => import('@/features/materiel/pages/MateriauListPage').then(m => ({ default: m.MateriauListPage })))
+const AuditTerrainPage = lazy(() => import('@/features/materiel/pages/AuditTerrainPage').then(m => ({ default: m.AuditTerrainPage })))
 const DemandeMaterielListPage = lazy(() => import('@/features/materiel/pages/DemandeMaterielListPage').then(m => ({ default: m.DemandeMaterielListPage })))
 const DemandeMaterielFormPage = lazy(() => import('@/features/materiel/pages/DemandeMaterielFormPage').then(m => ({ default: m.DemandeMaterielFormPage })))
 const DemandeMaterielDetailPage = lazy(() => import('@/features/materiel/pages/DemandeMaterielDetailPage').then(m => ({ default: m.DemandeMaterielDetailPage })))
@@ -101,14 +102,10 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
-  // ── Application mobile terrain (hors layout desktop) ─────
+  // ── Application mobile terrain (hors layout desktop, accès libre sans login) ─────
   {
     path: '/terrain/*',
-    element: (
-      <ProtectedRoute>
-        <L><TerrainAppPage /></L>
-      </ProtectedRoute>
-    ),
+    element: <L><TerrainAppPage /></L>,
   },
   {
     path: '/',
@@ -207,6 +204,10 @@ const router = createBrowserRouter([
       {
         path: 'mouvements',
         element: <ProtectedRoute><L><MouvementEnginListPage /></L></ProtectedRoute>,
+      },
+      {
+        path: 'audit-terrain',
+        element: <ProtectedRoute><L><AuditTerrainPage /></L></ProtectedRoute>,
       },
       {
         path: 'dma',

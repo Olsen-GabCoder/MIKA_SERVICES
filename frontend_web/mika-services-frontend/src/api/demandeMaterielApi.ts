@@ -43,16 +43,6 @@ export const demandeMaterielApi = {
     return response.data
   },
 
-  validerChantier: async (id: number, approuve: boolean, commentaire?: string): Promise<DemandeMateriel> => {
-    const response = await apiClient.patch<DemandeMateriel>(`/dma/${id}/valider-chantier`, { approuve, commentaire })
-    return response.data
-  },
-
-  validerProjet: async (id: number, approuve: boolean, commentaire?: string): Promise<DemandeMateriel> => {
-    const response = await apiClient.patch<DemandeMateriel>(`/dma/${id}/valider-projet`, { approuve, commentaire })
-    return response.data
-  },
-
   prendreEnCharge: async (id: number, commentaire?: string): Promise<DemandeMateriel> => {
     const response = await apiClient.patch<DemandeMateriel>(`/dma/${id}/prendre-en-charge`, { commentaire })
     return response.data

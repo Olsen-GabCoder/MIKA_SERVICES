@@ -29,7 +29,7 @@ function isRetryable(error: AxiosError): boolean {
     /network error/i.test(error.message)
 }
 
-function isNetworkOrServerDown(error: AxiosError): boolean {
+export function isNetworkOrServerDown(error: AxiosError): boolean {
   if (!error.response) {
     const code = error.code ?? ''
     return ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT', 'ECONNREFUSED'].includes(code) ||
@@ -44,6 +44,8 @@ function delay(ms: number): Promise<void> {
 
 function getRequestCacheKey(config: InternalAxiosRequestConfig): { url: string; params: string | undefined } | null {
   if (config.method?.toUpperCase() !== 'GET') return null
+  // Réponses binaires (photos…) : non sérialisables en JSON, ne pas cacher
+  if (config.responseType === 'blob' || config.responseType === 'arraybuffer') return null
   const url = config.url ?? ''
   if (NO_CACHE_PATHS.some((p) => url.includes(p))) return null
   if (isPaginatedListRequest(url)) return null
@@ -147,9 +149,19 @@ apiClient.interceptors.response.use(
 // Exporté pour authApi.refreshToken (refresh proactif) qui doit utiliser le même mutex
 let refreshPromise: Promise<AuthResponse | null> | null = null
 
+/**
+ * Univers courant : l'app mobile terrain a sa propre auth (/terrain/auth/*) avec un
+ * cookie httpOnly distinct (nom + Path dédiés) — cloisonnement strict web/mobile.
+ */
+export function isTerrainContext(): boolean {
+  return window.location.pathname.startsWith('/terrain')
+}
+
 async function doRefresh(): Promise<AuthResponse | null> {
   // Le refresh token est dans le cookie httpOnly, envoyé automatiquement (withCredentials: true)
-  const response = await apiClient.post<AuthResponse>('/auth/refresh', {})
+  // L'univers terrain utilise SON endpoint : seul le cookie terrain est envoyé (Path dédié).
+  const refreshUrl = isTerrainContext() ? '/terrain/auth/refresh' : '/auth/refresh'
+  const response = await apiClient.post<AuthResponse>(refreshUrl, {})
   const data = response.data
   if (data?.accessToken) {
     setAccessToken(data.accessToken)
@@ -180,13 +192,14 @@ apiClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    const isRefreshRequest = originalRequest.url?.includes('/auth/refresh')
-    if (status === 401 && !originalRequest._retry && !isRefreshRequest) {
+    // Un 401 sur les endpoints d'authentification (login, 2FA, reset…) est une erreur
+    // métier à afficher, PAS une session expirée : ne jamais déclencher refresh/logout.
+    const isAuthRequest = originalRequest.url?.includes('/auth/')
+    if (status === 401 && !originalRequest._retry && !isAuthRequest) {
       originalRequest._retry = true
       if (!getRefreshToken()) {
         removeAllTokens()
-        if (onAuthFailure) onAuthFailure()
-        else window.location.href = '/login'
+        handleAuthFailure()
         return Promise.reject(error)
       }
       try {
@@ -202,13 +215,26 @@ apiClient.interceptors.response.use(
         refreshPromise = null
       }
       removeAllTokens()
-      if (onAuthFailure) onAuthFailure()
-      else window.location.href = '/login'
+      handleAuthFailure()
       return Promise.reject(error)
     }
 
     return Promise.reject(error)
   }
 )
+
+/**
+ * Session réellement expirée : chaque univers retourne à SON écran de connexion.
+ * L'app mobile (/terrain) ne doit jamais retomber sur le login web, et inversement.
+ */
+function handleAuthFailure(): void {
+  if (window.location.pathname.startsWith('/terrain')) {
+    // Recharge /terrain : la gate TerrainAppPage affichera TerrainLoginScreen
+    window.location.href = '/terrain'
+    return
+  }
+  if (onAuthFailure) onAuthFailure()
+  else window.location.href = '/login'
+}
 
 export default apiClient

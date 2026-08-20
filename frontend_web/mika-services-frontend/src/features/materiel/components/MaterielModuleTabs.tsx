@@ -9,6 +9,7 @@ export function MaterielModuleTabs() {
     { to: '/mouvements', label: t('module.navMouvements') },
     { to: '/dma', label: t('module.navDma') },
     { to: '/materiaux', label: t('module.navMateriaux') },
+    { to: '/audit-terrain', label: t('module.navAudit') },
   ]
 
   return (

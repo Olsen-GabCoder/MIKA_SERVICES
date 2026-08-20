@@ -4,7 +4,44 @@
     "navEngins": "Engins",
     "navMouvements": "Mouvements",
     "navDma": "DMA",
-    "navMateriaux": "Matériaux"
+    "navMateriaux": "Matériaux",
+    "navAudit": "Audit terrain"
+  },
+  "audit": {
+    "title": "Audit terrain",
+    "hero": "Journal des actions de l'application mobile terrain.",
+    "tableTitle": "Journal d'audit",
+    "loadError": "Impossible de charger le journal d'audit.",
+    "empty": "Aucune action enregistrée.",
+    "anonyme": "Anonyme",
+    "filterEntite": "Entité",
+    "filterAction": "Action",
+    "col": {
+      "date": "Date",
+      "acteur": "Acteur",
+      "action": "Action",
+      "entite": "Entité",
+      "detail": "Détail"
+    },
+    "entite": {
+      "ENGIN": "Engin",
+      "DMA": "DMA",
+      "TRANSFERT": "Transfert"
+    },
+    "action": {
+      "SCAN_QR": "Scan QR",
+      "INSPECTION": "Inspection",
+      "INCIDENT": "Incident",
+      "RELEVE": "Relevé compteur",
+      "RAVITAILLEMENT": "Ravitaillement",
+      "POSITION_CONFIRMEE": "Position confirmée",
+      "DMA_CREEE": "DMA créée",
+      "DMA_TRANSITION": "Transition DMA",
+      "TRANSFERT_DEMANDE": "Transfert demandé",
+      "DEPART_CONFIRME": "Départ confirmé",
+      "RECEPTION_CONFIRMEE": "Réception confirmée",
+      "TRANSFERT_ANNULE": "Transfert annulé"
+    }
   },
   "list": {
     "heroEngins": "Pilotage du parc engins, statuts et location.",
@@ -202,10 +239,10 @@
     "hero": "Suivi et workflow des demandes d'approvisionnement.",
     "create": "Nouvelle DMA",
     "statut": {
-      "SOUMISE": "Soumise",
-      "EN_VALIDATION_CHANTIER": "Val. chantier",
-      "EN_VALIDATION_PROJET": "Val. projet",
-      "PRISE_EN_CHARGE": "Prise en charge",
+      "SOUMISE": "En attente logistique",
+      "EN_VALIDATION_CHANTIER": "Validée chantier (ancien circuit)",
+      "EN_VALIDATION_PROJET": "Validée projet (ancien circuit)",
+      "PRISE_EN_CHARGE": "Prise en charge logistique",
       "EN_ATTENTE_COMPLEMENT": "Complément requis",
       "EN_COMMANDE": "En commande",
       "LIVRE": "Livré",

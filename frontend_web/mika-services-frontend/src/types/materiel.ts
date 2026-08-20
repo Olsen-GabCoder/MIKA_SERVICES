@@ -153,6 +153,8 @@ export interface PositionEnginCreateRequest {
   precisionMetres?: number
   chantierNom?: string
   confirmePar?: string
+  /** Idempotence offline (app terrain). */
+  clientRequestId?: string
 }
 
 // ============================================
@@ -190,6 +192,8 @@ export interface InspectionEnginCreateRequest {
   etatGeneral: EtatGeneralInspection
   commentaire?: string
   signature?: string
+  /** Idempotence offline (app terrain). */
+  clientRequestId?: string
 }
 
 // ============================================
@@ -483,6 +487,8 @@ export interface IncidentEnginCreateRequest {
   description?: string
   lieu?: string
   signalePar?: string
+  /** Idempotence offline (app terrain). */
+  clientRequestId?: string
 }
 
 export interface IncidentEnginUpdateRequest {
@@ -548,6 +554,8 @@ export interface ReleveCompteurCreateRequest {
   valeurHeures: number
   relevePar?: string
   commentaire?: string
+  /** Idempotence offline (app terrain). */
+  clientRequestId?: string
 }
 
 // ============================================
@@ -572,6 +580,8 @@ export interface ConsommationCarburantCreateRequest {
   heuresCompteurAuPlein?: number
   pleinPar?: string
   commentaire?: string
+  /** Idempotence offline (app terrain). */
+  clientRequestId?: string
 }
 
 // ============================================

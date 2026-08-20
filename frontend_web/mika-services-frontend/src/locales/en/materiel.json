@@ -4,7 +4,44 @@
     "navEngins": "Equipment",
     "navMouvements": "Movements",
     "navDma": "DMA",
-    "navMateriaux": "Materials"
+    "navMateriaux": "Materials",
+    "navAudit": "Field audit"
+  },
+  "audit": {
+    "title": "Field audit",
+    "hero": "Action log of the mobile field application.",
+    "tableTitle": "Audit log",
+    "loadError": "Unable to load the audit log.",
+    "empty": "No action recorded.",
+    "anonyme": "Anonymous",
+    "filterEntite": "Entity",
+    "filterAction": "Action",
+    "col": {
+      "date": "Date",
+      "acteur": "Actor",
+      "action": "Action",
+      "entite": "Entity",
+      "detail": "Detail"
+    },
+    "entite": {
+      "ENGIN": "Equipment",
+      "DMA": "DMA",
+      "TRANSFERT": "Transfer"
+    },
+    "action": {
+      "SCAN_QR": "QR scan",
+      "INSPECTION": "Inspection",
+      "INCIDENT": "Incident",
+      "RELEVE": "Meter reading",
+      "RAVITAILLEMENT": "Refueling",
+      "POSITION_CONFIRMEE": "Position confirmed",
+      "DMA_CREEE": "DMA created",
+      "DMA_TRANSITION": "DMA transition",
+      "TRANSFERT_DEMANDE": "Transfer requested",
+      "DEPART_CONFIRME": "Departure confirmed",
+      "RECEPTION_CONFIRMEE": "Reception confirmed",
+      "TRANSFERT_ANNULE": "Transfer cancelled"
+    }
   },
   "list": {
     "heroEngins": "Fleet overview, statuses and rental flag.",
@@ -202,10 +239,10 @@
     "hero": "Track and manage procurement request workflows.",
     "create": "New DMA",
     "statut": {
-      "SOUMISE": "Submitted",
-      "EN_VALIDATION_CHANTIER": "Site validation",
-      "EN_VALIDATION_PROJET": "Project validation",
-      "PRISE_EN_CHARGE": "In progress",
+      "SOUMISE": "Awaiting logistics",
+      "EN_VALIDATION_CHANTIER": "Site-approved (legacy workflow)",
+      "EN_VALIDATION_PROJET": "Project-approved (legacy workflow)",
+      "PRISE_EN_CHARGE": "Handled by logistics",
       "EN_ATTENTE_COMPLEMENT": "Awaiting info",
       "EN_COMMANDE": "Ordered",
       "LIVRE": "Delivered",

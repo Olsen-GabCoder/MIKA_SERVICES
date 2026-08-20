@@ -1,4 +1,4 @@
-import apiClient, { performRefreshFromStorage } from './axios'
+import apiClient, { performRefreshFromStorage, isTerrainContext } from './axios'
 import type { AuthResponse, Login2FAPendingResponse } from '@/types'
 import { API_ENDPOINTS } from '@/constants/api'
 import { setTokenStorageMode, setAccessToken, getAccessToken, removeAllTokens } from '@/utils/tokenStorage'
@@ -42,7 +42,9 @@ export interface Disable2FARequest {
 export const authApi = {
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
     try {
-      const response = await apiClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, credentials)
+      // L'univers terrain a SES endpoints d'auth (cookie httpOnly distinct, cloisonné du web)
+      const loginUrl = isTerrainContext() ? '/terrain/auth/login' : API_ENDPOINTS.AUTH.LOGIN
+      const response = await apiClient.post<LoginResponse>(loginUrl, credentials)
       const data = response.data
       if (!isLogin2FAPending(data) && data.accessToken) {
         // Priorité au choix "rester connecté" du formulaire sur le profil utilisateur
@@ -74,7 +76,8 @@ export const authApi = {
   },
 
   verify2FA: async (tempToken: string, code: string, rememberMe: boolean = false): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.VERIFY_2FA, { tempToken, code, rememberMe })
+    const verifyUrl = isTerrainContext() ? '/terrain/auth/verify-2fa' : API_ENDPOINTS.AUTH.VERIFY_2FA
+    const response = await apiClient.post<AuthResponse>(verifyUrl, { tempToken, code, rememberMe })
     if (response.data.accessToken) {
       const logoutOnClose = rememberMe ? false : (response.data.user?.logoutOnBrowserClose ?? false)
       setTokenStorageMode(logoutOnClose)
@@ -125,7 +128,7 @@ export const authApi = {
     const token = getAccessToken()
     if (token && token !== getOfflineToken()) {
       try {
-        await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT, {}, {
+        await apiClient.post(isTerrainContext() ? '/terrain/auth/logout' : API_ENDPOINTS.AUTH.LOGOUT, {}, {
           headers: { Authorization: `Bearer ${token}` },
         })
       } catch { /* ignore en hors ligne */ }

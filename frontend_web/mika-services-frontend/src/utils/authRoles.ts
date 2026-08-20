@@ -57,15 +57,22 @@ export function canEditProjetEffective(
 }
 
 /**
- * Vrai si l'utilisateur ne possède QUE le rôle CONDUCTEUR (application mobile terrain).
- * Ces utilisateurs sont confinés à /terrain et ne doivent jamais accéder au reste de la plateforme.
+ * Rôles autorisés sur la partie web (pilotage). Miroir de SecurityConfig.WEB_ROLES backend.
+ * Tout utilisateur sans aucun de ces rôles est mobile-only : confiné à /terrain,
+ * il ne doit JAMAIS accéder au reste de la plateforme (le backend renvoie 403 de toute façon).
  */
-export function isConducteurOnlyEffective(
+const WEB_ROLES = new Set([
+  'SUPER_ADMIN', 'ADMIN', 'CHEF_PROJET', 'LOGISTIQUE',
+  'DIRECTEUR_TECHNIQUE', 'RESPONSABLE_QUALITE', 'INGENIEUR_QUALITE', 'CONTROLEUR_TECHNIQUE',
+])
+
+/** Vrai si l'utilisateur n'a aucun rôle web : application mobile terrain uniquement. */
+export function isTerrainOnlyEffective(
   user: { roles?: { code: string }[] } | null | undefined,
   accessToken: string | null | undefined
 ): boolean {
   const codes = getEffectiveRoleCodes(user, accessToken)
-  return codes.length > 0 && codes.every((c) => c === 'CONDUCTEUR')
+  return codes.length > 0 && codes.every((c) => !WEB_ROLES.has(c))
 }
 
 /** Désactivation projet : réservé aux administrateurs (aligné backend). */

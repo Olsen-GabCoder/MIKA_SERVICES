@@ -45,6 +45,10 @@ function messageForStatus(status: number | undefined): string | null {
 }
 
 export const handleApiError = (error: unknown): string => {
+  // Message déjà extrait (ex. rejectWithValue d'un thunk Redux) : le restituer tel quel
+  if (typeof error === 'string' && error.trim() !== '' && !isTechnicalMessage(error)) {
+    return error
+  }
   if (error instanceof AxiosError) {
     const status = error.response?.status
     const apiError = error.response?.data as ApiError | undefined

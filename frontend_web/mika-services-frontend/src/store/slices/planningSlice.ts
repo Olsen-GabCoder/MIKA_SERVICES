@@ -63,25 +63,39 @@ export const fetchTachesEnRetard = createAsyncThunk(
   }
 )
 
+// rejectWithValue : Redux sérialise les erreurs des thunks (l'AxiosError est perdue) ;
+// on extrait le message backend ICI, sinon l'UI n'affiche que « erreur inattendue ».
 export const createTache = createAsyncThunk(
   'planning/create',
-  async (request: TacheCreateRequest) => {
-    return await planningApi.createTache(request)
+  async (request: TacheCreateRequest, { rejectWithValue }) => {
+    try {
+      return await planningApi.createTache(request)
+    } catch (err) {
+      return rejectWithValue(handleApiError(err))
+    }
   }
 )
 
 export const updateTache = createAsyncThunk(
   'planning/update',
-  async ({ id, request }: { id: number; request: TacheUpdateRequest }) => {
-    return await planningApi.updateTache(id, request)
+  async ({ id, request }: { id: number; request: TacheUpdateRequest }, { rejectWithValue }) => {
+    try {
+      return await planningApi.updateTache(id, request)
+    } catch (err) {
+      return rejectWithValue(handleApiError(err))
+    }
   }
 )
 
 export const deleteTache = createAsyncThunk(
   'planning/delete',
-  async (id: number) => {
-    await planningApi.deleteTache(id)
-    return id
+  async (id: number, { rejectWithValue }) => {
+    try {
+      await planningApi.deleteTache(id)
+      return id
+    } catch (err) {
+      return rejectWithValue(handleApiError(err))
+    }
   }
 )
 
@@ -129,7 +143,7 @@ const planningSlice = createSlice({
       clearPlanningCache(action.payload.projetId)
       clearResponseCacheMatching('/planning/')
     })
-    builder.addCase(createTache.rejected, (state, action) => { state.error = handleApiError(action.error) })
+    builder.addCase(createTache.rejected, (state, action) => { state.error = (action.payload as string) ?? handleApiError(action.error) })
 
     // updateTache
     builder.addCase(updateTache.pending, (state) => { state.error = null })
@@ -148,7 +162,7 @@ const planningSlice = createSlice({
       clearPlanningCache(updated.projetId)
       clearResponseCacheMatching('/planning/')
     })
-    builder.addCase(updateTache.rejected, (state, action) => { state.error = handleApiError(action.error) })
+    builder.addCase(updateTache.rejected, (state, action) => { state.error = (action.payload as string) ?? handleApiError(action.error) })
 
     // deleteTache
     builder.addCase(deleteTache.fulfilled, (state, action) => {
@@ -160,7 +174,7 @@ const planningSlice = createSlice({
       if (deleted) clearPlanningCache(deleted.projetId)
       clearResponseCacheMatching('/planning/')
     })
-    builder.addCase(deleteTache.rejected, (state, action) => { state.error = handleApiError(action.error) })
+    builder.addCase(deleteTache.rejected, (state, action) => { state.error = (action.payload as string) ?? handleApiError(action.error) })
   },
 })
 

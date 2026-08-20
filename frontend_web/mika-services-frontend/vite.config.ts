@@ -15,6 +15,16 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    // Build terrain : titre d'onglet et nom d'app iOS dédiés (Safari ignore le manifest pour le nom)
+    {
+      name: 'terrain-index-html',
+      transformIndexHtml(html) {
+        if (!isTerrainBuild) return html
+        return html
+          .replace('<title>MIKA Services</title>', '<title>MIKA Terrain</title>')
+          .replace('name="apple-mobile-web-app-title" content="MIKA"', 'name="apple-mobile-web-app-title" content="Terrain"')
+      },
+    },
     VitePWA({
       registerType: 'prompt',
       injectRegister: false,
@@ -63,6 +73,24 @@ export default defineConfig({
         globIgnores: [
           '**/react-pdf.browser-*.js',
           '**/exceljs.min-*.js',
+          // Build terrain : ne pas précacher les chunks du web (pages pilotage + grosses libs
+          // inutilisées par /terrain) — ils restent servis mais ne gaspillent pas la data mobile.
+          ...(isTerrainBuild
+            ? [
+                '**/!(TerrainApp)Page-*.js', // toutes les pages sauf TerrainAppPage
+                '**/xlsx-*.js',
+                '**/wordDocument-*.js',
+                '**/excelDocument-*.js',
+                '**/dqeExcelDocument-*.js',
+                '**/dqePdfDocument-*.js',
+                '**/pdfDocument-*.js',
+                '**/PieChart-*.js',
+                '**/sortable.esm-*.js',
+                '**/SalleMikaLayout-*.js',
+                '**/BudgetTracker-*.js',
+                '**/SmartTooltip-*.js',
+              ]
+            : []),
         ],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: '/index.html',

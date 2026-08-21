@@ -26,6 +26,10 @@ class ReleveCompteur(
     @Column(name = "commentaire", columnDefinition = "TEXT")
     var commentaire: String? = null,
 
+    /** URL Cloudinary de la photo du compteur. */
+    @Column(name = "photo_url", length = 512)
+    var photoUrl: String? = null,
+
     /** Idempotence offline : UUID fourni par le client, unique. */
     @Column(name = "client_request_id", unique = true, length = 36)
     var clientRequestId: String? = null

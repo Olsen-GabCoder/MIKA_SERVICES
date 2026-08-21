@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import type { TerrainEngin } from '@/api/terrainApi'
+import { terrainApi, type TerrainEngin } from '@/api/terrainApi'
 import type { GraviteIncident, IncidentEngin } from '@/types/materiel'
 import { submitTerrainMutation } from '../offline/submitTerrainMutation'
 import { BORDER, F, INK, MUTED, RED, bigBtn, card, errMsg, getGps, inputStyle, label13, today } from '../theme'
-import { SubHeader } from '../components/ui'
+import { PhotoCapture, SubHeader } from '../components/ui'
 import { IconAlert } from '../components/icons'
 import { GRAVITES, TYPES_PANNE } from './shared'
 
@@ -17,6 +17,7 @@ export function SignalementScreen({ engin, onBack, onDone, onQueued, onError }: 
   const [type, setType] = useState<string | null>(null)
   const [gravite, setGravite] = useState<GraviteIncident | null>(null)
   const [description, setDescription] = useState('')
+  const [photos, setPhotos] = useState<File[]>([])
   const [busy, setBusy] = useState(false)
 
   const submit = async () => {
@@ -25,13 +26,18 @@ export function SignalementScreen({ engin, onBack, onDone, onQueued, onError }: 
     setBusy(true)
     const gps = await getGps()
     try {
+      let photoUrls: string[] | undefined
+      if (photos.length > 0 && navigator.onLine) {
+        try { photoUrls = await terrainApi.uploadOperationPhotos(engin.id, photos) } catch { /* photos optionnelles */ }
+      }
       const res = await submitTerrainMutation<IncidentEngin>('incident', {
         typeIncident: t.backend,
         gravite,
         dateIncident: today(),
         description: `[${t.label}] ${description}`.trim(),
         lieu: gps ? `GPS ${gps.latitude.toFixed(5)}, ${gps.longitude.toFixed(5)}` : engin.chantierNom ?? undefined,
-      }, { enginId: engin.id, contexte: engin.code })
+        photoUrls,
+      }, { enginId: engin.id, contexte: engin.code, photos: photos.length > 0 ? photos : undefined })
       if (res.queued) onQueued()
       else onDone()
     } catch (e) {
@@ -93,6 +99,17 @@ export function SignalementScreen({ engin, onBack, onDone, onQueued, onError }: 
               <IconAlert size={15} strokeWidth={2.2} /> L'engin passera automatiquement en statut EN PANNE.
             </div>
           )}
+        </div>
+
+        {/* Photos */}
+        <div>
+          <PhotoCapture
+            max={3}
+            photos={photos}
+            onAdd={(files) => setPhotos((prev) => [...prev, ...files].slice(0, 3))}
+            onRemove={(i) => setPhotos((prev) => prev.filter((_, j) => j !== i))}
+            label="Photos du problème (optionnel, max 3)"
+          />
         </div>
 
         {/* Description */}

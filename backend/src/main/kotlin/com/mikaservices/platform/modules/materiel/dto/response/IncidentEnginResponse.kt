@@ -18,6 +18,7 @@ data class IncidentEnginResponse(
     val resolu: Boolean,
     val dateResolution: LocalDate?,
     val actionsCorrectives: String?,
+    val photoUrls: List<String>?,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
 )

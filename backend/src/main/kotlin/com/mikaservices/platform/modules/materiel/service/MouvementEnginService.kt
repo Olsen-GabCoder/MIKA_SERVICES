@@ -386,6 +386,12 @@ class MouvementEnginService(
     fun receptionner(id: Long, request: ReceptionTransfertRequest): MouvementEnginResponse {
         val user = actingUser()
         val mouvement = getMouvement(id)
+
+        // Idempotence offline : si deja recu, renvoyer l'existant plutot que 400 (evite faux echec dans l'outbox).
+        if (mouvement.statut == StatutMouvementEngin.RECU) {
+            return MouvementEnginMapper.toResponse(mouvement)
+        }
+
         if (mouvement.statut != StatutMouvementEngin.EN_TRANSIT) {
             throw BadRequestException("Le mouvement n'est pas en transit")
         }
@@ -421,6 +427,21 @@ class MouvementEnginService(
         mouvement.receptionLatitude = request.latitude
         mouvement.receptionLongitude = request.longitude
         mouvement.receptionPrecisionMetres = request.precisionMetres
+        mouvement.signatureReceptionUrl = request.signatureDataUrl
+
+        // Réception offline différée : l'horodatage terrain prime sur le serveur
+        if (request.dateReceptionTerrain != null) {
+            val terrainInstant = java.time.Instant.ofEpochMilli(request.dateReceptionTerrain)
+            mouvement.dateReceptionTerrain = terrainInstant
+            mouvement.dateSynchronisation = java.time.Instant.now()
+            mouvement.syncDifferee = true
+            mouvement.dateReceptionConfirmee = terrainInstant.atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()
+            // Alerte si écart > 48h
+            val ecartHeures = java.time.Duration.between(terrainInstant, java.time.Instant.now()).toHours()
+            if (ecartHeures > 48) {
+                logger.warn("Reception differee id=$id : ecart ${ecartHeures}h entre capture et synchronisation")
+            }
+        }
 
         if (request.avecReserves) {
             val photos = request.photos.orEmpty().take(3)
@@ -537,6 +558,9 @@ class MouvementEnginService(
         return mouvementRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Mouvement non trouvé: $id") }
     }
+
+    /** Acces a l'entite pour le controller (tracking positions). */
+    fun getEntity(id: Long): MouvementEngin = getMouvement(id)
 
     private fun isLogistiqueOuAdminGlobal(user: User): Boolean {
         return user.roles.any { it.code == "LOGISTIQUE" || it.code == "SUPER_ADMIN" || it.code == "ADMIN" }

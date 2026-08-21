@@ -33,7 +33,9 @@ class BaremeImportServiceIntegrationTest {
     fun `import Excel minimal - une feuille corps d'etat`() {
         val workbook = HSSFWorkbook()
         try {
-            // Feuille 0 : Gros-Oeuvre (en-têtes 0-2, données à partir de 3)
+            // Feuille 0 : sommaire (ignorée par l'import, qui commence à l'index 1)
+            workbook.createSheet("Sommaire")
+            // Feuille 1 : Gros-Oeuvre (en-têtes 0-2, données à partir de 3)
             val sheet0 = workbook.createSheet("Gros-Oeuvre")
             sheet0.createRow(0).createCell(0).setCellValue("N°")
             sheet0.createRow(3).createCell(1).setCellValue("13")

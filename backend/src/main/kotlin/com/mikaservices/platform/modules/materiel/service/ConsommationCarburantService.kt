@@ -36,6 +36,7 @@ class ConsommationCarburantService(
             heuresCompteurAuPlein = request.heuresCompteurAuPlein,
             pleinPar = request.pleinPar,
             commentaire = request.commentaire,
+            photoUrl = request.photoUrl,
             clientRequestId = request.clientRequestId
         )
         val saved = consoRepository.save(conso)
@@ -52,6 +53,6 @@ class ConsommationCarburantService(
         id = e.id!!, enginId = e.engin.id!!, datePlein = e.datePlein,
         quantiteLitres = e.quantiteLitres, coutTotal = e.coutTotal,
         heuresCompteurAuPlein = e.heuresCompteurAuPlein, pleinPar = e.pleinPar,
-        commentaire = e.commentaire, createdAt = e.createdAt
+        commentaire = e.commentaire, photoUrl = e.photoUrl, createdAt = e.createdAt
     )
 }

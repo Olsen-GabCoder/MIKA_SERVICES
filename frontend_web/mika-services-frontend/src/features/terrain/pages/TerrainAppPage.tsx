@@ -21,6 +21,8 @@ import { peekCachedGet } from '@/api/axios'
 import { clearResponseCacheMatching } from '@/utils/responseCache'
 import { TerrainInstallBanner } from '../components/TerrainInstallBanner'
 import { BG, F, HEADER_DARK, INK, MUTED, errMsg, getGps } from '../theme'
+import { silentRegisterFcmToken, onForegroundMessage, getStoredFcmToken } from '@/config/firebase'
+import { setPushUserId } from '../push'
 import { Toast } from '../components/ui'
 import { IconBox, IconCloudOff, IconHome, IconScan, IconSync, IconTransfer } from '../components/icons'
 import type { Screen } from '../screens/shared'
@@ -43,6 +45,7 @@ import { RavitaillementScreen } from '../screens/RavitaillementScreen'
 import { SyncScreen } from '../screens/SyncScreen'
 import { AlertesScreen } from '../screens/AlertesScreen'
 import { ProfilScreen } from '../screens/ProfilScreen'
+import { OnboardingScreen, hasSeenOnboarding } from '../screens/OnboardingScreen'
 
 const GLOBAL_CSS = `
 @keyframes tkShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
@@ -97,6 +100,12 @@ function TerrainShell() {
   const dispatch = useAppDispatch()
   const user = useAppSelector((s) => s.auth.user)
   const prenom = user?.prenom || user?.nom || ''
+
+  // Enregistrer le userId courant pour les flags push par utilisateur (appareils partages)
+  const userId = user?.id
+  useEffect(() => { if (userId) setPushUserId(userId) }, [userId])
+  const [onboarded, setOnboarded] = useState(() => hasSeenOnboarding(userId))
+  const userRole = user?.roles?.[0]?.nom || user?.roles?.[0]?.code || 'Utilisateur'
 
   const [screen, setScreen] = useState<Screen>('accueil')
   // Contexte rôles/permissions/chantiers — SWR (cache immédiat, refresh en arrière-plan)
@@ -158,6 +167,26 @@ function TerrainShell() {
   }, [refreshUnread])
   useEffect(() => { if (screen === 'alertes') refreshUnread() }, [screen, refreshUnread])
 
+  // ── Push FCM : enregistrement silencieux si déjà granted (pas de popup) ──
+  useEffect(() => {
+    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY as string | undefined
+    if (!vapidKey) return
+    let alive = true
+    // Si la permission est déjà accordée, enregistrer le token silencieusement
+    silentRegisterFcmToken(vapidKey).then((token) => {
+      if (!alive || !token) return
+      terrainApi.registerPushToken(token, navigator.userAgent.slice(0, 200), /iPhone|iPad/.test(navigator.userAgent) ? 'ios' : 'android')
+        .catch(() => { /* silencieux */ })
+    }).catch(() => {})
+    const unsub = onForegroundMessage((payload) => {
+      if (payload.notification?.title) {
+        showToast(payload.notification.title)
+        refreshUnread()
+      }
+    })
+    return () => { alive = false; unsub() }
+  }, [showToast, refreshUnread]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Offline : outbox + replay au retour du réseau et au montage ──
   const outbox = useTerrainOutbox()
   const online = useIsOnline()
@@ -212,6 +241,10 @@ function TerrainShell() {
   }, [loadEngins])
 
   const showTabBar = screen === 'accueil' || screen === 'dma-list' || screen === 'transfert-list' || screen === 'alertes'
+
+  if (!onboarded) {
+    return <OnboardingScreen prenom={prenom} role={userRole} userId={userId} onDone={() => setOnboarded(true)} />
+  }
 
   return (
     <TerrainMeProvider value={me}>
@@ -377,6 +410,10 @@ function TerrainShell() {
               void loadEngins()
               setScreen('transfert-detail')
             }}
+            onQueued={() => {
+              showToast('Réception enregistrée — sera synchronisée au retour du réseau')
+              setScreen('transfert-detail')
+            }}
             onError={(m) => showToast(m, true)}
           />
         )}
@@ -402,7 +439,16 @@ function TerrainShell() {
             photoUrl={photoUrl}
             onPhotoChanged={loadPhoto}
             onBack={() => setScreen('accueil')}
-            onLogout={async () => { await dispatch(logoutUser()) }}
+            onLogout={async () => {
+              const fcmToken = getStoredFcmToken()
+              if (fcmToken) {
+                await Promise.race([
+                  terrainApi.deactivatePushToken(fcmToken).catch(() => {}),
+                  new Promise((r) => setTimeout(r, 2000)),
+                ])
+              }
+              await dispatch(logoutUser())
+            }}
             onToast={showToast}
           />
         )}

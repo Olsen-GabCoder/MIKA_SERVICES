@@ -13,5 +13,6 @@ data class ConsommationCarburantResponse(
     val heuresCompteurAuPlein: Int?,
     val pleinPar: String?,
     val commentaire: String?,
+    val photoUrl: String?,
     val createdAt: LocalDateTime?
 )

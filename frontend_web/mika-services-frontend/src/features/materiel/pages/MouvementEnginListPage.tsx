@@ -14,6 +14,7 @@ import {
 import { MaterielEmptyState, MaterielPagination } from '../components/MaterielListChrome'
 import { MaterielModuleTabs } from '../components/MaterielModuleTabs'
 import { MouvementEnginCreateModal } from '../components/MouvementEnginCreateModal'
+import { TransfertLiveMap } from '../map/TransfertLiveMap'
 import { useCountUp } from '../hooks/useCountUp'
 import type { StatutMouvementEngin, MouvementEnginSummary } from '@/types/materiel'
 
@@ -199,7 +200,7 @@ function ActionConfirmModal({
    MOUVEMENT TABLE ROW
    ═══════════════════════════════════════════════════════════════════ */
 
-function MouvementTableRow({ m, index, isActing, isOnline, locale, t, onAction }: {
+function MouvementTableRow({ m, index, isActing, isOnline, locale, t, onAction, onOpenMap }: {
   m: MouvementEnginSummary
   index: number
   isActing: boolean
@@ -207,6 +208,7 @@ function MouvementTableRow({ m, index, isActing, isOnline, locale, t, onAction }
   locale: string
   t: (key: string) => string
   onAction: (type: 'depart' | 'reception' | 'annuler', label: string) => void
+  onOpenMap: (id: number) => void
 }) {
   const cfg = STATUT_CONFIG[m.statut]
   const fmt = (d: string) => new Date(d).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
@@ -297,15 +299,27 @@ function MouvementTableRow({ m, index, isActing, isOnline, locale, t, onAction }
             </>
           )}
           {m.statut === 'EN_TRANSIT' && (
-            <button
-              type="button"
-              disabled={isActing || !isOnline}
-              title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
-              onClick={() => onAction('reception', t('mouvement.action.confirmReception'))}
-              className="px-2.5 py-1.5 rounded-md border border-emerald-200 dark:border-emerald-700/50 bg-emerald-50/80 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/35 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              {isActing ? '…' : t('mouvement.action.confirmReception')}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => onOpenMap(m.id)}
+                className="px-2.5 py-1.5 rounded-md border border-violet-200 dark:border-violet-700/50 bg-violet-50/80 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 text-[11px] font-bold hover:bg-violet-100 dark:hover:bg-violet-900/35 transition-all inline-flex items-center gap-1"
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+                </svg>
+                {t('mouvement.action.suivreCarte')}
+              </button>
+              <button
+                type="button"
+                disabled={isActing || !isOnline}
+                title={!isOnline ? t('common:offline.actionUnavailable') : undefined}
+                onClick={() => onAction('reception', t('mouvement.action.confirmReception'))}
+                className="px-2.5 py-1.5 rounded-md border border-emerald-200 dark:border-emerald-700/50 bg-emerald-50/80 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/35 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {isActing ? '…' : t('mouvement.action.confirmReception')}
+              </button>
+            </>
           )}
           {(m.statut === 'RECU' || m.statut === 'ANNULE') && (
             <span className="text-[11px] text-gray-400 dark:text-gray-500 italic">{t('mouvement.terminal')}</span>
@@ -332,6 +346,7 @@ export function MouvementEnginListPage() {
   const [pageSize, setPageSize] = useState(20)
   const [showCreate, setShowCreate] = useState(false)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+  const [mapTransfertId, setMapTransfertId] = useState<number | null>(null)
 
   const fetchPage = (page = 0) => {
     dispatch(fetchMouvements({ page, size: pageSize, statut: filterStatut || undefined }))
@@ -593,6 +608,7 @@ export function MouvementEnginListPage() {
                         locale={i18n.language}
                         t={t}
                         onAction={(type, label) => setPendingAction({ type, mouvementId: m.id, label })}
+                        onOpenMap={(id) => setMapTransfertId(id)}
                       />
                     ))}
                   </tbody>
@@ -662,6 +678,35 @@ export function MouvementEnginListPage() {
           onConfirm={handleAction}
           onCancel={() => setPendingAction(null)}
         />
+      )}
+
+      {/* Modal suivi carte temps réel */}
+      {mapTransfertId != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMapTransfertId(null)} />
+          <motion.div
+            className="relative z-10 w-full max-w-4xl h-[70vh] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t('mouvement.action.suivreCarte')}</h3>
+              <button
+                type="button"
+                onClick={() => setMapTransfertId(null)}
+                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 min-h-0">
+              <TransfertLiveMap transfertId={mapTransfertId} />
+            </div>
+          </motion.div>
+        </div>
       )}
     </PageContainer>
   )

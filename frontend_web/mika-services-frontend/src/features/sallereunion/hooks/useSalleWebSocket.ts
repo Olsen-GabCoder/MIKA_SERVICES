@@ -26,12 +26,14 @@ export function useSalleWebSocket(enabled: boolean) {
 
     const client = new Client({
       brokerURL: buildWsUrl(),
-      connectHeaders: {
-        Authorization: `Bearer ${getAccessToken() ?? ''}`,
-      },
       reconnectDelay: 5000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
+
+      // Token frais a chaque (re)connexion — evite un token perime apres expiration.
+      beforeConnect: () => {
+        client.connectHeaders = { Authorization: `Bearer ${getAccessToken() ?? ''}` }
+      },
 
       onConnect: () => {
         client.subscribe('/topic/salle-reunion', (message) => {

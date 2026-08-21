@@ -90,6 +90,22 @@ class MouvementEngin(
     /** Incident auto-créé lors d'une réception avec réserves. */
     @Column(name = "incident_reception_id")
     var incidentReceptionId: Long? = null,
+
+    /** Signature du receveur (data URL PNG base64, ~5-15 Ko). */
+    @Column(name = "signature_reception_url", columnDefinition = "TEXT")
+    var signatureReceptionUrl: String? = null,
+
+    /** Reception offline : horodatage capture sur l'appareil (date de l'acte). */
+    @Column(name = "date_reception_terrain")
+    var dateReceptionTerrain: java.time.Instant? = null,
+
+    /** Reception offline : horodatage d'enregistrement serveur. */
+    @Column(name = "date_synchronisation")
+    var dateSynchronisation: java.time.Instant? = null,
+
+    /** true si la reception a ete capturee offline et synchronisee plus tard. */
+    @Column(name = "sync_differee", nullable = false)
+    var syncDifferee: Boolean = false,
 ) : BaseEntity() {
 
     override fun equals(other: Any?): Boolean {

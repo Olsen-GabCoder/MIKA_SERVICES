@@ -136,6 +136,8 @@ export interface ReceptionTransfertRequest {
   longitude?: number
   precisionMetres?: number
   photos?: string[]
+  signatureDataUrl?: string
+  dateReceptionTerrain?: number
 }
 
 export interface TransfertCreateRequest {
@@ -291,6 +293,34 @@ export const terrainApi = {
       timeout: 60000,
     })
     return response.data.urls
+  },
+  /** Upload photos d'opération terrain (inspection, incident, relevé, ravitaillement). */
+  uploadOperationPhotos: async (enginId: number, files: File[]): Promise<string[]> => {
+    const form = new FormData()
+    files.slice(0, 3).forEach((f) => form.append('files', f))
+    const response = await apiClient.post<{ urls: string[] }>(`/terrain/engins/${enginId}/operation-photos`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    })
+    return response.data.urls
+  },
+  /** Envoyer les positions GPS du convoyeur en transit (batch). */
+  envoyerPositionsTransfert: async (mouvementId: number, positions: { latitude: number; longitude: number; precisionMetres?: number; vitesseKmh?: number; cap?: number; horodatage: number }[]): Promise<void> => {
+    await apiClient.post(`/terrain/transferts/${mouvementId}/positions`, { positions })
+  },
+  /** Derniere position connue d'un transfert en transit. */
+  dernierePositionTransfert: async (mouvementId: number): Promise<{ latitude: number; longitude: number; vitesseKmh?: number; horodatage: number; etaMinutes?: number } | null> => {
+    const response = await apiClient.get(`/terrain/transferts/${mouvementId}/derniere-position`)
+    const d = response.data
+    return d && d.latitude ? d : null
+  },
+  /** Enregistrer un token FCM push pour cet appareil. */
+  registerPushToken: async (token: string, deviceInfo?: string, platform?: string): Promise<void> => {
+    await apiClient.post('/terrain/push-tokens', { token, deviceInfo, platform })
+  },
+  /** Désactiver le token FCM push (logout). */
+  deactivatePushToken: async (token: string): Promise<void> => {
+    await apiClient.delete('/terrain/push-tokens', { data: { token } })
   },
   mesEngins: async (): Promise<TerrainEngin[]> => {
     const response = await apiClient.get<TerrainEngin[]>('/terrain/mes-engins')

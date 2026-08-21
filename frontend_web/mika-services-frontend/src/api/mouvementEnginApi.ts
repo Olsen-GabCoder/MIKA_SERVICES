@@ -4,6 +4,7 @@ import type {
   MouvementEnginCreateRequest,
   MouvementEnginActionRequest,
   StatutMouvementEngin,
+  SuiviTransfert,
   PageResponse,
 } from '@/types/materiel'
 
@@ -30,6 +31,11 @@ export const mouvementEnginApi = {
 
   findById: async (id: number): Promise<MouvementEnginSummary> => {
     const response = await apiClient.get<MouvementEnginSummary>(`/mouvements/${id}`)
+    return response.data
+  },
+
+  getSuivi: async (id: number): Promise<SuiviTransfert> => {
+    const response = await apiClient.get<SuiviTransfert>(`/mouvements/${id}/suivi`)
     return response.data
   },
 

@@ -11,6 +11,8 @@ data class ConsommationCarburantCreateRequest(
     val heuresCompteurAuPlein: Int? = null,
     val pleinPar: String? = null,
     val commentaire: String? = null,
+    /** URL Cloudinary de la photo du ticket/compteur. */
+    val photoUrl: String? = null,
     /** Idempotence offline : UUID client, unique en base. */
     val clientRequestId: String? = null
 )

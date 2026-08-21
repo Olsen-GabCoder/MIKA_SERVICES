@@ -3,8 +3,9 @@ import type { TerrainEngin } from '@/api/terrainApi'
 import EnginTypeIcon from '@/features/materiel/icons/EnginTypeIcon'
 import { F, FC, ICON_MUTED, INK, INK_SOFT, MUTED, ORANGE, AMBER, SURFACE, card } from '../theme'
 import { AuthImg, FilterChips, StatutBadge, Skeleton, TopBar } from '../components/ui'
-import { IconAlert, IconBell, IconCheck, IconClipboard, IconFuel, IconGauge, IconMore, IconPin, IconScan, IconSync, IconTransfer } from '../components/icons'
+import { IconAlert, IconBell, IconCheck, IconClipboard, IconFuel, IconGauge, IconMore, IconPin, IconScan, IconSync, IconTransfer, IconX } from '../components/icons'
 import { canTransfert, hasParcComplet, isOperateur, useTerrainMe } from '../me'
+import { shouldShowPushBanner, dismissPushBanner, activatePush } from '../push'
 
 type Filtre = 'tous' | 'a_inspecter' | 'en_panne'
 
@@ -51,6 +52,20 @@ export function AccueilScreen({ prenom, photoUrl, engins, loading, unreadCount, 
     }
     return list
   }, [engins, filtre, recherche])
+
+  // Push notification banner
+  const [showPushBanner, setShowPushBanner] = useState(() => shouldShowPushBanner())
+  const [pushActivating, setPushActivating] = useState(false)
+  const handleActivatePush = async () => {
+    setPushActivating(true)
+    await activatePush()
+    setShowPushBanner(false)
+    setPushActivating(false)
+  }
+  const handleDismissPush = () => {
+    dismissPushBanner()
+    setShowPushBanner(false)
+  }
 
   // Scroll infini : on ne rend qu'un nombre limité de cartes, étendu quand la sentinelle devient visible
   const [renderCount, setRenderCount] = useState(FEED_BATCH)
@@ -198,6 +213,39 @@ export function AccueilScreen({ prenom, photoUrl, engins, loading, unreadCount, 
               <span style={{ display: 'block', fontSize: 12.5, color: '#A16A20' }}>
                 {sansInspection.slice(0, 3).map((e) => e.code).join(' · ')}{sansInspection.length > 3 ? '…' : ''}
               </span>
+            </div>
+          </div>
+        )}
+
+        {/* Bandeau push notifications */}
+        {showPushBanner && (
+          <div style={{ margin: '0 16px', background: '#fff', border: `1.5px solid ${ORANGE}`, borderRadius: 14, padding: '12px 14px', display: 'flex', gap: 12, alignItems: 'center' }}>
+            <span style={{ width: 38, height: 38, borderRadius: 10, background: '#FFF0E8', color: ORANGE, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <IconBell size={20} strokeWidth={2} />
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: INK }}>Activez les notifications</div>
+              <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.3, marginTop: 2 }}>Transferts, DMA et incidents en temps réel.</div>
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              <button
+                onClick={handleDismissPush}
+                style={{ appearance: 'none', border: 'none', background: 'transparent', color: MUTED, cursor: 'pointer', padding: 6, display: 'flex' }}
+                aria-label="Plus tard"
+              >
+                <IconX size={16} strokeWidth={2.2} />
+              </button>
+              <button
+                onClick={() => void handleActivatePush()}
+                disabled={pushActivating}
+                className="tk-press"
+                style={{
+                  appearance: 'none', border: 'none', borderRadius: 10, background: ORANGE, color: '#fff',
+                  padding: '8px 14px', fontSize: 13, fontWeight: 700, fontFamily: F, cursor: 'pointer',
+                }}
+              >
+                {pushActivating ? '...' : 'Activer'}
+              </button>
             </div>
           </div>
         )}

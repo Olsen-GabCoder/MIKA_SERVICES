@@ -92,6 +92,9 @@ class TerrainService(
         currentUserService.getCurrentUser()
             ?: throw UnauthorizedException("Authentification requise")
 
+    /** Utilisateur connecté — accessible depuis le controller pour les endpoints simples. */
+    fun currentUser(): User = actingUser()
+
     // ── Notifications in-app (écran Alertes terrain) ──────────────────────
 
     fun mesNotifications(pageable: Pageable): Page<NotificationResponse> =

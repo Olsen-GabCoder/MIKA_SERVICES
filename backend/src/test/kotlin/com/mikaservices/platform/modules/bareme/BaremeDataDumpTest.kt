@@ -3,11 +3,11 @@ package com.mikaservices.platform.modules.bareme
 import com.mikaservices.platform.modules.bareme.repository.CorpsEtatBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.FournisseurBaremeRepository
 import com.mikaservices.platform.modules.bareme.repository.LignePrixBaremeRepository
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * Interroge la base (profil dev = MySQL) et affiche toutes les données barème.
@@ -23,6 +23,7 @@ class BaremeDataDumpTest {
     @Autowired private lateinit var lignePrixRepo: LignePrixBaremeRepository
 
     @Test
+    @Transactional(readOnly = true)
     fun `dump all bareme data to stdout`() {
         val sb = StringBuilder()
 

@@ -45,6 +45,10 @@ class IncidentEngin(
     @Column(name = "actions_correctives", columnDefinition = "TEXT")
     var actionsCorrectives: String? = null,
 
+    /** URLs Cloudinary des photos d'incident (JSON array). */
+    @Column(name = "photo_urls", columnDefinition = "TEXT")
+    var photoUrls: String? = null,
+
     /** Idempotence offline : UUID fourni par le client, unique. */
     @Column(name = "client_request_id", unique = true, length = 36)
     var clientRequestId: String? = null

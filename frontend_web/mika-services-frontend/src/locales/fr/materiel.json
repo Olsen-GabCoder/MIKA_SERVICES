@@ -215,6 +215,7 @@
     "action": {
       "confirmDepart": "Confirmer départ",
       "confirmReception": "Confirmer réception",
+      "suivreCarte": "Suivi carte",
       "annuler": "Annuler"
     },
     "form": {

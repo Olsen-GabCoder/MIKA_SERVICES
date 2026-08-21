@@ -8,6 +8,8 @@ data class ReleveCompteurCreateRequest(
     @field:NotNull val valeurHeures: Int,
     val relevePar: String? = null,
     val commentaire: String? = null,
+    /** URL Cloudinary de la photo du compteur. */
+    val photoUrl: String? = null,
     /** Idempotence offline : UUID client, unique en base. */
     val clientRequestId: String? = null
 )

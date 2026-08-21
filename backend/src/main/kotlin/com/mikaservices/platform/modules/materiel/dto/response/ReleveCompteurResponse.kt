@@ -10,5 +10,6 @@ data class ReleveCompteurResponse(
     val valeurHeures: Int,
     val relevePar: String?,
     val commentaire: String?,
+    val photoUrl: String?,
     val createdAt: LocalDateTime?
 )

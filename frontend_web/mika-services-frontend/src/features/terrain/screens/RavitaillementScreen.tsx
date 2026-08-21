@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import type { TerrainEngin } from '@/api/terrainApi'
+import { terrainApi, type TerrainEngin } from '@/api/terrainApi'
 import type { ConsommationCarburant } from '@/types/materiel'
 import { submitTerrainMutation } from '../offline/submitTerrainMutation'
 import { AMBER, MUTED, bigBtn, card, errMsg, inputStyle, label13, today } from '../theme'
-import { SubHeader } from '../components/ui'
+import { PhotoCapture, SubHeader } from '../components/ui'
 import { IconFuel } from '../components/icons'
 
 export function RavitaillementScreen({ engin, onBack, onDone, onQueued, onError }: {
@@ -16,6 +16,7 @@ export function RavitaillementScreen({ engin, onBack, onDone, onQueued, onError 
   const [litres, setLitres] = useState('')
   const [compteur, setCompteur] = useState(String(engin.heuresCompteur))
   const [commentaire, setCommentaire] = useState('')
+  const [photos, setPhotos] = useState<File[]>([])
   const [busy, setBusy] = useState(false)
   const litresNum = Number(litres)
   const valide = litres.trim() !== '' && !Number.isNaN(litresNum) && litresNum > 0
@@ -23,12 +24,17 @@ export function RavitaillementScreen({ engin, onBack, onDone, onQueued, onError 
   const submit = async () => {
     setBusy(true)
     try {
+      let photoUrl: string | undefined
+      if (photos.length > 0 && navigator.onLine) {
+        try { const urls = await terrainApi.uploadOperationPhotos(engin.id, photos); photoUrl = urls[0] } catch { /* optionnel */ }
+      }
       const res = await submitTerrainMutation<ConsommationCarburant>('ravitaillement', {
         datePlein: today(),
         quantiteLitres: litresNum,
         heuresCompteurAuPlein: compteur.trim() ? Number(compteur) : undefined,
         commentaire: commentaire.trim() || undefined,
-      }, { enginId: engin.id, contexte: engin.code })
+        photoUrl,
+      }, { enginId: engin.id, contexte: engin.code, photos: photos.length > 0 ? photos : undefined })
       if (res.queued) onQueued()
       else onDone()
     } catch (e) {
@@ -64,6 +70,13 @@ export function RavitaillementScreen({ engin, onBack, onDone, onQueued, onError 
           <span style={label13}>Commentaire (optionnel)</span>
           <input value={commentaire} onChange={(e) => setCommentaire(e.target.value)} style={inputStyle} />
         </div>
+        <PhotoCapture
+          max={1}
+          photos={photos}
+          onAdd={(files) => setPhotos(files.slice(0, 1))}
+          onRemove={() => setPhotos([])}
+          label="Photo du ticket/compteur (optionnel)"
+        />
         <button onClick={() => void submit()} disabled={busy || !valide} className="tk-press" style={{ ...bigBtn(AMBER), opacity: busy || !valide ? 0.5 : 1 }}>
           <IconFuel size={20} strokeWidth={2} /> {busy ? 'Enregistrement…' : 'Enregistrer le plein'}
         </button>

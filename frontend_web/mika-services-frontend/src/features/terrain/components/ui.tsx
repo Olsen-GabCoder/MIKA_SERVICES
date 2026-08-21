@@ -7,7 +7,7 @@ import {
   INK, INK_SOFT, MUTED, ORANGE, RED, STATUT_COLORS,
   TRANSFERT_STATUT_COLORS, TRANSFERT_STATUT_LABELS, selectStyle, statutLabel,
 } from '../theme'
-import { IconCheck, IconChevronLeft, IconSearch, IconTransfer, IconX } from './icons'
+import { IconCamera, IconCheck, IconChevronLeft, IconSearch, IconTransfer, IconX } from './icons'
 import apiClient from '@/api/axios'
 
 // ── Images nécessitant le JWT (photos legacy servies par l'API) ─
@@ -440,6 +440,101 @@ export function SignatureCanvas({ onChange }: { onChange: (dataUrl: string | nul
       <button onClick={clear} style={{ appearance: 'none', border: 'none', background: 'transparent', color: MUTED, fontSize: 13, fontWeight: 600, marginTop: 4, cursor: 'pointer', padding: '8px 0', fontFamily: F, display: 'flex', alignItems: 'center', gap: 6 }}>
         <IconX size={14} strokeWidth={2.4} /> Effacer la signature
       </button>
+    </div>
+  )
+}
+
+// ── PhotoCapture — capture de photos terrain ────────────────────────
+export function PhotoCapture({ max = 3, photos, onAdd, onRemove, label }: {
+  max?: number
+  photos: File[]
+  onAdd: (files: File[]) => void
+  onRemove: (index: number) => void
+  label?: string
+}) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  return (
+    <div>
+      {label && <label style={{ fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6, display: 'block' }}>{label}</label>}
+      <input
+        ref={fileRef} type="file" accept="image/*" capture="environment" hidden
+        onChange={(e) => { if (e.target.files) onAdd(Array.from(e.target.files)); e.target.value = '' }}
+      />
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {photos.map((p, i) => (
+          <span key={i} style={{ position: 'relative' }}>
+            <img src={URL.createObjectURL(p)} alt="" style={{ width: 76, height: 76, objectFit: 'cover', borderRadius: 10 }} />
+            <button
+              onClick={() => onRemove(i)}
+              aria-label="Retirer"
+              style={{ position: 'absolute', top: -6, right: -6, appearance: 'none', border: 'none', cursor: 'pointer', width: 22, height: 22, borderRadius: '50%', background: '#0F1B26', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+            >
+              <IconX size={12} strokeWidth={2.4} />
+            </button>
+          </span>
+        ))}
+        {photos.length < max && (
+          <button
+            onClick={() => fileRef.current?.click()}
+            aria-label="Ajouter une photo"
+            style={{ appearance: 'none', cursor: 'pointer', width: 76, height: 76, borderRadius: 10, border: '1.5px dashed #C6CFD8', background: '#fff', color: INK_SOFT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <IconCamera size={24} strokeWidth={1.8} />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── ProgressTracker — timeline horizontale type "tracker commande" ──
+export type TrackerStep = { label: string; status: 'done' | 'active' | 'future' | 'error' }
+
+const TRACKER_COLORS = {
+  done:   { dot: '#16A34A', bar: '#16A34A' },
+  active: { dot: '#FF6B35', bar: '#E3E9EF' },
+  future: { dot: '#C6CFD8', bar: '#E3E9EF' },
+  error:  { dot: '#DC2626', bar: '#DC2626' },
+} as const
+
+export function ProgressTracker({ steps }: { steps: TrackerStep[] }) {
+  return (
+    <div style={{ padding: '4px 0' }}>
+      {/* Dots + bars */}
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        {steps.map((s, i) => {
+          const c = TRACKER_COLORS[s.status]
+          return (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'none' }}>
+              <span style={{
+                width: s.status === 'active' ? 14 : 10,
+                height: s.status === 'active' ? 14 : 10,
+                borderRadius: '50%',
+                background: c.dot,
+                flexShrink: 0,
+                boxShadow: s.status === 'active' ? '0 0 0 4px rgba(255,107,53,.2)' : 'none',
+                transition: 'all .2s',
+              }} />
+              {i < steps.length - 1 && (
+                <div style={{ flex: 1, height: 3, background: TRACKER_COLORS[steps[i + 1].status === 'future' ? 'future' : s.status].bar, borderRadius: 2 }} />
+              )}
+            </div>
+          )
+        })}
+      </div>
+      {/* Labels */}
+      <div style={{ display: 'flex', marginTop: 6 }}>
+        {steps.map((s, i) => (
+          <div key={i} style={{
+            flex: 1,
+            textAlign: i === 0 ? 'left' : i === steps.length - 1 ? 'right' : 'center',
+            fontSize: 10.5, fontWeight: 600, fontFamily: F, lineHeight: 1.2,
+            color: s.status === 'active' ? '#FF6B35' : s.status === 'done' ? '#16A34A' : s.status === 'error' ? '#DC2626' : '#9AA8B5',
+          }}>
+            {s.label}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

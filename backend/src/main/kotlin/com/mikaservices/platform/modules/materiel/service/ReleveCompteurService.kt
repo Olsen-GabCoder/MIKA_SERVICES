@@ -39,6 +39,7 @@ class ReleveCompteurService(
             valeurHeures = request.valeurHeures,
             relevePar = request.relevePar,
             commentaire = request.commentaire,
+            photoUrl = request.photoUrl,
             clientRequestId = request.clientRequestId
         )
         val saved = releveRepository.save(releve)
@@ -96,6 +97,6 @@ class ReleveCompteurService(
     private fun toResponse(e: ReleveCompteur) = ReleveCompteurResponse(
         id = e.id!!, enginId = e.engin.id!!, dateReleve = e.dateReleve,
         valeurHeures = e.valeurHeures, relevePar = e.relevePar,
-        commentaire = e.commentaire, createdAt = e.createdAt
+        commentaire = e.commentaire, photoUrl = e.photoUrl, createdAt = e.createdAt
     )
 }

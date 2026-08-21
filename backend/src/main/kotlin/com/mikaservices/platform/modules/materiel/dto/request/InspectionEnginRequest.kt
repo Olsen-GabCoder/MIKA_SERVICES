@@ -20,6 +20,8 @@ data class InspectionEnginCreateRequest(
     val etatGeneral: EtatGeneralInspection = EtatGeneralInspection.BON,
     val commentaire: String? = null,
     val signature: String? = null,
+    /** URLs Cloudinary des photos d'inspection. */
+    val photoUrls: List<String>? = null,
     /** Idempotence offline : UUID client, unique en base. */
     val clientRequestId: String? = null
 )

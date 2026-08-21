@@ -31,7 +31,13 @@ import com.mikaservices.platform.modules.materiel.service.DemandeMaterielService
 import com.mikaservices.platform.modules.materiel.service.MouvementEnginService
 import com.mikaservices.platform.modules.materiel.service.EnginService
 import com.mikaservices.platform.modules.materiel.service.TerrainAuditService
+import com.mikaservices.platform.modules.materiel.service.TransfertEtaCalculator
 import com.mikaservices.platform.modules.materiel.service.TerrainService
+import com.mikaservices.platform.modules.materiel.entity.PushToken
+import com.mikaservices.platform.modules.materiel.entity.TrajetPosition
+import com.mikaservices.platform.modules.materiel.repository.PushTokenRepository
+import com.mikaservices.platform.modules.materiel.repository.TrajetPositionRepository
+import org.springframework.messaging.simp.SimpMessagingTemplate
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -70,6 +76,9 @@ class TerrainController(
     private val auditService: TerrainAuditService,
     private val enginService: EnginService,
     private val fileStorageService: FileStorageService,
+    private val pushTokenRepository: PushTokenRepository,
+    private val trajetPositionRepository: TrajetPositionRepository,
+    private val messagingTemplate: SimpMessagingTemplate,
 ) {
 
     /** Journal append-only : trace une transition DMA. */
@@ -365,4 +374,159 @@ class TerrainController(
         @Valid @RequestBody request: InspectionEnginCreateRequest
     ) = ResponseEntity.status(HttpStatus.CREATED).body(terrainService.creerInspection(id, request))
         .also { auditService.log("INSPECTION", "ENGIN", id) }
+
+    @PostMapping("/engins/{id}/operation-photos", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @Operation(summary = "Upload photos d'opération terrain (max 3, Cloudinary)")
+    fun uploadOperationPhotos(
+        @PathVariable id: Long,
+        @RequestParam("files") files: List<MultipartFile>,
+    ): ResponseEntity<Map<String, List<String>>> {
+        terrainService.assertEnginDansPerimetre(id)
+        val urls = files.take(3).map { fileStorageService.store(it, "operations", "engin_${id}_${System.currentTimeMillis()}") }
+        auditService.log("OPERATION_PHOTOS", "ENGIN", id, payload = "${urls.size} photo(s)")
+        return ResponseEntity.ok(mapOf("urls" to urls))
+    }
+
+    // ── Tracking GPS transfert en transit ──────────────────────────
+
+    data class TrajetPositionPoint(
+        val latitude: Double,
+        val longitude: Double,
+        val precisionMetres: Int? = null,
+        val vitesseKmh: Double? = null,
+        val cap: Double? = null,
+        val horodatage: Long, // epoch millis (capturé côté client)
+    )
+
+    data class TrajetPositionsRequest(val positions: List<TrajetPositionPoint>)
+
+    data class TrajetPositionResponse(
+        val latitude: Double,
+        val longitude: Double,
+        val vitesseKmh: Double?,
+        val horodatage: Long,
+        val etaMinutes: Int?,
+    )
+
+    @PostMapping("/transferts/{id}/positions")
+    @Operation(summary = "Envoyer les positions GPS du convoyeur en transit (batch)")
+    fun envoyerPositions(
+        @PathVariable id: Long,
+        @RequestBody request: TrajetPositionsRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val mouvement = mouvementEnginService.findById(id)
+        if (mouvement.statut.name != "EN_TRANSIT") {
+            return ResponseEntity.badRequest().body(mapOf("error" to "Le transfert n'est pas en transit"))
+        }
+
+        // Seul l'initiateur (convoyeur) peut envoyer des positions GPS
+        val mouvementEntity = mouvementEnginService.getEntity(id)
+        val user = terrainService.currentUser()
+        if (mouvementEntity.initiateur.id != user.id) {
+            return ResponseEntity.status(403).body(mapOf("error" to "Seul le convoyeur peut envoyer des positions"))
+        }
+        val saved = mutableListOf<TrajetPosition>()
+        for (p in request.positions.takeLast(50)) {
+            saved += trajetPositionRepository.save(TrajetPosition(
+                mouvement = mouvementEntity,
+                latitude = p.latitude,
+                longitude = p.longitude,
+                precisionMetres = p.precisionMetres,
+                vitesseKmh = p.vitesseKmh,
+                cap = p.cap,
+                horodatage = java.time.Instant.ofEpochMilli(p.horodatage),
+            ))
+        }
+
+        // Publier la dernière position via WebSocket pour la carte live
+        saved.lastOrNull()?.let { last ->
+            val dest = mouvementEntity.projetDestination
+            val eta = TransfertEtaCalculator.etaMinutes(
+                last.latitude, last.longitude, dest.latitude, dest.longitude,
+                saved.mapNotNull { it.vitesseKmh },
+            )
+            if (eta != last.etaMinutes) {
+                last.etaMinutes = eta
+                trajetPositionRepository.save(last)
+            }
+            val payload = TrajetPositionResponse(
+                latitude = last.latitude,
+                longitude = last.longitude,
+                vitesseKmh = last.vitesseKmh,
+                horodatage = last.horodatage.toEpochMilli(),
+                etaMinutes = eta,
+            )
+            messagingTemplate.convertAndSend("/topic/transfert/$id/position", payload)
+        }
+
+        return ResponseEntity.ok(mapOf("saved" to saved.size))
+    }
+
+    @GetMapping("/transferts/{id}/positions")
+    @Operation(summary = "Historique des positions d'un transfert (trajet complet)")
+    fun getPositions(@PathVariable id: Long): ResponseEntity<List<TrajetPositionResponse>> {
+        val positions = trajetPositionRepository.findByMouvementIdOrderByHorodatageAsc(id)
+        return ResponseEntity.ok(positions.map { p ->
+            TrajetPositionResponse(
+                latitude = p.latitude,
+                longitude = p.longitude,
+                vitesseKmh = p.vitesseKmh,
+                horodatage = p.horodatage.toEpochMilli(),
+                etaMinutes = p.etaMinutes,
+            )
+        })
+    }
+
+    @GetMapping("/transferts/{id}/derniere-position")
+    @Operation(summary = "Derniere position connue d'un transfert en transit")
+    fun getDernierePosition(@PathVariable id: Long): ResponseEntity<Any> {
+        val pos = trajetPositionRepository.findFirstByMouvementIdOrderByHorodatageDesc(id)
+            ?: return ResponseEntity.ok(emptyMap<String, Any>())
+        return ResponseEntity.ok(TrajetPositionResponse(
+            latitude = pos.latitude,
+            longitude = pos.longitude,
+            vitesseKmh = pos.vitesseKmh,
+            horodatage = pos.horodatage.toEpochMilli(),
+            etaMinutes = pos.etaMinutes,
+        ))
+    }
+
+    // ── Push tokens FCM ──────────────────────────────────────────
+
+    data class PushTokenRequest(val token: String, val deviceInfo: String? = null, val platform: String? = null)
+
+    @PostMapping("/push-tokens")
+    @Operation(summary = "Enregistrer ou mettre a jour un token FCM push")
+    fun registerPushToken(@RequestBody request: PushTokenRequest): ResponseEntity<Map<String, String>> {
+        val user = terrainService.currentUser()
+        val existing = pushTokenRepository.findByToken(request.token)
+        if (existing != null) {
+            existing.user = user
+            existing.lastUsedAt = java.time.Instant.now()
+            existing.actif = true
+            existing.deviceInfo = request.deviceInfo
+            existing.platform = request.platform
+            pushTokenRepository.save(existing)
+        } else {
+            pushTokenRepository.save(PushToken(
+                user = user,
+                token = request.token,
+                deviceInfo = request.deviceInfo,
+                platform = request.platform,
+            ))
+        }
+        return ResponseEntity.ok(mapOf("status" to "ok"))
+    }
+
+    @DeleteMapping("/push-tokens")
+    @Operation(summary = "Desactiver le token FCM push (logout)")
+    fun deactivatePushToken(@RequestBody request: PushTokenRequest): ResponseEntity<Map<String, String>> {
+        val user = terrainService.currentUser()
+        val existing = pushTokenRepository.findByToken(request.token)
+        if (existing != null && existing.user.id == user.id) {
+            existing.actif = false
+            pushTokenRepository.save(existing)
+        }
+        return ResponseEntity.ok(mapOf("status" to "ok"))
+    }
 }

@@ -7,6 +7,7 @@ import com.mikaservices.platform.modules.materiel.dto.request.ReceptionTransfert
 import com.mikaservices.platform.modules.materiel.dto.request.RejetTransfertRequest
 import com.mikaservices.platform.modules.materiel.dto.request.ValidationTransfertRequest
 import com.mikaservices.platform.modules.materiel.dto.response.MouvementEnginResponse
+import com.mikaservices.platform.modules.materiel.repository.TrajetPositionRepository
 import com.mikaservices.platform.modules.materiel.service.MouvementEnginService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -26,7 +27,57 @@ import java.time.LocalDateTime
 @Tag(name = "Mouvements engins", description = "Ordres de déplacement inter-chantiers")
 class MouvementEnginController(
     private val mouvementEnginService: MouvementEnginService,
+    private val trajetPositionRepository: TrajetPositionRepository,
 ) {
+
+    // ── Suivi carte (pilotage) ───────────────────────────────────
+
+    data class SuiviPoint(
+        val latitude: Double,
+        val longitude: Double,
+        val vitesseKmh: Double?,
+        val horodatage: Long,
+        val etaMinutes: Int?,
+    )
+
+    data class PointNomme(val latitude: Double, val longitude: Double, val nom: String)
+
+    data class SuiviTransfertResponse(
+        val statut: String,
+        val enginCode: String,
+        val origine: PointNomme?,
+        val destination: PointNomme?,
+        val positions: List<SuiviPoint>,
+        val dernierePosition: SuiviPoint?,
+    )
+
+    @GetMapping("/{id}/suivi")
+    @PreAuthorize("hasAnyRole('LOGISTIQUE','CHEF_PROJET','CHEF_CHANTIER','SUPER_ADMIN','ADMIN')")
+    @Operation(summary = "Suivi carte d'un transfert : destination, origine et trajet GPS")
+    fun getSuivi(@PathVariable id: Long): ResponseEntity<SuiviTransfertResponse> {
+        // findById applique le filtre de visibilite (404 si hors perimetre).
+        mouvementEnginService.findById(id)
+        val mouvement = mouvementEnginService.getEntity(id)
+        val positions = trajetPositionRepository.findByMouvementIdOrderByHorodatageAsc(id).map { p ->
+            SuiviPoint(p.latitude, p.longitude, p.vitesseKmh, p.horodatage.toEpochMilli(), p.etaMinutes)
+        }
+        val dest = mouvement.projetDestination
+        val destPoint = if (dest.latitude != null && dest.longitude != null) {
+            PointNomme(dest.latitude!!, dest.longitude!!, dest.nom)
+        } else null
+        val orig = mouvement.projetOrigine
+        val origPoint = if (orig?.latitude != null && orig.longitude != null) {
+            PointNomme(orig.latitude!!, orig.longitude!!, orig.nom)
+        } else null
+        return ResponseEntity.ok(SuiviTransfertResponse(
+            statut = mouvement.statut.name,
+            enginCode = mouvement.engin.code,
+            origine = origPoint,
+            destination = destPoint,
+            positions = positions,
+            dernierePosition = positions.lastOrNull(),
+        ))
+    }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('LOGISTIQUE','SUPER_ADMIN')")

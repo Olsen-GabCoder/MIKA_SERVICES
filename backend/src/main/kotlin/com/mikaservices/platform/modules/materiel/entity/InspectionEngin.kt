@@ -44,6 +44,10 @@ class InspectionEngin(
     @Column(name = "incident_cree_id")
     var incidentCreeId: Long? = null,
 
+    /** URLs Cloudinary des photos d'inspection (JSON array). */
+    @Column(name = "photo_urls", columnDefinition = "TEXT")
+    var photoUrls: String? = null,
+
     /** Idempotence offline : UUID fourni par le client, unique. */
     @Column(name = "client_request_id", unique = true, length = 36)
     var clientRequestId: String? = null

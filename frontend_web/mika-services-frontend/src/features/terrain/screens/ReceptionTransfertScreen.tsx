@@ -1,19 +1,22 @@
 /**
- * Réception d'un transfert — ONLINE ONLY (scan QR + GPS + photos exigent le réseau).
- * Le receveur scanne le QR affiché sur le téléphone du convoyeur (preuve de rencontre
- * physique) ou saisit le code 6 chiffres (mode dégradé, tracé). Conforme ou avec
- * réserves : commentaire + photos → incident auto « à qualifier » côté backend.
+ * Réception d'un transfert — OFFLINE CAPABLE (item 1.11).
+ * Scan QR validé localement (le token est dans le QR), signature + photos + GPS
+ * capturés au moment de l'acte. Si offline : tout part dans l'outbox avec
+ * dateReceptionTerrain (horodatage appareil) et photos en IndexedDB.
+ * Le backend distingue dateReceptionTerrain (acte) et dateSynchronisation (serveur).
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { terrainApi, type Transfert } from '@/api/terrainApi'
+import { submitTerrainMutation } from '../offline/submitTerrainMutation'
 import { DISABLED, F, GREEN, INK, INK_SOFT, MUTED, RED, bigBtn, card, errMsg, getGps, inputStyle, label13 } from '../theme'
-import { SubHeader, TrajetBlock } from '../components/ui'
-import { IconCamera, IconCheck, IconFlash, IconX } from '../components/icons'
+import { PhotoCapture, SignatureCanvas, SubHeader, TrajetBlock } from '../components/ui'
+import { IconCheck, IconFlash, IconX } from '../components/icons'
 
-export function ReceptionTransfertScreen({ transfert, onBack, onDone, onError }: {
+export function ReceptionTransfertScreen({ transfert, onBack, onDone, onQueued, onError }: {
   transfert: Transfert
   onBack: () => void
   onDone: (t: Transfert) => void
+  onQueued: () => void
   onError: (m: string) => void
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -30,10 +33,11 @@ export function ReceptionTransfertScreen({ transfert, onBack, onDone, onError }:
   const [avecReserves, setAvecReserves] = useState(false)
   const [commentaire, setCommentaire] = useState('')
   const [photos, setPhotos] = useState<File[]>([])
+  const [signature, setSignature] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
 
   const preuveOk = token !== null || code.trim().length === 6
+  const signatureOk = signature !== null
 
   const onScanned = useCallback((raw: string) => {
     setToken((prev) => prev ?? raw.trim())
@@ -106,22 +110,21 @@ export function ReceptionTransfertScreen({ transfert, onBack, onDone, onError }:
     } catch { /* torche non supportée */ }
   }
 
-  const addPhotos = (files: FileList | null) => {
-    if (!files) return
-    setPhotos((prev) => [...prev, ...Array.from(files)].slice(0, 3))
-  }
-
   const soumettre = async () => {
-    if (busy || !preuveOk) return
+    if (busy || !preuveOk || !signatureOk) return
     if (avecReserves && !commentaire.trim()) { onError('Décrivez les réserves constatées'); return }
     setBusy(true)
     try {
       const gps = await getGps()
-      let urls: string[] | undefined
-      if (avecReserves && photos.length > 0) {
-        urls = await terrainApi.transfertReceptionPhotos(transfert.id, photos)
+
+      // Upload photos si online (sinon elles passent par IndexedDB via options.photos)
+      let photoUrls: string[] | undefined
+      if (avecReserves && photos.length > 0 && navigator.onLine) {
+        try { photoUrls = await terrainApi.transfertReceptionPhotos(transfert.id, photos) } catch { /* photos optionnelles */ }
       }
-      const t = await terrainApi.transfertReceptionner(transfert.id, {
+
+      const res = await submitTerrainMutation<Transfert>('transfert-receptionner', {
+        id: transfert.id,
         token: token ?? undefined,
         code: token ? undefined : code.trim(),
         avecReserves,
@@ -129,9 +132,15 @@ export function ReceptionTransfertScreen({ transfert, onBack, onDone, onError }:
         latitude: gps?.latitude,
         longitude: gps?.longitude,
         precisionMetres: gps?.precisionMetres,
-        photos: urls,
+        photos: photoUrls,
+        signatureDataUrl: signature ?? undefined,
+        dateReceptionTerrain: Date.now(),
+      }, {
+        contexte: transfert.enginCode,
+        photos: avecReserves && photos.length > 0 ? photos : undefined,
       })
-      onDone(t)
+      if (res.queued) onQueued()
+      else onDone(res.result)
     } catch (e) {
       onError(errMsg(e))
     } finally {
@@ -242,46 +251,37 @@ export function ReceptionTransfertScreen({ transfert, onBack, onDone, onError }:
           </div>
 
           {avecReserves && (
-            <div>
-              <label style={label13}>Photos des réserves (max 3)</label>
-              <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => { addPhotos(e.target.files); e.target.value = '' }} />
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {photos.map((p, i) => (
-                  <span key={i} style={{ position: 'relative' }}>
-                    <img src={URL.createObjectURL(p)} alt="" style={{ width: 76, height: 76, objectFit: 'cover', borderRadius: 10 }} />
-                    <button
-                      onClick={() => setPhotos((prev) => prev.filter((_, j) => j !== i))}
-                      aria-label="Retirer"
-                      style={{ position: 'absolute', top: -6, right: -6, appearance: 'none', border: 'none', cursor: 'pointer', width: 22, height: 22, borderRadius: '50%', background: '#0F1B26', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-                    >
-                      <IconX size={12} strokeWidth={2.4} />
-                    </button>
-                  </span>
-                ))}
-                {photos.length < 3 && (
-                  <button
-                    onClick={() => fileRef.current?.click()}
-                    aria-label="Ajouter une photo"
-                    style={{ appearance: 'none', cursor: 'pointer', width: 76, height: 76, borderRadius: 10, border: '1.5px dashed #C6CFD8', background: '#fff', color: INK_SOFT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <IconCamera size={24} strokeWidth={1.8} />
-                  </button>
-                )}
-              </div>
-            </div>
+            <PhotoCapture
+              max={3}
+              photos={photos}
+              onAdd={(files) => setPhotos((prev) => [...prev, ...files].slice(0, 3))}
+              onRemove={(i) => setPhotos((prev) => prev.filter((_, j) => j !== i))}
+              label="Photos des réserves (max 3)"
+            />
           )}
+
+          {/* Signature du receveur */}
+          <div>
+            <label style={label13}>Signature du receveur (obligatoire)</label>
+            <SignatureCanvas onChange={setSignature} />
+          </div>
 
           <button
             onClick={() => void soumettre()}
-            disabled={busy || !preuveOk}
+            disabled={busy || !preuveOk || !signatureOk}
             className="tk-press"
-            style={bigBtn(busy || !preuveOk ? DISABLED : (avecReserves ? RED : GREEN))}
+            style={bigBtn(busy || !preuveOk || !signatureOk ? DISABLED : (avecReserves ? RED : GREEN))}
           >
             {busy ? 'Envoi…' : avecReserves ? 'Réceptionner avec réserves' : 'Confirmer la réception'}
           </button>
           {!preuveOk && (
             <div style={{ fontSize: 12.5, color: MUTED, textAlign: 'center' }}>
               Scannez le QR du bon ou saisissez le code à 6 chiffres pour continuer.
+            </div>
+          )}
+          {preuveOk && !signatureOk && (
+            <div style={{ fontSize: 12.5, color: MUTED, textAlign: 'center' }}>
+              Signez ci-dessus pour confirmer la réception.
             </div>
           )}
         </div>

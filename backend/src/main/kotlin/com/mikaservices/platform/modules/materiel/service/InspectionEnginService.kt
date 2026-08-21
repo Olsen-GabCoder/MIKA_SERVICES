@@ -55,6 +55,7 @@ class InspectionEnginService(
             anomaliesDetectees = anomalies,
             commentaire = request.commentaire,
             signature = request.signature,
+            photoUrls = request.photoUrls?.takeIf { it.isNotEmpty() }?.let { objectMapper.writeValueAsString(it) },
             clientRequestId = request.clientRequestId
         )
 
@@ -114,6 +115,10 @@ class InspectionEnginService(
             commentaire = i.commentaire,
             signature = i.signature,
             incidentCreeId = i.incidentCreeId,
+            photoUrls = i.photoUrls?.let {
+                try { objectMapper.readValue(it, object : TypeReference<List<String>>() {}) }
+                catch (_: Exception) { null }
+            },
             createdAt = i.createdAt
         )
     }

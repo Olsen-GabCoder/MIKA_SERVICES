@@ -42,4 +42,7 @@ enum class TypeNotification {
     QSHE_PERMIS_EXPIRE,
     QSHE_EPI_STOCK_BAS,
     QSHE_DEPASSEMENT_ENVIRONNEMENTAL,
+
+    /** Alertes maintenance preventive (cron quotidien) */
+    ALERTE_MAINTENANCE,
 }

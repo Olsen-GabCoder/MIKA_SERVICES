@@ -3,13 +3,15 @@
  * DEMANDE → validation/rejet logistique · EN_ATTENTE_DEPART → bon QR + départ ·
  * EN_TRANSIT → réception par scan (écran dédié, online only).
  */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { terrainApi, type TerrainChantier, type Transfert } from '@/api/terrainApi'
 import { peekCachedGet } from '@/api/axios'
 import { submitTerrainMutation } from '../offline/submitTerrainMutation'
 import { DISABLED, F, GREEN, INK, INK_SOFT, MUTED, ORANGE, RED, bigBtn, card, errMsg, inputStyle, label13 } from '../theme'
 import { SubHeader, SheetSelect, TrajetBlock, TransfertStatutBadge } from '../components/ui'
 import { canReceptionnerTransfert, canValiderTransfert, useTerrainMe } from '../me'
+import { useTrackingGps } from '../hooks/useTrackingGps'
+import { IconSync } from '../components/icons'
 
 const fmt = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null
@@ -36,6 +38,23 @@ export function TransfertDetailScreen({ transfert, onBack, onUpdated, onQueued, 
 
   const estValideur = canValiderTransfert(me)
   const estInitiateur = me !== null && me.id === transfert.initiateurUserId
+
+  // Tracking GPS : actif uniquement pour le convoyeur (initiateur) pendant EN_TRANSIT
+  const isConvoyeur = estInitiateur && transfert.statut === 'EN_TRANSIT'
+  const tracking = useTrackingGps(transfert.id, isConvoyeur)
+
+  // Dernière position connue (pour les non-convoyeurs, polling)
+  const [dernierePosition, setDernierePosition] = useState<{ latitude: number; longitude: number; vitesseKmh?: number; horodatage: number } | null>(null)
+  const refreshPosition = useCallback(() => {
+    if (transfert.statut !== 'EN_TRANSIT' || isConvoyeur) return
+    terrainApi.dernierePositionTransfert(transfert.id).then(setDernierePosition).catch(() => {})
+  }, [transfert.id, transfert.statut, isConvoyeur])
+  useEffect(() => {
+    refreshPosition()
+    if (transfert.statut !== 'EN_TRANSIT' || isConvoyeur) return
+    const timer = window.setInterval(refreshPosition, 30_000) // polling 30s
+    return () => window.clearInterval(timer)
+  }, [refreshPosition, transfert.statut, isConvoyeur])
 
   // Destinations pour la validation (modifiable par la logistique)
   useEffect(() => {
@@ -295,23 +314,68 @@ export function TransfertDetailScreen({ transfert, onBack, onUpdated, onQueued, 
           </div>
         )}
 
-        {/* EN_TRANSIT : réception par scan (online only) */}
+        {/* EN_TRANSIT : tracking + réception */}
         {transfert.statut === 'EN_TRANSIT' && (
-          <div style={{ ...card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button onClick={() => onOpenBon(transfert)} className="tk-press" style={{ ...bigBtn('#fff'), color: ORANGE, border: `1.5px solid ${ORANGE}` }}>
-              Bon de transfert (QR)
-            </button>
-            {canReceptionnerTransfert(me) && (
-              <>
-                <div style={{ fontSize: 13, color: MUTED }}>
-                  À l'arrivée, le receveur scanne le QR du bon présenté par le convoyeur (ou saisit le code de réception).
+          <>
+            {/* Bloc tracking convoyeur */}
+            {isConvoyeur && (
+              <div style={{ ...card, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, border: `1.5px solid ${ORANGE}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span className="tk-spin" style={{ color: ORANGE, display: 'flex' }}>
+                    <IconSync size={20} strokeWidth={2} />
+                  </span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: INK }}>Trajet en cours</span>
+                  {tracking.wakeLockActive && (
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#16A34A', background: '#E8F7EE', borderRadius: 6, padding: '2px 8px' }}>GPS actif</span>
+                  )}
                 </div>
-                <button onClick={() => onOpenReception(transfert)} className="tk-press" style={bigBtn(GREEN)}>
-                  Réceptionner l'engin
-                </button>
-              </>
+                {tracking.lastPosition && (
+                  <div style={{ fontSize: 13, color: MUTED }}>
+                    Position : {tracking.lastPosition.latitude.toFixed(5)}, {tracking.lastPosition.longitude.toFixed(5)}
+                    {tracking.lastPosition.vitesseKmh != null && ` — ${tracking.lastPosition.vitesseKmh} km/h`}
+                  </div>
+                )}
+                <div style={{ fontSize: 12, color: MUTED }}>
+                  {tracking.pointsEnAttente > 0
+                    ? `${tracking.pointsEnAttente} point(s) en attente de synchronisation`
+                    : 'Positions transmises en temps reel'}
+                </div>
+                <div style={{ fontSize: 12, color: INK_SOFT, background: '#F4F6F8', borderRadius: 8, padding: '8px 10px' }}>
+                  Gardez l'application ouverte pendant le trajet. L'ecran restera allume.
+                </div>
+              </div>
             )}
-          </div>
+
+            {/* Bloc position pour les non-convoyeurs */}
+            {!isConvoyeur && dernierePosition && (
+              <div style={{ ...card, padding: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: ORANGE, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: INK }}>En route</div>
+                  <div style={{ fontSize: 12.5, color: MUTED }}>
+                    Derniere position : {new Date(dernierePosition.horodatage).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    {dernierePosition.vitesseKmh != null && ` — ${dernierePosition.vitesseKmh} km/h`}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div style={{ ...card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <button onClick={() => onOpenBon(transfert)} className="tk-press" style={{ ...bigBtn('#fff'), color: ORANGE, border: `1.5px solid ${ORANGE}` }}>
+                Bon de transfert (QR)
+              </button>
+              {canReceptionnerTransfert(me) && (
+                <>
+                  <div style={{ fontSize: 13, color: MUTED }}>
+                    A l'arrivee, le receveur scanne le QR du bon presente par le convoyeur (ou saisit le code de reception).
+                  </div>
+                  <button onClick={() => onOpenReception(transfert)} className="tk-press" style={bigBtn(GREEN)}>
+                    Receptionner l'engin
+                  </button>
+                </>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>

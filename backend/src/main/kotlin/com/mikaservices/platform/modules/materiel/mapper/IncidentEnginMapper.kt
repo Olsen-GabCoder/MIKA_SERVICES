@@ -18,6 +18,7 @@ object IncidentEnginMapper {
         resolu = entity.resolu,
         dateResolution = entity.dateResolution,
         actionsCorrectives = entity.actionsCorrectives,
+        photoUrls = entity.photoUrls?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() },
         createdAt = entity.createdAt,
         updatedAt = entity.updatedAt
     )

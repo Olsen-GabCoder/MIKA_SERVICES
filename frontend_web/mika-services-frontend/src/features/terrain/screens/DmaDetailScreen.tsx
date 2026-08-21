@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react'
 import { terrainApi, type Dma, type DmaHistorique } from '@/api/terrainApi'
 import { DISABLED, DMA_PRIORITE_COLORS, DMA_STATUT_COLORS, DMA_STATUT_LABELS, F, INK, INK_SOFT, MUTED, ORANGE, RED, bigBtn, card, errMsg, inputStyle, label13 } from '../theme'
-import { DmaStatutBadge, Skeleton, SubHeader } from '../components/ui'
+import { DmaStatutBadge, ProgressTracker, Skeleton, SubHeader, type TrackerStep } from '../components/ui'
 import { IconDownload } from '../components/icons'
 import { useTerrainMe } from '../me'
 import { actionsPour, type DmaAction } from '../dmaWorkflow'
@@ -81,10 +81,47 @@ export function DmaDetailScreen({ demande, onBack, onUpdated, onDupliquer, onQue
   const actions = actionsPour(demande.statut, me, demande)
   const com = commentaire.trim() || undefined
 
+  const trackerSteps: TrackerStep[] = (() => {
+    const PIPELINE = ['SOUMISE', 'PRISE_EN_CHARGE', 'EN_COMMANDE', 'LIVRE', 'CLOTUREE'] as const
+    const PIPELINE_LABELS = ['Soumise', 'Prise en charge', 'Commandée', 'Livrée', 'Clôturée']
+    const statut = demande.statut
+
+    if (statut === 'REJETEE') {
+      // Trouve la dernière étape franchie avant rejet (SOUMISE ou PRISE_EN_CHARGE)
+      const lastDone = statut === 'REJETEE' ? 0 : 0
+      return [...PIPELINE.slice(0, lastDone + 1).map((_, i) => ({ label: PIPELINE_LABELS[i], status: 'done' as const })),
+        { label: 'Rejetée', status: 'error' as const }]
+    }
+    if (statut === 'EN_ATTENTE_COMPLEMENT') {
+      // Pareil que PRISE_EN_CHARGE mais avec marqueur complément
+      return PIPELINE.map((s, i) => ({
+        label: s === 'PRISE_EN_CHARGE' ? 'Complément' : PIPELINE_LABELS[i],
+        status: i < 1 ? 'done' as const : i === 1 ? 'active' as const : 'future' as const,
+      }))
+    }
+    // Legacy statuts : mapper vers SOUMISE (active)
+    if (statut === 'EN_VALIDATION_CHANTIER' || statut === 'EN_VALIDATION_PROJET') {
+      return PIPELINE.map((_, i) => ({
+        label: PIPELINE_LABELS[i],
+        status: i === 0 ? 'active' as const : 'future' as const,
+      }))
+    }
+    const idx = PIPELINE.indexOf(statut as typeof PIPELINE[number])
+    return PIPELINE.map((_, i) => ({
+      label: PIPELINE_LABELS[i],
+      status: i < idx ? 'done' as const : i === idx ? 'active' as const : 'future' as const,
+    }))
+  })()
+
   return (
     <div>
       <SubHeader titre={demande.reference} onBack={onBack} />
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16, fontFamily: F }}>
+
+        {/* Tracker de progression */}
+        <div style={{ ...card, padding: '16px 16px 12px' }}>
+          <ProgressTracker steps={trackerSteps} />
+        </div>
 
         {/* En-tête */}
         <div style={{ ...card, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>

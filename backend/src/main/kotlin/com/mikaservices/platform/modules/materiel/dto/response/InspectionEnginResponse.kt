@@ -17,5 +17,6 @@ data class InspectionEnginResponse(
     val commentaire: String?,
     val signature: String?,
     val incidentCreeId: Long?,
+    val photoUrls: List<String>?,
     val createdAt: LocalDateTime?
 )

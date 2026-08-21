@@ -280,6 +280,29 @@ export interface MouvementEnginSummary {
   updatedAt: string
 }
 
+export interface SuiviPoint {
+  latitude: number
+  longitude: number
+  vitesseKmh: number | null
+  horodatage: number
+  etaMinutes: number | null
+}
+
+export interface PointNomme {
+  latitude: number
+  longitude: number
+  nom: string
+}
+
+export interface SuiviTransfert {
+  statut: StatutMouvementEngin
+  enginCode: string
+  origine: PointNomme | null
+  destination: PointNomme | null
+  positions: SuiviPoint[]
+  dernierePosition: SuiviPoint | null
+}
+
 export interface MouvementEnginCreateRequest {
   enginId: number
   projetOrigineId?: number

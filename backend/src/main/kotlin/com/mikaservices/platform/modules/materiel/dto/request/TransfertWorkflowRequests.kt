@@ -28,4 +28,10 @@ data class ReceptionTransfertRequest(
     val precisionMetres: Double? = null,
     /** URLs Cloudinary des photos de réserves (uploadées via /reception-photos). */
     val photos: List<String>? = null,
+    /** Signature PNG du receveur (data URL base64). */
+    val signatureDataUrl: String? = null,
+    /** Horodatage capture sur l'appareil (epoch ms) — reception offline differee. */
+    val dateReceptionTerrain: Long? = null,
+    /** Idempotence offline : evite le double-replay (meme semantique que les autres mutations). */
+    val clientRequestId: String? = null,
 )

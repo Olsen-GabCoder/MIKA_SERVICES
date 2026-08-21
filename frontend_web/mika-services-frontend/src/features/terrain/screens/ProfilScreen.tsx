@@ -20,6 +20,8 @@ import {
   IconKey, IconLogout, IconMail, IconMonitor, IconPen, IconPhone, IconPin, IconShield, IconX,
 } from '../components/icons'
 import { roleLabel } from '../me'
+import { pushSupported, pushPermissionStatus } from '@/config/firebase'
+import { activatePush } from '../push'
 
 type Vue = 'main' | 'edit' | 'password' | 'sessions' | 'settings'
 
@@ -616,6 +618,8 @@ function SettingsVue({ full, onChanged, onBack, onToast }: {
       {pref('inAppNotificationsEnabled', 'Notifications in-app', 'Alertes dans la cloche de l\u2019application')}
       {pref('notificationSoundEnabled', 'Son des notifications')}
 
+      <PushNotificationSetting />
+
       <div style={sectionTitle}>Notifications par e-mail</div>
       {pref('emailNotificationsEnabled', 'E-mails d\u2019activité', 'Événements importants vous concernant')}
       {pref('alertNewLoginEnabled', 'Alerte nouvelle connexion', 'E-mail si un nouvel appareil se connecte')}
@@ -698,5 +702,60 @@ function SettingsVue({ full, onChanged, onBack, onToast }: {
         Ces préférences sont synchronisées avec votre compte et s&rsquo;appliquent aussi sur la plateforme web.
       </div>
     </div>
+  )
+}
+
+// ── Composant push inline pour la section paramètres ────────
+function PushNotificationSetting() {
+  const supported = pushSupported()
+  const [status, setStatus] = useState(() => pushPermissionStatus())
+  const [busy, setBusy] = useState(false)
+
+  const handleActivate = async () => {
+    setBusy(true)
+    const ok = await activatePush()
+    setStatus(ok ? 'granted' : pushPermissionStatus())
+    setBusy(false)
+  }
+
+  return (
+    <>
+      <div style={{ padding: '10px 16px 4px', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: MUTED }}>
+        Notifications push
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderTop: `1px solid ${HAIRLINE}` }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 14.5, fontWeight: 600, color: INK }}>Notifications push</div>
+          <div style={{ fontSize: 12.5, color: MUTED, marginTop: 2 }}>
+            {!supported
+              ? 'Non disponible sur ce navigateur. Installez l\u2019app sur l\u2019ecran d\u2019accueil pour activer.'
+              : status === 'granted'
+                ? 'Actif — vous recevez les alertes en temps reel.'
+                : status === 'denied'
+                  ? 'Bloque par le navigateur. Reactivez dans les parametres du navigateur.'
+                  : 'Recevez les alertes meme quand l\u2019app est fermee.'}
+          </div>
+        </div>
+        {supported && status === 'default' && (
+          <button
+            onClick={() => void handleActivate()}
+            disabled={busy}
+            className="tk-press"
+            style={{
+              appearance: 'none', border: 'none', borderRadius: 10, background: ORANGE, color: '#fff',
+              padding: '8px 16px', fontSize: 13, fontWeight: 700, fontFamily: F, cursor: 'pointer', flexShrink: 0,
+            }}
+          >
+            {busy ? '...' : 'Activer'}
+          </button>
+        )}
+        {supported && status === 'granted' && (
+          <span style={{ color: '#16A34A', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>Actif</span>
+        )}
+        {supported && status === 'denied' && (
+          <span style={{ color: '#DC2626', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>Bloque</span>
+        )}
+      </div>
+    </>
   )
 }

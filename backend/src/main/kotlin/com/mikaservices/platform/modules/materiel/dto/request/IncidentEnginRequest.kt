@@ -12,6 +12,8 @@ data class IncidentEnginCreateRequest(
     val description: String? = null,
     val lieu: String? = null,
     val signalePar: String? = null,
+    /** URLs Cloudinary des photos d'incident. */
+    val photoUrls: List<String>? = null,
     /** Idempotence offline : UUID client, unique en base. */
     val clientRequestId: String? = null
 )

@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import type { TerrainEngin } from '@/api/terrainApi'
+import { terrainApi, type TerrainEngin } from '@/api/terrainApi'
 import type { ChecklistItem, EtatGeneralInspection, InspectionEngin } from '@/types/materiel'
 import { submitTerrainMutation } from '../offline/submitTerrainMutation'
 import { AMBER, F, FC, GREEN, INK, INK_SOFT, bigBtn, card, errMsg, inputStyle, label13, today, BORDER, RED } from '../theme'
-import { SignatureCanvas, SubHeader } from '../components/ui'
-import { IconCheck } from '../components/icons'
+import { PhotoCapture, SignatureCanvas, SubHeader } from '../components/ui'
+import { IconCheck, IconShield, IconX } from '../components/icons'
 import { CHECKLIST_SECTIONS, TOTAL_ITEMS } from './shared'
 
 export function InspectionScreen({ engin, onBack, onDone, onQueued, onError }: {
@@ -20,11 +20,23 @@ export function InspectionScreen({ engin, onBack, onDone, onQueued, onError }: {
   const [compteur, setCompteur] = useState(String(engin.heuresCompteur))
   const [commentaire, setCommentaire] = useState('')
   const [signature, setSignature] = useState<string | null>(null)
+  const [photos, setPhotos] = useState<File[]>([])
   const [busy, setBusy] = useState(false)
 
   const answered = Object.values(reponses).filter((v) => v !== undefined).length
   const nokCount = Object.values(reponses).filter((v) => v === false).length
   const complete = answered === TOTAL_ITEMS
+  const allOk = answered === TOTAL_ITEMS && nokCount === 0
+
+  const setAllOk = () => {
+    const next: Record<string, boolean> = {}
+    for (const s of CHECKLIST_SECTIONS) for (const it of s.items) next[it.code] = true
+    setReponses(next)
+  }
+  const resetAll = () => {
+    setReponses({})
+    setCommentaires({})
+  }
 
   const etatGeneral: EtatGeneralInspection = nokCount === 0 ? 'BON' : nokCount <= 2 ? 'CORRECT' : 'MAUVAIS'
 
@@ -40,6 +52,10 @@ export function InspectionScreen({ engin, onBack, onDone, onQueued, onError }: {
       })),
     )
     try {
+      let photoUrls: string[] | undefined
+      if (photos.length > 0 && navigator.onLine) {
+        try { photoUrls = await terrainApi.uploadOperationPhotos(engin.id, photos) } catch { /* photos optionnelles */ }
+      }
       const res = await submitTerrainMutation<InspectionEngin>('inspection', {
         dateInspection: today(),
         compteurHeures: compteur.trim() ? Number(compteur) : undefined,
@@ -47,7 +63,8 @@ export function InspectionScreen({ engin, onBack, onDone, onQueued, onError }: {
         etatGeneral,
         commentaire: commentaire.trim() || undefined,
         signature: signature ?? undefined,
-      }, { enginId: engin.id, contexte: engin.code })
+        photoUrls,
+      }, { enginId: engin.id, contexte: engin.code, photos: photos.length > 0 ? photos : undefined })
       if (res.queued) onQueued()
       else onDone(nokCount > 0)
     } catch (e) {
@@ -73,6 +90,23 @@ export function InspectionScreen({ engin, onBack, onDone, onQueued, onError }: {
       </div>
 
       <div style={{ padding: '10px 16px 32px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Bouton Tout OK / Réinitialiser */}
+        <button
+          onClick={allOk ? resetAll : setAllOk}
+          className="tk-press"
+          style={{
+            appearance: 'none', border: `2px solid ${allOk ? BORDER : GREEN}`, borderRadius: 14,
+            background: allOk ? '#fff' : GREEN, color: allOk ? INK_SOFT : '#fff',
+            minHeight: 56, padding: '14px 18px', fontFamily: F, fontSize: 16, fontWeight: 700,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            width: '100%', cursor: 'pointer',
+          }}
+        >
+          {allOk
+            ? <><IconX size={20} strokeWidth={2.2} /> Réinitialiser</>
+            : <><IconShield size={20} strokeWidth={2.2} /> Tout OK</>}
+        </button>
+
         {CHECKLIST_SECTIONS.map((section) => (
           <div key={section.titre} style={{ ...card, padding: 14 }}>
             <div style={{ fontFamily: FC, fontSize: 16, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: INK_SOFT, marginBottom: 10 }}>
@@ -122,6 +156,17 @@ export function InspectionScreen({ engin, onBack, onDone, onQueued, onError }: {
             </div>
           </div>
         ))}
+
+        {/* Photos (optionnel) */}
+        <div style={{ ...card, padding: 14 }}>
+          <PhotoCapture
+            max={3}
+            photos={photos}
+            onAdd={(files) => setPhotos((prev) => [...prev, ...files].slice(0, 3))}
+            onRemove={(i) => setPhotos((prev) => prev.filter((_, j) => j !== i))}
+            label="Photos de l'engin (optionnel, max 3)"
+          />
+        </div>
 
         {/* Compteur + commentaire */}
         <div style={{ ...card, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>

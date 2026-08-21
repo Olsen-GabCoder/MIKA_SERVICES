@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import type { TerrainEngin } from '@/api/terrainApi'
+import { terrainApi, type TerrainEngin } from '@/api/terrainApi'
 import type { ReleveCompteur } from '@/types/materiel'
 import { submitTerrainMutation } from '../offline/submitTerrainMutation'
 import { AMBER, BLUE, FC, MUTED, bigBtn, card, errMsg, inputStyle, label13, today } from '../theme'
-import { SubHeader } from '../components/ui'
+import { PhotoCapture, SubHeader } from '../components/ui'
 import { IconAlert, IconGauge } from '../components/icons'
 
 export function ReleveScreen({ engin, onBack, onDone, onQueued, onError }: {
@@ -15,6 +15,7 @@ export function ReleveScreen({ engin, onBack, onDone, onQueued, onError }: {
 }) {
   const [valeur, setValeur] = useState('')
   const [commentaire, setCommentaire] = useState('')
+  const [photos, setPhotos] = useState<File[]>([])
   const [busy, setBusy] = useState(false)
   const valNum = Number(valeur)
   const valide = valeur.trim() !== '' && !Number.isNaN(valNum) && valNum >= 0
@@ -22,11 +23,16 @@ export function ReleveScreen({ engin, onBack, onDone, onQueued, onError }: {
   const submit = async () => {
     setBusy(true)
     try {
+      let photoUrl: string | undefined
+      if (photos.length > 0 && navigator.onLine) {
+        try { const urls = await terrainApi.uploadOperationPhotos(engin.id, photos); photoUrl = urls[0] } catch { /* optionnel */ }
+      }
       const res = await submitTerrainMutation<ReleveCompteur>('releve', {
         dateReleve: today(),
         valeurHeures: valNum,
         commentaire: commentaire.trim() || undefined,
-      }, { enginId: engin.id, contexte: engin.code })
+        photoUrl,
+      }, { enginId: engin.id, contexte: engin.code, photos: photos.length > 0 ? photos : undefined })
       if (res.queued) onQueued()
       else onDone()
     } catch (e) {
@@ -61,6 +67,13 @@ export function ReleveScreen({ engin, onBack, onDone, onQueued, onError }: {
           <span style={label13}>Commentaire (optionnel)</span>
           <input value={commentaire} onChange={(e) => setCommentaire(e.target.value)} style={inputStyle} />
         </div>
+        <PhotoCapture
+          max={1}
+          photos={photos}
+          onAdd={(files) => setPhotos(files.slice(0, 1))}
+          onRemove={() => setPhotos([])}
+          label="Photo du compteur (optionnel)"
+        />
         <button onClick={() => void submit()} disabled={busy || !valide} className="tk-press" style={{ ...bigBtn(BLUE), opacity: busy || !valide ? 0.5 : 1 }}>
           <IconGauge size={20} strokeWidth={2} /> {busy ? 'Enregistrement…' : 'Enregistrer le relevé'}
         </button>

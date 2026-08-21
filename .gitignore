@@ -24,6 +24,7 @@ temp_*.txt
 *.pk
 *.pem
 *.pub
+**/firebase-service-account*.json
 
 # ── OS ────────────────────────────────────────────────────
 Thumbs.db

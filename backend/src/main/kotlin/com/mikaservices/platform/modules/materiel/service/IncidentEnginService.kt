@@ -54,6 +54,7 @@ class IncidentEnginService(
             description = request.description,
             lieu = request.lieu,
             signalePar = request.signalePar,
+            photoUrls = request.photoUrls?.takeIf { it.isNotEmpty() }?.joinToString(","),
             clientRequestId = request.clientRequestId
         )
         val saved = incidentRepository.save(incident)

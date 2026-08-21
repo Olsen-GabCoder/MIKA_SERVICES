@@ -77,6 +77,8 @@ class SecurityConfig(
                     .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/swagger-ui.htm", "/swagger-ui/index.html").permitAll()
                     .requestMatchers("/v3/api-docs/**").permitAll()
                     .requestMatchers("/webjars/**").permitAll()
+                    // Handshake HTTP SockJS ouvert (nécessaire), mais l'auth STOMP CONNECT
+                    // est imposée par WebSocketAuthInterceptor (JWT obligatoire).
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/health").permitAll()
                     // Auth terrain (cookie dédié, cloisonnée du web) : mêmes règles que /auth

@@ -25,7 +25,6 @@ import { PlanMaintenanceFormModal } from '../components/PlanMaintenanceFormModal
 import { LeafletCarteEngins } from '../map/LeafletCarteEngins'
 import { useConfirm } from '@/contexts/ConfirmContext'
 import { useToast } from '@/contexts/ToastContext'
-import { useAppSelector } from '@/store/hooks'
 import '../styles/materiel-maquette.css'
 
 /* ═══════════════════════════════════════════════════════════
@@ -205,8 +204,6 @@ export const EnginListPage = () => {
   const confirm = useConfirm()
   const toast = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
-  const isSuperAdmin = useAppSelector((s: any) => s.auth.user?.roles?.some((r: any) => (r.code ?? r) === 'SUPER_ADMIN') ?? false)
-  const [seeding, setSeeding] = useState(false)
 
   // Sync screen state with URL params (?view=fiche&id=42&tab=maintenance)
   const screenFromUrl = (searchParams.get('view') as Screen) || 'dashboard'
@@ -310,29 +307,6 @@ export const EnginListPage = () => {
       setCurrentPage(page)
     }).catch(() => {})
   }, [searchQuery, filterStatut, filterType, filterChantier, sortParam])
-
-  // Outil admin : affecte en masse les engins « au parc » à un chantier actif (données de test)
-  const handleSeedAffectations = useCallback(async () => {
-    const ok = await confirm({
-      message: 'Affecter automatiquement tous les engins non localisés (au parc) à un chantier actif ? Les engins déjà affectés ne sont pas touchés.',
-    })
-    if (!ok) return
-    setSeeding(true)
-    try {
-      const res = await enginApi.seedAffectations()
-      toast({
-        message: res.nouvellesAffectations > 0
-          ? `${res.nouvellesAffectations} engin(s) affecté(s) · ${res.dejaLocalises} déjà localisé(s)`
-          : `Aucun changement — les ${res.totalEnginsActifs} engins actifs sont déjà localisés`,
-        variant: 'success',
-      })
-      loadEngins(0)
-    } catch {
-      toast({ message: 'Erreur lors de l\'affectation en masse', variant: 'error' })
-    } finally {
-      setSeeding(false)
-    }
-  }, [confirm, toast, loadEngins])
 
   useEffect(() => {
     let cancelled = false
@@ -1302,12 +1276,6 @@ ${couts}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                 Exporter
               </button>
-              {isSuperAdmin && (
-                <button onClick={handleSeedAffectations} disabled={seeding} title="Affecter les engins non localisés à un chantier (données de test)" style={{ height: 38, padding: '0 16px', border: '1.5px solid var(--db-border-str)', borderRadius: 'var(--db-radius-sm)', background: 'var(--db-card)', color: 'var(--db-t1)', fontSize: 13, fontWeight: 700, cursor: seeding ? 'default' : 'pointer', opacity: seeding ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                  {seeding ? 'Affectation…' : 'Affecter le parc'}
-                </button>
-              )}
               <button onClick={() => go('carte')} style={{ height: 38, padding: '0 16px', border: '1.5px solid var(--db-border-str)', borderRadius: 'var(--db-radius-sm)', background: 'var(--db-card)', color: 'var(--db-t1)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Carte du parc</button>
               <button onClick={() => setShowCreateModal(true)} style={{ height: 38, padding: '0 16px', border: 0, borderRadius: 'var(--db-radius-sm)', background: 'var(--db-orange)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7 }}>
                 <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>

@@ -17,7 +17,6 @@ interface EnginRepository : JpaRepository<Engin, Long> {
     fun findByQrCodeToken(qrCodeToken: String): Optional<Engin>
     fun existsByCode(code: String): Boolean
     fun findByActifTrue(pageable: Pageable): Page<Engin>
-    fun findByActifTrue(): List<Engin>
     fun findByStatut(statut: StatutEngin): List<Engin>
     fun findByType(type: TypeEngin): List<Engin>
     fun findByStatutAndActifTrue(statut: StatutEngin): List<Engin>

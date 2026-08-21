@@ -38,7 +38,6 @@ import com.mikaservices.platform.modules.materiel.dto.response.PlanMaintenanceRe
 import com.mikaservices.platform.modules.materiel.dto.response.PositionEnginResponse
 import com.mikaservices.platform.modules.materiel.dto.response.ReleveCompteurResponse
 import com.mikaservices.platform.modules.materiel.service.EnginService
-import com.mikaservices.platform.modules.materiel.service.SeedAffectationsResult
 import com.mikaservices.platform.modules.materiel.service.CarnetEnginService
 import com.mikaservices.platform.modules.materiel.service.CoutEnginService
 import com.mikaservices.platform.modules.materiel.service.ConsommationCarburantService
@@ -237,13 +236,6 @@ class EnginController(
     @Operation(summary = "Affecter un engin à un projet (détection automatique des conflits)")
     fun affecterEngin(@Valid @RequestBody request: AffectationEnginRequest): ResponseEntity<AffectationEnginResponse> {
         return ResponseEntity.status(HttpStatus.CREATED).body(enginService.affecterEngin(request))
-    }
-
-    @PostMapping("/seed-affectations")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Affecter en masse les engins non localisés à un chantier actif (données de test, idempotent)")
-    fun seedAffectations(): ResponseEntity<SeedAffectationsResult> {
-        return ResponseEntity.ok(enginService.seedAffectations())
     }
 
     @PutMapping("/affectations/{affectationId}")

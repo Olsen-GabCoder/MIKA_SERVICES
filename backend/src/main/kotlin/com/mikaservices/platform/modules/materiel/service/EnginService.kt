@@ -2,7 +2,6 @@ package com.mikaservices.platform.modules.materiel.service
 
 import com.mikaservices.platform.common.enums.StatutAffectation
 import com.mikaservices.platform.common.enums.StatutEngin
-import com.mikaservices.platform.common.enums.StatutProjet
 import com.mikaservices.platform.common.enums.TypeEngin
 import com.mikaservices.platform.common.exception.BadRequestException
 import com.mikaservices.platform.common.exception.ConflictException
@@ -255,52 +254,6 @@ class EnginService(
         return affectationRepository.findByStatutIn(statuts).map { EnginMapper.toAffectationResponse(it) }
     }
 
-    /**
-     * Outil de données de test (SUPER_ADMIN) : affecte en masse tous les engins actifs sans
-     * localisation ouverte à un chantier actif, en répartition round-robin. Idempotent — un engin
-     * déjà localisé (affectation PLANIFIEE/EN_COURS avec dateFin nulle) est ignoré. Ne modifie
-     * jamais une affectation existante.
-     */
-    fun seedAffectations(): SeedAffectationsResult {
-        val chantiers = projetRepository.findByActifTrue(Pageable.unpaged()).content
-            .filter { it.statut != StatutProjet.RECEPTION_DEFINITIVE }
-            .sortedBy { it.id }
-        if (chantiers.isEmpty()) {
-            throw BadRequestException("Aucun chantier actif disponible pour l'affectation")
-        }
-
-        // Engins déjà localisés : affectation ouverte (statut actif + dateFin nulle).
-        val ouvertes = affectationRepository.findByStatutIn(
-            listOf(StatutAffectation.PLANIFIEE, StatutAffectation.EN_COURS)
-        )
-        val enginsLocalises = ouvertes.filter { it.dateFin == null }.mapNotNull { it.engin.id }.toSet()
-
-        val engins = enginRepository.findByActifTrue().sortedBy { it.id }
-        val aAffecter = engins.filter { it.id !in enginsLocalises }
-
-        val aujourdhui = LocalDate.now()
-        val parChantier = mutableMapOf<String, Int>()
-        aAffecter.forEachIndexed { index, engin ->
-            val chantier = chantiers[index % chantiers.size]
-            affectationRepository.save(
-                AffectationEnginChantier(
-                    projet = chantier, engin = engin, dateDebut = aujourdhui,
-                    dateFin = null, statut = StatutAffectation.EN_COURS,
-                    observations = "Affectation initiale (données de test)"
-                )
-            )
-            parChantier.merge(chantier.nom, 1, Int::plus)
-        }
-
-        logger.info("seedAffectations : ${aAffecter.size} engins affectés, ${enginsLocalises.size} déjà localisés")
-        return SeedAffectationsResult(
-            totalEnginsActifs = engins.size,
-            dejaLocalises = engins.size - aAffecter.size,
-            nouvellesAffectations = aAffecter.size,
-            repartition = parChantier,
-        )
-    }
-
     // ========== Photo ==========
     fun uploadPhoto(id: Long, file: MultipartFile): EnginResponse {
         val maxSize = 5L * 1024 * 1024
@@ -327,11 +280,3 @@ class EnginService(
             .orElseThrow { ResourceNotFoundException("Engin non trouvé avec l'ID: $id") }
     }
 }
-
-/** Récapitulatif de l'affectation en masse des engins (outil de données de test). */
-data class SeedAffectationsResult(
-    val totalEnginsActifs: Int,
-    val dejaLocalises: Int,
-    val nouvellesAffectations: Int,
-    val repartition: Map<String, Int>,
-)

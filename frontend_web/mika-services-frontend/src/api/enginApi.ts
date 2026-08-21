@@ -15,6 +15,14 @@ import type {
 import { USE_MOCK, USE_MOCK_FALLBACK } from '@/config/mock'
 import { getMockEnginsPage, getMockEnginsSearchPage } from '@/mock/data/engins'
 
+/** Récapitulatif de l'affectation en masse des engins (outil admin). */
+export interface SeedAffectationsResult {
+  totalEnginsActifs: number
+  dejaLocalises: number
+  nouvellesAffectations: number
+  repartition: Record<string, number>
+}
+
 export const enginApi = {
   create: async (data: EnginCreateRequest): Promise<Engin> => {
     const response = await apiClient.post<Engin>('/engins', data)
@@ -102,6 +110,12 @@ export const enginApi = {
   },
   deleteAffectation: async (affectationId: number): Promise<void> => {
     await apiClient.delete(`/engins/affectations/${affectationId}`)
+  },
+
+  // Outil admin : affecte en masse les engins non localisés à un chantier actif (SUPER_ADMIN)
+  seedAffectations: async (): Promise<SeedAffectationsResult> => {
+    const response = await apiClient.post<SeedAffectationsResult>('/engins/seed-affectations')
+    return response.data
   },
 
   // Planning (toutes affectations actives/planifiées)

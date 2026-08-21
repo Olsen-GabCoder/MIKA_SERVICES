@@ -112,25 +112,28 @@ class FcmPushListener(
                 }
             }
             MouvementNotificationKind.DEPART_CONFIRME -> {
-                e.projetDestinationResponsableId?.let { cpId ->
-                    pushService.sendToUser(cpId,
-                        "${e.enginCode} en route",
-                        "D\u00e9part confirm\u00e9 vers ${e.projetDestinationNom}.", data)
-                }
+                val cibles = mutableSetOf<Long>()
+                e.projetDestinationResponsableId?.let { cibles.add(it) }
+                e.initiateurUserId?.let { cibles.add(it) }
+                userRepository.findByRoleCode("LOGISTIQUE").mapNotNullTo(cibles) { it.id }
+                pushToSet(cibles, "${e.enginCode} en route",
+                    "D\u00e9part confirm\u00e9 vers ${e.projetDestinationNom}.", data)
             }
             MouvementNotificationKind.RECEPTION_CONFIRMEE -> {
-                userRepository.findByRoleCode("LOGISTIQUE").forEach { u ->
-                    pushService.sendToUser(u.id!!,
-                        "${e.enginCode} r\u00e9ceptionn\u00e9",
-                        "Re\u00e7u sur ${e.projetDestinationNom}.", data)
-                }
+                val cibles = mutableSetOf<Long>()
+                userRepository.findByRoleCode("LOGISTIQUE").mapNotNullTo(cibles) { it.id }
+                e.projetDestinationResponsableId?.let { cibles.add(it) }
+                e.initiateurUserId?.let { cibles.add(it) }
+                pushToSet(cibles, "${e.enginCode} r\u00e9ceptionn\u00e9",
+                    "Re\u00e7u sur ${e.projetDestinationNom}.", data)
             }
             MouvementNotificationKind.RECEPTION_AVEC_RESERVES -> {
-                userRepository.findByRoleCode("LOGISTIQUE").forEach { u ->
-                    pushService.sendToUser(u.id!!,
-                        "${e.enginCode} re\u00e7u avec r\u00e9serves",
-                        "Incident cree automatiquement.", data)
-                }
+                val cibles = mutableSetOf<Long>()
+                userRepository.findByRoleCode("LOGISTIQUE").mapNotNullTo(cibles) { it.id }
+                e.projetDestinationResponsableId?.let { cibles.add(it) }
+                e.initiateurUserId?.let { cibles.add(it) }
+                pushToSet(cibles, "${e.enginCode} re\u00e7u avec r\u00e9serves",
+                    "Incident cree automatiquement.", data)
             }
             else -> { /* ORDRE_CREE, ANNULE, EN_TRANSIT_TROP_LONG : push optionnel, a ajouter si besoin */ }
         }
@@ -166,5 +169,9 @@ class FcmPushListener(
         if (id2 != null && id2 != id1) {
             pushService.sendToUser(id2, title, body, data)
         }
+    }
+
+    private fun pushToSet(ids: Set<Long>, title: String, body: String, data: Map<String, String>) {
+        ids.forEach { pushService.sendToUser(it, title, body, data) }
     }
 }

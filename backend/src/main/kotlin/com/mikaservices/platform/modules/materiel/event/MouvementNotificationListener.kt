@@ -75,6 +75,7 @@ class MouvementNotificationListener(
                 val notifies = mutableSetOf<Long>()
                 userRepository.findByRoleCode("LOGISTIQUE").mapNotNullTo(notifies) { it.id }
                 e.projetDestinationResponsableId?.let { notifies.add(it) }
+                e.initiateurUserId?.let { notifies.add(it) }
                 notifies.forEach { uid ->
                     notificationService.envoyerNotification(uid, titre, contenu, TypeNotification.MOUVEMENT_RESERVES, lien)
                 }
@@ -89,51 +90,49 @@ class MouvementNotificationListener(
                 }
             }
 
-            // Spec §7 — Déclencheur : création de l'ordre → CP + Chef Chantier source
+            // Déclencheur : création de l'ordre → responsable projet source + destination + initiateur
             MouvementNotificationKind.ORDRE_CREE -> {
                 val titre = "Ordre de mouvement — ${e.enginCode} ${e.enginNom}"
                 val contenu = buildString {
                     append("Déplacement vers : ${e.projetDestinationNom}.")
                     if (e.projetOrigineNom != null) append(" Depuis : ${e.projetOrigineNom}.")
                 }
-                // CP source
-                e.projetOrigineResponsableId?.let { rid ->
-                    notificationService.envoyerNotification(rid, titre, contenu, TypeNotification.MOUVEMENT_ORDRE_CREE, lien)
-                }
-                // Tous les Chefs de Chantier
-                userRepository.findByRoleCode("CHEF_CHANTIER").forEach { u ->
-                    if (u.id != e.projetOrigineResponsableId) {
-                        notificationService.envoyerNotification(u.id!!, titre, contenu, TypeNotification.MOUVEMENT_ORDRE_CREE, lien)
-                    }
+                val notifies = mutableSetOf<Long>()
+                e.projetOrigineResponsableId?.let { notifies.add(it) }
+                e.projetDestinationResponsableId?.let { notifies.add(it) }
+                e.initiateurUserId?.let { notifies.add(it) }
+                notifies.forEach { uid ->
+                    notificationService.envoyerNotification(uid, titre, contenu, TypeNotification.MOUVEMENT_ORDRE_CREE, lien)
                 }
             }
 
-            // Spec §7 — Déclencheur : confirmation départ → CP + Chef Chantier destination + Logistique
+            // Déclencheur : confirmation départ → responsable projet destination + Logistique + initiateur
             MouvementNotificationKind.DEPART_CONFIRME -> {
                 val titre = "Engin ${e.enginCode} ${e.enginNom} en transit"
                 val contenu = "L'engin est en route vers ${e.projetDestinationNom}."
                 val notifies = mutableSetOf<Long>()
-                // CP destination
-                e.projetDestinationResponsableId?.let { rid -> notifies.add(rid) }
-                // Chefs de Chantier
-                userRepository.findByRoleCode("CHEF_CHANTIER").mapNotNullTo(notifies) { it.id }
-                // Logistique
+                e.projetDestinationResponsableId?.let { notifies.add(it) }
+                e.initiateurUserId?.let { notifies.add(it) }
                 userRepository.findByRoleCode("LOGISTIQUE").mapNotNullTo(notifies) { it.id }
                 notifies.forEach { uid ->
                     notificationService.envoyerNotification(uid, titre, contenu, TypeNotification.MOUVEMENT_DEPART_CONFIRME, lien)
                 }
             }
 
-            // Spec §7 — Déclencheur : confirmation réception → Resp. Logistique
+            // Déclencheur : confirmation réception → Logistique + responsable projet destination + initiateur
             MouvementNotificationKind.RECEPTION_CONFIRMEE -> {
                 val titre = "Engin ${e.enginCode} ${e.enginNom} réceptionné"
                 val contenu = "Arrivée confirmée sur ${e.projetDestinationNom}."
-                userRepository.findByRoleCode("LOGISTIQUE").forEach { u ->
-                    notificationService.envoyerNotification(u.id!!, titre, contenu, TypeNotification.MOUVEMENT_RECEPTION_CONFIRMEE, lien)
+                val notifies = mutableSetOf<Long>()
+                userRepository.findByRoleCode("LOGISTIQUE").mapNotNullTo(notifies) { it.id }
+                e.projetDestinationResponsableId?.let { notifies.add(it) }
+                e.initiateurUserId?.let { notifies.add(it) }
+                notifies.forEach { uid ->
+                    notificationService.envoyerNotification(uid, titre, contenu, TypeNotification.MOUVEMENT_RECEPTION_CONFIRMEE, lien)
                 }
             }
 
-            // Spec §7 — Déclencheur : annulation → CP source + CP destination
+            // Déclencheur : annulation → responsable projet source + destination + initiateur
             MouvementNotificationKind.ANNULE -> {
                 val titre = "Mouvement annulé — ${e.enginCode} ${e.enginNom}"
                 val contenu = buildString {
@@ -143,6 +142,7 @@ class MouvementNotificationListener(
                 val notifies = mutableSetOf<Long>()
                 e.projetOrigineResponsableId?.let { notifies.add(it) }
                 e.projetDestinationResponsableId?.let { notifies.add(it) }
+                e.initiateurUserId?.let { notifies.add(it) }
                 notifies.forEach { uid ->
                     notificationService.envoyerNotification(uid, titre, contenu, TypeNotification.MOUVEMENT_ANNULE, lien)
                 }

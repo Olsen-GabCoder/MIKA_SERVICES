@@ -27,6 +27,8 @@ export function InspectionScreen({ engin, onBack, onDone, onQueued, onError }: {
   const nokCount = Object.values(reponses).filter((v) => v === false).length
   const complete = answered === TOTAL_ITEMS
   const allOk = answered === TOTAL_ITEMS && nokCount === 0
+  // Sécurité : une anomalie doit être documentée par au moins une photo.
+  const photoManquante = nokCount > 0 && photos.length === 0
 
   const setAllOk = () => {
     const next: Record<string, boolean> = {}
@@ -41,7 +43,7 @@ export function InspectionScreen({ engin, onBack, onDone, onQueued, onError }: {
   const etatGeneral: EtatGeneralInspection = nokCount === 0 ? 'BON' : nokCount <= 2 ? 'CORRECT' : 'MAUVAIS'
 
   const submit = async () => {
-    if (!complete) return
+    if (!complete || photoManquante) return
     setBusy(true)
     const checklist: ChecklistItem[] = CHECKLIST_SECTIONS.flatMap((s) =>
       s.items.map((it) => ({
@@ -164,7 +166,7 @@ export function InspectionScreen({ engin, onBack, onDone, onQueued, onError }: {
             photos={photos}
             onAdd={(files) => setPhotos((prev) => [...prev, ...files].slice(0, 3))}
             onRemove={(i) => setPhotos((prev) => prev.filter((_, j) => j !== i))}
-            label="Photos de l'engin (optionnel, max 3)"
+            label={nokCount > 0 ? 'Photos de l\u2019anomalie (obligatoire, max 3)' : 'Photos de l\u2019engin (optionnel, max 3)'}
           />
         </div>
 
@@ -188,18 +190,27 @@ export function InspectionScreen({ engin, onBack, onDone, onQueued, onError }: {
 
         {nokCount > 0 && (
           <div style={{ background: '#FDF3E2', border: '1px solid #F0DCB0', borderRadius: 12, padding: '12px 14px', fontSize: 13, color: '#8A5A0B', lineHeight: 1.4 }}>
-            {nokCount} point{nokCount > 1 ? 's' : ''} NOK — un incident sera créé automatiquement pour les anomalies détectées.
+            {nokCount} point{nokCount > 1 ? 's' : ''} NOK — un incident sera créé automatiquement.
+            {photoManquante
+              ? ' Une photo de l\u2019anomalie est obligatoire avant de valider.'
+              : ' Un défaut critique immobilise l\u2019engin et alerte la logistique.'}
           </div>
         )}
 
         <button
           onClick={() => void submit()}
-          disabled={busy || !complete}
+          disabled={busy || !complete || photoManquante}
           className="tk-press"
-          style={{ ...bigBtn(GREEN), opacity: busy || !complete ? 0.5 : 1 }}
+          style={{ ...bigBtn(GREEN), opacity: busy || !complete || photoManquante ? 0.5 : 1 }}
         >
-          {complete && !busy && <IconCheck size={20} strokeWidth={2.2} />}
-          {busy ? 'Enregistrement…' : complete ? "Valider l'inspection" : `Répondre aux ${TOTAL_ITEMS - answered} points restants`}
+          {complete && !photoManquante && !busy && <IconCheck size={20} strokeWidth={2.2} />}
+          {busy
+            ? 'Enregistrement…'
+            : !complete
+              ? `Répondre aux ${TOTAL_ITEMS - answered} points restants`
+              : photoManquante
+                ? 'Ajoutez une photo de l\u2019anomalie'
+                : "Valider l'inspection"}
         </button>
       </div>
     </div>

@@ -3,7 +3,7 @@
  * Écrans dans ../screens/, design system dans ../theme.ts et ../components/.
  * Usage terrain : cibles >= 56px, gants, plein soleil — Barlow, fond #F4F6F8.
  */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { fetchUserFromToken, logoutUser, refreshToken } from '@/store/slices/authSlice'
@@ -143,6 +143,35 @@ function TerrainShell() {
     window.setTimeout(() => setToast(null), 3500)
   }, [])
 
+  // ── Navigation interne synchronisee a l'historique navigateur ──
+  // Le geste de retour (swipe/bouton systeme) doit revenir a l'ecran precedent, pas quitter
+  // la PWA. navStackRef = pile d'ecrans (source de verite) ; chaque `navigate` ajoute une
+  // entree d'historique (meme URL), consommee par `popstate` (geste ou bouton retour ecran)
+  // pour depiler. `replace` change l'ecran courant sans profondeur (retour post-action).
+  const navStackRef = useRef<Screen[]>(['accueil'])
+  const navigate = useCallback((next: Screen) => {
+    navStackRef.current.push(next)
+    window.history.pushState(null, '', window.location.href)
+    setScreen(next)
+  }, [])
+  const replace = useCallback((next: Screen) => {
+    navStackRef.current[navStackRef.current.length - 1] = next
+    setScreen(next)
+  }, [])
+  const goBack = useCallback(() => {
+    if (navStackRef.current.length > 1) window.history.back()
+  }, [])
+  useEffect(() => {
+    const onPop = () => {
+      if (navStackRef.current.length > 1) {
+        navStackRef.current.pop()
+        setScreen(navStackRef.current[navStackRef.current.length - 1])
+      }
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
   const loadEngins = useCallback(async () => {
     try {
       setEngins(await terrainApi.mesEngins())
@@ -223,15 +252,14 @@ function TerrainShell() {
       try {
         const e = await terrainApi.scan(`/engins/${enginParam}`)
         setEngin(e)
-        setScreen('engin')
+        navigate('engin')
       } catch (err) {
         showToast(errMsg(err), true)
       }
     })()
-  }, [enginParam, setSearchParams, showToast])
+  }, [enginParam, setSearchParams, showToast, navigate])
 
-  const openEngin = (e: TerrainEngin) => { setEngin(e); setScreen('engin') }
-  const backToEngin = () => setScreen(engin ? 'engin' : 'accueil')
+  const openEngin = (e: TerrainEngin) => { setEngin(e); navigate('engin') }
   const refreshEngin = useCallback(async (id: number) => {
     try {
       const fresh = await terrainApi.scan(`/engins/${id}`)
@@ -259,28 +287,28 @@ function TerrainShell() {
             engins={engins}
             loading={loading}
             unreadCount={unreadCount}
-            onScan={() => setScreen('scan')}
+            onScan={() => navigate('scan')}
             onOpenEngin={openEngin}
             onRefresh={loadEngins}
-            onTransferts={() => setScreen('transfert-list')}
-            onAlertes={() => setScreen('alertes')}
-            onProfil={() => setScreen('profil')}
+            onTransferts={() => navigate('transfert-list')}
+            onAlertes={() => navigate('alertes')}
+            onProfil={() => navigate('profil')}
           />
         )}
         {screen === 'scan' && (
           <ScanScreen
-            onBack={() => setScreen('accueil')}
-            onFound={(e) => { setEngin(e); setScreen('engin') }}
+            onBack={goBack}
+            onFound={(e) => { setEngin(e); replace('engin') }}
             onError={(m) => showToast(m, true)}
           />
         )}
         {screen === 'engin' && engin && (
           <EnginScreen
             engin={engin}
-            onBack={() => setScreen('accueil')}
+            onBack={goBack}
             onAction={(s) => {
               if (s === 'transfert-form') setTransfertEnginInitial(engin)
-              setScreen(s)
+              navigate(s)
             }}
             onConfirmPosition={async () => {
               const gps = await getGps()
@@ -295,31 +323,31 @@ function TerrainShell() {
         {screen === 'signalement' && engin && (
           <SignalementScreen
             engin={engin}
-            onBack={backToEngin}
-            onDone={() => { showToast('Incident signalé'); void refreshEngin(engin.id); backToEngin() }}
-            onQueued={() => { showToast(QUEUED_MSG); backToEngin() }}
+            onBack={goBack}
+            onDone={() => { showToast('Incident signalé'); void refreshEngin(engin.id); goBack() }}
+            onQueued={() => { showToast(QUEUED_MSG); goBack() }}
             onError={(m) => showToast(m, true)}
           />
         )}
         {screen === 'inspection' && engin && (
           <InspectionScreen
             engin={engin}
-            onBack={backToEngin}
+            onBack={goBack}
             onDone={(anomalies) => {
               showToast(anomalies ? 'Inspection validée — incident créé pour les anomalies' : 'Inspection validée')
               void refreshEngin(engin.id)
-              backToEngin()
+              goBack()
             }}
-            onQueued={() => { showToast(QUEUED_MSG); backToEngin() }}
+            onQueued={() => { showToast(QUEUED_MSG); goBack() }}
             onError={(m) => showToast(m, true)}
           />
         )}
         {screen === 'releve' && engin && (
           <ReleveScreen
             engin={engin}
-            onBack={backToEngin}
-            onDone={() => { showToast('Relevé enregistré'); void refreshEngin(engin.id); backToEngin() }}
-            onQueued={() => { showToast(QUEUED_MSG); backToEngin() }}
+            onBack={goBack}
+            onDone={() => { showToast('Relevé enregistré'); void refreshEngin(engin.id); goBack() }}
+            onQueued={() => { showToast(QUEUED_MSG); goBack() }}
             onError={(m) => showToast(m, true)}
           />
         )}
@@ -327,9 +355,9 @@ function TerrainShell() {
           <DmaListScreen
             prenom={prenom}
             photoUrl={photoUrl}
-            onOpen={(d) => { setDma(d); setScreen('dma-detail') }}
-            onCreate={() => { setDmaModele(null); setScreen('dma-form') }}
-            onProfil={() => setScreen('profil')}
+            onOpen={(d) => { setDma(d); navigate('dma-detail') }}
+            onCreate={() => { setDmaModele(null); navigate('dma-form') }}
+            onProfil={() => navigate('profil')}
             onError={(m) => showToast(m, true)}
           />
         )}
@@ -337,18 +365,18 @@ function TerrainShell() {
           <DmaFormScreen
             key={dmaModele ? `copie-${dmaModele.id}` : 'neuve'}
             modele={dmaModele}
-            onBack={() => setScreen(dmaModele ? 'dma-detail' : 'dma-list')}
-            onDone={(d) => { clearResponseCacheMatching('/terrain/demandes'); setDma(d); showToast(`Demande ${d.reference} soumise`); setScreen('dma-detail') }}
-            onQueued={() => { showToast(QUEUED_MSG); setScreen('dma-list') }}
+            onBack={goBack}
+            onDone={(d) => { clearResponseCacheMatching('/terrain/demandes'); setDma(d); showToast(`Demande ${d.reference} soumise`); replace('dma-detail') }}
+            onQueued={() => { showToast(QUEUED_MSG); replace('dma-list') }}
             onError={(m) => showToast(m, true)}
           />
         )}
         {screen === 'dma-detail' && dma && (
           <DmaDetailScreen
             demande={dma}
-            onBack={() => setScreen('dma-list')}
+            onBack={goBack}
             onUpdated={(d) => { clearResponseCacheMatching('/terrain/demandes'); setDma(d) }}
-            onDupliquer={() => { setDmaModele(dma); setScreen('dma-form') }}
+            onDupliquer={() => { setDmaModele(dma); navigate('dma-form') }}
             onQueued={() => showToast(QUEUED_MSG)}
             onToast={(m) => showToast(m)}
             onError={(m) => showToast(m, true)}
@@ -358,9 +386,9 @@ function TerrainShell() {
           <TransfertListScreen
             prenom={prenom}
             photoUrl={photoUrl}
-            onOpen={(t) => { setTransfert(t); setScreen('transfert-detail') }}
-            onCreate={() => { setTransfertEnginInitial(null); setScreen('transfert-form') }}
-            onProfil={() => setScreen('profil')}
+            onOpen={(t) => { setTransfert(t); navigate('transfert-detail') }}
+            onCreate={() => { setTransfertEnginInitial(null); navigate('transfert-form') }}
+            onProfil={() => navigate('profil')}
             onError={(m) => showToast(m, true)}
           />
         )}
@@ -368,51 +396,51 @@ function TerrainShell() {
           <TransfertFormScreen
             engins={engins}
             enginInitial={transfertEnginInitial}
-            onBack={() => setScreen(transfertEnginInitial && engin ? 'engin' : 'transfert-list')}
+            onBack={goBack}
             onDone={(t) => {
               clearResponseCacheMatching('/terrain/transferts')
               setTransfert(t)
               showToast('Demande de transfert enregistrée')
               void loadEngins()
-              setScreen('transfert-detail')
+              replace('transfert-detail')
             }}
-            onQueued={() => { showToast(QUEUED_MSG); setScreen('transfert-list') }}
+            onQueued={() => { showToast(QUEUED_MSG); replace('transfert-list') }}
             onError={(m) => showToast(m, true)}
           />
         )}
         {screen === 'transfert-detail' && transfert && (
           <TransfertDetailScreen
             transfert={transfert}
-            onBack={() => setScreen('transfert-list')}
+            onBack={goBack}
             onUpdated={(t) => { clearResponseCacheMatching('/terrain/transferts'); setTransfert(t); void loadEngins() }}
             onQueued={() => showToast(QUEUED_MSG)}
             onToast={(m) => showToast(m)}
             onError={(m) => showToast(m, true)}
-            onOpenBon={(t) => { setTransfert(t); setScreen('transfert-bon') }}
-            onOpenReception={(t) => { setTransfert(t); setScreen('transfert-reception') }}
+            onOpenBon={(t) => { setTransfert(t); navigate('transfert-bon') }}
+            onOpenReception={(t) => { setTransfert(t); navigate('transfert-reception') }}
           />
         )}
         {screen === 'transfert-bon' && transfert && (
           <BonTransfertScreen
             transfert={transfert}
-            onBack={() => setScreen('transfert-detail')}
+            onBack={goBack}
             onError={(m) => showToast(m, true)}
           />
         )}
         {screen === 'transfert-reception' && transfert && (
           <ReceptionTransfertScreen
             transfert={transfert}
-            onBack={() => setScreen('transfert-detail')}
+            onBack={goBack}
             onDone={(t) => {
               clearResponseCacheMatching('/terrain/transferts')
               setTransfert(t)
               showToast(t.receptionAvecReserves ? 'Réception avec réserves — incident créé' : 'Réception confirmée — affectation basculée')
               void loadEngins()
-              setScreen('transfert-detail')
+              goBack()
             }}
             onQueued={() => {
               showToast('Réception enregistrée — sera synchronisée au retour du réseau')
-              setScreen('transfert-detail')
+              goBack()
             }}
             onError={(m) => showToast(m, true)}
           />
@@ -420,15 +448,15 @@ function TerrainShell() {
         {screen === 'ravitaillement' && engin && (
           <RavitaillementScreen
             engin={engin}
-            onBack={backToEngin}
-            onDone={() => { showToast('Ravitaillement enregistré'); void refreshEngin(engin.id); backToEngin() }}
-            onQueued={() => { showToast(QUEUED_MSG); backToEngin() }}
+            onBack={goBack}
+            onDone={() => { showToast('Ravitaillement enregistré'); void refreshEngin(engin.id); goBack() }}
+            onQueued={() => { showToast(QUEUED_MSG); goBack() }}
             onError={(m) => showToast(m, true)}
           />
         )}
         {screen === 'alertes' && (
           <AlertesScreen
-            onNavigate={(target) => setScreen(target)}
+            onNavigate={(target) => navigate(target)}
             onError={(m) => showToast(m, true)}
             onCountChanged={refreshUnread}
           />
@@ -438,7 +466,7 @@ function TerrainShell() {
             me={me}
             photoUrl={photoUrl}
             onPhotoChanged={loadPhoto}
-            onBack={() => setScreen('accueil')}
+            onBack={goBack}
             onLogout={async () => {
               const fcmToken = getStoredFcmToken()
               if (fcmToken) {
@@ -454,7 +482,7 @@ function TerrainShell() {
         )}
         {screen === 'sync' && (
           <SyncScreen
-            onBack={() => setScreen('accueil')}
+            onBack={goBack}
             onToast={showToast}
             onSynced={() => { void loadEngins() }}
           />
@@ -464,7 +492,7 @@ function TerrainShell() {
       {/* Indicateur offline / synchronisation en attente */}
       {screen !== 'sync' && (!online || outbox.length > 0) && (
         <button
-          onClick={() => setScreen('sync')}
+          onClick={() => navigate('sync')}
           className="tk-press"
           aria-label="Synchronisation"
           style={{
@@ -492,28 +520,28 @@ function TerrainShell() {
           padding: '8px 12px calc(8px + env(safe-area-inset-bottom))',
         }}>
           <button
-            onClick={() => setScreen('accueil')}
+            onClick={() => navigate('accueil')}
             style={{ appearance: 'none', border: 'none', background: 'transparent', color: screen === 'accueil' ? HEADER_DARK : MUTED, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer', fontFamily: F, fontSize: 12, fontWeight: screen === 'accueil' ? 700 : 600, flex: 1, padding: '4px 0' }}
           >
             <IconHome size={23} strokeWidth={2} />
             Accueil
           </button>
           <button
-            onClick={() => setScreen('transfert-list')}
+            onClick={() => navigate('transfert-list')}
             style={{ appearance: 'none', border: 'none', background: 'transparent', color: screen === 'transfert-list' ? HEADER_DARK : MUTED, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer', fontFamily: F, fontSize: 12, fontWeight: screen === 'transfert-list' ? 700 : 600, flex: 1, padding: '4px 0' }}
           >
             <IconTransfer size={23} strokeWidth={2} />
             Transferts
           </button>
           <button
-            onClick={() => setScreen('scan')}
+            onClick={() => navigate('scan')}
             style={{ appearance: 'none', border: 'none', background: 'transparent', color: MUTED, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer', fontFamily: F, fontSize: 12, fontWeight: 600, flex: 1, padding: '4px 0' }}
           >
             <IconScan size={23} strokeWidth={2} />
             Scanner
           </button>
           <button
-            onClick={() => setScreen('dma-list')}
+            onClick={() => navigate('dma-list')}
             style={{ appearance: 'none', border: 'none', background: 'transparent', color: screen === 'dma-list' ? HEADER_DARK : MUTED, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, cursor: 'pointer', fontFamily: F, fontSize: 12, fontWeight: screen === 'dma-list' ? 700 : 600, flex: 1, padding: '4px 0' }}
           >
             <IconBox size={23} strokeWidth={2} />

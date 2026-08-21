@@ -252,7 +252,9 @@ class DemandeMaterielService(
         val from = dma.statut
         dma.statut = StatutDemandeMateriel.CLOTUREE
         appendHistorique(dma, user, from, dma.statut, body?.commentaire)
-        return DemandeMaterielMapper.toResponse(demandeMaterielRepository.save(dma))
+        val saved = demandeMaterielRepository.save(dma)
+        publishDmaNotification(DmaNotificationKind.CLOTUREE, saved)
+        return DemandeMaterielMapper.toResponse(saved)
     }
 
     fun rejeter(id: Long, request: DemandeMaterielRejetRequest): DemandeMaterielResponse {

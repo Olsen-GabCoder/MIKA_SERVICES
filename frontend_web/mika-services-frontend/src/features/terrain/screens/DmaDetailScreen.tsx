@@ -87,8 +87,10 @@ export function DmaDetailScreen({ demande, onBack, onUpdated, onDupliquer, onQue
     const statut = demande.statut
 
     if (statut === 'REJETEE') {
-      // Trouve la dernière étape franchie avant rejet (SOUMISE ou PRISE_EN_CHARGE)
-      const lastDone = statut === 'REJETEE' ? 0 : 0
+      // Étape franchie avant rejet = deStatut de la transition REJETEE dans l'historique
+      // (SOUMISE ou PRISE_EN_CHARGE). Repli SOUMISE tant que l'historique n'est pas chargé.
+      const avantRejet = historique?.find((h) => h.versStatut === 'REJETEE')?.deStatut ?? 'SOUMISE'
+      const lastDone = Math.max(0, PIPELINE.indexOf(avantRejet as typeof PIPELINE[number]))
       return [...PIPELINE.slice(0, lastDone + 1).map((_, i) => ({ label: PIPELINE_LABELS[i], status: 'done' as const })),
         { label: 'Rejetée', status: 'error' as const }]
     }

@@ -25,4 +25,10 @@ interface JournalAuditTerrainRepository : JpaRepository<JournalAuditTerrain, Lon
         @Param("acteurId") acteurId: Long?,
         pageable: Pageable,
     ): Page<JournalAuditTerrain>
+
+    fun findByActionAndEntiteTypeAndEntiteId(
+        action: String,
+        entiteType: String,
+        entiteId: Long,
+    ): List<JournalAuditTerrain>
 }

@@ -63,6 +63,11 @@ class FcmPushListener(
                     "DMA ${e.reference} livr\u00e9e",
                     "Le mat\u00e9riel est arriv\u00e9 sur ${e.projetNom}.", data)
             }
+            DmaNotificationKind.CLOTUREE -> {
+                pushDistinct(e.createurId, e.responsableProjetId,
+                    "DMA ${e.reference} cl\u00f4tur\u00e9e",
+                    "La demande sur ${e.projetNom} est cl\u00f4tur\u00e9e.", data)
+            }
             DmaNotificationKind.REJETEE -> {
                 pushService.sendToUser(e.createurId,
                     "DMA ${e.reference} rejet\u00e9e",

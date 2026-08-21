@@ -16,7 +16,9 @@ class CarnetEnginService(
     private val incidentRepository: IncidentEnginRepository,
     private val releveRepository: ReleveCompteurRepository,
     private val consoRepository: ConsommationCarburantRepository,
-    private val mouvementRepository: MouvementEnginRepository
+    private val mouvementRepository: MouvementEnginRepository,
+    private val inspectionRepository: InspectionEnginRepository,
+    private val auditRepository: JournalAuditTerrainRepository
 ) {
     fun getCarnet(enginId: Long): CarnetEnginResponse {
         val engin = enginRepository.findById(enginId)
@@ -76,6 +78,29 @@ class CarnetEnginService(
                 titre = "Mouvement vers ${m.projetDestination.nom} - ${m.statut.name}",
                 detail = m.commentaire,
                 couleur = "#2563EB"
+            ))
+        }
+
+        // Inspections quotidiennes
+        for (ins in inspectionRepository.findByEnginId(enginId)) {
+            entries.add(CarnetEnginEntry(
+                type = "INSPECTION",
+                date = ins.dateInspection.atTime(LocalTime.NOON),
+                titre = "Inspection - ${ins.etatGeneral.name}" +
+                    if (ins.anomaliesDetectees) " (anomalie)" else "",
+                detail = ins.commentaire,
+                couleur = if (ins.anomaliesDetectees) "#DC2626" else "#0EA5E9"
+            ))
+        }
+
+        // Scans QR (journal d'audit terrain)
+        for (s in auditRepository.findByActionAndEntiteTypeAndEntiteId("SCAN_QR", "ENGIN", enginId)) {
+            entries.add(CarnetEnginEntry(
+                type = "SCAN_QR",
+                date = s.createdAt,
+                titre = "Scan QR" + (s.acteurNom?.let { " par $it" } ?: ""),
+                detail = null,
+                couleur = "#64748B"
             ))
         }
 

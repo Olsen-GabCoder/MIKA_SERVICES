@@ -86,6 +86,11 @@ class DmaNotificationListener(
                     }
                 }
             }
+            DmaNotificationKind.CLOTUREE -> {
+                val titre = "DMA ${e.reference} clôturée"
+                val contenu = "La demande sur ${e.projetNom} est clôturée."
+                notifyDistinct(e.createurId, e.responsableProjetId, titre, contenu, TypeNotification.DMA_CLOTUREE, lien)
+            }
             DmaNotificationKind.REJETEE -> {
                 notificationService.envoyerNotification(
                     e.createurId,

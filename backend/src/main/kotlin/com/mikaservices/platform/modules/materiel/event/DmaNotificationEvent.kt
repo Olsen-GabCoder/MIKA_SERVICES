@@ -6,6 +6,7 @@ enum class DmaNotificationKind {
     COMPLEMENT_REQUIS,
     COMMANDEE,
     LIVREE,
+    CLOTUREE,
     REJETEE,
 }
 

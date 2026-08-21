@@ -18,6 +18,7 @@ enum class TypeNotification {
     DMA_COMPLEMENT_REQUIS,
     DMA_COMMANDEE,
     DMA_LIVREE,
+    DMA_CLOTUREE,
     DMA_REJETEE,
 
     /** Mouvements d'engins inter-chantiers (spec Engins & DMA §7) */

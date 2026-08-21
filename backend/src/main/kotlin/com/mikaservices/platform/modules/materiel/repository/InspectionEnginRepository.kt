@@ -10,6 +10,7 @@ import java.time.LocalDate
 @Repository
 interface InspectionEnginRepository : JpaRepository<InspectionEngin, Long> {
     fun findByEnginIdOrderByDateInspectionDesc(enginId: Long, pageable: Pageable): Page<InspectionEngin>
+    fun findByEnginId(enginId: Long): List<InspectionEngin>
     fun existsByEnginIdAndDateInspection(enginId: Long, dateInspection: LocalDate): Boolean
     fun findByClientRequestId(clientRequestId: String): InspectionEngin?
 }

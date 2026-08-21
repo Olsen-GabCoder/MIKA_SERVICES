@@ -30,7 +30,9 @@ export function OnboardingScreen({ prenom, role, userId, onDone }: {
   const [step, setStep] = useState(0)
   const [pushResult, setPushResult] = useState<'idle' | 'activating' | 'done' | 'skipped'>('idle')
 
-  const showPushSlide = pushSupported() && pushPermissionStatus() === 'default'
+  // Fige au montage : activer la permission fait passer pushPermissionStatus() a 'granted',
+  // ce qui retirerait la slide push en plein flux et rendrait slides[step] undefined.
+  const [showPushSlide] = useState(() => pushSupported() && pushPermissionStatus() === 'default')
   const totalSlides = showPushSlide ? 3 : 2
 
   const finish = () => {

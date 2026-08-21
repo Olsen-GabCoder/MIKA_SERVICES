@@ -38,6 +38,29 @@ function getMessagingInstance() {
  */
 let swRegistrationPromise: Promise<ServiceWorkerRegistration | undefined> | null = null
 
+// Scope dedie de FCM (celui utilise par defaut par le SDK Firebase). L'enregistrer ici
+// evite toute collision avec le SW Workbox (vite-plugin-pwa) qui possede le scope racine '/'.
+// Deux scripts SW differents sur le meme scope se remplacent en boucle comme controleur,
+// ce qui declenchait des rechargements en cascade (updateServiceWorker auto).
+const FCM_SW_SCOPE = '/firebase-cloud-messaging-push-scope'
+
+/**
+ * Desenregistre tout SW Firebase reste sur le scope racine '/' (etat corrompu laisse
+ * par une version anterieure enregistrant sans scope explicite) — sinon la guerre de
+ * controleur avec Workbox persiste et provoque la boucle de rechargement.
+ */
+async function unregisterConflictingFcmSw(): Promise<void> {
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    await Promise.all(registrations.map(async (reg) => {
+      const script = reg.active?.scriptURL ?? reg.waiting?.scriptURL ?? reg.installing?.scriptURL ?? ''
+      if (script.includes('firebase-messaging-sw.js') && new URL(reg.scope).pathname === '/') {
+        await reg.unregister()
+      }
+    }))
+  } catch { /* ignore */ }
+}
+
 function getSwRegistration(): Promise<ServiceWorkerRegistration | undefined> {
   if (swRegistrationPromise) return swRegistrationPromise
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
@@ -51,8 +74,11 @@ function getSwRegistration(): Promise<ServiceWorkerRegistration | undefined> {
     messagingSenderId: firebaseConfig.messagingSenderId,
     appId: firebaseConfig.appId,
   })
-  swRegistrationPromise = navigator.serviceWorker
-    .register(`/firebase-messaging-sw.js?${params.toString()}`)
+  swRegistrationPromise = unregisterConflictingFcmSw()
+    .then(() => navigator.serviceWorker.register(
+      `/firebase-messaging-sw.js?${params.toString()}`,
+      { scope: FCM_SW_SCOPE },
+    ))
     .catch((e) => { console.warn('[FCM] Enregistrement SW echoue:', e); return undefined })
   return swRegistrationPromise
 }
